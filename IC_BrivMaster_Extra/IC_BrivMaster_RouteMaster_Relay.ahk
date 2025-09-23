@@ -40,17 +40,22 @@ class IC_BrivMaster_Relay_Class
 				this.RelayData := ComObjActive(this.GUID)
 				this.MainPID:=this.RelayData.MainPID ;TODO: passing one-off items as Args on launch might be better than COM - particularly the offsets array
 				this.MainHwnd:=this.RelayData.MainHwnd
-				this.MEMORY_baseAddress:=this.RelayData.MEMORY_baseAddress
+				this.MEMORY_baseAddress:=this.RelayData.MEMORY_baseAddress ;TODO: Actually the module offset now. Change this name...
 				this.MEMORY_LOADED_Type:=this.RelayData.MEMORY_LOADED_Type
 				this.MEMORY_LOADED_Offsets:=[]
+				DEBUG_OFFSET_STRING:="" ;Remove once the fail-once-then-fail-forever issue is resolved. If it's resolved...
 				for k,_ in this.RelayData.MEMORY_LOADED_Offsets
+				{
 					this.MEMORY_LOADED_Offsets.Push(k)
+					DEBUG_OFFSET_STRING.=k . ";"
+				}
 				this.InstallPath:=this.RelayData.InstallPath
 				this.ExeName:=this.RelayData.ExeName
 				this.RestoreWindow:=this.RelayData.RestoreWindow
 				this.LogFile:=this.RelayData.LogFile
 				this.RelayData.State:=2 ;Connected
 				this.ForceRelease:=false
+				this.LogString.=A_TickCount . " Read from Relay Data COM object,MainPID=[" . this.MainPID . "] MainHwnd=[" . this.MainHwnd . "] MEMORY_baseAddress=[" . this.MEMORY_baseAddress . "] MEMORY_LOADED_Type=[" . this.MEMORY_LOADED_Type . "] MEMORY_LOADED_Offsets=[" . DEBUG_OFFSET_STRING . "] InstallPath=[" . this.InstallPath . "] ExeName=[" . this.ExeName . "]`n"
 			}
 			catch
 			{
@@ -189,7 +194,7 @@ class IC_BrivMaster_Relay_Class
 		static MaxTime:=""
 		if (MaxTime=="")
 		{
-			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.MEMORY_baseAddress, this.MEMORY_LOADED_Offsets*)
+			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.gameBaseAddress, this.MEMORY_LOADED_Offsets*)
 			if (this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type)==1) ;If the initial call was made after login we're not playing the state machine game here
 			{
 				this.LogString.=A_TickCount . " WaitForUserLogin() was called after platform login`n"
@@ -205,23 +210,23 @@ class IC_BrivMaster_Relay_Class
 		if (this.ForceRelease) ;If we're forced out (by the main thread being ready to go) or run out of time
 		{
 			this.Stage++ ;This is not a fail, as the main instance will be closed and the script will pick the new game instance up when ready
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via ForceRelease in [" . A_TickCount-(MaxTime-timeout) . "]ms Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
+			this.LogString.=A_TickCount . " WaitForUserLogin() exit via ForceRelease in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(4)
 			return
 		}
 		else if (A_TickCount > MaxTime)
 		{
 			this.Stage++ ;This is not a fail, as the main instance will be closed and the script will pick the new game instance up when ready
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Timeout in [" . A_TickCount-(MaxTime-timeout) . "]ms`n"
+			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Timeout in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(4)
 			return
 		}
 		if (!this.MEMORY_LOADED_finalAddress) ;The read may not be available initially - have to try until it resolves
-			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.MEMORY_baseAddress, this.MEMORY_LOADED_Offsets*)
+			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.gameBaseAddress, this.MEMORY_LOADED_Offsets*)
 		if (this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type)==1) ;If the user has loaded
 		{
 			this.SuspendProcess(this.PID,True)
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Suspend in [" . A_TickCount-(MaxTime-timeout) . "]ms`n"
+			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Suspend in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(5)
 			try
 			{
@@ -257,6 +262,7 @@ class IC_BrivMaster_Relay_Class
 			if(isExeRead AND this.handle!="")
 			{
 				;this.Is64Bit := this.MemoryManager.is64Bit ;Is this useful?
+				this.LogString.=A_TickCount . " OpenProcessReader() with PID=[" . this.MemoryManager.PID . "]`n"
 				this.Stage++
 			}
 		}
@@ -270,15 +276,17 @@ class IC_BrivMaster_Relay_Class
 	MemoryManagerRefresh() ;Replacing part of _MemoryManager so we don't need a full instance of everything memory
     {
         moduleName := "mono-2.0-bdwgc.dll"
-		this.MemoryManager := new _ClassMemory("ahk_pid " . this.PID, "", handle) ;Must use PID
+		this.MemoryManager := new _ClassMemory("AHK_PID " . this.PID, "", handle) ;Must use PID
         this.handle := handle
         if !IsObject(this.MemoryManager)
 		{
-            this.baseAddress[moduleName] := -1
+            this.baseAddress[moduleName] := -1 ;TODO: Unused?
             return false
         }
-        this.baseAddress[moduleName] := this.MemoryManager.getModuleBaseAddress(moduleName)
-        return true
+        this.baseAddress[moduleName] := this.MemoryManager.getModuleBaseAddress(moduleName) ;TODO: Compact this is a bit, this.baseAddress[moduleName] isn't useful to keep
+		this.gameBaseAddress:=this.baseAddress[moduleName] + this.MEMORY_baseAddress
+		this.LogString.= A_TickCount . " MemoryManagerRefresh() complete with Module BaseAddress=[" . this.baseAddress[moduleName]  . "] gameBaseAddress=[" . this.gameBaseAddress . "]`n"
+		return true
     }
 
 	ActivateLastWindow()

@@ -43,10 +43,10 @@ class IC_BrivMaster_BrivGemFarm_Class extends IC_BrivGemFarm_Class
 			{
 				g_SF.SafetyCheck()
 			}
-			if (!this.TriggerStart AND offRamp AND currentZone < this.routeMaster.GetOffRampZone()) ;Additional reset detection - if we've fallen back more than 1 zone from the offramp
+			if (!this.TriggerStart AND offRamp AND currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
 			{
 				this.TriggerStart:=true
-				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . currentZone . "] is before Offramp Zone z[" . this.routeMaster.GetOffRampZone() . "]")
+				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
 			}
 			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount() > lastResetCount) ; first loop or Modron has reset
             {
@@ -144,7 +144,7 @@ class IC_BrivMaster_BrivGemFarm_Class extends IC_BrivGemFarm_Class
 		currentZone:=existingZone
 		startTime:=A_TickCount
 		ElapsedTime:=0
-		while (currentZone=="" and ElapsedTime < 1000) ;1s should be plenty
+		while (currentZone=="" and ElapsedTime < 2000) ;Was 1s - possibly not enough for potatotablet
 		{
 			currentZone:=g_SF.Memory.ReadCurrentZone()
 			sleep IC_BrivMaster_BrivGemFarm_Class.IRI_LOOP_WAIT_FAST

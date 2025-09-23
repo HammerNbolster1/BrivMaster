@@ -28,7 +28,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Button, x+5 vIBM_Stats_Reset gIBM_Stats_Reset, Reset Stats
 		;Import warning (replacing the one on Stats)
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Text, vWarning_Imports_Bad x+12 yp-4 w270 r2
+		Gui, ICScriptHub:Add, Text, vWarning_Imports_Bad x+12 yp-4 w260 r2
 		Gui, ICScriptHub:Font, w400
 		;Cycle
 		Gui, ICScriptHub:Add, Groupbox, xm+385 yp-5 w100 h30
@@ -170,7 +170,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1
 		Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile, Profile 2
 		Gui, ICScriptHub:Add, Text, x+10 h18 w220 0x200 vIBM_Game_Settings_Status, Not checked
-		Gui, ICScriptHub:Add, Button, xs+399 yp+0 w46 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
+		Gui, ICScriptHub:Add, Button, xs+398 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Game Settings Options Window
 		Gui, ICScriptHub:Font, w700

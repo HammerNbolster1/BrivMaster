@@ -8,6 +8,7 @@ IC_BrivMaster_SharedFunctions_Class.InjectAddon()
 global g_IriBrivMaster := new IC_IriBrivMaster_Component
 global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI
 SH_UpdateClass.UpdateClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure) ;Required so that the Ellywick tool can work in the same way as the main script. TODO: Might not be needed if Aug25 SH update is applied and has built-in methods for this
+SH_UpdateClass.UpdateClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
 g_IriBrivMaster.Init()
 
 

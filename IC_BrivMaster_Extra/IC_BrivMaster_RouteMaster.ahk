@@ -8,7 +8,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	zonesPerJumpE:=1
 	zonesPerJumpM:=1 ;Needed when combining, as the jump from the Casino will still be on M
 	zones:={}
-	jumpCosts:=[] 
+	jumpCosts:=[]
 	thelloraTarget:=1 ;The target zone including combine and the +1. So at 300 favour non-combining, 301
 	thelloraCap:=1 ;The ablity cap, so at 300 favour, 300
 	thelloraDirty:=true ;True if we have not actually read Thellora's data this run, due to her not being deployed yet
@@ -244,7 +244,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			thelloraTarget:=this.thelloraTarget
 		}
 		jumps:=this.zones[thelloraTarget].jumpsToFinish
-		;OutputDebug % A_TickCount . " expectedNextRush=[" . expectedNextRush . "] thelloraTarget=[" . thelloraTarget . "] jumps=[" . jumps . "]`n" 
+		;OutputDebug % A_TickCount . " expectedNextRush=[" . expectedNextRush . "] thelloraTarget=[" . thelloraTarget . "] jumps=[" . jumps . "]`n"
 		if (this.combining) ;We need to do one jump to reach ThelloraTarget in this case
 		{
 			jumps++
@@ -284,7 +284,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return returnValue
 		}
 	}
-	
+
 	GetStackDepletionZone(zoneNumber, jumps)
 	{
 		while (jumps > 0)
@@ -380,14 +380,15 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	TestForBlankOffline(currentZone)
 	{
-		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayManager.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
+		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayData.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
 		{
+			;OutputDebug % A_TickCount . ":TestForBlankOffline() ShouldBlankRestart=[" . this.ShouldBlankRestart() . "] EnoughHasteForCurrentRun=[" . this.EnoughHasteForCurrentRun() . "] RelayBlankOffline=[" . this.RelayBlankOffline . "] RelayData.IsActive=[" . this.RelayData.IsActive() . "] RelayData.State=[" . this.RelayData.State . "]`n"
 			restartZone:=g_BrivUserSettingsFromAddons[ "IBM_Offline_Stack_Zone"] ;Default
 			if (currentZone > restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
 			{
 				this.BlankRestart()
 			}
-			else if (this.RelayBlankOffline)
+			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
 				relayZone:=this.RelayData.GetRelayZone(restartZone,this)
 				if (currentZone > relayZone) ;If beyond the relay threshold TODO: If we need to stack this has to wait. Maybe it could be set to go 500 zones before the expected stack zone if that many are available?
@@ -462,7 +463,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
         if (g_SF.Memory.ReadHasteStacks() < 50 AND stacks >= targetStacks AND g_SF.Memory.ReadHighestZone() > this.thelloraTarget AND (g_SF.Memory.ReadHighestZone() <= this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; is there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...)
         {
-            if (this.RelayBlankOffline AND this.RelayManager.IsActive()) ;TODO: Something smart here
+            if (this.RelayBlankOffline AND this.RelayData.IsActive()) ;TODO: Something smart here
 			{
 				g_BrivGemFarm.Logger.AddMessage("TestForSteelBonesStackFarming() force restart supressed due to Relay")
 			}
@@ -479,7 +480,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	ResetCycleCount()
 	{
 		this.cycleForceOffline:=false
-		this.cycleCount:=0 ;Reset the count of runs in a cycle at offline. TODO: Could resetting this during the run cause problems? Might need to set a variable and process in Reset()
+		this.cycleCount:=0 ;Reset the count of runs in a cycle at offline. TODO: Could resetting this during the run cause problems? Might need to set a variable and process in Reset() - Note at this point the script expects this to happen
 	}
 
 	GetOffRampZone() ;returns the zone 5 Q-jumps from the reset, used to trigger offramp
@@ -504,54 +505,30 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackUltra(highZone,maxOnlineStackTime := 300000)
     {
-        if (this.PostponeStackingUltra(highZone))
+        if (this.PostponeStacking(highZone))
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks ;Save a direct pointer to reduce _get overhead as we read this repeatedly (Does this actually help?)
-		startStacks:= stacks := MEMORY_SB_STAT.Read()
+		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks
+		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
+		TYPE_SB:=MEMORY_SB_STAT.ValueType
+		startStacks:= stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
         if (this.ShouldAvoidRestack(stacks, targetStacks))
-        {
 			return
-		}
-		;OutputDebug % A_TickCount . " z[" . g_SF.Memory.ReadCurrentZone() . "] StackUltra commit`n"
 		StartTime := A_TickCount
 		this.UltraStackFarmSetup()
-        ;OutputDebug % A_TickCount . " z[" . g_SF.Memory.ReadCurrentZone() . "] returned from UltraStackFarmSetup()`n"
 		ElapsedTime := 0
         g_SharedData.LoopString := "Stack Ultra"
         g_SF.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
-		{
-			boostStartTime:=A_TickCount
-			currentLevel:=g_SF.Memory.ReadChampLvlByID(58)
-			if (!currentLevel) ;If Briv is somehow unlevelled
-				currentLevel:=0
-			targetLevel:=this.BrivBoost.GetBrivBoostTargetLevel(g_SF.Memory.ReadHighestZone(),currentLevel)
-			if(targetLevel > currentLevel)
-			{
-				g_BrivGemFarm.levelManager.OverrideLevelByIDRaiseToMin(58, "min", targetLevel)
-				g_BrivGemFarm.Logger.AddMessage("BrivBoost{C=" . currentLevel . " T=" . targetLevel . "}")
-			}
-		}
+			this.BrivBoost.Apply()
 		g_BrivGemFarm.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
 		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.95) ;At a steady-state stack rate of 240/s, for 600 stacks this is 30 => ~125ms - which is plenty of time to activate precision mode
-		;OutputDebug % A_TickCount . " z[" . g_SF.Memory.ReadCurrentZone() . "] pre-main loop`n"
-		zoneStart:=""
-		if (g_SF.Memory.ReadCurrentZone()==highZone)
-			zoneStart:=A_TickCount
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
-			if (!zoneStart AND g_SF.Memory.ReadCurrentZone()==highZone)
-				zoneStart:=A_TickCount
 			if (precisionMode)
 			{
-				if (g_SF.Memory.ReadCurrentZone() < 1) ;If the game closes or resets we don't want to be stuck in this loop with critical on until the (necessarily large) max time is hit. TODO: Given we are scaling the timeout now is this so important?
-				{
-					Critical Off
-					return
-				}
 				Sleep, 0 ;Fast sleep
 			}
 			else
@@ -565,20 +542,17 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				Sleep, IC_BrivMaster_BrivGemFarm_Class.IRI_LOOP_WAIT_FAST ;Longer sleep outside precision mode
 			}
 			ElapsedTime := A_TickCount - StartTime
-			stacks := MEMORY_SB_STAT.Read()
+			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
-		;OutputDebug % A_TickCount . " Ultra before IBM_UseUltimate()`n"
 		StartTime:=A_TickCount
 		ultRetryCount:=g_SF.Memory.IBM_UseUltimate(58)
 		if (ultRetryCount=="") ;No key found - ult not available (not fielded, not levelled enough)
 		{
-			;OutputDebug % A_TickCount . " unable to exit Ultra stack as Briv ult key not available - falling back`n"
 			g_BrivGemFarm.Logger.AddMessage("Unable to exit Ultra stack as Briv ult key not available - falling back")
 			g_SF.FallBackFromZone()
 		}
 		else
 		{
-			;OutputDebug % A_TickCount . " Ultra after IBM_UseUltimate() Retries=[" . ultRetryCount . "] CD=[" . g_SF.Memory.IBM_GetUltimateCooldown(58) . "]`n"
 			ReleaseTime:=0
 			maxTime:=200 + (5000 / g_SF.Memory.IBM_ReadBaseGameSpeed()) ;200ms real time for the ult to activate, then 5 in-game seconds to resolve and give kill credit
 			while (g_SF.Memory.ReadHighestZone()==highZone AND ReleaseTime <= maxTime) ;Whilst still on this zone
@@ -586,62 +560,25 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				Sleep 15
 				ReleaseTime:=A_TickCount - StartTime
 			}
-			ZoneTime := A_TickCount - zoneStart
-			;OutputDebug % A_TickCount . " Ultra highestZone increase check completed after ReleaseTime=[" . ReleaseTime . "]ms`n"
 			if (g_SF.Memory.ReadHighestZone()==highZone) ;If we still didn't proceed
 			{
-				;OutputDebug % A_TickCount . " failed to exit Ultra stack after firing Briv's ultimate - falling back`n"
 				g_BrivGemFarm.Logger.AddMessage("Failed to exit Ultra stack after firing Briv's ultimate - falling back")
 				g_SF.FallBackFromZone()
 			}
 		}
-		;OutputDebug % A_TickCount . " z[" . g_SF.Memory.ReadCurrentZone() . "] Ult used`n"
         if (ElapsedTime >= maxOnlineStackTime)
         {
             g_SF.RestartAdventure( "Ultra@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_SF.SafetyCheck()
-            g_PreviousZoneStartTime := A_TickCount
+            g_PreviousZoneStartTime:=A_TickCount
             return
         }
-        g_PreviousZoneStartTime := A_TickCount
+        g_PreviousZoneStartTime:=A_TickCount
  		Critical Off
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_RunControl_StackString:="Stacking: Completed online Ultra at z" . highZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s"
 		g_BrivGemFarm.Logger.AddMessage("Ultra{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . highZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		;g_BrivGemFarm.Logger.AddMessage("Excess Stacks:" . MEMORY_SB_STAT.Read() - targetStacks . "(at loop exit was: " . stacks - targetStacks . ")")
-		;OutputDebug % A_TickCount . " z[" . highZone . "] Ultra Generated=[" . generatedStacks . "] Zone time=[" . Round(ZoneTime / 1000,3) . "] Total time=[" . Round(ElapsedTime / 1000,3) . "] Exit stacks gained=[" . MEMORY_SB_STAT.Read() - startStacks . "]`n"
 		this.SetFormation() ;Standard call to reset trustRecent
-    }
-
-	PostponeStackingUltra(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff. Note: For a while this perferred spawn-faster in the event that spawn-more wasn't available, but that makes next to no difference so best to stack ASAP - more value doing that to help Elly fill her hand before the first save is forced
-    {
-        ; Stack immediately if Briv can't jump anymore
-        if (g_SF.Memory.ReadHasteStacks() < 50)
-            return false
-		if (currentZone > this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
-			return false
-		nextSpawnMoreRange := this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
-		if(nextSpawnMoreRange)
-		{
-			if (currentZone < nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
-			{
-				return true
-			}
-			else if (this.zones[currentZone].stackZone==false) ;Not on a stack zone
-            {
-				return true
-			}
-			else if (!this.MelfManager.IsMelfEffectSpawnMore(currentZone)) ;Not spawning more
-			{
-				return true
-			}
-		}
-		else ;No Spawn More available
-		{
-			if (this.zones[currentZone].stackZone == false) ;Even without spawn more, try to use a desired stackzone
-				return true
-		}
-		return false
     }
 
 	UltraStackFarmSetup()
@@ -670,12 +607,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackNormal(maxOnlineStackTime := 300000) ;300s might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
     {
-		zoneStart:=A_TickCount ;DEBUG - Ultra mode
 		; Melf stacking
-        if (g_BrivUserSettingsFromAddons["IBM_Online_Use_Melf"] AND this.PostponeStacking())
+        if (g_BrivUserSettingsFromAddons["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone()))
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks ;Save a direct pointer to reduce _get overhead as we read this repeatedly (Does this actually help?)
-		startStacks:= stacks := MEMORY_SB_STAT.Read()
+		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks
+		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
+		TYPE_SB:=MEMORY_SB_STAT.ValueType
+		startStacks:= stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
         if (this.ShouldAvoidRestack(stacks, targetStacks))
         {
@@ -699,17 +637,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         g_SharedData.LoopString := "Stack Normal"
         g_SF.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
-		{
-			currentLevel:=g_SF.Memory.ReadChampLvlByID(58)
-			if (!currentLevel) ;If Briv is somehow unlevelled
-				currentLevel:=0
-			targetLevel:=this.BrivBoost.GetBrivBoostTargetLevel(g_SF.Memory.ReadCurrentZone(),currentLevel)
-			if(targetLevel > currentLevel)
-			{
-				g_BrivGemFarm.levelManager.OverrideLevelByIDRaiseToMin(58, "min", targetLevel)
-				g_BrivGemFarm.Logger.AddMessage("BrivBoost{C=" . currentLevel . " T=" . targetLevel . "}")
-			}
-		}
+			this.BrivBoost.Apply()
 		g_BrivGemFarm.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
 		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout, leaving 30000ms @ x10
 		precisionMode:=false
@@ -718,11 +646,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         {
 			if (precisionMode)
 			{
-				if (g_SF.Memory.ReadCurrentZone() < 1) ;If the game closes or resets we don't want to be stuck in this loop with critical on until the (necessarily large) max time is hit. TODO: Given we are scaling the timeout now is this so important?
-				{
-					Critical Off
-					return
-				}
 				Sleep, 0 ;Fast sleep
 			}
 			else
@@ -737,8 +660,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				Sleep, IC_BrivMaster_BrivGemFarm_Class.IRI_LOOP_WAIT_FAST ;Longer sleep outside precision mode
 			}
 			ElapsedTime := A_TickCount - StartTime
-			ZoneTime := A_TickCount - zoneStart ;DEBUG - Ultra mode
-			stacks := MEMORY_SB_STAT.Read()
+			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason- game focus is set when precision is turned on
         if (ElapsedTime >= maxOnlineStackTime)
@@ -762,8 +684,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_RunControl_StackString:="Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s"
 		g_BrivGemFarm.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		;g_BrivGemFarm.Logger.AddMessage("Excess Stacks:" . MEMORY_SB_STAT.Read() - targetStacks . "(at loop exit was: " . stacks - targetStacks . ")")
-		;OutputDebug % A_TickCount . " z[" . g_SF.Memory.ReadCurrentZone() . "] Normal Generated=[" . generatedStacks . "] Zone time=[" . Round(ZoneTime / 1000,3) . "] Total time=[" . Round(ElapsedTime / 1000,3) . "]`n" ;DEBUG - Ultra mode
 		this.SetFormation() ;Standard call to reset trustRecent
     }
 
@@ -783,12 +703,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         }
     }
 
-	PostponeStacking() ;Used to delay stacking whilst waiting for Melf's spawn-more buff. Note: For a while this perferred spawn-faster in the event that spawn-more wasn't available, but that makes next to no difference so best to stack ASAP - more value doing that to help Elly fill her hand before the first save is forced
+	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff
     {
-        ; Stack immediately if Briv can't jump anymore.
-        if (g_SF.Memory.ReadHasteStacks() < 50)
+        if (g_SF.Memory.ReadHasteStacks() < 50) ;Stack immediately if Briv can't jump anymore.
             return false
-        currentZone:=g_SF.Memory.ReadCurrentZone()
 		if (currentZone > this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
 			return false
 		nextSpawnMoreRange := this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
@@ -988,9 +906,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         }
         return
     }
-	
-	
-	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone. TODO: Might be better to just have this as a special case in the FirstZone BGF handler?
+
+
+	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
 	{
 		isEZone:=this.zones[g_SF.Memory.ReadHighestZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
 		Critical On ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
@@ -1024,13 +942,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return
         }
 	}
-	
+
 	SetFormation(fastCheck:=false) ;To be called with FastCheck during straightforward progression, e.g. not after stacking, falling back, other fun things
     {
 		static trustRecent:=false ;Do we believe that the ReadMostRecentFormationFavorite() is respresentative? Needed as it changes even if the formation swap fails
-		
+
 		;DEBUG_INITIAL_TRUST_RECENT:=trustRecent ;DEBUG!
-		
+
 		if (!fastCheck)
 			trustRecent:=false ;Reset to false for all normal calls
 		isEZone:=this.zones[g_SF.Memory.ReadCurrentZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
@@ -1078,7 +996,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - FAST NO ACTION - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 			}
 		}
-		else 
+		else
 		{
 			if !(g_SF.IsCurrentFormation(g_BrivGemFarm.levelManager.GetFormation("Q")) OR g_SF.IsCurrentFormation(g_BrivGemFarm.levelManager.GetFormation("E")))
 			{
@@ -1352,6 +1270,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		3: Game started
 		4: Game started and Relay ended before platform login
 		5: Game held after platform login
+		6: Complete (any outcome)
 		-1: Failed to launch
 		-2: Failed to suspend (game will have started, current instance will be invalid)
 	*/
@@ -1359,7 +1278,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	__New()
 	{
 		this.RelayZones:=g_BrivUserSettingsFromAddons["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start TODO: Option for this
-		this.MEMORY_baseAddress:=g_SF.Memory.GameManager.game.gameUser.Loaded.basePtr.baseAddress + 0 ;Memory structure data for the reads we need
+		this.MEMORY_baseAddress:=g_SF.Memory.GameManager.game.gameUser.Loaded.basePtr.ModuleOffset + 0 ;Memory structure data for the reads we need TODO: This has been changed from the whole address to the module offset, since if the module moves in a new process the base address for the old one is worthless... Maybe rename throughout
 		this.MEMORY_LOADED_Type:=g_SF.Memory.GameManager.game.gameUser.Loaded.valueType
 		offSets:=g_SF.Memory.GameManager.game.gameUser.Loaded.GetOffsets() ;We need to turn this into a SafeArray for access via COM
 		offsetSize:=offSets.Count()
@@ -1402,8 +1321,13 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			this.State:=1
 		}
 	}
+
+	IsActive() ;Currently running
+	{
+		return this.State!=0 AND this.State!=6 ;Any any state but unstarted and complete
+	}
 	
-	IsActive()
+	HasTriggered() ;Has been activated this run
 	{
 		return this.State!=0
 	}
@@ -1429,12 +1353,14 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_SF.IBM_SuspendProcess(this.RelayPID,False)
 			this.ProcessSwap()
 			g_BrivGemFarm.Logger.AddMessage("Relay Release() state 5")
+			this.State:=6 ;Complete
 			return
 		}
 		else if (this.State==4) ;Never suspended, either because the relay missed the login, or because the main script asked the relay to abort via RequestRelease
 		{
 			this.ProcessSwap()
 			g_BrivGemFarm.Logger.AddMessage("Relay Release() state 4")
+			this.State:=6 ;Complete
 			return
 		}
 		else if (this.State==3 OR this.State==2) ;Relay started (2), and maybe started the game (3) but has yet to suspend it, in this case we need to take care that we don't get stuck by a race condition with the Relay suspending the process after we set RequestRequest:=true, but before it is read through the COM object
@@ -1471,6 +1397,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		}
 		else
 			g_BrivGemFarm.Logger.AddMessage("Relay Release() with invalid state [" . this.State . "]")
+		this.State:=6 ;Complete
 	}
 
 	LogZone(message) ;DEBUG - remove later?
@@ -1576,6 +1503,19 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 		this.maxMonsters:=100
 		this.overwhelmAdditivePenalty:=0.1
 		this.targetMultiplier:=targetMulti ;If we exactly matched Briv's HP to enemy damage he would be one-shot as soon as we reached 100 enemies attaching . This factor allows us to survive that and some enrage. 8 seems to be good for a fast stack, might need a bit more for long ones
+	}
+	
+	Apply()
+	{
+		currentLevel:=g_SF.Memory.ReadChampLvlByID(58)
+		if (!currentLevel) ;If Briv is somehow unlevelled
+			currentLevel:=0
+		targetLevel:=this.GetBrivBoostTargetLevel(g_SF.Memory.ReadHighestZone(),currentLevel)
+		if(targetLevel > currentLevel)
+		{
+			g_BrivGemFarm.levelManager.OverrideLevelByIDRaiseToMin(58, "min", targetLevel)
+			g_BrivGemFarm.Logger.AddMessage("BrivBoost{C=" . currentLevel . " T=" . targetLevel . "}")
+		}
 	}
 
 	GetBrivBoostTargetLevel(zone,currentLevel) ;This is the main function to be called when using this class

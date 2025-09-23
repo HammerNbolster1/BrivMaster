@@ -92,6 +92,20 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         ;this.ActiveEffectKeyHandler.Refresh()
     }
 	
+	IBM_IsChampInCurrentFormation(champID) ;g_SF.IsChampInFormation() loops through the results of a loop, which is...not ideal
+	{
+        FORMATION_SLOTS:=this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots
+		size:=FORMATION_SLOTS.size.Read()
+        if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
+            return ""
+        loop, %size%
+        {
+            if (champID==FORMATION_SLOTS[A_index - 1].hero.def.ID.Read())
+				return true
+        }
+        return false
+    }
+	
 	IBM_ReadBaseGameSpeed() ;Reads the game speed without the area transition multipier Diana applies, e.g. x10 will flick between x10 and x50 constantly - this will always return x10
 	{
 		areaTransMulti:=this.GameManager.game.gameInstances[this.GameInstance].areaTransitionTimeScaleMultiplier.Read()
@@ -195,31 +209,50 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 		return ULTIMATE_CD
 	}
 	
-	IBM_UseUltimate(champID,maxRetries:=5) ;Uses an ultimate, retrying up to the given number of times if the cooldown doesn't change (implying it hasn't actually triggered - ult activation seems very flakey). Doing it in a single function avoids having to keep looping to find the index
+	IBM_UseUltimate(champID,maxRetries:=50) ;Uses an ultimate, retrying up to the given number of times if the cooldown doesn't change (implying it hasn't actually triggered - ult activation seems very flakey). Doing it in a single function avoids having to keep looping to find the index
 	{
 		ULTIMATEITEMS_LIST:=this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.ultimatesBar.ultimateItems
         ULTIMATE_HOTKEY:=""
-		ULTIMATE_INDEX:=""
-		loop, % ULTIMATEITEMS_LIST.size.Read()
+		ADDRESS_ULTIMATEITEMS_LIST:=_MemoryManager.instance.getAddressFromOffsets(ULTIMATEITEMS_LIST.BasePtr.BaseAddress,ULTIMATEITEMS_LIST.FullOffsets*)
+		ADDRESS_ULTIMATEITEMS_ITEMS:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_LIST,0x10)
+		HEROID_OFFSET:=[ULTIMATEITEMS_LIST.hero.Offset[1],ULTIMATEITEMS_LIST.hero.def.Offset[1],ULTIMATEITEMS_LIST.hero.def.ID.Offset[1]] ;TODO: A lot of this never changes; should be prepared once only. Some kind of ultimate handler object?
+		HEROID_TYPE:=ULTIMATEITEMS_LIST.hero.def.ID.ValueType
+		
+		loop, % _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_LIST,"Int",0x18)
         {
-            if (champID == ULTIMATEITEMS_LIST[A_Index-1].hero.def.ID.Read())
+            ADDRESS_ULTIMATEITEMS_ITEM:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEMS,0x20 + (A_Index-1) * 0x8)
+			if (champID == _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,HEROID_TYPE,HEROID_OFFSET*))
 			{
-				ULTIMATE_INDEX:=A_Index-1
-				ULTIMATE_HOTKEY:=ULTIMATEITEMS_LIST[ULTIMATE_INDEX].HotKey.Read()
+				ULTIMATE_HOTKEY:=_MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,ULTIMATEITEMS_LIST.HotKey.ValueType,ULTIMATEITEMS_LIST.HotKey.Offset*)
 				break
 			}
         }
-		if (!ULTIMATE_HOTKEY) ;Return empty
+		if (ULTIMATE_HOTKEY=="") ;Return empty
 			return
-		ULTIMATE_KEY:=g_BrivGemFarm.inputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be past as an argument to this function? 
+		ULTIMATE_KEY:=g_BrivGemFarm.inputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
 		ULTIMATE_KEY.KeyPress()
 		retryCount:=0
-		while (ULTIMATEITEMS_LIST[ULTIMATE_INDEX].ultimateAttack.internalCooldownTimer.Read()<=0 AND retryCount < maxRetries)
+		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
+		ADDRESS_ULTIMATEATTACK:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEM, ULTIMATEATTACK.Offset*)
+		;OutputDebug % "++++++++++++++++Ult Used++++++++++++++++`n" . A_TickCount . ":IBM_UseUltimate() HeroID=[" . champID . "] CD=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*) . "] Queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.Queued.ValueType,ULTIMATEATTACK.Queued.Offset*) . "]`n"
+		
+		while (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*)<=0 AND retryCount < maxRetries)
 		{
-			ULTIMATE_KEY.KeyPress()
-			retryCount++
-			Sleep 15
+			if (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*)) ;If the ultimate is queued, just wait on it
+			{
+				;OutputDebug % A_TickCount . ":IBM_UseUltimate() WAIT HeroID=[" . champID . "] CD=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*) . "] Queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.Queued.ValueType,ULTIMATEATTACK.Queued.Offset*) . "]`n"
+				retryCount++ ;Counting this as 1/10th of a retry to avoid having to have some duplicate timeout in case the queued attack gets stuck forever
+				Sleep 15
+			}
+			else
+			{
+				;OutputDebug % A_TickCount . ":IBM_UseUltimate() REPRESS HeroID=[" . champID . "] CD=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*) . "] Queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.Queued.ValueType,ULTIMATEATTACK.Queued.Offset*) . "]`n"
+				ULTIMATE_KEY.KeyPress()
+				retryCount+=10
+				Sleep 0
+			}
 		}
+		;OutputDebug % A_TickCount . ":IBM_UseUltimate() EXIT HeroID=[" . champID . "] CD=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*) . "] Queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.Queued.ValueType,ULTIMATEATTACK.Queued.Offset*) . "]`n"
 		return retryCount
 	}
 

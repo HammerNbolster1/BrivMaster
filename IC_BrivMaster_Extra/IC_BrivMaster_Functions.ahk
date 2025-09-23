@@ -295,7 +295,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 				}
 			}
 			if (this.EFFECT_HANDLER_CARDS)
-				this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart. Doesn't work from the hub but isn't neccesary there was we don't really care about performance
+				this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart. Doesn't work from the hub but isn't neccesary there as we don't really care about performance
 		}
 
         Stop() ;Note - do not clear EFFECT_HANDLER_CARDS here as it might be needed for Flames-based stack zones
@@ -507,7 +507,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 		IsEllyWickOnTheField()
         {
-            return g_SF.IsChampInFormation(IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY, g_SF.Memory.GetCurrentFormation())
+            return g_SF.Memory.IBM_IsChampInCurrentFormation(IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY)
         }
 
 		IsEllywickUltReady()
@@ -565,7 +565,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 		IsDMOnTheField()
         {
-            return g_SF.IsChampInFormation(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM, g_SF.Memory.GetCurrentFormation())
+            return g_SF.Memory.IBM_IsChampInCurrentFormation(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM)
         }
 
         IsDMUltReady()
@@ -675,7 +675,7 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 				while (!ultActivated AND elapsedTime < IC_BrivMaster_EllywickDealer_Class.ULTIMATE_RESOLUTION_TIME)
 				{
 					Sleep, IC_BrivMaster_BrivGemFarm_Class.IRI_LOOP_WAIT_FAST
-					ultActivated:=this.StandaloneCheckEllywickUltimateActive ;No check for empty in this version as we can't do much about it (no log)
+					ultActivated:=g_SF.Memory.IBM_GetEllywickUltimateActive() ;No check for empty in this version as we can't do much about it (no log)
 					elapsedTime:=A_TickCount - startTime
 				}
                 If (ultActivated)
@@ -697,50 +697,6 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 			}
         }
 		
-		IsEllywickUltReady()
-        {
-			ultCooldown:=this.StandaloneGetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY)
-			return ultCooldown <= 0
-        }
-		
-		IsDMUltReady()
-        {
-            ultCooldown:=this.StandaloneGetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM)
-			return ultCooldown <= 0
-        }
-		
-		StandaloneCheckEllywickUltimateActive() ;TODO: Should we just apply the memory override to SH so we don't need these duplicates?
-		{
-			EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.HeroHandler.heroes[this.GetHeroHandlerIndexByChampID(83)].effects.effectKeysByHashedKeyName
-			EK_HANDLER_SIZE := EK_HANDLER.size.Read()
-			EllyUltActive:=""
-			loop, %EK_HANDLER_SIZE%
-			{
-				PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
-				if ("ellywick_call_of_the_feywild" == PARENT_HANDLER.def.Key.Read())
-				{
-					EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
-					break
-				}
-			}
-			return EllyUltActive
-		}
-		
-		StandaloneGetUltimateCooldown(champID) ;TODO: Should we just apply the memory override to SH so we don't need these duplicates?
-		{
-			ULTIMATEITEMS_LIST:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Screen.uiController.ultimatesBar.ultimateItems
-			ULTIMATE_CD:=""
-			loop, % ULTIMATEITEMS_LIST.size.Read()
-			{
-				if (champID == ULTIMATEITEMS_LIST[A_Index-1].hero.def.ID.Read())
-				{
-					ULTIMATE_CD:=ULTIMATEITEMS_LIST[A_Index-1].ultimateAttack.internalCooldownTimer.Read()
-					break
-				}
-			}
-			return ULTIMATE_CD
-		}
-
 		UseDMUlt(sleepTime:=30) ;30ms default sleep is for use after Elly's ult triggers, to let the game process it
         {
 			if (this.CanUseDMUlt())
@@ -757,7 +713,7 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 				while (!ultActivated AND elapsedTime < IC_BrivMaster_EllywickDealer_Class.ULTIMATE_RESOLUTION_TIME)
 				{
 					Sleep, IC_BrivMaster_BrivGemFarm_Class.IRI_LOOP_WAIT_FAST
-					ultActivated:=this.StandaloneGetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM) > 0 ;Not checking for empty in this version as nothing much we can do (no log)
+					ultActivated:=g_SF.Memory.IBM_GetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM) > 0 ;Not checking for empty in this version as nothing much we can do (no log)
 					elapsedTime:=A_TickCount - startTime
 				}
             }

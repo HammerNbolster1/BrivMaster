@@ -406,7 +406,16 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		currentZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_SF.CurrentZone:=currentZone
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . currentZone)
-		g_SF.KEY_GameStartFormation:=this.ShouldWalk(g_SF.CurrentZone) ? this.KEY_E : this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
+		if(this.ShouldWalk(g_SF.CurrentZone))
+		{
+			g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
+			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
+		}
+		else
+		{
+			g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
+			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
+		}
 		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
 		if (g_IBM_Settings["IBM_OffLine_Sleep_Time"])
 		{
@@ -784,7 +793,16 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             retryAttempt++               ; pre stackfarm call
             this.StackFarmSetup()
             g_SF.CurrentZone := g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-            g_SF.KEY_GameStartFormation:=this.ShouldWalk(g_SF.CurrentZone) ? this.KEY_E : this.KEY_Q
+			if(this.ShouldWalk(g_SF.CurrentZone))
+			{
+				g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
+				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
+			}
+			else
+			{
+				g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
+				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
+			}
             if (this.targetZone != "" AND g_SF.CurrentZone > this.targetZone)
             {
                 g_SharedData.IBM_UpdateOutbound("LoopString","Attempted to offline stack after modron reset - verify settings")

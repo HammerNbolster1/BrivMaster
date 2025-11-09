@@ -29,7 +29,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             }
             if(this.Memory.ReadResetting() AND this.Memory.ReadCurrentZone() <= 1 AND this.Memory.ReadCurrentObjID() == "")
                 this.WorldMapRestart()
-            this.RecoverFromGameClose(this.KEY_GameStartFormation)
+            this.RecoverFromGameClose()
             this.BadSaveTest()
             return false
         }
@@ -166,30 +166,29 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     }
 	
 	;Override to make it MASH KEYS FASTER, in an attempt to avoid fallbacks more reliably, and to use inputManager
-	RecoverFromGameClose(KEY_Formation)
+	RecoverFromGameClose()
     {
         StartTime := A_TickCount
         ElapsedTime := 0
         timeout := 10000
         if(this.Memory.ReadCurrentZone() == 1)
 			return
-        formationFavorite := g_IBM.levelManager.GetFormation(formationFavouriteKey)
         ElapsedTime := 0
-		isCurrentFormation:=this.IsCurrentFormation(formationFavorite)
+		isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
         while(!isCurrentFormation AND ElapsedTime < timeout AND !this.Memory.ReadNumAttackingMonstersReached())
         {
-			KEY_Formation.KeyPress()
+			this.KEY_GameStartFormation.KeyPress()
             g_IBM.IBM_Sleep(15) ;Fast as we do want to mash this to get it in before an enemy spawns
-			isCurrentFormation:=this.IsCurrentFormation(formationFavorite)
+			isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
 			ElapsedTime := A_TickCount - StartTime
         }
         while(!isCurrentFormation AND (this.Memory.ReadNumAttackingMonstersReached() OR this.Memory.ReadNumRangedAttackingMonsters()) AND (ElapsedTime < (2 * timeout)))
         {
             ElapsedTime := A_TickCount - StartTime
             this.FallBackFromZone()
-            KEY_Formation.KeyPress()
+            this.KEY_GameStartFormation.KeyPress()
             g_IBM.RouteMaster.ToggleAutoProgress(1, true)
-            isCurrentFormation := this.IsCurrentFormation(formationFavorite)
+            isCurrentFormation := this.IsCurrentFormation(g_SF.GameStartFormation)
         }
 		Critical Off ;Turned On previously via WaitForGameReady() calling WaitForFinalStatUpdates()
         g_SharedData.IBM_UpdateOutbound("LoopString","Loading game finished")
@@ -292,7 +291,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         ; finished before timeout
         if(offlineDone)
         {
-			this.WaitForFinalStatUpdates(this.KEY_GameStartFormation)
+			this.WaitForFinalStatUpdates()
 			g_PreviousZoneStartTime := A_TickCount
             return true
         }
@@ -302,7 +301,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	
 	;Override to send formation switch
 	; Waits until stats are finished updating from offline progress calculations.
-    WaitForFinalStatUpdates(KEY_Formation)
+    WaitForFinalStatUpdates()
     {
 		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() start")
 		g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
@@ -329,7 +328,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			ElapsedTime := A_TickCount - StartTime
         }
-		KEY_Formation.KeyPress()
+		this.KEY_GameStartFormation.KeyPress()
     }
 
 	;Override to use sleep, not sure why this spins the wheels in loops like this, but the base script does it a LOT

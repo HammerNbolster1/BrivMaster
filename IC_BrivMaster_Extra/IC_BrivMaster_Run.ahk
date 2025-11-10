@@ -319,7 +319,7 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-			thelloraPresent:=this.levelManager.IsChampInFormation(139, "M") ;Maybe these need to be a table
+			
 			melfPresent:=this.levelManager.IsChampInFormation(59, "M")
 			tatyanaPresent:=this.levelManager.IsChampInFormation(97, "M")
 			BBEGPresent:=this.levelManager.IsChampInFormation(125, "M")
@@ -334,6 +334,7 @@ class IC_BrivMaster_GemFarm_Class
 
 			if (this.routeMaster.combining)
 			{
+				thelloraPresent:=this.levelManager.IsChampInFormation(139, "M") ;Maybe these need to be a table. Thellora is separate for (non)combining as her presence matters in M for combine, and Q/E for non-combine
 				this.routeMaster.CheckThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
 				if (!melfSpawningMore)
@@ -405,9 +406,11 @@ class IC_BrivMaster_GemFarm_Class
 					this.routeMaster.SetFormationHighZone() ;Special version for use here on the immediate exit
 				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
 			}
-			else
+			else ;Non-combining
 			{
+				
 				this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
+				thelloraPresent:=this.levelManager.IsChampInFormation(139, "Q") OR this.levelManager.IsChampInFormation(139, "E") ;TODO: Check based on z1 .ShouldWalk? Although having her in only one formation makes no sense at all
 				;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
 				;TODO: Update to check BBEGPresent
 				if (melfSpawningMore)
@@ -470,7 +473,7 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
 					swapAttempts++
-				} until (g_SF.IsChampInFormation(139, g_SF.Memory.GetCurrentFormation())) OR (swapAttempts > 10) ;139 is Thellora
+				} until (g_SF.IsChampInFormation(139, g_SF.Memory.GetCurrentFormation()) OR (swapAttempts > 10)) ;139 is Thellora
 				;if (swapAttempts > 1)
 					;OutputDebug % "IBM_FirstZone: Done loading z1 Formation. Required attempts: " . swapAttempts . "`n"
 				;this.IBM_Sleep(15) ;sleep to allow the change to actually apply - Do we need to verify this?

@@ -18,23 +18,23 @@ Do not load BrivGemFarm or addons that modify it, and in general it is advisable
 You require a modron core with automation to farm. Four formations are used, Q,W,E which are named after their formation hotkey, and M, which is short for Modron and is the formation selected in the modron core
 The difference between Q and E will depend on whether feat swapping is being used or not. Feat swapping is the use of feats to give Briv 2 different jump values, one for the Q formation and one for the E formation, to give more route options. This allows use to use jumps that are not paractical on their own as they'd either hit bosses, or require so many walks as to be inferior to a lower jump value. Emmote's route calculator (https://emmotes.github.io/ic_scripting_routes/#stacksTab_pure4TT_500_100_490_2_q_1_1_1_0, this has a Tall Tales 4J route selected) is an invaluable tool in setting this up. In this document feat swap setups are written in the style of 12/11J, 6/4J. Those using the round-down feat sometimes written in the style of 12-1J (one item level from 12J) in other resources.
 
-In general feats should not be saved in these formations. If you are concerned about forgetting to set feats, e.g. on Elly after using her for gold farming, saving into M is acceptable. Emmote's site can again help with example formations: https://emmotes.github.io/ic_scripting_routes/#formsTab.
+- In general feats should not be saved in these formations. If you are concerned about forgetting to set feats, e.g. on Elly after using her for gold farming, saving into M is acceptable. Emmote's site can again help with example formations: https://emmotes.github.io/ic_scripting_routes/#formsTab.
 
-Without feat swapping:
+- Without feat swapping:
 
 	Q: The farming team with Briv
 	W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well.
 	E: The farming team with Briv removed
 	M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 9J route could have 4J in M to allow it to land on z1 instead of z6 without walks. Whether that is a benefit or not for an individual setup would need testing
 
-With feat swapping:
+- With feat swapping:
 	
 	Q: The farming team with Briv in the higher jump configuration (e.g. 12 for 12/11J)
 	W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well. When using Ultra stacking (below) Briv must be configured to match the jump value associated with the stack zones selected
 	E: The farming team with Briv in the lower jump configuration  (e.g. 11 for 12/11J)
 	M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 12/11J route could have 9J in M.
-	
-	With feat swapping Briv must have feats saved in each formation, to ensure that changes are applied consistently. When using Thunder Step this feat will be sufficent
+
+With feat swapping Briv must have feats saved in each formation, to ensure that changes are applied consistently. When using Thunder Step this feat will be sufficent
 
 # Settings
 

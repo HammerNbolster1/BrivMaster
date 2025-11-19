@@ -595,7 +595,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	UltraStackFarmSetup()
     {
-        this.KEY_W.KeyPress() ;This KeyPress() call will set control focus, allowing later calls to use _Bulk
+        this.KEY_W.KeyPress()
 		g_IBM.levelManager.LevelFormation("W", "min")
 		StartTime := A_TickCount
         ElapsedTime := 0
@@ -603,7 +603,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation")
         while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
         {
-			this.KEY_W.KeyPress_Bulk()
+			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms
 			g_IBM.IBM_Sleep(15)
             ElapsedTime := A_TickCount - StartTime
@@ -682,7 +682,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			ElapsedTime := A_TickCount - StartTime
 			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
-		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason- game focus is set when precision is turned on
+		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
         if (ElapsedTime >= maxOnlineStackTime)
         {
             g_SF.RestartAdventure( "Normal@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
@@ -712,11 +712,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.SetFormation()
         StartTime := A_TickCount
         ElapsedTime := 0
-        g_SF.WaitForTransition()
+        this.WaitForTransition()
         quest:=g_SF.Memory.ReadQuestRemaining()
         while (quest > 0 AND ElapsedTime < maxTime)
         {
-            g_IBM.IBM_Sleep(15)
+            g_IBM.IBM_Sleep(10)
             this.SetFormation()
             quest:=g_SF.Memory.ReadQuestRemaining()
 			ElapsedTime := A_TickCount - StartTime
@@ -849,7 +849,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		if (!g_SF.KillCurrentBoss() ) ; Previously/Alternatively FallBackFromBossZone()
             g_SF.FallBackFromBossZone()
-        this.KEY_W.KeyPress() ;This KeyPress call will set focus, allowing later calls to use _Bulk
+        this.KEY_W.KeyPress()
         this.ToggleAutoProgress(0,false,true)
 		g_IBM.levelManager.LevelFormation("W", "min")
 		this.WaitForTransition(this.KEY_W)
@@ -859,7 +859,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation")
         while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut)
         {
-			this.KEY_W.KeyPress_Bulk()
+			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min") ;Should this be here?
 			g_IBM.IBM_Sleep(15)
             ElapsedTime := A_TickCount - StartTime
@@ -894,7 +894,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	OnlineStackFarmSetup(fastMelf,levelKey) ;Cuts out checking for bosses, stopping and waiting for the transition, since we're already parked up on a completed zone
     {
-        this.KEY_W.KeyPress() ;This KeyPress() call will set control focus, allowing later calls to use _Bulk
+        this.KEY_W.KeyPress()
 		if (fastMelf==2)
 		{
 			g_IBM.LevelManager.SetModifierKey(true)
@@ -911,7 +911,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation")
         while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
         {
-			this.KEY_W.KeyPress_Bulk()
+			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms
 			g_IBM.IBM_Sleep(15)
             ElapsedTime := A_TickCount - StartTime
@@ -944,16 +944,18 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	}
 
 	;Override to use Sleep
-	WaitForTransition(key, maxLoopTime:=5000) ;key is a IC_BrivMaster_InputManager_Key_Class object
+	WaitForTransition(KEY:="", maxLoopTime:=5000) ;KEY is a IC_BrivMaster_InputManager_Key_Class object
     {
         if !g_SF.Memory.ReadTransitioning()
             return
         StartTime := A_TickCount
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for transition...")
-        g_IBM.inputManager.gameFocus() ;Set focus once and use _Bulk()
+        if (KEY)
+			g_IBM.inputManager.gameFocus() ;Set focus once and use _Bulk()
 		while (g_SF.Memory.ReadTransitioning()==1 AND A_TickCount - StartTime < maxLoopTime)
         {
-			key.KeyPress_Bulk()
+			If (KEY)
+				KEY.KeyPress_Bulk()
 			g_IBM.IBM_Sleep(15) ;Sleep as we don't want to go back multiple zones
         }
         return
@@ -1032,33 +1034,23 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if (this.UnBenchBrivConditions(isEZone) AND lastFormation!=1) ;Formation 1 is Q
         {
 			this.KEY_Q.KeyPress()
-            ;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - STD Q - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 			return
         }
 		if (trustRecent AND fastCheck)
 		{
 			if !(lastFormation==1 OR lastFormation==3)
 			{
-				;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - FAST SWAP - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 				isEZone ? this.KEY_E.KeyPress() : this.KEY_Q.KeyPress()
-				return
-			}
-			else
-			{
-				;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - FAST NO ACTION - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 			}
 		}
 		else
 		{
 			if !(g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("Q")) OR g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("E")))
 			{
-				;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - SLOW SWAP - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 				isEZone ? this.KEY_E.KeyPress() : this.KEY_Q.KeyPress()
-				return
 			}
 			else
 			{
-				;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - SLOW NO ACTION - setting trustRecent:=true - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 				trustRecent:=true ;As we've checked we're on Q or E via formation read, we should be in normal progression
 			}
 		}
@@ -1268,7 +1260,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	InitZone()
     {
         g_IBM.levelManager.LevelClickDamage()
-        this.KEY_RIGHT.KeyPress() ;TODO: Why is this needed if autoprogress is on, and will be toggled on again should we fall back?
+        ;this.KEY_RIGHT.KeyPress() ;TODO: Why is this needed if autoprogress is on, and will be toggled on again should we fall back?
         this.StartAutoProgressSoft(1)
         g_PreviousZoneStartTime:=A_TickCount
     }

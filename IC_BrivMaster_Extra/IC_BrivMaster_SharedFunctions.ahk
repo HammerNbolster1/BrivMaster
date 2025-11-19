@@ -142,6 +142,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting adventure")
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . this.Memory.ReadCurrentZone() . " with haste:" . this.Memory.ReadHasteStacks() . ")")
 		this.CloseIC(reason)
+		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Checking stack conversion")
 		if (this.steelbones != "")
 			convertedSteelbones:=FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) ;Handle Thunder Step
 		if (this.sprint != "" AND this.steelbones != "" AND (this.sprint + convertedSteelbones) < 190000)
@@ -170,14 +171,14 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     {
         StartTime := A_TickCount
         ElapsedTime := 0
-        timeout := 10000
+        timeout := 10000 ;TODO: Does this make sense? Should it use the timeout factor?
         if(this.Memory.ReadCurrentZone() == 1)
 			return
         ElapsedTime := 0
 		isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
         while(!isCurrentFormation AND ElapsedTime < timeout AND !this.Memory.ReadNumAttackingMonstersReached())
         {
-			this.KEY_GameStartFormation.KeyPress()
+			this.KEY_GameStartFormation.KeyPress() ;Note: Inputs in this function are covered by Critical being turned on previously via WaitForGameReady() calling WaitForFinalStatUpdates()
             g_IBM.IBM_Sleep(15) ;Fast as we do want to mash this to get it in before an enemy spawns
 			isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
 			ElapsedTime := A_TickCount - StartTime
@@ -334,7 +335,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	;Override to use sleep, not sure why this spins the wheels in loops like this, but the base script does it a LOT
 	FallBackFromZone(maxLoopTime:=5000)
     {
-        fellBack:=0
         StartTime:=A_TickCount
         ElapsedTime:=0
         while(this.Memory.ReadCurrentZone() == -1 AND ElapsedTime < maxLoopTime)
@@ -353,10 +353,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			g_IBM.IBM_Sleep(15) ;Sleep for this one as we don't want to go back multiple zones
 			ElapsedTime := A_TickCount - StartTime
         }
-        this.WaitForTransition()
-        ;ElapsedTime := A_TickCount - StartTime
-        fellBack := 1 ;Irisiri - this makes the return meaningless, and doesn't match the description above. Needs to check if it timed out at each stage?
-        return fellBack
+        g_IBM.RouteMaster.WaitForTransition()
     }
 	
 	;Override to use IBM levelling and progress management
@@ -610,7 +607,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
         }
         StartTime := A_TickCount
-		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Kill after 5 seconds.
+		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Kill
         {
 			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
 			{
@@ -622,7 +619,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			sleep 200 ;Let WinKill do its thing. Might as well use standard sleep for this
 		}
         StartTime := A_TickCount
-		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder after 5 more seconds
+		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder
 		{
 			hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", g_SF.PID, "Ptr")
 			if(hProcess)
@@ -631,8 +628,12 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
 				g_IBM.Logger.AddMessage("IC failed to close cleanly: sending TerminateProcess")
 				sleep 200 ;Might as well use standard sleep for this
-			} else
+			}
+			else
+			{
 				g_IBM.Logger.AddMessage("IC failed to close cleanly: failed to get process handle for TerminateProcess")
+				Break ;If we can't get the handle for the process trying again isn't going to help
+			}
 		}
 		if (saveCompleteTime==-1) ;Failed to detect, going to have to go with current time
 		{

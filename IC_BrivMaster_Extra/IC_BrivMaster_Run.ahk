@@ -611,7 +611,7 @@ class IC_BrivMaster_GemFarm_Class
 			ErrorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"
 			ErrorMsg.="Set Area Goal: " . (modronEnabledR ? "Enabled" : "Disabled") . "`n"
 			ErrorMsg.="Set Buffs: " . (modronEnabledB ? "Enabled" : "Disabled") . "`n"
-			Msgbox, %ErrorMsg%
+			Msgbox, %ErrorMsg% ;TODO: this comes up as the AHK file name. Give these sensible titles like 'Pre-flight Check: Modron'
 			return -1
 		}
         return 0

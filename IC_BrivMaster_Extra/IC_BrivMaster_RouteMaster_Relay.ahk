@@ -124,8 +124,14 @@ class IC_BrivMaster_Relay_Class
 			else
 				this.UpdateState(-1)
 		}
-		this.LogString.=A_TickCount . " Relay complete`n"
+		this.ExitRelay()
+	}
+	
+	ExitRelay(comment:="Standard")
+	{
+		this.LogString.=A_TickCount . " Relay Exit: " . comment . "`n"
 		FileAppend, % this.LogString . "`n", % this.LogFile ;Save the log
+		ExitApp 
 	}
 
 	UpdateState(state)
@@ -142,14 +148,16 @@ class IC_BrivMaster_Relay_Class
 
 	CleanUpOverlap()
 	{
-		this.LogString.=A_TickCount . "CleanUpOverlap()`n"
+		this.LogString.=A_TickCount . " CleanUpOverlap() called`n"
 		this.UpdateState(-2)
 		this.RelayData.RelayCloseMain()
+		this.Stage:=-3
+		this.ExitRelay("CleanUpOverlap()") ;Exit, nothing further we can do here
 	}
 
 	CleanUpOnFailedStart() ;Do what we can to clean up if the Relay start-up fails
 	{
-		this.LogString.=A_TickCount . "CleanUpOnFailedStart()`n"
+		this.LogString.=A_TickCount . " CleanUpOnFailedStart() called`n"
 		if(this.PID) ;If we have a PID, try to kill that window. This goes straight for the nuke, as we shouldn't normally end up in this scenario
 		{
 			if WinExist( "ahk_pid " . this.PID )
@@ -185,6 +193,7 @@ class IC_BrivMaster_Relay_Class
 			}
 		}
 		this.UpdateState(-1)
+		this.ExitRelay("CleanUpOnFailedStart()") ;Exit, nothing further we can do here
 	}
 
 	WaitForUserLogin(timeOut) ;This version sets up the memory reads and waits for them to return a value. NOTE: It isn't practical to dismiss the splash screen in these loops, as the SendMessage can take 500ms to process at certain points, stopping us catching the platform login

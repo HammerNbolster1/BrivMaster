@@ -2,6 +2,11 @@
 
 class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 {
+	IBM_ReadGameVersionMinor() ;If the game is 636.2, return 2. This can the empty
+	{
+		return this.GameSettings.VersionPostFix.Read() 
+    }
+	
 	IBM_IsBuffActive(buffName) ;Is a Gem Hunter potion active
 	{
 		buffSize:=this.GameManager.game.gameInstances[this.GameInstance].BuffHandler.activeBuffs.size.Read()

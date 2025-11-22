@@ -1,4 +1,4 @@
-;No #include required as already IC_SharedFunctions_Class.ahk
+;No #include required as already in IC_SharedFunctions_Class.ahk
 
 class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 {

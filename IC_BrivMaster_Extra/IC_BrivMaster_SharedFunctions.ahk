@@ -349,7 +349,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         g_SharedData.IBM_UpdateOutbound("LoopString","Falling back from zone...")
         while(!this.Memory.ReadTransitioning() AND ElapsedTime < maxLoopTime)
         {
-            this.DirectedInput(,, "{Left}" )
+            g_IBM.RouteMaster.KEY_LEFT.KeyPress()
 			g_IBM.IBM_Sleep(15) ;Sleep for this one as we don't want to go back multiple zones
 			ElapsedTime := A_TickCount - StartTime
         }
@@ -493,7 +493,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         StartTime := A_TickCount
         ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Modron Resetting...")
-		g_SharedData.LoopString := 
         this.SetUserCredentials()
         if (this.sprint != "" AND this.steelbones != "" AND (this.sprint + this.steelbones) < 190000) ;TODO: Not sure this is needed in all cases...
             response := g_serverCall.CallPreventStackFail( this.sprint + this.steelbones, true)
@@ -592,9 +591,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			sendMessageString := "ahk_pid " . this.PID ;TODO: When using PID we need to fall back to closing by exe name at some point, which will obviously ruin a relay, but it's possible we end up with the game and this.PID not being aligned. Maybe the standard CheckifStuck() logic will be enough?
 		else
 			sendMessageString := "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
-		if WinExist(sendMessageString)
-            SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, 10000 ; WinClose
 		timeout:=1000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 5s
+		if WinExist(sendMessageString)
+            SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
 		StartTime := A_TickCount
 		saveCompleteTime := -1 ;Unset
 		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout )

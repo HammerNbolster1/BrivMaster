@@ -145,7 +145,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Checking stack conversion")
 		if (this.steelbones != "")
 			convertedSteelbones:=FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) ;Handle Thunder Step
-		if (this.sprint != "" AND this.steelbones != "" AND (this.sprint + convertedSteelbones) < 190000)
+		if (this.sprint != "" AND this.steelbones != "" AND (this.sprint + convertedSteelbones)<=176046)
 		{
 			g_IBM.Logger.AddMessage("Servercall Save (Haste:" . this.sprint . " Steelbones[Raw:" . this.steelbones . " Converted:" . convertedSteelbones . "] for a total of:" . this.sprint + convertedSteelbones . ")")
 			response := g_serverCall.CallPreventStackFail(this.sprint + convertedSteelbones)
@@ -154,7 +154,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		{
 			g_IBM.Logger.AddMessage("Servercall Save (Haste:" . this.sprint . " raw Steelbones:" . this.steelbones . " which should convert to:" . convertedSteelbones . ")")
 			response := g_serverCall.CallPreventStackFail(this.sprint + convertedSteelbones)
-			g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting with >190k stacks, some stacks lost")
+			g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting with >176k stacks, some stacks lost")
 		}
 		else
 		{
@@ -488,7 +488,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Modron Resetting...")
         this.SetUserCredentials()
-		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) < 190000)) ;Only try and manually save if it hasn't already happened - (steelbones > 0). TODO: Determine if this ever triggers, or was just a duplicate call being made in the hopes one went through?
+		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0). TODO: Determine if this ever triggers, or was just a duplicate call being made in the hopes one went through?
         {
 			g_IBM.Logger.AddMessage("Manual stack conversion: Converted Haste=[" . this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 			response:=g_serverCall.CallPreventStackFail(this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate), true)

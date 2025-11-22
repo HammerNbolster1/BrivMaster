@@ -256,8 +256,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		if (!g_IBM.routeMaster.HybridBlankOffline AND g_IBM.routeMaster.offlineSaveTime>=0) ;If this is set by stack restart
 			this.IBM_WaitForUserLogin()
 		timeoutTimerStart := A_TickCount
-        ElapsedTime := 0	
-        ; wait for game to start
+        ElapsedTime:=0
+		; wait for game to start
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for game started...")
         gameStarted := 0
 		lastInput:=-250 ;Input limiter for the escape key presses
@@ -274,6 +274,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			gameStarted := this.Memory.ReadGameStarted()
             ElapsedTime := A_TickCount - timeoutTimerStart
         }
+		g_IBM.RefreshImportCheck() ;The game has started so version memory reads should be available
         ; check if game has offline progress to calculate
         offlineTime := this.Memory.ReadOfflineTime()
 		if(gameStarted AND offlineTime <= 0 AND offlineTime != "")
@@ -461,7 +462,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         this.UserID:=this.Memory.ReadUserID()
         this.UserHash:=this.Memory.ReadUserHash()
         this.InstanceID:=this.Memory.ReadInstanceID()
-        this.sprint:=this.Memory.ReadHasteStacks() ;TODO: Calling Haste 'Sprint' here is confusing; need to check throughout IC_Core if replacing it however
+        this.sprint:=this.Memory.ReadHasteStacks() ;TODO: Calling Haste 'Sprint' here is confusing; need to check throughout IC_Core if replacing it however (N.B. The reason for this naming is that the stat in the game is called 'BrivSprintStacks')
         this.steelbones:=this.Memory.ReadSBStacks()
     }
 	

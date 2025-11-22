@@ -66,7 +66,6 @@ Class IC_IriBrivMaster_Component
             this.GemFarmGUID := guid := GuidCreate.Guid
             Run, %A_AhkPath% "%scriptLocation%" "%guid%"
         }
-        g_IriBrivMaster_GUI.RefreshImportWarning()
     }
 
     UpdateGUIDFromLast()

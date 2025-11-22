@@ -52,13 +52,16 @@ try
 		Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico
 }
 
-Gui, IBM_GemFarm:New, -Resize
-Gui, IBM_GemFarm:+Resize -MaximizeBox
+Gui, IBM_GemFarm:New, -Resize -MaximizeBox
 FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
 Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
-Gui IBM_GemFarm:Add, Text, w110 x+5, % formattedDateTime
-Gui IBM_GemFarm:Add, Text, w95 h18 xm+5, % "Settings Updated:"
-Gui IBM_GemFarm:Add, Text, w110 h18 x+5 vIBM_GemFarm_Settings_Update_Time, % formattedDateTime
+Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
+Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
+Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Settings_Update_Time, % formattedDateTime
+Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Game Version:"
+Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
+Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
+Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
 
 if(!g_IBM_Settings["IBM_Window_Hide"])
 {
@@ -125,6 +128,7 @@ class IC_BrivMaster_GemFarm_Class
         DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
 		g_SF.Memory.OpenProcessReader()
+		this.RefreshImportCheck() ;Does the initial population of the import check
 		g_SF.Memory.GetChampIDToIndexMap() ;This is normally in the effect key handler, which is unhelpful for us, so having to call manually. TODO: Put somewhere sensible if using, or move everything to the LevelManager champ objects
         if (g_SF.VerifyAdventureLoaded() < 0)
             return
@@ -267,6 +271,47 @@ class IC_BrivMaster_GemFarm_Class
 	   GuiControl, IBM_GemFarm:, IBM_GemFarm_Settings_Update_Time, % formattedDateTime
 	}
 
+	RefreshImportCheck()
+	{
+		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return 3, 637 will return empty as it has no minor version
+		importsMajor:=g_ImportsGameVersion64
+		importsMinor:=g_ImportsGameVersionPostFix64
+		importsBad:=false
+		if (gameMajor=="")
+		{
+			gameString:="Unable to detect"
+			importsBad:=true
+		}
+		if (importsMajor=="")
+		{
+			importString:="Unable to detect"
+			importsBad:=true
+		}
+		if (importsBad)
+			colour:="cRed"
+		else
+		{
+			if (gameMajor==importsMajor AND gameMinor==importsMinor) ;Full matching
+				colour:="cBlack"
+			else if (gameMajor==importsMajor) ;In this case the minor versions necessarily do not match
+				colour:="cFFC000" ;Amber
+			else ;Major version
+			{
+				colour:="cRed"
+				importsBad:=true
+			}
+			gameString:=gameMajor . (gameMinor ? gameMinor : "")
+			importString:=importsMajor . (importsMinor ? importsMinor : "")
+		}
+		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Game
+		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
+		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString
+		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Imports, % importString
+		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Game
+		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
+	}
+
 	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
 	{
 		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
@@ -319,7 +364,7 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-			
+
 			melfPresent:=this.levelManager.IsChampInFormation(59, "M")
 			tatyanaPresent:=this.levelManager.IsChampInFormation(97, "M")
 			BBEGPresent:=this.levelManager.IsChampInFormation(125, "M")
@@ -408,7 +453,7 @@ class IC_BrivMaster_GemFarm_Class
 			}
 			else ;Non-combining
 			{
-				
+
 				this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
 				thelloraPresent:=this.levelManager.IsChampInFormation(139, "Q") OR this.levelManager.IsChampInFormation(139, "E") ;TODO: Check based on z1 .ShouldWalk? Although having her in only one formation makes no sense at all
 				;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
@@ -606,7 +651,7 @@ class IC_BrivMaster_GemFarm_Class
 		modronEnabledR:=g_SF.Memory.ReadModronAutoReset()==1
 		modronEnabledB:=g_SF.Memory.ReadModronAutoBuffs()==1
 		if (!modronEnabledF OR !modronEnabledR OR !modronEnabledB) ;If any of the Modron core functions are not set TODO: Should buffs (potions) be optional? Not like you can't turn it on with nothing added...
-		{	
+		{
 			ErrorMsg:="All 3 Mordon Core automation functions must be enabled before starting the gem farm. Current status:`n"
 			ErrorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"
 			ErrorMsg.="Set Area Goal: " . (modronEnabledR ? "Enabled" : "Disabled") . "`n"

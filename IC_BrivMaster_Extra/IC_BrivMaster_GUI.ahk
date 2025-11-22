@@ -274,10 +274,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
 		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5,0
 		Gui, ICScriptHub:Add, Text, x+25 w130 vIBM_NonGemFarm_Elly_Status,
-		;Import warning TODO: This is just stuffed at the bottom, can we do something better here?
-		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Text, vIBM_Import_Warning xm+10 y+25 w480 Center
-		Gui, ICScriptHub:Font, w400
 
 		;ROUTE TAB
 		Gui, ICScriptHub:Tab, BM Route
@@ -890,20 +886,6 @@ class IC_IriBrivMaster_GUI
 		DllCall("ReleaseDC", "ptr", 0, "ptr", hdc)
 		return dpi / 96
 	}
-	
-	RefreshImportWarning()
-	{
-		gameVersion := g_SF.Memory.ReadGameVersion()
-		importsVersion := _MemoryManager.is64bit ? g_ImportsGameVersion64 . g_ImportsGameVersionPostFix64 : g_ImportsGameVersion32 . g_ImportsGameVersionPostFix32
-		GuiControl, ICScriptHub: +cF18500, IBM_Import_Warning,
-		if (gameVersion == "")
-			GuiControl, ICScriptHub:, IBM_Import_Warning, % "⚠ Warning: Memory Read Failure. Check for updated Imports."
-		else if( gameVersion > 100 AND gameVersion <= 999 AND gameVersion != importsVersion )
-			GuiControl, ICScriptHub:, IBM_Import_Warning, % "⚠ Warning: Game version (" . gameVersion . ") does not match Imports version (" . importsVersion . ")."
-		else
-			GuiControl, ICScriptHub:, IBM_Import_Warning, % ""
-	}
-
 }
 
 IBM_Level_Diana_Cheese()

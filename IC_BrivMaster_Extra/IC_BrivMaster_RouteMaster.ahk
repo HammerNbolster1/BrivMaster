@@ -1071,10 +1071,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;ReadTransitionOverrideSize() 	| should read 1 if briv jump animation override is loaded to , 0 otherwise
 		;ReadTransitionDirection() 		| 0 = right, 1 = left, 2 = static (instant)
 		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OffToLeft, 3 = OffToRight
-		if (this.ShouldDoThelloraRecovery()) ;Irisiri - to stop Briv being used before Thell is done
-			{
-				return 1
-			}
+		;if (this.ShouldDoThelloraRecovery()) ;Irisiri - to stop Briv being used before Thell is done
+		;	{
+		;		return 1
+		;	}
 		;bench briv if jump animation override is added to list and it isn't a quick transition (reading ReadFormationTransitionDir makes sure QT isn't read too early). We can't do this for feat swap as every formation has Briv
         if (this.zonesPerJumpE == 1 AND g_SF.Memory.ReadTransitionOverrideSize() == 1 AND g_SF.Memory.ReadTransitionDirection() != 2 AND g_SF.Memory.ReadFormationTransitionDir() >= 3 )
             {
@@ -1092,10 +1092,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     UnBenchBrivConditions(isEZone)
     {
 		; do not unbench Briv if before Thellora's rush target (as per the bench condition)
-		if (this.ShouldDoThelloraRecovery())
-			{
-			return false
-			}
+		;if (this.ShouldDoThelloraRecovery())
+		;	{
+		;	return false
+		;	}
 		; do not unbench briv if party is not on a perferred briv jump zone.
         if (isEZone)
 			{
@@ -1115,6 +1115,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return false
     }
 
+	/*
 	ShouldDoThelloraRecovery() ;True if we should walk to Thellora's skip zone regardless of the zone's setting
 	{
 		return false ;Testing stack-calc based recovery as walk based can't work for feat swap TODO: Option for this? Maybe a max number of zones to walk?
@@ -1127,10 +1128,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		return false
 	}
+	*/
 
 	ShouldWalk(currentZone)
 	{
-		return this.zones[currentZone].jumpZone==False Or this.ShouldDoThelloraRecovery()
+		return this.zones[currentZone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
 	}
 
 	LoadRoute() ;Once per script-run loading of the route

@@ -331,7 +331,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	EnoughHasteForCurrentRun() ;True if we have enough haste stacks to complete the run
 	{
-		if (!g_SF.Memory.ReadTransitioning() and !g_SF.Memory.ReadTransitionOverrideSize()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking)
+		if (!g_SF.Memory.ReadTransitioning()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking)
 			zone:=g_SF.Memory.ReadCurrentZone()
 		else ;Use the highest zone, as we should have spent the stacks as we left the previous one
 			zone:=g_SF.Memory.ReadHighestZone()
@@ -981,7 +981,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
 					startTime:=A_TickCount
-					while (g_SF.Memory.ReadTransitionOverrideSize() == 1 and (A_TickCount-startTime)<5000)
+					while (g_SF.Memory.ReadFormationTransitionDir() == 4 and (A_TickCount-startTime)<5000)
 					{
 						g_IBM.IBM_Sleep(15)
 					}
@@ -1009,12 +1009,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 		if (!fastCheck)
 			trustRecent:=false ;Reset to false for all normal calls
-		isEZone:=this.zones[g_SF.Memory.ReadCurrentZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
+		isEZone:=this.ShouldWalk(g_SF.Memory.ReadCurrentZone()) ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
 		Critical On ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
 		benchReturn:=this.BenchBrivConditions(isEZone) ;check to bench briv
 		lastFormation:=g_SF.Memory.ReadMostRecentFormationFavorite() ;New Sep25 read, used in all cases as it is part of the bad formation check
         if (benchReturn AND lastFormation!=3) ;New Sep25 read. Formation 3 is E
         {
+			;OutputDebug % A_TickCount . "@z" . g_SF.Memory.ReadCurrentZone() . ": Swap to E`n"
 			this.KEY_E.KeyPress()
 			;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - STD E - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
 			If (benchReturn==2)
@@ -1022,10 +1023,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
 					startTime:=A_TickCount
-					while (g_SF.Memory.ReadTransitionOverrideSize() == 1 and (A_TickCount-startTime)<5000)
+					while (g_SF.Memory.ReadFormationTransitionDir() == 4 and (A_TickCount-startTime)<5000)
 					{
 						g_IBM.IBM_Sleep(15)
 					}
+					;OutputDebug % A_TickCount . "@z" . g_SF.Memory.ReadCurrentZone() . ": Swap to Q - Fast Return`n"
 					this.KEY_Q.KeyPress_Bulk() ;_Bulk as follows the E.KeyPress()
 				}
 			}
@@ -1037,6 +1039,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;check to unbench briv
         if (this.UnBenchBrivConditions(isEZone) AND lastFormation!=1) ;Formation 1 is Q
         {
+			;OutputDebug % A_TickCount . "@z" . g_SF.Memory.ReadCurrentZone() . ": Swap to Q`n"
 			this.KEY_Q.KeyPress()
 			return
         }
@@ -1068,15 +1071,15 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     BenchBrivConditions(isEZone)
     {
 		;Irisiri-Bench Briv if before Thellora's rush target so he doesn't do extra unplanned skips and run out of stacks (causing an early reset, and too few Thell stacks, causing a death spiral). Notes on the memory functions:
-		;ReadTransitionOverrideSize() 	| should read 1 if briv jump animation override is loaded to , 0 otherwise
-		;ReadTransitionDirection() 		| 0 = right, 1 = left, 2 = static (instant)
-		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OffToLeft, 3 = OffToRight
+		;ReadTransitionOverrideSize() 	| should read 1 if briv jump animation override is loaded to , 0 otherwise - REMOVED in 627
+		;ReadTransitionDirection() 		| 0 = Static (instant), 1 = Forward, 2 = Backward, 3=JumpDown, 4=FallDown
+		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OnFromTop, 3 = OffToLeft, 4 = OffToRight, 5 = OffToBottom
 		;if (this.ShouldDoThelloraRecovery()) ;Irisiri - to stop Briv being used before Thell is done
 		;	{
 		;		return 1
 		;	}
 		;bench briv if jump animation override is added to list and it isn't a quick transition (reading ReadFormationTransitionDir makes sure QT isn't read too early). We can't do this for feat swap as every formation has Briv
-        if (this.zonesPerJumpE == 1 AND g_SF.Memory.ReadTransitionOverrideSize() == 1 AND g_SF.Memory.ReadTransitionDirection() != 2 AND g_SF.Memory.ReadFormationTransitionDir() >= 3 )
+		if (this.zonesPerJumpE == 1 AND g_SF.Memory.ReadTransitionDirection() == 1 AND g_SF.Memory.ReadFormationTransitionDir() == 4 )
             {
 				return 2
 			}
@@ -1104,14 +1107,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.zonesPerJumpE > 1) ;Don't do transition-based checks when feat swapping
 			return true ;Not a walk zone so go to Q
         ;if transition direction is "OnFromLeft"
-		if (g_SF.Memory.ReadFormationTransitionDir() == 0)
-			{
-            return true
-			}
-        if (g_SF.Memory.ReadTransitionOverrideSize() != 1)
-			{
-            return true
-			}
+		if (g_SF.Memory.ReadFormationTransitionDir() != 4)
+		{
+			return true
+		}
         return false
     }
 

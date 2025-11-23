@@ -177,10 +177,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run
 	{
-		;ReadTransitionOverrideSize() 	| should read 1 if briv jump animation override is loaded to , 0 otherwise
-		;ReadTransitionDirection() 		| 0 = right, 1 = left, 2 = static (instant)
-		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OffToLeft, 3 = OffToRight
-		;OutputDebug % "Current z:" . g_SF.Memory.ReadCurrentZone() . " Highest z: " . g_SF.Memory.ReadHighestZone() . " Transitioning: " . g_SF.Memory.ReadTransitioning() . " TransitionOverride: " . g_SF.Memory.ReadTransitionOverrideSize() . " TransitionDirection: " . g_SF.Memory.ReadTransitionDirection() . " FormationTransitionDirection: " . g_SF.Memory.ReadFormationTransitionDir() . " | Haste: " . g_SF.Memory.ReadHasteStacks() . " Expected remainder:" . this.GetLeftoverHaste(true) . "`n"
 		if ignoreHaste
 			return this.GetTargetStacksForFullRun()
 		else
@@ -222,7 +218,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if(this.CombineModeThelloraBossAvoidance AND this.combining)
 		{
-			thelloraChargesUncapped:=FLOOR(g_SF.Memory.IBM_GetThelloraAreaCharges()) ;Floor as the part-charges are presented as fractions, eg 307.2 = 307 zones plus 20% of the way to another
+			thelloraChargesUncapped:=FLOOR(g_SF.Memory.IBM_GetThelloraAreaCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
 			thelloraCharges:=MIN(thelloraChargesUncapped,this.thelloraCap) ;Cap
 			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true) ;TODO: These have been split out for debug reasons, can be streamlined later
 			rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
@@ -239,12 +235,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (expectedNextRush)
 			thelloraTarget:=this.GetThelloraTarget(expectedNextRush,this.combining)
 		else
-		{
-			this.UpdateThellora() ;Make sure we have Thellora's current data (this mostly impacts the first run if we start without her fielded)
 			thelloraTarget:=this.thelloraTarget
-		}
 		jumps:=this.zones[thelloraTarget].jumpsToFinish
-		;OutputDebug % A_TickCount . " expectedNextRush=[" . expectedNextRush . "] thelloraTarget=[" . thelloraTarget . "] jumps=[" . jumps . "]`n"
 		if (this.combining) ;We need to do one jump to reach ThelloraTarget in this case
 		{
 			jumps++
@@ -264,20 +256,20 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		else
 		{
 			returnValue:=0
+			this.UpdateThellora() ;Ensure we have her cap read (mostly impacts the first run)
 			calcResult:=this.UpdateLeftoverHaste_Calculate()
-			this.leftoverHaste:=calcResult[1]
-			if (calcResult[2]) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
+			this.leftoverHaste:=calcResult.haste
+			;TODO: Consider changing the below to deal in charges not zones, it's rather confusing at the moment doing 5x then /5...
+			thelloraNeedsZones:=this.thelloraCap * 5 + (this.combining ? 0 : 1) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
+			currentChargesInZones:=g_SF.Memory.IBM_GetThelloraAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
+			thelloraNeedsAdditional:=MAX(0,thelloraNeedsZones-currentChargesInZones)
+			if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
+				zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
+			else
+				zonesRemaining:=MAX(0,this.targetZone-calcResult.zone)
+			if (zonesRemaining < thelloraNeedsAdditional)
 			{
-				;TODO: Consider changing the below to deal in charges not zones, it's rather confusing at the moment doing 5x/5...
-				thelloraNeedsZones:=this.thelloraCap * 5 + (this.combining ? 0 : 1) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
-				currentChargesInZones:=g_SF.Memory.IBM_GetThelloraAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
-				expectedReset:=this.GetStackDepletionZone(calcResult[3],calcResult[2])
-				zonesRemaining:=MAX(0,expectedReset-calcResult[3])
-				thelloraNeedsAdditional:=MAX(0,thelloraNeedsZones-currentChargesInZones)
-				If (zonesRemaining < thelloraNeedsAdditional)
-				{
-					returnValue:=FLOOR((currentChargesInZones + zonesRemaining) / 5) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
-				}
+				returnValue:=FLOOR((currentChargesInZones + zonesRemaining) / 5) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
 			}
 			if (g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
 				this.leftoverCalculated:=true
@@ -306,24 +298,35 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return zoneNumber
 	}
 
-	UpdateLeftoverHaste_Calculate() ;Returns the number of haste stacks expected to remain at the end of this run, and the number of jumps made at the point stacks will run out (normally 0). If we don't have enough jumps the zone is also returned to further processing (TODO: Make this neater), eg [48,0]. [48,80,349] would mean we can jump 80 times, then will be out of stacks, and we did the calculation on z349
+	UpdateLeftoverHaste_Calculate() ;Returns the number of haste stacks expected to remain at the end of this run, the number of jumps made at the point stacks will run out (normally 0), whether we will run out early, and the zone is also returned to further processing. Examples:
+	;.haste=48, .partialRun=false, .jumpsToDepletion=0 and .zone=349 would mean we will expect to make it to the end, having done the calc on z349
+	;.haste=48, .partialRun=true, .jumpsToDepletion=80 and .zone=501 would mean would mean we can jump 80 times, then will be out of stacks, having done the calculation on z501
 	{
-		curHaste:=g_SF.Memory.ReadHasteStacks()
-		if (!g_SF.Memory.ReadTransitioning() and !g_SF.Memory.ReadTransitionOverrideSize()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking) - TODO: Needs to go in a function, as it's used in EnoughHasteForCurrentRun() too
-			zone:=g_SF.Memory.ReadCurrentZone()
+		calcResult:={}
+		calcResult.haste:=g_SF.Memory.ReadHasteStacks()
+		if (!g_SF.Memory.ReadTransitioning()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking) - TODO: Needs to go in a function, as it's used in EnoughHasteForCurrentRun() too. Also TODO: The transition override was removing from this as the memory read is no longer available as of v637 (Nov25) - can we use one of the other transition reads to keep this robust?
+			calcResult.zone:=g_SF.Memory.ReadCurrentZone()
 		else ;Use the highest zone, as we should have spent the stacks as we left the previous one
-			zone:=g_SF.Memory.ReadHighestZone()
-		jumps:=this.zones[zone].jumpsToFinish
+			calcResult.zone:=g_SF.Memory.ReadHighestZone()
+		jumps:=this.zones[calcResult.zone].jumpsToFinish
+		calcResult.jumpsToDepletion:=0
+		calcResult.partialRun:=false
 		if (jumps < 1) ;No stacks needed if no jumps required
-			return [curHaste,0]
+		{
+			return calcResult
+		}
         while jumps > 0
         {
-            if (curHaste < 50) ;Won't jump with <50 stacks, script will in most cases abort the run when they run out ;TODO: This needs to calculate recovery stacks for the next run based on what Thellora will get from this one
-                return [curHaste,this.zones[zone].jumpsToFinish - jumps,zone] ;return the current zone in this case (only)
-            curHaste:=Round(curHaste*0.968)
+            if (calcResult.haste < 50) ;Won't jump with <50 stacks, script will in most cases abort the run when they run out
+            {    
+				calcResult.partialRun:=true
+				calcResult.jumpsToDepletion:=this.zones[calcResult.zone].jumpsToFinish - jumps
+				return calcResult
+			}
+            calcResult.haste:=Round(calcResult.haste*0.968)
             jumps--
         }
-        return [curHaste,0]
+        return calcResult
 	}
 
 	EnoughHasteForCurrentRun() ;True if we have enough haste stacks to complete the run

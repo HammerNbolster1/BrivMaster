@@ -532,9 +532,9 @@ class IC_BrivMaster_GemFarm_Class
 
 			}
 		}
-		else ;Not z1. Level click damage to make sure we can move - otherwise we can be stuck since it's normally called in InitZone()
+		else ;Not z1
 		{
-			this.levelManager.LevelClickDamage()
+			this.levelManager.LevelClickDamage() ;Level click damage to make sure we can move - otherwise we can be stuck since it's normally called in InitZone()
 		}
 	}
 

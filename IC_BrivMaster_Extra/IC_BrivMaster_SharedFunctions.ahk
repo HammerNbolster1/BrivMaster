@@ -613,7 +613,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			if (A_TickCount >= NextCloseAttempt) ;Throttle input whilst continuing to check rapidly for game save and window closure
 			{
-				g_IBM.Logger.AddMessage("IC failed to close cleanly: sending WinKill")
+				g_IBM.Logger.AddMessage("IC failed to close cleanly: sending WinKill saveCompleteTime=[" . saveCompleteTime . "]")
 				WinKill, sendMessageString
 				NextCloseAttempt:=A_TickCount+500
 			}
@@ -633,13 +633,13 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", g_SF.PID, "Ptr")
 				if(hProcess)
 				{
-					g_IBM.Logger.AddMessage("IC failed to close cleanly: sending TerminateProcess")
+					g_IBM.Logger.AddMessage("IC failed to close cleanly: sending TerminateProcess saveCompleteTime=[" . saveCompleteTime . "]")
 					DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
 					DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
 				}
 				else
 				{
-					g_IBM.Logger.AddMessage("IC failed to close cleanly: failed to get process handle for TerminateProcess")
+					g_IBM.Logger.AddMessage("IC failed to close cleanly: failed to get process handle for TerminateProcess saveCompleteTime=[" . saveCompleteTime . "]")
 					Break ;If we can't get the handle for the process trying again isn't going to help
 				}
 				NextCloseAttempt:=A_TickCount+500

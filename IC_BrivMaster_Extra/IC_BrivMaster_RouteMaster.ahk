@@ -175,7 +175,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return g_SF.Memory.ReadSBStacks() < this.GetTargetStacks()
 	}
 
-	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run
+	GetTargetStacks(ignoreHaste:=true, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run
 	{
 		if ignoreHaste
 			return this.GetTargetStacksForFullRun()
@@ -404,6 +404,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	BlankRestart() ;Restart without stacking TODO: We need an option to stop progress here for potatoes
     {
+		this.ToggleAutoProgress(0)
 		startStacks:=g_SF.Memory.ReadSBStacks()
 		offlineStartTime:=A_TickCount
 		currentZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks

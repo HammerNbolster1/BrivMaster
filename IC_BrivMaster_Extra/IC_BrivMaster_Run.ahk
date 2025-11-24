@@ -656,7 +656,7 @@ class IC_BrivMaster_GemFarm_Class
 			ErrorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"
 			ErrorMsg.="Set Area Goal: " . (modronEnabledR ? "Enabled" : "Disabled") . "`n"
 			ErrorMsg.="Set Buffs: " . (modronEnabledB ? "Enabled" : "Disabled") . "`n"
-			Msgbox, %ErrorMsg% ;TODO: this comes up as the AHK file name. Give these sensible titles like 'Pre-flight Check: Modron'
+			Msgbox, %ErrorMsg% ;TODO: this comes up as the AHK file name. Give these sensible titles like 'Pre-flight Check: Modron'. Probably need a function for start-up abort errors - for example reading the heroID<>heroIndex mapping failing needs to error and stop
 			return -1
 		}
         return 0

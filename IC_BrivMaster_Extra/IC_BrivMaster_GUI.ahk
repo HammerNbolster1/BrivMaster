@@ -430,9 +430,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Max sequential keys
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+5 Number w20 Limit2 vIBM_Level_Options_Input_Max gIBM_Level_Options_Input_Max
 		GUIFunctions.AddToolTip( "IBM_Level_Options_Input_Max", "The maximum number of key presses to be send to the game in a batch during levelling. Minimum of 2.")
-		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, Default level
-		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Level_Options_Default_Min_0 gIBM_Level_Options_Default_Min, 0
-		Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Level_Options_Default_Min_1 gIBM_Level_Options_Default_Min, 1
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Modifier key
 		Gui, ICScriptHub:Add, DropDownList, x+5 w45 vIBM_Level_Options_Mod_Key gIBM_Level_Options_Mod, Shift|Ctrl|Alt
 		GUIFunctions.AddToolTip( "IBM_Level_Options_Mod_Key", "The modifier keybind to use for levelling less than 100 levels at a time. Set all champions to multiples of 100 levels if you do not wish to use this feature")
@@ -454,7 +451,7 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip( "IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining")
 		;Level manager - headings
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+10 w%groupWidth% h70 vIBM_LevelManager, Level Manager
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h70 vIBM_LevelManager, Level Manager
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h20 w15 Left 0x200 vIBM_LevelRow_H_Seat, S
 		Gui, ICScriptHub:Add, Text, x+1 h20 w90 Left 0x200 vIBM_LevelRow_H_Name, Champion
@@ -547,8 +544,6 @@ class IC_IriBrivMaster_GUI
 		IBM_Combine_Enable(data.IBM_Route_Combine)
 		GuiControl, ICScriptHub:, IBM_Route_Combine_Boss_Avoidance, % data.IBM_Route_Combine_Boss_Avoidance
 		;Levelling options
-		GuiControl, ICScriptHub:, IBM_Level_Options_Default_Min_0, % !data.IBM_LevelManager_Defaults_Min
-		GuiControl, ICScriptHub:, IBM_Level_Options_Default_Min_1, % data.IBM_LevelManager_Defaults_Min
 		GuiControl, ICScriptHub:, IBM_Level_Options_Input_Max, % data.IBM_LevelManager_Input_Max
 		GuiControl, ICScriptHub:, IBM_Level_Options_BrivBoost_Use, % data.IBM_LevelManager_Boost_Use
 		GuiControl, ICScriptHub:, IBM_Level_Options_BrivBoost_Multi, % data.IBM_LevelManager_Boost_Multi
@@ -1249,12 +1244,6 @@ IBM_Route_BrivJump_M_Edit()
 {
 	GuiControlGet, value,, IBM_Route_BrivJump_m_Edit
 	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_M",value)
-}
-
-IBM_Level_Options_Default_Min()
-{
-	GuiControlGet, value,, IBM_Level_Options_Default_Min_1 ;The '1' value is stored as true, so just checking that
-	g_IriBrivMaster.UpdateSetting("IBM_LevelManager_Defaults_Min",value)
 }
 
 IBM_Level_Options_Input_Max()

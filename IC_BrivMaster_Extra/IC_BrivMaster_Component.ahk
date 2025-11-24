@@ -185,7 +185,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Online_Melf_Min:=349
 		settings.IBM_Online_Melf_Max:=800
 		settings.IBM_Online_Ultra_Enabled:=false
-		settings.IBM_LevelManager_Defaults_Min:=false ;False is the lower option
 		settings.IBM_LevelManager_Input_Max:=5
 		settings.IBM_LevelManager_Boost_Use:=false
 		settings.IBM_LevelManager_Boost_Multi:=8

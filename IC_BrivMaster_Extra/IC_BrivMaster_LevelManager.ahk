@@ -267,15 +267,13 @@ class IC_BrivMaster_Champion_Class ;Represents a champion, along with mostly lev
 				this.Master.Min:=champData["min"]
 			else
 			{
-				level:=g_IBM_Settings["IBM_LevelManager_Defaults_Min"]
-				this.Master.Min:=(level == "" or !level) ? 0 : 1
+				this.Master.Min:=0
 			}
 			if champData.hasKey("z1")
 				this.Master.z1:=champData["z1"]
 			else
 			{
-				level:=g_IBM_Settings["IBM_LevelManager_Defaults_Min"]
-				this.Master.z1:=(level == "" or !level) ? 0 : 1
+				this.Master.z1:=0
 			}
 			if champData.hasKey("z1c")
 				this.Master.z1c:=champData["z1c"]
@@ -290,11 +288,10 @@ class IC_BrivMaster_Champion_Class ;Represents a champion, along with mostly lev
 			else
 				this.Master.priorityLimit:=""
 		}
-		else ;No data, apply defaults
+		else ;No data, apply defaults. This is always level 0 - we do not want to level mistakenly saved champions, only those we've intentionally set a level for
 		{
-			level:=g_IBM_Settings["IBM_LevelManager_Defaults_Min"]
-			this.Master.Min:=(level == "" or !level) ? 0 : 1
-			this.Master.z1:=0 ;This is a champion with no settings at all - do not level them in z1, as that is intended to be a vaguely controlled enviroment
+			this.Master.Min:=0
+			this.Master.z1:=0
 			this.Master.z1c:=false
 			this.Master.priority:=0
 			this.Master.priorityLimit:=""

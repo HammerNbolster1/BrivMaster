@@ -406,9 +406,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		startStacks:=g_SF.Memory.ReadSBStacks()
 		offlineStartTime:=A_TickCount
-		currentZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-		g_SF.CurrentZone:=currentZone
-		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . currentZone)
+		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
+		g_SF.CurrentZone:=startZone
+		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
 		if(this.ShouldWalk(g_SF.CurrentZone))
 		{
 			g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
@@ -445,11 +445,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
-		if (returnZone < currentZone AND g_IBM.offramp) ;We've gone backwards, this is expected as we don't stop autoprogress, however we should reset the offramp. Not checking the offramp zone here as simply overwriting false with fast is likely faster than doing so
+		if (returnZone < startZone AND g_IBM.offramp) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
 		{
-			g_IBM.offramp:=false ;Reset offramp
+			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
+				g_IBM.offramp:=false ;Reset offramp
+			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		}
-		g_IBM.Logger.AddMessage("BlankRestart Exit:z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -1410,7 +1412,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_SF.IBM_SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 5 - resuming")
 		}
-		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery?
+		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery? TODO: This can be called when a second CloseIC() is called after the relay handover, e.g. because the run gets stuck
 		{
 			g_SF.IBM_SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 6 - resuming - DEBUG")

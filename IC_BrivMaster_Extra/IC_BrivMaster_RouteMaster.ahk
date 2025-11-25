@@ -441,7 +441,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SF.SafetyCheck() ;TODO: Does this do more harm than good during Blank offlines? It can potentially swap the process back to the wrong one if the window is still in existance? Need to roll our own for the blank codepath? Possibly needs to be changed for all runs
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
-		g_IBM.Logger.AddMessage("BlankRestart Exit:z" . g_SF.Memory.ReadCurrentZone() . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+		returnZone:=g_SF.Memory.ReadCurrentZone()
+		if (returnZone < currentZone AND g_IBM.offramp) ;We've gone backwards, this is expected as we don't stop autoprogress, however we should reset the offramp. Not checking the offramp zone here as simply overwriting false with fast is likely faster than doing so
+		{
+			g_IBM.offramp:=false ;Reset offramp
+		}
+		g_IBM.Logger.AddMessage("BlankRestart Exit:z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -593,7 +598,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online Ultra at z" . highZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
 		g_IBM.Logger.AddMessage("Ultra{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . highZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		this.SetFormation() ;Standard call to reset trustRecent
+		if(g_SF.Memory.ReadHighestZone()<this.targetZone) ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
+			this.SetFormation() ;Standard call to reset trustRecent
     }
 
 	UltraStackFarmSetup()
@@ -660,6 +666,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		fariUltUsed:=false
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
+		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
 			if (this.useFaridehUlt AND !fariUltUsed AND g_SF.Memory.ReadActiveMonstersCount()>=100 AND this.BUDTracker.ReadBUD(0)<g_SF.Memory.IBM_ReadCurrentZoneMonsterHealthExponent())
@@ -686,29 +693,34 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
-        if (ElapsedTime >= maxOnlineStackTime)
+		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_SF.RestartAdventure( "Normal@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_SF.RestartAdventure( "Normal@z" . currentZone . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_SF.SafetyCheck()
             g_PreviousZoneStartTime := A_TickCount
             return
         }
         g_PreviousZoneStartTime := A_TickCount
-        currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
-        if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
+        runComplete:=g_SF.Memory.ReadHighestZone()>=this.targetZone ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
+		if (!runComplete)
 		{
-			g_SF.FallBackFromZone()
-		}
-        else
-		{
-			this.ToggleAutoProgress( 1, false, true )
+			;If we're at reset
+			if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
+			{
+				g_SF.FallBackFromZone()
+			}
+			else
+			{
+				this.ToggleAutoProgress( 1, false, true )
+			}
 		}
 		Critical Off
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
 		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		this.SetFormation() ;Standard call to reset trustRecent
+		if (!runComplete)
+			this.SetFormation() ;Standard call to reset trustRecent
     }
 
 	WaitForZoneCompleted(maxTime := 3000)

@@ -407,9 +407,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.ToggleAutoProgress(0)
 		startStacks:=g_SF.Memory.ReadSBStacks()
 		offlineStartTime:=A_TickCount
-		currentZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-		g_SF.CurrentZone:=currentZone
-		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . currentZone)
+		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
+		g_SF.CurrentZone:=startZone
+		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
 		if(this.ShouldWalk(g_SF.CurrentZone))
 		{
 			g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
@@ -421,17 +421,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
 		}
 		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
-		if (g_IBM_Settings["IBM_OffLine_Sleep_Time"])
-		{
-			g_SharedData.IBM_UpdateOutbound("LoopString","BlankRestart: Sleep")
-			ElapsedTime := 0
-			while ( ElapsedTime < g_IBM_Settings["IBM_OffLine_Sleep_Time"] )
-			{
-				g_SharedData.IBM_UpdateOutbound("LoopString","BlankRestart Sleep: " . g_IBM_Settings["IBM_OffLine_Sleep_Time"] - ElapsedTime)
-				g_IBM.IBM_Sleep(15)
-				ElapsedTime := A_TickCount
-			}
-		}
 		if (this.RelayBlankOffline)
 		{
 			g_IBM.Logger.AddMessage("BlankRestart() returning game in Relay mode")
@@ -439,10 +428,31 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.routeMaster.ResetCycleCount() ;TODO: Do these make sense here? Might need to be after picked up
 			g_IBM.DialogSwatter_Start() ;This seems a bit low-priority to happen this early, can we make it check later?
 		}
+		else ;The sleep is to allow launcher like EGS to detect the game has closed, but that is not applicable to relay (which can't use the EGS launcher)
+		{
+			if (g_IBM_Settings["IBM_OffLine_Sleep_Time"])
+			{
+				g_SharedData.IBM_UpdateOutbound("LoopString","BlankRestart: Sleep")
+				ElapsedTime := 0
+				while ( ElapsedTime < g_IBM_Settings["IBM_OffLine_Sleep_Time"] )
+				{
+					g_SharedData.IBM_UpdateOutbound("LoopString","BlankRestart Sleep: " . g_IBM_Settings["IBM_OffLine_Sleep_Time"] - ElapsedTime)
+					g_IBM.IBM_Sleep(15)
+					ElapsedTime := A_TickCount
+				}
+			}
+		}
 		g_SF.SafetyCheck() ;TODO: Does this do more harm than good during Blank offlines? It can potentially swap the process back to the wrong one if the window is still in existance? Need to roll our own for the blank codepath? Possibly needs to be changed for all runs
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
-		g_IBM.Logger.AddMessage("BlankRestart Exit:z" . g_SF.Memory.ReadCurrentZone() . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+		returnZone:=g_SF.Memory.ReadCurrentZone()
+		if (returnZone < startZone AND g_IBM.offramp) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
+		{
+			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
+				g_IBM.offramp:=false ;Reset offramp
+			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+		}
+		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -594,7 +604,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online Ultra at z" . highZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
 		g_IBM.Logger.AddMessage("Ultra{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . highZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		this.SetFormation() ;Standard call to reset trustRecent
+		if(g_SF.Memory.ReadHighestZone()<this.targetZone) ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
+			this.SetFormation() ;Standard call to reset trustRecent
     }
 
 	UltraStackFarmSetup()
@@ -661,6 +672,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		fariUltUsed:=false
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
+		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
 			if (this.useFaridehUlt AND !fariUltUsed AND g_SF.Memory.ReadActiveMonstersCount()>=100 AND this.BUDTracker.ReadBUD(0)<g_SF.Memory.IBM_ReadCurrentZoneMonsterHealthExponent())
@@ -687,29 +699,34 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
-        if (ElapsedTime >= maxOnlineStackTime)
+		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_SF.RestartAdventure( "Normal@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_SF.RestartAdventure( "Normal@z" . currentZone . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_SF.SafetyCheck()
             g_PreviousZoneStartTime := A_TickCount
             return
         }
         g_PreviousZoneStartTime := A_TickCount
-        currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
-        if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
+        runComplete:=g_SF.Memory.ReadHighestZone()>=this.targetZone ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
+		if (!runComplete)
 		{
-			g_SF.FallBackFromZone()
-		}
-        else
-		{
-			this.ToggleAutoProgress( 1, false, true )
+			;If we're at reset
+			if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
+			{
+				g_SF.FallBackFromZone()
+			}
+			else
+			{
+				this.ToggleAutoProgress( 1, false, true )
+			}
 		}
 		Critical Off
 		generatedStacks:=stacks - startStacks
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
 		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		this.SetFormation() ;Standard call to reset trustRecent
+		if (!runComplete)
+			this.SetFormation() ;Standard call to reset trustRecent
     }
 
 	WaitForZoneCompleted(maxTime := 3000)
@@ -1396,7 +1413,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_SF.IBM_SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 5 - resuming")
 		}
-		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery?
+		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery? TODO: This can be called when a second CloseIC() is called after the relay handover, e.g. because the run gets stuck
 		{
 			g_SF.IBM_SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 6 - resuming - DEBUG")

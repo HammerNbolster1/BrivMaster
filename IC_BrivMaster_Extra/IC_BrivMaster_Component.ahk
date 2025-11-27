@@ -228,6 +228,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Window_Hide:=false
 		settings.IBM_Level_Diana_Cheese:=false
 		settings.IBM_Window_Dark_Icon:=false
+		settings.IBM_Allow_Modron_Buff_Off:=false ;Allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
         return settings
     }
 

@@ -650,7 +650,8 @@ class IC_BrivMaster_GemFarm_Class
 		modronEnabledF:=g_SF.Memory.ReadModronAutoFormation()==1
 		modronEnabledR:=g_SF.Memory.ReadModronAutoReset()==1
 		modronEnabledB:=g_SF.Memory.ReadModronAutoBuffs()==1
-		if (!modronEnabledF OR !modronEnabledR OR !modronEnabledB) ;If any of the Modron core functions are not set TODO: Should buffs (potions) be optional? Not like you can't turn it on with nothing added...
+		modronStatusB:=g_IBM_Settings["IBM_Allow_Modron_Buff_Off"] OR modronEnabledB ;Request to allow this for those who don't want to have the modron core use potions, and instead save a familiar in the formation. Which is apparently a thing. Not recommended
+		if (!modronEnabledF OR !modronEnabledR OR !modronStatusB) ;If any of the Modron core functions are not set TODO: Should buffs (potions) be optional? Not like you can't turn it on with nothing added...
 		{
 			ErrorMsg:="All 3 Mordon Core automation functions must be enabled before starting the gem farm. Current status:`n"
 			ErrorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"

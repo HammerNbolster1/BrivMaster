@@ -36,7 +36,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %g_ConnectButton%
 		Gui, ICScriptHub:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Save vIBM_MainButtons_Save, %g_SaveButton%
 		Gui, ICScriptHub:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Reset vIBM_MainButtons_Reset, %A_LineFile%\..\Resources\Reset-100x100.png
-		GUIFunctions.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm") ;TODO: Figure out what this first entry has to be doubled. Possibly using 'A' for active window too early? Reported to Anti 08Nov25
 		GUIFunctions.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm")
         GUIFunctions.AddToolTip("IBM_MainButtons_Stop", "Stop Gem Farm")
         GUIFunctions.AddToolTip("IBM_MainButtons_Connect", "Reconnect to Gem Farm script")

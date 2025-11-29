@@ -446,13 +446,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
-		if (returnZone < startZone AND g_IBM.offramp) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
+		if (returnZone < startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
 		{
 			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				g_IBM.offramp:=false ;Reset offramp
 			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+			g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
 		}
-		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -795,7 +796,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return 0
     }
 
-	StackRestart()
+	StackRestart() ;TODO: Put rollback detection back into this?
     {
 		startStacks:= lastStacks := stacks := g_SF.Memory.ReadSBStacks()
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
@@ -841,7 +842,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				ElapsedTime := A_TickCount - sleepStart
             }
 			g_SF.SafetyCheck()
-            stacks := g_SF.Memory.ReadSBStacks()
+            stacks:=g_SF.Memory.ReadSBStacks()
             ;check if save reverted back to below stacking conditions
             if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Irisiri - this might need to consider the offline fallback?
             {
@@ -850,7 +851,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             }
             ;g_SharedData.PreviousStacksFromOffline := stacks - lastStacks ;Doesn't appear to be used for anything
             lastStacks := stacks
-			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
 			this.offlineSaveTime:=-1 ;Flags as not active
         }
         g_PreviousZoneStartTime := A_TickCount

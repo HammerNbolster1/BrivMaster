@@ -30,7 +30,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             if(this.Memory.ReadResetting() AND this.Memory.ReadCurrentZone() <= 1 AND this.Memory.ReadCurrentObjID() == "")
                 this.WorldMapRestart()
             this.RecoverFromGameClose()
-            this.BadSaveTest()
+            this.BadSaveTest() ;TODO: Replace this call, we're not making use of the zone variables in g_SF
             return false
         }
         else if ( this.Memory.ReadCurrentZone() == "" )  ; game loaded but can't read zone? failed to load proper on last load? (Tests if game started without script starting it)
@@ -573,8 +573,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         }
     }
 	
-	;Overridden to reduce check loop sleep time
-	;A function that closes IC. If IC takes longer than 60 seconds to save and close then the script will force it closed.
+	;A function that closes IC
     CloseIC(string := "",usePID:=false)
     {
 		g_SharedData.IBM_UpdateOutbound("LastCloseReason",string)
@@ -588,7 +587,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			sendMessageString := "ahk_pid " . this.PID ;TODO: When using PID we need to fall back to closing by exe name at some point, which will obviously ruin a relay, but it's possible we end up with the game and this.PID not being aligned. Maybe the standard CheckifStuck() logic will be enough?
 		else
 			sendMessageString := "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
-		timeout:=1000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 5s
+		baseTimeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 10s. This is an initial value that is reduced once a save is detected
+		timeout:=baseTimeout
 		if WinExist(sendMessageString)
             SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
 		StartTime := A_TickCount
@@ -599,7 +599,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
 			{
 				saveCompleteTime:=A_TickCount
+				g_IBM.Logger.AddMessage("CloseIC() Standard Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 				g_IBM.routeMaster.CheckRelayRelease()
+				timeout:=MAX(1000,baseTimeout//4) ;Quarter the timeout post-save. Allow 1s even if this new timer would be elapsed TODO: This puts a floor on the baseTimeout value of 4000ms, which is a factor of 2, and is probably okay, but these numbers are all rather made up and need some structure
 			}
         }
         StartTime := A_TickCount
@@ -609,7 +611,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
 			{
 				saveCompleteTime:=A_TickCount
+				g_IBM.Logger.AddMessage("CloseIC() WinKill Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 				g_IBM.routeMaster.CheckRelayRelease()
+				timeout:=baseTimeout//4 ;Quarter the timeout post-save
 			}
 			if (A_TickCount >= NextCloseAttempt) ;Throttle input whilst continuing to check rapidly for game save and window closure
 			{
@@ -621,11 +625,13 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
         StartTime := A_TickCount
 		NextCloseAttempt:=A_TickCount
+		timeout:=baseTimeout ;Reset the timeout, as we need to force the game closed if it doesn't want to close normally - continuing with old instances running will cause problems eventually
 		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder
 		{
-			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
+			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty()) ;Not reducing the timeout here, for the same reason it is reset prior to this
 			{
 				saveCompleteTime:=A_TickCount
+				g_IBM.Logger.AddMessage("CloseIC() TerminateProcess Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 				g_IBM.routeMaster.CheckRelayRelease()
 			}
 			if (A_TickCount >= NextCloseAttempt) ;Throttle input whilst continuing to check rapidly for game save and window closure

@@ -24,7 +24,7 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
 		Return Hour + Minute/60
 	}
 
-	ReadCNETimeZone(TIME_ZONE_INFORMATION) ;Gets time data for CNE's Pacific standard time location. It's okay for this to error with message boxes as it's a one-off at startup
+	ReadCNETimeZone(TIME_ZONE_INFORMATION) ;Gets time data for CNE's Pacific standard time location. It's okay for this to error with message boxes as it's a one-off at startup TODO: This needs to be built into an organised pre-flight check
 	{
 		; Read Pacific Standard Time data from registry (Windows 11 format)
 		RegRead, TZIHex, HKEY_LOCAL_MACHINE, SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones\Pacific Standard Time, TZI
@@ -330,59 +330,11 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	EFFECT_HANDLER_CARDS:="" ;Deck of Many Things effect handler cards object, dereferrenced from main memory functions for performance
 	EFFECT_KEY_DOMT:="ellywick_deck_of_many_things"
 
-	;DEBUG THINGS
-	DEBUG:=false
-	DEBUG_LOG_STRING:=""
-
 	__new()
 	{
 		this.HERO_INDEX_ELLY:=g_IBM.LevelManager.Champions[IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY].HeroIndex ;Only needs to be done once TODO: Not sure there is much value copying this?
 	}
-
-	DEBUG_ELLY_STATUS_CSV(commentString:="")
-	{
-		this.DEBUG_LOG_STRING.=A_NOW . "," . A_TickCount . "," . commentString . ","
-		this.DEBUG_LOG_STRING.="Elly:" . g_SF.Memory.IBM_GetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY) . ","
-		this.DEBUG_LOG_STRING.="DM:" . g_SF.Memory.IBM_GetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM) . ","
-		this.DEBUG_LOG_STRING.="Redraws:" . this.Redraws . "/" . this.MaxRedraws[this.melfMode] . ","
-		this.DEBUG_LOG_STRING.="Transitioning:" . g_SF.Memory.ReadTransitioning() . ","
-		this.DEBUG_LOG_STRING.="Hand:"
-		loop, % this.EFFECT_HANDLER_CARDS.size.Read()
-		{
-			if (3==this.EFFECT_HANDLER_CARDS[A_index - 1].CardType.Read())
-				this.DEBUG_LOG_STRING.="G"
-			else
-				this.DEBUG_LOG_STRING.="x"
-		}
-		this.DEBUG_LOG_STRING.=",MelfMode:" . this.melfMode . ","
-		this.DEBUG_LOG_STRING.="EllyUltViaRead:" . g_SF.Memory.IBM_GetEllywickUltimateActive() . ","
-		this.DEBUG_LOG_STRING.="z" . g_SF.Memory.ReadCurrentZone() . ","
-		this.DEBUG_LOG_STRING.=this.DEBUG_FORMATION_STRING() . ","
-		this.DEBUG_LOG_STRING.="DM Level:" . g_SF.Memory.ReadChampLvlByID(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM) . "`n"
-	}
-
-	DEBUG_FORMATION_STRING()
-	{
-		size := g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.formation.slots.size.Read()
-		if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
-			return "X:[]"
-		formation:=":["
-		champCount:=0
-		loop, %size%
-		{
-			heroID := g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
-			if (heroID>0)
-				champCount++
-			else
-				heroID:=-1
-			formation.=heroID . ";"
-		}
-		formation:=champCount . formation . "]"
-		return formation
-	}
-
-	;END DEBUG THINGS
-
+	
 	Start(setMelfMode:=false)
 	{
 		this.MelfMode:=setMelfMode
@@ -438,8 +390,6 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	Casino()
 	{
-		if (this.DEBUG)
-			this.DEBUG_ELLY_STATUS_CSV("Casino() Timer Handler")
 		if (!this.EFFECT_HANDLER_CARDS) ;Check the effect handler has been set up
 		{
 			this.InitHandler()
@@ -450,8 +400,6 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 		if (this.UsedUlt AND g_SF.Memory.IBM_GetEllywickUltimateActive()!=1) ;Check for completed ultimate
 		{
 			this.UsedUlt:=False
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Casino() cleared ultimate block")
 		}
 		if (this.Complete AND !this.UsedUlt) ;In flight re-roll checks. Order of lazy ANDs matters to avoid calling CanUseEllyWickUlt() every tick
 		{
@@ -541,18 +489,12 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	UseEllywickUlt()
 	{
-		if (this.DEBUG)
-			this.DEBUG_ELLY_STATUS_CSV("UseEllywickUlt() start")
 		if (g_SF.Memory.ReadTransitioning()) ;Do not try using the ults during a transition - possible source of Weird Stuff
 		{
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("UseEllywickUlt() aborted due to transition")
 			return
 		}
 		if (this.CanUseEllyWickUlt())
 		{
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Can use ult")
 			this.UsedUlt := true ;Set here to block-double presses, until we can confirm it has / hasn't been used
 			Critical On ;Champion levelling between reading the ultimate key and pressing it could cause the incorrect button to be pressed
 			startTime:=A_TickCount
@@ -562,51 +504,35 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 			if (retryCount=="")
 				this.StatusString.="FAIL-Elly ultButton returned empty:"
 			Critical Off
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Post-input; pre-loop")
 			while (!ultActivated AND elapsedTime < IC_BrivMaster_EllywickDealer_Class.ULTIMATE_RESOLUTION_TIME)
 			{
 				g_IBM.IBM_Sleep(15)
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("ultActivated loop post-sleep " . elapsedTime . "ms")
 				ultActivated:=g_SF.Memory.IBM_GetEllywickUltimateActive() ;Specific read for Elly from her handler, seemed more reliable than the cooldown
 				if (ultActivated=="") ;This should be 0 or 1, if we fail to get a value something has gone weird
 					this.StatusString.="FAIL-Elly ultActivated was empty:"
 				elapsedTime:=A_TickCount - startTime
 			}
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Exited loop after " . elapsedTime)
 			If (ultActivated)
 			{
 				this.Redraws++
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("Redraws incremented-calling DM")
 				this.UseDMUlt()
 			}
 			else
 			{
 				this.UsedUlt:=False
 				this.StatusString.="FAIL-Elly Ult Attempted but failed to register:"
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("Ult was attempted but failed to register")
 			}
 		}
 		else
 		{
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Can't use ult")
 			if (this.CanUseDMUlt()) ;Somehow Elly's ult isn't ready by DM's is - try using it
 			{
 				this.StatusString.="FAIL-Elly Ult not available-DM available:"
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("Can't use ult-DM available-calling")
 				this.UseDMUlt(0)
 			}
 			else
 			{
 				this.StatusString.="FAIL-Elly(Level:" . g_SF.Memory.ReadChampLvlByID(IC_BrivMaster_EllywickDealer_Class.HERO_ID_ELLY) . ") Ult not available-DM(Level:" . g_SF.Memory.ReadChampLvlByID(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM) . ") Ult not available-Lowered Max Rerolls to " . this.Redraws . ":"
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("Can't use ult-DM not available-lowering max reroll from:" . this.MaxRedraws[this.melfMode] . " to: " . this.Redraws)
 				this.MaxRedraws[this.melfMode]:=this.Redraws ;Lower max re-rolls so we move on; this Casino is busted
 			}
 		}
@@ -632,12 +558,8 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	UseDMUlt(sleepTime:=30) ;30ms default sleep is for use after Elly's ult triggers, to let the game process it
 	{
-		if (this.DEBUG)
-			this.DEBUG_ELLY_STATUS_CSV("UseDMUlt() start")
 		if (this.CanUseDMUlt())
 		{
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Can use DM ult; sleeping for " . sleepTime . "ms")
 			g_IBM.IBM_Sleep(sleepTime)
 			Critical On ;Champion levelling between reading the ultimate key and pressing it could cause the incorrect button to be pressed
 			startTime:=A_TickCount
@@ -647,26 +569,15 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 			if (retryCount=="")
 				this.StatusString.="FAIL-DM ultButton returned empty:"
 			Critical Off
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Post-input; pre-loop")
 			while (!ultActivated AND elapsedTime < IC_BrivMaster_EllywickDealer_Class.ULTIMATE_RESOLUTION_TIME)
 			{
 				g_IBM.IBM_Sleep(15)
-				if (this.DEBUG)
-					this.DEBUG_ELLY_STATUS_CSV("ultActivated loop post-sleep " . elapsedTime . "ms")
 				ultCooldown:=g_SF.Memory.IBM_GetUltimateCooldown(IC_BrivMaster_EllywickDealer_Class.HERO_ID_DM)
 				if (ultCooldown=="")
 					this.StatusString.="FAIL-DM ultCooldown returned empty:"
 				ultActivated:=ultCooldown > 0
 				elapsedTime:=A_TickCount - startTime
 			}
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Exited loop after " . elapsedTime . "ms")
-		}
-		else
-		{
-			if (this.DEBUG)
-				this.DEBUG_ELLY_STATUS_CSV("Can't use DM ult")
 		}
 	}
 

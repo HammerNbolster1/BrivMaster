@@ -364,7 +364,7 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip( "IBM_OffLine_Sleep_Time_Edit", "The time to wait between the game closing and launching a new copy. This should only be increased from 0 if the lack of delay causes platform issues")
 		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, Timeout factor:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w20 x+3 Number Limit3 vIBM_OffLine_Timeout_Edit gIBM_OffLine_Timeout_Edit
-		GUIFunctions.AddToolTip( "IBM_OffLine_Timeout_Edit", "Controls the time allowed for the game to start and close. The start time is 10s times this value, and the close value a number of seconds equal to it")
+		GUIFunctions.AddToolTip( "IBM_OffLine_Timeout_Edit", "Controls the time allowed for the game to start and close. The start time is 10s times this value, and the initial close time is 2s times this value")
 		Gui, ICScriptHub:Add, Text, xs+10 y+5 h18 0x200, Offline every:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w25 x+3 Number Limit3 vIBM_OffLine_Freq_Edit gIBM_OffLine_Freq_Edit
 		Gui, ICScriptHub:Add, Text, x+5 h18 0x200, runs

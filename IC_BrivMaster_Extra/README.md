@@ -279,10 +279,6 @@ EGS & Copy from IC: Described in the introduction to this group.
 ### Levelling Options  
 Max sequential keys: The maximum number of levelling commands that will be send in a batch. A higher number increases the likelyhood of drifting whilst levelling, a lower number means more overhead in the script and may delay levelling of important champions at the start of the run. This setting has a minimum of 2 to allow modifier keys to be used along with an F-key.
 	
-Default level: If a champion is saved a formation but no level is specified in the Level Manager section below, this option determines if it is considered to be set to level 0 (i.e. not levelled) or level 1, and will thus be placed.
-	
-> Author's Note: This option may be deleted soon; if a champion is meant to be used it should be set up in the options, if it is not it should not be saved in the formations.
-	
 Modifier key for x10/25: Modifier key levelling allows for champions to be levelled to amounts that are not multiples of 100, but applying either CTRL or SHIFT. These options set the modifer to use and the level up amount that it is bound to. This must match the the in-game key bindings; the Game Settings options can help maintain that. It is recommended to use the default of CTRL for x25.
 	
 > Author's Note: Only one value can be used at once (i.e. you can have x100 and x25, or x100 and x10, not x100, x25 and x10. This is as currently there is no particular need for it the capability to do so.

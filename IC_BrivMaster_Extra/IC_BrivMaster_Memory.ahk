@@ -9,7 +9,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 			webRoot:="Unable to read WebRoot"
 	}
 	
-	IBM_ReadGameVersionMinor() ;If the game is 636.2, return '.2'. This can the empty
+	IBM_ReadGameVersionMinor() ;If the game is 636.2, return '.2'. This can be, and often is, empty
 	{
 		return this.GameSettings.VersionPostFix.Read() 
     }
@@ -249,9 +249,4 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         }
         return champList
     }
-
-	IBM_SelectedChampIDBySeat(seat)
-	{
-		return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat - 1].hero.def.ID.read()
-	}
 }

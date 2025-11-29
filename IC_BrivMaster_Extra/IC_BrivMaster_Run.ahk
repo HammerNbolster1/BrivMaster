@@ -121,9 +121,9 @@ class IC_BrivMaster_GemFarm_Class
         static lastResetCount := 0
         this.TriggerStart:=true
 		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
-        existingProcessID := g_IBM_Settings["IBM_Game_Exe"] ;TODO: This...isn't the process ID? Just an odd variable name I guess
-        Process, Exist, %existingProcessID%
-        g_SF.PID := ErrorLevel
+        exeName:=g_IBM_Settings["IBM_Game_Exe"]
+        Process, Exist, %exeName%
+        g_SF.PID:=ErrorLevel
         Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority if needed - the SH launch will just leave it at normal. Trying script High and game Realtime
         DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest

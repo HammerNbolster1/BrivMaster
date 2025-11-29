@@ -357,18 +357,15 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         g_IBM.RouteMaster.WaitForTransition()
     }
 	
-	;Override to use IBM levelling and progress management
-	; Wait for Thellora to activate her Rush ability.
-    DoRushWait(stopProgress:=false) ;Note: unknown what IBM_ThelloraTriggered returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
+	; Wait for Thellora (ID=139) to activate her Rush ability.
+    DoRushWait(stopProgress:=false) ;Note: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {
-		;OutputDebug % A_TickCount ":DoRushWait() - start`n"
         StartTime := A_TickCount
         ElapsedTime := 0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
 		g_SharedData.IBM_UpdateOutbound("LoopString","Rush Wait")
-		while (!(this.Memory.ReadCurrentZone() > 1 OR this.Memory.IBM_ThelloraTriggered()) AND ElapsedTime < 8000)
+		while (!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
         {
-			;OutputDebug % A_TickCount ":DoRushWait() - loop`n"
 			if (stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
 			{
 				if (this.Memory.ReadHighestZone() > 1)
@@ -385,7 +382,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			ElapsedTime := A_TickCount - StartTime
         }
         g_PreviousZoneStartTime := A_TickCount
-		;OutputDebug % A_TickCount ":DoRushWait() - end`n"
     }
 	
 	;Overriding to:

@@ -1,6 +1,6 @@
 #Requires AutoHotkey 1.1.37+ <1.2
 #SingleInstance Force
-;Based on BrivGemFarm Preformance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. This project would not have been possible without the work of those who came before
+;Based on BrivGemFarm Preformance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the ReadMe.
 
 ;=======================
 ;Script Optimization
@@ -23,6 +23,7 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
+#include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 #include %A_LineFile%\..\..\..\ServerCalls\SH_ServerCalls_Includes.ahk
 #include %A_LineFile%\..\..\IC_Core\IC_SaveHelper_Class.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
@@ -35,6 +36,7 @@ global g_IBM:=new IC_BrivMaster_GemFarm_Class
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_SettingsFromAddons:={}
+global g_Heroes:={} ;Has to be instantiated after memory reads are available
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
@@ -106,7 +108,7 @@ IBM_GemFarmGuiClose()
 
 class IC_BrivMaster_GemFarm_Class
 {
-	;TODO: Review all of these class variables for relevance
+	;TODO: Review all of these class variables for relevance, put ones we need in a proper __new() or in the setup of GemFarm() as appropriate
 	TimerFunctions := {}
     TargetStacks := 0
     GemFarmGUID := ""
@@ -118,7 +120,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	GemFarm()
     {
-        static lastResetCount := 0
+        static lastResetCount:=0
         this.TriggerStart:=true
 		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
         exeName:=g_IBM_Settings["IBM_Game_Exe"]
@@ -129,13 +131,12 @@ class IC_BrivMaster_GemFarm_Class
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
 		g_SF.Memory.OpenProcessReader()
 		this.RefreshImportCheck() ;Does the initial population of the import check
-		g_SF.Memory.GetChampIDToIndexMap() ;This is normally in the effect key handler, which is unhelpful for us, so having to call manually. TODO: Put somewhere sensible if using, or move everything to the LevelManager champ objects
         if (g_SF.VerifyAdventureLoaded() < 0)
             return
-        g_SF.CurrentAdventure := g_SF.Memory.ReadCurrentObjID()
+        g_SF.CurrentAdventure:=g_SF.Memory.ReadCurrentObjID()
         g_ServerCall.UpdatePlayServer()
         g_SF.ResetServerCall()
-        g_SF.PatronID := g_SF.Memory.ReadPatronID()
+        g_SF.PatronID:=g_SF.Memory.ReadPatronID()
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
         if (this.PreFlightCheck() == -1) ; Did not pass pre flight check.
             return -1
@@ -146,11 +147,12 @@ class IC_BrivMaster_GemFarm_Class
 			FileCreateDir, %LogDir%
 		LogBase:=LogDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time
 		offRamp:=false ;Irisiri - trying to stop the script failing to stop a new run on time by limiting the code that runs at the end of a run
+		g_Heroes:=new IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=new IC_BrivMaster_Logger_Class(LogBase . ".csv")
-		this.inputManager:=new IC_BrivMaster_InputManager_Class()
-		this.levelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"])
-		this.routeMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],LogBase)
-		this.routeMaster.LoadRoute() ;Once per script run load of route
+		this.InputManager:=new IC_BrivMaster_InputManager_Class()
+		this.LevelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"])
+		this.RouteMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],LogBase)
+		this.RouteMaster.LoadRoute() ;Once per script run load of route TODO: Why isn't this in RouteMaster.__new()?
 		this.EllywickCasino:=new IC_BrivMaster_EllywickDealer_Class()
 		;Diana Electrum Chest Cheese things
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"])
@@ -274,7 +276,7 @@ class IC_BrivMaster_GemFarm_Class
 	RefreshImportCheck()
 	{
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
-		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return 3, 637 will return empty as it has no minor version
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		importsMajor:=g_ImportsGameVersion64
 		importsMinor:=g_ImportsGameVersionPostFix64
 		colour:="cRed" ;Default
@@ -523,7 +525,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)
     {
-        if (this.EllywickCasino.IsEllyWickOnTheField())
+        if (g_Heroes[83].ReadFielded())
         {
 			frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()>0 ? false : true ;If there are no locked champions there's no need to check for unlocking them
 			ghostLevellingAllowed:=!allowGhostLevelling

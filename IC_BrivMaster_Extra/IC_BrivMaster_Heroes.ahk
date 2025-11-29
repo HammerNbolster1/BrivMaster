@@ -1,0 +1,439 @@
+;TODO: When implementing this, remove my hacked for populating g_SF.Memory.HeroIDToIndexMap without the activeEffectKeyHandler code running. Done for _Run, still needs to be done for _Component
+
+class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but that's a longer word and I am not being paid by the letter
+{
+	__New()
+	{
+		this.GenerateHeroIDtoHeroIndexMap()
+	}
+
+	__Get(heroID)
+	{
+		switch heroID ;Create extended objects for heroes that need extra functionality
+		{
+			case 83: this[heroID]:=new IC_BrivMaster_Elly_Class(heroID,this.IDToIndexMap[heroID]) ;Elly
+			case 139: this[heroID]:=new IC_BrivMaster_Thellora_Class(heroID,this.IDToIndexMap[heroID]) ;Thellora
+			default: this[heroID]:=new IC_BrivMaster_Hero_Class(heroID,this.IDToIndexMap[heroID])
+		}
+	}
+
+	ResetAll() ;Reset all heroes
+	{
+		for k,v in this
+		{
+			if k is integer ;Only call for the heroID objects. N.B. This cannot be an expression in AHK v1, i.e. 'if (k is integer)' is not valid
+				v.Reset()
+		}
+	}
+
+    GenerateHeroIDtoHeroIndexMap()
+	{
+        this.IDToIndexMap:={}
+        size:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes.size.Read()
+		if(size<=0 OR size>=500) ; Sanity check;
+        {
+			ErrorMsg:="Critical Error`n"
+			ErrorMsg.="Unable to generate HeroID to HeroIndex map`n"
+			ErrorMsg.="Dictionary size read=[" . size . "], expected 1 to 500`n"
+			Msgbox, %ErrorMsg%
+			ExitApp	;Without this map all hero functions will fail. TODO: PreFlightCheck() needs a structured approach to message boxes, along with all initial setup actions
+		}
+        loop, %size%
+        {
+            heroID:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[A_Index - 1].def.ID.Read()
+            this.IDToIndexMap[heroID] := A_Index - 1
+        }
+    }
+}
+
+class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for heroes with specific functionality
+{
+	__New(heroID,heroIndex)
+	{
+		this.ID:=heroID
+		this.HeroIndex:=heroIndex
+		this.Seat:=this.ReadChampSeat()
+		this.Key:=g_IBM.inputManager.getKey("F" . this.Seat) ;So we don't have to re-calc this constantly
+		this.Key.Tag:=this.Seat ;Use the tag to track the seat. TODO: If levelling is encapsulated properly this might not be needed
+		this.lastUpgradeLevel:=this.GetLastUpgradeLevel()
+		this.Master:={} ;Unmodified levelling data
+		this.Current:={} ;Current levelling data
+	}
+
+	;--------------------------------------------------------------------------------------
+	;---Hero related memory reads
+	;--------------------------------------------------------------------------------------
+
+	ReadChampSeat()
+    {
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].def.SeatID.Read()
+    }
+
+	GetLastUpgradeLevel() ;Loop upgrades until the upgrade with the highest level is found
+	{
+		size:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.UserData.HeroHandler.heroes[this.heroIndex].upgradeHandler.upgradesByUpgradeId.size.Read()
+		if (size < 1 || size > 1000)
+			return 0
+		maxUpgradeLevel:=0
+		Loop, %size% ;Loop and save the highest level requirement
+		{
+			requiredLevel:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].upgradeHandler.upgradesByUpgradeId["value",A_Index-1].RequiredLevel.Read()
+			if (requiredLevel!=9999) ;This check taken from IC_BrivGemFarm_Levelup; I assume this is the value for 'not available'
+				maxUpgradeLevel:=Max(requiredLevel, maxUpgradeLevel)
+		}
+		return maxUpgradeLevel
+	}
+
+	ReadLevel()
+    {
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].level.Read()
+    }
+
+	ReadUltimateCooldown() ;TODO: Does it make sense to have an UltimateReady() wrapper for this? Currently Casino uses direct result to allow for debug/error checking, so might not be very useful
+	{
+		ULTIMATEITEMS_LIST:=g_SF.Memory.GameManager.game.gameInstances[0].Screen.uiController.ultimatesBar.ultimateItems
+        ULTIMATE_CD:=""
+		loop, % ULTIMATEITEMS_LIST.size.Read()
+        {
+            if (this.ID == ULTIMATEITEMS_LIST[A_Index-1].hero.def.ID.Read())
+			{
+				ULTIMATE_CD:=ULTIMATEITEMS_LIST[A_Index-1].ultimateAttack.internalCooldownTimer.Read()
+				break
+			}
+        }
+		return ULTIMATE_CD
+	}
+
+	UseUltimate(maxRetries:=50,exitOnceQueued:=false) ;Use ultimate, retrying up to the given number of times if the cooldown doesn't change. If exitOnceQueued is true the function will return as soon as the ultimate is queued - which may mean it never activates if something changes in the game state (area change most likely). Returns the number of attempts made
+	{
+		;TODO: Not sure this function should be hard coded offsets in a specific file like this - constants in a main file might be better? Applies later in this function as well. Maybe some wrapper somewhere?
+		ULTIMATEITEMS_LIST:=g_SF.Memory.GameManager.game.gameInstances[0].Screen.uiController.ultimatesBar.ultimateItems
+        ULTIMATE_HOTKEY:=""
+		ADDRESS_ULTIMATEITEMS_LIST:=_MemoryManager.instance.getAddressFromOffsets(ULTIMATEITEMS_LIST.BasePtr.BaseAddress,ULTIMATEITEMS_LIST.FullOffsets*)
+		ADDRESS_ULTIMATEITEMS_ITEMS:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_LIST,0x10)
+		HEROID_OFFSET:=[ULTIMATEITEMS_LIST.hero.Offset[1],ULTIMATEITEMS_LIST.hero.def.Offset[1],ULTIMATEITEMS_LIST.hero.def.ID.Offset[1]] ;TODO: A lot of this never changes; should be prepared once only. Some kind of ultimate handler object?
+		HEROID_TYPE:=ULTIMATEITEMS_LIST.hero.def.ID.ValueType ;TODO: This one can't change
+		loop, % _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_LIST,"Int",0x18)
+        {
+            ADDRESS_ULTIMATEITEMS_ITEM:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEMS,0x20 + (A_Index-1) * 0x8)
+			if (this.ID == _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,HEROID_TYPE,HEROID_OFFSET*))
+			{
+				ULTIMATE_HOTKEY:=_MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,ULTIMATEITEMS_LIST.HotKey.ValueType,ULTIMATEITEMS_LIST.HotKey.Offset*)
+				break
+			}
+        }
+		if (ULTIMATE_HOTKEY=="") ;Return empty
+			return
+		ULTIMATE_KEY:=g_IBM.inputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
+		ULTIMATE_KEY.KeyPress()
+		retryCount:=0
+		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
+		ADDRESS_ULTIMATEATTACK:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEM, ULTIMATEATTACK.Offset*)
+		while (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.internalCooldownTimer.ValueType,ULTIMATEATTACK.internalCooldownTimer.Offset*)<=0 AND retryCount < maxRetries)
+		{
+			if (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*)) ;If the ultimate is queued, just wait on it
+			{
+				retryCount++ ;Counting this as 1/10th of a retry to avoid having to have some duplicate timeout in case the queued attack gets stuck forever
+				if (exitOnceQueued)
+					return retryCount
+				g_IBM.IBM_Sleep(15)
+			}
+			else
+			{
+				ULTIMATE_KEY.KeyPress()
+				retryCount+=10
+				Sleep 0
+			}
+		}
+		return retryCount
+	}
+
+	ReadMaxHealth()
+    {
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].lastMaxHealth.Read()
+    }
+
+	ReadOverwhelm()
+    {
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].overwhelm.Read()
+    }
+
+	ReadFielded() ;In current formation
+	{
+        FORMATION_SLOTS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.slots
+		size:=FORMATION_SLOTS.size.Read()
+        if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
+            return false
+        loop, %size%
+        {
+            if (this.ID==FORMATION_SLOTS[A_index - 1].hero.def.ID.Read())
+				return true
+        }
+        return false
+    }
+
+	ReadSelectedInSeat() ;Selected in their seat - may not be placed / levelled
+	{
+		return this.ID==g_SF.Memory.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[this.Seat - 1].hero.def.ID.read()
+	}
+
+    ReadName() ;Not stored as the main script doesn't need to know the names
+	{
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].def.name.Read()
+    }
+
+	;------------------------------------------------------------------------------------
+	;---General functions
+	;------------------------------------------------------------------------------------
+
+
+
+	;------------------------------------------------------------------------------------
+	;---Levelling functions
+	;------------------------------------------------------------------------------------
+
+
+	Reset()
+	{
+		this.Current:=this.Master.Clone()
+	}
+
+	ApplyLevelSettings(levelsettings) ;Set up this champion's levelling related properties
+	{
+		if (levelSettings.hasKey(this.ID))
+		{
+			champData:=levelSettings[this.ID]
+			if champData.hasKey("min")
+				this.Master.Min:=champData["min"]
+			else
+			{
+				this.Master.Min:=0
+			}
+			if champData.hasKey("z1")
+				this.Master.z1:=champData["z1"]
+			else
+			{
+				this.Master.z1:=0
+			}
+			if champData.hasKey("z1c")
+				this.Master.z1c:=champData["z1c"]
+			else
+				this.Master.z1c:=false
+			if champData.hasKey("prio")
+				this.Master.priority:=champData["prio"]
+			else
+				this.Master.priority:=0
+			if champData.hasKey("priolimit")
+				this.Master.priorityLimit:=champData["priolimit"]
+			else
+				this.Master.priorityLimit:=""
+		}
+		else ;No data, apply defaults. This is always level 0 - we do not want to level mistakenly saved champions, only those we've intentionally set a level for
+		{
+			this.Master.Min:=0
+			this.Master.z1:=0
+			this.Master.z1c:=false
+			this.Master.priority:=0
+			this.Master.priorityLimit:=""
+		}
+		this.Master.PendingLevels:=0
+		this.Current:=this.Master.Clone() ;A copy of the master data to allow manipulation at runtime whilst allowing us to reset to default each run
+	}
+
+	GetTargetLevel(mode:="min")
+	{
+		if(mode=="z1")
+			return this.Current.z1
+		else if (mode=="min")
+			return this.Current.min
+		else
+			return 0
+	}
+
+	NeedsLevelling(mode:="min")
+	{
+		this.Current.Level:=this.ReadLevel() ;TODO: Consider updating this.Current.Level directly in this.ReadLevel() so it can be used for low-priority things without a memory read?
+		if (this.Current.Level=="")
+			this.Current.Level:=0 ;Or the memory reads were not ready. Need to check something like ReadHeroIsOwned() returns a value maybe? That should possibly be done long before we get this far though
+		if(mode=="z1")
+			return this.Current.Level < this.Current.z1
+		else if (mode=="min")
+			return this.Current.Level < this.Current.min
+		else
+			return 0
+	}
+
+	GetPriority(mode:="min",includePending:=true)
+	{
+		if(mode=="z1") ;Priority settings apply to z1 only
+		{
+			;this.Current.Level:=g_SF.Memory.IBM_ReadChampLvlByIndex(this.HeroIndex) ;TODO: Decide if we should check this here? It's checked before we add to the levelling Worklist, and after each levelling attempt
+			;if (this.Current.Level=="")
+			;this.Current.Level:=0 ;Or the memory reads were not ready. Need to check something like ReadHeroIsOwned() returns a value maybe? That should possibly be done long before we get this far though
+			expectedLevel:=includePending ? this.Current.Level + this.Current.PendingLevels : this.Current.Level
+			if (this.Current.PriorityLimit AND expectedLevel>=this.Current.PriorityLimit)
+				return 0
+			else
+				return this.Current.Priority
+		}
+		else
+			return 0
+	}
+
+	CheckZ1cAllowed(mode:="min") ;checks for zone 1 completed conditions
+	{
+		if(mode=="z1" AND this.Current.z1c)
+			return g_SF.Memory.ReadCurrentZone()>1 OR g_SF.Memory.ReadQuestRemaining()==0 ;allow levelling if the zone is complete on z1 | TODO: Replace non-encapsulated memory reads
+		else
+			return true
+	}
+
+	GetLevelsRequired(mode:="min") ;Always includes pending. Does not refresh this.Current.Level TODO: If we do some fancy memory manager for levelling or champions, we could maybe add the re-check
+	{
+		if(mode=="z1")
+			return Max(this.Current.z1 - (this.Current.Level + this.Current.PendingLevels),0)
+		else if (mode=="min")
+			return Max(this.Current.min - (this.Current.Level + this.Current.PendingLevels),0)
+		else
+			return 0
+	}
+
+	SetSoftCap() ;Sets the champions current min level to softcap
+	{
+		this.Current.Min:=this.lastUpgradeLevel
+	}
+
+	OverrideLevel(mode,level)
+	{
+		this.Current[mode]:=level
+	}
+
+	RaisePriorityForFrontRow()
+	{
+		if (this.Current.Priority<=0)
+		{
+			this.Current.Priority:=1
+			this.Current.PriorityLimit:=100
+		}
+	}
+}
+
+class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
+{
+	__new(heroID,heroIndex)
+	{
+		base.__new(heroID,heroIndex)
+		this.EFFECT_KEY_PoUR:="thellora_plateaus_of_unicorn_run"
+		this.STAT_RUSH_TRIGGERED:="thellora_plateaus_of_unicorn_run_has_triggered"
+		this.STAT_AREA_CHARGES:="thellora_plateaus_of_unicorn_run_areas"
+	}
+
+	ReadRushTriggered() ;Has Thellora rushed yet this run?
+	{
+		return g_SF.Memory.GameManager.game.gameInstances[0].StatHandler.ServerStats[this.STAT_RUSH_TRIGGERED].Read()==1
+	}
+
+	ReadRushAreaCharges() ;How many zones does Thellora have stored?
+	{
+		return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats[this.STAT_AREA_CHARGES].Read()
+	}
+
+	ReadRushTarget() ;Gets the base favour exponent which Thellora uses to cap her rush amount. Note this is much slower than using an ActiveEffectKeyHandler that is already set up for her, but much faster than having to set one up first
+	{
+		thelloraRushTarget:=""
+		EK_HANDLERS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
+		EK_HANDLERS_SIZE := EK_HANDLERS.size.Read()
+		loop, %EK_HANDLERS_SIZE%
+		{
+			EK_PARENT_HANDLER:=EK_HANDLERS["value", A_Index - 1].List[0].parentEffectKeyHandler
+			if (this.EFFECT_KEY_PoUR==EK_PARENT_HANDLER.def.Key.Read())
+			{
+				thelloraRushTarget:=EK_PARENT_HANDLER.activeEffectHandlers[0].baseFavorExponent.Read()
+				break
+			}
+		}
+		return thelloraRushTarget
+	}
+}
+
+class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
+{
+	__new(heroID,heroIndex)
+	{
+		base.__new(heroID,heroIndex)
+		this.EFFECT_HANDLER_CARDS:="" ;Deck of Many Things effect handler cards object, dereferrenced from main memory functions for performance
+		this.EFFECT_KEY_DOMT:="ellywick_deck_of_many_things"
+	}
+
+	Reset()
+	{
+		base.Reset()
+		this.EFFECT_HANDLER_CARDS:=""
+	}
+
+	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup
+	{
+		if(this.EFFECT_HANDLER_CARDS=="")
+		{
+			this.InitDoMTHandler()
+			return true
+		}
+		else
+		return false
+	}
+
+	InitDoMTHandler()
+	{
+		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
+		EK_HANDLER_SIZE := EK_HANDLER.size.Read()
+		loop, %EK_HANDLER_SIZE%
+		{
+			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
+			if (this.EFFECT_KEY_DOMT == PARENT_HANDLER.def.Key.Read())
+			{
+				this.EFFECT_HANDLER_CARDS:=PARENT_HANDLER.activeEffectHandlers[0].Clone()
+				break
+			}
+		}
+		if (this.EFFECT_HANDLER_CARDS)
+			this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart. Doesn't work from the hub but isn't neccesary there as we don't really care about performance
+	}
+
+	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate
+	{
+		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
+		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
+		EllyUltActive:=""
+		loop, %EK_HANDLER_SIZE%
+		{
+			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
+			if ("ellywick_call_of_the_feywild" == PARENT_HANDLER.def.Key.Read())
+			{
+				EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
+				break
+			}
+		}
+		return EllyUltActive
+	}
+
+	GetNumCardsOfType(cardType) ;3 is Gem, 5 is Flames
+	{
+		numCards := 0
+		loop, % this.EFFECT_HANDLER_CARDS.cardsInHand.size.Read()
+		{
+			if (cardType==this.EFFECT_HANDLER_CARDS.cardsInHand[A_index - 1].CardType.Read())
+				numCards++
+		}
+		return numCards
+	}
+
+	GetNumGemCards()
+	{
+		return this.GetNumCardsOfType(3)
+	}
+
+	GetNumFlamesCards()
+	{
+		return this.GetNumCardsOfType(5)
+	}
+}

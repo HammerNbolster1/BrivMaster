@@ -187,11 +187,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	UpdateThellora()
+	UpdateThellora() ;TODO: Encapsulate the cap/dirty part of this in the Hero object? The target is route based and should probably stay here
 	{
 		if (this.thelloraDirty)
 		{
-			cap:=g_SF.Memory.IBM_GetThelloraRushTarget()
+			cap:=g_Heroes[139].ReadRushTarget()
 			if (cap)
 			{
 				this.thelloraCap:=cap
@@ -218,7 +218,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if(this.CombineModeThelloraBossAvoidance AND this.combining)
 		{
-			thelloraChargesUncapped:=FLOOR(g_SF.Memory.IBM_GetThelloraAreaCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
+			thelloraChargesUncapped:=FLOOR(g_Heroes[139].ReadRushAreaCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
 			thelloraCharges:=MIN(thelloraChargesUncapped,this.thelloraCap) ;Cap
 			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true) ;TODO: These have been split out for debug reasons, can be streamlined later
 			rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
@@ -261,7 +261,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.leftoverHaste:=calcResult.haste
 			;TODO: Consider changing the below to deal in charges not zones, it's rather confusing at the moment doing 5x then /5...
 			thelloraNeedsZones:=this.thelloraCap * 5 + (this.combining ? 0 : 1) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
-			currentChargesInZones:=g_SF.Memory.IBM_GetThelloraAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
+			currentChargesInZones:=g_Heroes[139].ReadRushAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
 			thelloraNeedsAdditional:=MAX(0,thelloraNeedsZones-currentChargesInZones)
 			if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
 				zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
@@ -347,7 +347,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stackZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
 			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_IBM.levelManager.IsChampInFormation(83, "W")) ;if enabled and Elly is specifically in formation 2, the stacking formation TODO: Check if Elly is actually enabled somewhere?
 			{
-				flames:=g_IBM.EllywickCasino.GetNumCardsOfType(5) ;Card type 5 is flames
+				flames:=g_Heroes[83].GetNumFlamesCards()
 				if (flames>0)
 					stackZone:=g_IBM_Settings["IBM_OffLine_Flames_Zones"][flames]
 			}
@@ -452,7 +452,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 			g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
 		}
-		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
+		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -571,7 +571,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
 		StartTime:=A_TickCount
-		ultRetryCount:=g_SF.Memory.IBM_UseUltimate(58)
+		ultRetryCount:=g_Heroes[58].UseUltimate()
 		if (ultRetryCount=="") ;No key found - ult not available (not fielded, not levelled enough)
 		{
 			g_IBM.Logger.AddMessage("Unable to exit Ultra stack as Briv ult key not available - falling back")
@@ -626,7 +626,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ElapsedTime >= TimeOut)
 		{
 			g_IBM.Logger.AddMessage("FAIL: UltraStackFarmSetup() did not set W formation within " . TimeOut . "ms")
-			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_SF.Memory.ReadChampLvlByID(59) . "] Formation=" . this.DEBUG_FORMATION_STRING())
+			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
 		}
     }
 
@@ -677,7 +677,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         {
 			if (this.useFaridehUlt AND !fariUltUsed AND g_SF.Memory.ReadActiveMonstersCount()>=100 AND this.BUDTracker.ReadBUD(0)<g_SF.Memory.IBM_ReadCurrentZoneMonsterHealthExponent())
 			{
-				g_SF.Memory.IBM_UseUltimate(33,,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack	
+				g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack	
 				fariUltUsed:=true 
 			}
 			if (precisionMode)
@@ -850,7 +850,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             }
             ;g_SharedData.PreviousStacksFromOffline := stacks - lastStacks ;Doesn't appear to be used for anything
             lastStacks := stacks
-			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
+			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
 			this.offlineSaveTime:=-1 ;Flags as not active
         }
         g_PreviousZoneStartTime := A_TickCount
@@ -941,7 +941,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ElapsedTime >= TimeOut)
 		{
 			g_IBM.Logger.AddMessage("FAIL: OnlineStackFarmSetup() did not set W formation within " . TimeOut . "ms")
-			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_SF.Memory.ReadChampLvlByID(59) . "] Formation=" . this.DEBUG_FORMATION_STRING() . " fastMelf=[" . fastMelf . "]")
+			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING() . " fastMelf=[" . fastMelf . "]")
 		}
     }
 
@@ -1586,7 +1586,7 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 	
 	Apply()
 	{
-		currentLevel:=g_SF.Memory.ReadChampLvlByID(58)
+		currentLevel:=g_Heroes[58].ReadLevel()
 		if (!currentLevel) ;If Briv is somehow unlevelled
 			currentLevel:=0
 		targetLevel:=this.GetBrivBoostTargetLevel(g_SF.Memory.ReadHighestZone(),currentLevel)
@@ -1601,11 +1601,10 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 	{
 		if (!this.ZoneCache.HasKey(zone))
 			this.ZoneCache[zone]:=this.GetPreFlamesDamage(zone)
-		flamesAdjusted:=this.ZoneCache[zone]*(2**g_IBM.EllywickCasino.GetNumCardsOfType(5))
-		brivHPMultiplier:=g_SF.Memory.IBM_GetMaxHealthByID(58) / this.GetBrivBaseHPforLevel(currentLevel)
+		flamesAdjusted:=this.ZoneCache[zone]*(2**g_Heroes[83].GetNumFlamesCards())
+		brivHPMultiplier:=g_Heroes[58].ReadMaxHealth() / this.GetBrivBaseHPforLevel(currentLevel)
 		targetBrivLevel:=this.GetBrivLevelForBaseHP(flamesAdjusted/brivHPMultiplier)
 		targetBrivLevel100:=CEIL(targetBrivLevel/100)*100 ;Adjust for x100 levelling
-		;OutputDebug % "Current Level=[" . g_SF.Memory.ReadChampLvlByID(58) .  "] Target Level=[" . targetBrivLevel100 . "]`n"
 		return targetBrivLevel100
 	}
 
@@ -1614,7 +1613,7 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 		damage:=this.GetCurveValue(zone) ;Mimcing ComputeMonsterAttackDPS
 		damage*=this.areaAndCampaignMonsterDamageMultiplier
 		damage*=this.maxMonsters ;Monster count
-		damage*=1+Max(this.maxMonsters-g_SF.Memory.IBM_GetOverwhelmByID(58),0)*this.overwhelmAdditivePenalty ;Overwhelm
+		damage*=1+Max(this.maxMonsters-g_Heroes[58].ReadOverwhelm(),0)*this.overwhelmAdditivePenalty ;Overwhelm
 		damage*=this.targetMultiplier ;HP margin factor
 		return damage
 	}

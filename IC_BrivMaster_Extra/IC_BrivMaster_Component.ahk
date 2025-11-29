@@ -3,13 +3,15 @@
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Needed for import/export string functions TODO: Maybe bring them over? They are not relevant to the gem farm
+#include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script. TODO: Might not be needed if Aug25 SH update is applied and has built-in methods for this
-SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well TODO: This doesn't actually work?
+SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well TODO: This doesn't actually work? Also what do we actually use from this now?
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
-global g_IriBrivMaster := new IC_IriBrivMaster_Component
-global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI
+global g_IriBrivMaster := new IC_IriBrivMaster_Component()
+global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI()
+global g_Heroes:={}
 global g_IBM_Settings:={}
 
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
@@ -33,7 +35,6 @@ Class IC_IriBrivMaster_Component
 {
 	Settings := ""
 	TimerFunction := ObjBindMethod(this, "UpdateStatus")
-	;ChestSnatcherTimer := ObjBindMethod(this, "ChestSnatcher")
 	SharedRunData:=""
 	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff?
 	CONSTANT_serverRateBuy:=250
@@ -137,12 +138,10 @@ Class IC_IriBrivMaster_Component
 	Init()
     {
         ; Read settings
-		g_SF.Memory.GetChampIDToIndexMap() ;This is normally in the effect key handler, which is unhelpful for us, so having to call manually. TODO: Put somewhere sensible
-
 		this.GemFarmGUID:=g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json") ;TODO: Should be IC_IriBrivMaster_Component property? Probably best placed in .Init() - done, still needs further thought?
-
+        g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
-        this.LoadSettings()
+		this.LoadSettings()
 		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
@@ -1148,20 +1147,20 @@ Class IC_IriBrivMaster_Component
 
 	IBM_GetGUIFormationData_ProcessFormation(championData,index,formation) ;TODO: This needs to deal with the seat/name reads failing. Probably via trying to restart memory reader initially, then giving up and not returning any champs with some kind of feedback message
 	{
-		for _, champId in formation
+		for _, heroID in formation
 		{
-			if champID>0
+			if heroID>0
 			{
-				seat:=g_SF.Memory.ReadChampSeatByID(champID)
-                if !(championData.hasKey(seat) and championData[seat].hasKey(champID)) ;Create entry for this champ
+				seat:=g_Heroes[heroID].Seat
+                if !(championData.hasKey(seat) and championData[seat].hasKey(heroID)) ;Create entry for this champ
                 {
-                    championData[seat,champID,"Name"]:=g_SF.Memory.ReadChampNameByID(champID) ;We need to create the array if it doesn't yet exist
-                    championData[seat,champID,"Q"]:=false
-                    championData[seat,champID,"W"]:=false
-                    championData[seat,champID,"E"]:=false
-                    championData[seat,champID,"M"]:=false
+                    championData[seat,heroID,"Name"]:=g_Heroes[heroID].ReadName() ;We need to create the array if it doesn't yet exist
+                    championData[seat,heroID,"Q"]:=false
+                    championData[seat,heroID,"W"]:=false
+                    championData[seat,heroID,"E"]:=false
+                    championData[seat,heroID,"M"]:=false
                 }
-                championData[seat,champID,index]:=true
+                championData[seat,heroID,index]:=true
 			}
 		}
 	}

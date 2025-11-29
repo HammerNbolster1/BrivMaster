@@ -546,8 +546,8 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 	{
 		this.minCards := minCards ;These are arrays indexed by card type, so 1 is Knight, 2 Moon, 3 Gem, 4 Fates, 5 Flames
 		this.maxCards := maxCards
-		g_Heroes[83] ;Will create Elly's hero object if not already present TODO: Is this useful? First access will create view __get() anyway
-		g_Heroes[99] ;And DM
+		g_Heroes[83].Reset() ;Reset Elly to clear any previous handlers. This will also create the hero object if necessary
+		g_Heroes[99].Reset() ;And DM
 	}
 
 	Casino()

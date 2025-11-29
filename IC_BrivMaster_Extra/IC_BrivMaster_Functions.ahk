@@ -603,11 +603,11 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 	Start() ;Overriden as we might need to get the process when launching this way
 	{
 		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
-		existingProcessID := g_IBM_Settings["IBM_Game_Exe"]
-		Process, Exist, %existingProcessID%
+		exeName:=g_IBM_Settings["IBM_Game_Exe"]
+		Process, Exist, %exeName%
 		g_SF.PID := ErrorLevel
 		g_SF.Memory.OpenProcessReader()
-		timerFunction := this.CasinoTimer
+		timerFunction:=this.CasinoTimer
 		SetTimer, %timerFunction%, 20, 0
 		g_Heroes[83].SetupDotMHandlerIfNeeded()
 		this.Casino()

@@ -259,7 +259,7 @@ class IC_BrivMaster_GemFarm_Class
 			}
             if (g_SF.CheckifStuck())
             {
-                this.TriggerStart := true
+                this.TriggerStart:=true
             }
 			;Loop frequency check
 			this.IBM_SleepOffset(lastLoopEndTime,30)

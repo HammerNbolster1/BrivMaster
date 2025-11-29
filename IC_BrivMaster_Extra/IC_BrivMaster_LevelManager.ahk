@@ -65,7 +65,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		if (g_SF.Memory.ReadCurrentZone()==1) ;On z1 we want to level to meet Thellora's rush target
 			return this.clickDamageTargetRush
 		else
-			return Min(this.clickDamageTargetFinal,g_SF.Memory.ReadHighestZone()+g_IBM.routeMaster.zonesPerJumpQ*2) ;Return the lowest of the reset zone click damage requirement, and one jump from the next landing zone to ensure we don't overlevel, but never have to wait for levelling
+			return Min(this.clickDamageTargetFinal,g_SF.Memory.ReadHighestZone()+g_IBM.routeMaster.zonesPerJumpQ*2) ;Return the lowest of the reset zone click damage requirement, and 2 jumps from the next landing zone to ensure we don't overlevel, but never have to wait for levelling
 	}
 
 	LevelClickDamage(timeout:=500) ;Default 500ms should be good for a min of 3 upgrades, being 300 levels on x100, which should be enough even going 300 zones with Thellora

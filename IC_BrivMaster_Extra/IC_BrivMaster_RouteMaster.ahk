@@ -1275,7 +1275,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	InitZone()
     {
         g_IBM.levelManager.LevelClickDamage()
-        this.StartAutoProgressSoft(1)
+        this.StartAutoProgressSoft()
         g_PreviousZoneStartTime:=A_TickCount
     }
 }

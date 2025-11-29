@@ -2,7 +2,14 @@
 
 class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 {
-	IBM_ReadGameVersionMinor() ;If the game is 636.2, return 2. This can the empty
+	IBM_GetWebRootString() ;Handle read failures - it uses the EngineSettings pointer that moves a lot
+	{
+		webRoot:=g_SF.Memory.ReadWebRoot()
+		if(!webRoot)
+			webRoot:="Unable to read WebRoot"
+	}
+	
+	IBM_ReadGameVersionMinor() ;If the game is 636.2, return '.2'. This can the empty
 	{
 		return this.GameSettings.VersionPostFix.Read() 
     }
@@ -124,6 +131,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 	}
 	*/
 
+	/* Replaced by IBM_UseUltimate
 	IBM_GetUltimateHotkey(champID)
 	{
 		ULTIMATEITEMS_LIST:=this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.ultimatesBar.ultimateItems
@@ -138,6 +146,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         }
 		return ULTIMATE_HOTKEY
 	}
+	*/
 
 	IBM_GetUltimateCooldown(champID)
 	{

@@ -451,7 +451,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				g_IBM.offramp:=false ;Reset offramp
 			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		}
-		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
         g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
@@ -849,7 +849,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             }
             ;g_SharedData.PreviousStacksFromOffline := stacks - lastStacks ;Doesn't appear to be used for anything
             lastStacks := stacks
-			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . "," . g_ServerCall.webroot)
+			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootString())
 			this.offlineSaveTime:=-1 ;Flags as not active
         }
         g_PreviousZoneStartTime := A_TickCount

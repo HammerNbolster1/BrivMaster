@@ -7,6 +7,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(!webRoot)
 			webRoot:="Unable to read WebRoot"
+		return webRoot
 	}
 	
 	IBM_ReadGameVersionMinor() ;If the game is 636.2, return '.2'. This can the empty

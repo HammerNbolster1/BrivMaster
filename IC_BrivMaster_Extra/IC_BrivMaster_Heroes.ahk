@@ -124,7 +124,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
         }
 		if (ULTIMATE_HOTKEY=="") ;Return empty
 			return
-		ULTIMATE_KEY:=g_IBM.inputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
+		ULTIMATE_KEY:=g_InputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
 		ULTIMATE_KEY.KeyPress()
 		retryCount:=0
 		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
@@ -185,8 +185,6 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------
-
-
 
 	;------------------------------------------------------------------------------------
 	;---Levelling functions
@@ -328,6 +326,10 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		this.STAT_AREA_CHARGES:="thellora_plateaus_of_unicorn_run_areas"
 	}
 
+	;--------------------------------------------------------------------------------------
+	;---Hero related memory reads
+	;--------------------------------------------------------------------------------------
+
 	ReadRushTriggered() ;Has Thellora rushed yet this run?
 	{
 		return g_SF.Memory.GameManager.game.gameInstances[0].StatHandler.ServerStats[this.STAT_RUSH_TRIGGERED].Read()==1
@@ -354,6 +356,10 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		}
 		return thelloraRushTarget
 	}
+
+	;------------------------------------------------------------------------------------
+	;---General functions
+	;------------------------------------------------------------------------------------
 }
 
 class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
@@ -371,16 +377,9 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		this.EFFECT_HANDLER_CARDS:=""
 	}
 
-	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup
-	{
-		if(this.EFFECT_HANDLER_CARDS=="")
-		{
-			this.InitDoMTHandler()
-			return true
-		}
-		else
-		return false
-	}
+	;--------------------------------------------------------------------------------------
+	;---Hero related memory reads
+	;--------------------------------------------------------------------------------------
 
 	InitDoMTHandler()
 	{
@@ -407,7 +406,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
-			if ("ellywick_call_of_the_feywild" == PARENT_HANDLER.def.Key.Read())
+			if (this.EFFECT_KEY_DOMT==PARENT_HANDLER.def.Key.Read())
 			{
 				EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
 				break
@@ -427,6 +426,10 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		return numCards
 	}
 
+	;------------------------------------------------------------------------------------
+	;---General functions
+	;------------------------------------------------------------------------------------
+
 	GetNumGemCards()
 	{
 		return this.GetNumCardsOfType(3)
@@ -435,5 +438,16 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	GetNumFlamesCards()
 	{
 		return this.GetNumCardsOfType(5)
+	}
+
+	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup
+	{
+		if(this.EFFECT_HANDLER_CARDS=="")
+		{
+			this.InitDoMTHandler()
+			return true
+		}
+		else
+		return false
 	}
 }

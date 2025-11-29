@@ -546,7 +546,6 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 	{
 		this.minCards := minCards ;These are arrays indexed by card type, so 1 is Knight, 2 Moon, 3 Gem, 4 Fates, 5 Flames
 		this.maxCards := maxCards
-		this.inputManager:=new IC_BrivMaster_InputManager_Class()
 		g_Heroes[83] ;Will create Elly's hero object if not already present TODO: Is this useful? First access will create view __get() anyway
 		g_Heroes[99] ;And DM
 	}
@@ -610,7 +609,7 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 		g_SF.Memory.OpenProcessReader()
 		timerFunction := this.CasinoTimer
 		SetTimer, %timerFunction%, 20, 0
-		this.InitHandler()
+		g_Heroes[83].SetupDotMHandlerIfNeeded()
 		this.Casino()
 	}
 

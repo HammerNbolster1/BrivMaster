@@ -14,10 +14,10 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.ProcessFormation(levelSettings)
 		this.ResetLevellingDone()
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
-		this.KEY_ClickDmg:=g_IBM.inputManager.getKey("ClickDmg")
+		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")
 		this.ExtactFrontColumn()
 		this.failedConversionMode:=false
-		this.KEY_Modifier:=g_IBM.inputManager.getKey(g_IBM_Settings["IBM_Level_Options_Mod_Key"]=="Ctrl" ? "LCtrl" : g_IBM_Settings["IBM_Level_Options_Mod_Key"]) ;Modifer to hold - the game uses LeftControl in the keybindings, as much as it doesn't seem to make a lick of difference
+		this.KEY_Modifier:=g_InputManager.getKey(g_IBM_Settings["IBM_Level_Options_Mod_Key"]=="Ctrl" ? "LCtrl" : g_IBM_Settings["IBM_Level_Options_Mod_Key"]) ;Modifer to hold - the game uses LeftControl in the keybindings, as much as it doesn't seem to make a lick of difference
 		this.modifierLevelUpAmount:=g_IBM_Settings["IBM_Level_Options_Mod_Value"] ;How many levels applying the modifier key will give per keypress
 	}
 
@@ -266,7 +266,7 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 		;OutputDebug % A_TickCount . ":levelManager.Level(), x100 count=[" . keyList100.Count() . "] x10 count=[" . keyList10.Count() . "]`n"
 		if (keyList100.Count()==0 AND keyList10.Count()==0) ;Due to z1c restrictions, it is possible that .Done() is false but there is nothing to do this iteration
 			return
-		g_IBM.inputManager.gameFocus() ;This might be a bit early when waitforgold is needed. Possibly checking adventure gold, then calling gameFocus(), then checking hero gold might be better for the first run
+		g_InputManager.gameFocus() ;This might be a bit early when waitforgold is needed. Possibly checking adventure gold, then calling gameFocus(), then checking hero gold might be better for the first run
 		if (waitForGold) ;Wait for gold if requested, for start-of-run calls only
 		{
 			waitForGold:=!this.WaitForFirstGold(keyList100.Count()>0 ? keyList100[1].tag : keyList10[1].tag)

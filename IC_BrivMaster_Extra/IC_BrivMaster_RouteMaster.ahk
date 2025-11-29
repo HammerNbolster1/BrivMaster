@@ -45,12 +45,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.stackConversionRate:=1.2
 		else
 			this.stackConversionRate:=1
-		this.KEY_autoProgress:=g_IBM.inputManager.getKey("g")
-		this.KEY_Q:=g_IBM.inputManager.getKey("q")
-		this.KEY_W:=g_IBM.inputManager.getKey("w")
-		this.KEY_E:=g_IBM.inputManager.getKey("e")
-		this.KEY_LEFT:=g_IBM.inputManager.getKey("Left")
-		this.KEY_RIGHT:=g_IBM.inputManager.getKey("Right")
+		this.KEY_autoProgress:=g_InputManager.getKey("g")
+		this.KEY_Q:=g_InputManager.getKey("q")
+		this.KEY_W:=g_InputManager.getKey("w")
+		this.KEY_E:=g_InputManager.getKey("e")
+		this.KEY_LEFT:=g_InputManager.getKey("Left")
+		this.KEY_RIGHT:=g_InputManager.getKey("Right")
 		this.HybridBlankOffline:=g_IBM_Settings["IBM_OffLine_Blank"] ;Should we avoid trying to get stacks when restarting during hybrid?
 		this.RelayBlankOffline:=g_IBM_Settings["IBM_OffLine_Blank_Relay"]
 		if (this.RelayBlankOffline)
@@ -562,7 +562,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				if (stacks > precisionTrigger) ;Once we have hit precisionTrigger stacks go critical and check faster to get maximum precision
 				{
 					Critical On
-					g_IBM.inputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
+					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
 					precisionMode:=true
 				}
 				g_IBM.IBM_Sleep(15)
@@ -689,7 +689,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				if (stacks > precisionTrigger) ;Once we have hit precisionTrigger stacks go critical and check faster to get maximum precision
 				{
 					Critical On
-					g_IBM.inputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
+					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
 					precisionMode:=true
 					;g_IBM.Logger.AddMessage("Precision Mode at:" . stacks . " stacks")
 				}
@@ -973,7 +973,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         StartTime := A_TickCount
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for transition...")
         if (KEY)
-			g_IBM.inputManager.gameFocus() ;Set focus once and use _Bulk()
+			g_InputManager.gameFocus() ;Set focus once and use _Bulk()
 		while (g_SF.Memory.ReadTransitioning()==1 AND A_TickCount - StartTime < maxLoopTime)
         {
 			If (KEY)

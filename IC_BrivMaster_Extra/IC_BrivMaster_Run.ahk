@@ -37,6 +37,7 @@ global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_SettingsFromAddons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
+global g_InputManager:=new IC_BrivMaster_InputManager_Class()
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
@@ -149,7 +150,6 @@ class IC_BrivMaster_GemFarm_Class
 		offRamp:=false ;Irisiri - trying to stop the script failing to stop a new run on time by limiting the code that runs at the end of a run
 		g_Heroes:=new IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=new IC_BrivMaster_Logger_Class(LogBase . ".csv")
-		this.InputManager:=new IC_BrivMaster_InputManager_Class()
 		this.LevelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"])
 		this.RouteMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],LogBase)
 		this.RouteMaster.LoadRoute() ;Once per script run load of route TODO: Why isn't this in RouteMaster.__new()?
@@ -196,7 +196,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
 				g_SharedData.IBM_UpdateOutbound("LoopString","Main Loop")
-                this.previousZone:=currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected
+                this.previousZone:=currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
 				currentZone:=g_SF.Memory.ReadCurrentZone()
             }
 			g_SharedData.IBM_UpdateOutbound("LoopString",offRamp ? "Off Ramp" : "Main Loop")
@@ -732,7 +732,7 @@ class IC_BrivMaster_GemFarm_Class
 	DialogSwatter_Setup()
     {
         this.SwatterTimer :=  ObjBindMethod(this, "DialogSwatter_Swat")
-		this.KEY_ESC:=this.inputManager.getKey("Esc")
+		this.KEY_ESC:=g_InputManager.getKey("Esc")
     }
 
     DialogSwatter_Start()

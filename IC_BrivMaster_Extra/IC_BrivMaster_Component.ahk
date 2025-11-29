@@ -13,6 +13,7 @@ global g_IriBrivMaster := new IC_IriBrivMaster_Component()
 global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI()
 global g_Heroes:={}
 global g_IBM_Settings:={}
+global g_InputManager:=new IC_BrivMaster_InputManager_Class()
 
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions := {}

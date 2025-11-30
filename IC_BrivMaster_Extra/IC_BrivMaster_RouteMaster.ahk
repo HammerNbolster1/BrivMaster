@@ -443,10 +443,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				g_IBM.offramp:=false ;Reset offramp
 			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+			g_IBM.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 			g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
+			g_IBM.Logger.AddMessage("BlankRestart() Exit Rollback Detected,Start@z" . startZone . ",End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
 		}
-		g_IBM.Logger.AddMessage("BlankRestart Exit: Start z" . startZone . " End z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
-        g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . g_SF.Memory.ReadCurrentZone() . " in " . Round(totalTime/ 1000,2) . "s")
+		else
+			g_IBM.Logger.AddMessage("BlankRestart() Exit, End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
+        g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
 		g_PreviousZoneStartTime := A_TickCount
     }
 

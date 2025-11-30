@@ -123,15 +123,13 @@ class IC_BrivMaster_GemFarm_Class
 		g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
 		Loop
         {
-			currentZone := g_SF.Memory.ReadCurrentZone()
-			if (currentZone == "")
-			{
+			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
+			if (this.currentZone=="")
 				g_SF.SafetyCheck()
-			}
-			if (!this.TriggerStart AND this.offRamp AND currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
+			if (!this.TriggerStart AND this.offRamp AND this.currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
 			{
 				this.TriggerStart:=true
-				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
 			}
 			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount() > lastResetCount) ; first loop or Modron has reset
             {
@@ -141,7 +139,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.Logger.AddMessage("Bosses:" . g_SharedData.BossesHitThisRun) ;Boss hits from previous run
 					g_SharedData.IBM_UpdateOutbound("BossesHitThisRun",0)
 				}
-				currentZone:=this.IBM_WaitForZoneLoad(currentZone)
+				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.Logger.NewRun()
 				this.offRamp:=false
@@ -149,7 +147,7 @@ class IC_BrivMaster_GemFarm_Class
                 this.levelManager.Reset()
                 this.routeMaster.Reset()
 				this.EllywickCasino.Reset()
-				this.IBM_FirstZone(currentZone)
+				this.IBM_FirstZone(this.currentZone)
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
 				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
 					g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",true)
@@ -157,8 +155,8 @@ class IC_BrivMaster_GemFarm_Class
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
 				g_SharedData.IBM_UpdateOutbound("LoopString","Main Loop")
-                this.previousZone:=currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
-				currentZone:=g_SF.Memory.ReadCurrentZone()
+                this.previousZone:=this.currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
+				this.currentZone:=g_SF.Memory.ReadCurrentZone()
             }
 			g_SharedData.IBM_UpdateOutbound("LoopString",this.offRamp ? "Off Ramp" : "Main Loop")
 			if (g_SF.Memory.ReadResetting())
@@ -166,7 +164,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.Logger.ResetReached()
 				this.ModronResetCheck()
 			}
-			else if (currentZone <= this.routeMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
+			else if (this.currentZone <= this.routeMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
 			{
 				if (!Mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND Mod( g_SF.Memory.ReadHighestZone(), 5 ) AND !g_SF.Memory.ReadTransitioning())
 					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
@@ -176,20 +174,20 @@ class IC_BrivMaster_GemFarm_Class
 					Continue ;Go straight back to the start of the loop
 				}
 				this.routeMaster.SetFormation(true)
-				this.RouteMaster.TestForBlankOffline(currentZone)
+				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
 				{
 					needToStack := this.routeMaster.NeedToStack()
 					; Check for failed stack conversion
 					if (g_SF.Memory.ReadHasteStacks() < 50 AND needToStack) ;TODO: Settings for this
 						this.levelManager.SetupFailedConversion() ;TODO: This gets nuked by the next LevelManager.Reset() in most cases; we need to avoid doing it when TestForSteelBonesStackFarming() is going to ForceReset us
-					if (currentZone>1)
+					if (this.currentZone>1)
 						this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
 				}
-				if(currentZone > this.previousZone) ;Things to be done every new zone
+				if(this.currentZone > this.previousZone) ;Things to be done every new zone
 				{
-					this.Logger.UpdateZone(currentZone)
-					this.previousZone:=CurrentZone
+					this.Logger.UpdateZone(this.currentZone)
+					this.previousZone:=this.currentZone
 					this.RouteMaster.InitZone()
 					if ((!Mod( g_SF.Memory.ReadCurrentZone(), 5 )) AND (!Mod( g_SF.Memory.ReadHighestZone(), 5)))
 					{
@@ -199,7 +197,7 @@ class IC_BrivMaster_GemFarm_Class
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{
 						;Check for offRamp
-						if (!needToStack and (currentZone >= this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
+						if (!needToStack and (this.currentZone >= this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
 						{
 							If (this.routeMaster.EnoughHasteForCurrentRun())
 							{

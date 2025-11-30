@@ -368,7 +368,8 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	{
 		base.__new(heroID,heroIndex)
 		this.EFFECT_HANDLER_CARDS:="" ;Deck of Many Things effect handler cards object, dereferrenced from main memory functions for performance
-		this.EFFECT_KEY_DOMT:="ellywick_deck_of_many_things"
+		this.EFFECT_KEY_DoMT:="ellywick_deck_of_many_things"
+		this.EFFECT_KEY_CotF:="ellywick_call_of_the_feywild"
 	}
 
 	Reset()
@@ -406,7 +407,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
-			if (this.EFFECT_KEY_DOMT==PARENT_HANDLER.def.Key.Read())
+			if (this.EFFECT_KEY_CotF==PARENT_HANDLER.def.Key.Read())
 			{
 				EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
 				break

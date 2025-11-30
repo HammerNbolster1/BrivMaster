@@ -140,7 +140,7 @@ Class IC_IriBrivMaster_Component
     {
         ; Read settings
 		this.GemFarmGUID:=g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json") ;TODO: Should be IC_IriBrivMaster_Component property? Probably best placed in .Init() - done, still needs further thought?
-        g_Heroes:=new IC_BrivMaster_Heroes_Class(true) ;Create in quiet mode so it doesn't error and stop the hub loading
+        g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
 		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()

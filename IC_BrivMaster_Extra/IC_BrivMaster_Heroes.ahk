@@ -2,9 +2,10 @@
 
 class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but that's a longer word and I am not being paid by the letter
 {
-	__New()
+	__New(quietMode:=false) ;In quiet mode no error will be reported if initialisation fails; for use with the hub side where the game is likely not running which it is launched
 	{
-		this.GenerateHeroIDtoHeroIndexMap()
+		this.quietMode:=quietMode
+		this.initialised:=this.GenerateHeroIDtoHeroIndexMap()
 	}
 
 	__Get(heroID)
@@ -16,7 +17,15 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 			default: this[heroID]:=new IC_BrivMaster_Hero_Class(heroID,this.IDToIndexMap[heroID])
 		}
 	}
-
+	
+	Init() ;Initialises the heroIndexMap if needed, returns true on success or if already done. This is for use with the hub side where we don't abort if the __new function cannot do this, so hub functions need to check this
+	{
+		if (this.initialised)
+			return true
+		this.initialised:=this.GenerateHeroIDtoHeroIndexMap()
+		return this.initialised
+	}
+	
 	ResetAll() ;Reset all heroes
 	{
 		for k,v in this
@@ -26,23 +35,26 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 		}
 	}
 
-    GenerateHeroIDtoHeroIndexMap()
+    GenerateHeroIDtoHeroIndexMap() ;Returns true on success
 	{
         this.IDToIndexMap:={}
         size:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes.size.Read()
 		if(size<=0 OR size>=500) ; Sanity check;
         {
+			if (this.quietMode)
+				return false
 			ErrorMsg:="Critical Error`n"
 			ErrorMsg.="Unable to generate HeroID to HeroIndex map`n"
 			ErrorMsg.="Dictionary size read=[" . size . "], expected 1 to 500`n"
 			Msgbox, %ErrorMsg%
-			ExitApp	;Without this map all hero functions will fail. TODO: PreFlightCheck() needs a structured approach to message boxes, along with all initial setup actions
+			ExitApp	;Without this map all hero functions will fail. TODO: PreFlightCheck() needs a structured approach to message boxes, along with all initial setup actions. Keep the hub's need to start without the game running in mind
 		}
         loop, %size%
         {
             heroID:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[A_Index - 1].def.ID.Read()
             this.IDToIndexMap[heroID] := A_Index - 1
         }
+		return true
     }
 }
 

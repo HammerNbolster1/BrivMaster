@@ -140,7 +140,7 @@ Class IC_IriBrivMaster_Component
     {
         ; Read settings
 		this.GemFarmGUID:=g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json") ;TODO: Should be IC_IriBrivMaster_Component property? Probably best placed in .Init() - done, still needs further thought?
-        g_Heroes:=new IC_BrivMaster_Heroes_Class()
+        g_Heroes:=new IC_BrivMaster_Heroes_Class(true) ;Create in quiet mode so it doesn't error and stop the hub loading
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
 		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
@@ -1135,6 +1135,8 @@ Class IC_IriBrivMaster_Component
 	IBM_GetGUIFormationData() ;Generates formation data for the level manager GUI
 	{
 		championData:={} ;This will be per seat, then champID with a list of formations containing, eg championData[1][58] being [1,3,4] if Briv is in Q/E/M but not W
+		if (!g_Heroes.Init()) ;Initialise the hero handler, otherwise we won't be able to get champion details - likely if this fails the formation reads would also fail anyway
+			return
         slots:=["Q","W","E"]
 		loop 3
 		{
@@ -1167,8 +1169,18 @@ Class IC_IriBrivMaster_Component
 	}
 
 	IBM_Elly_StartNonGemFarm()
-    {
-        this.Elly_NonGemFarm := new IC_BrivMaster_EllywickDealer_NonFarm_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
+	{
+		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
+		exeName:=g_IBM_Settings["IBM_Game_Exe"]
+		Process, Exist, %exeName%
+		g_SF.PID := ErrorLevel
+		g_SF.Memory.OpenProcessReader()
+		if (!g_Heroes.Init()) ;Initialise the hero handler, otherwise we won't be able to get Elly's details - would generally mean the game is closed
+		{
+			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Unable to read hero details")
+			return
+		}
+		this.Elly_NonGemFarm := new IC_BrivMaster_EllywickDealer_NonFarm_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
         this.Elly_NonGemFarm.Start()
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Started")
     }

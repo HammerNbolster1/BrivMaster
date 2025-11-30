@@ -331,7 +331,6 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	{
 		this.MelfMode:=setMelfMode
 		timerFunction := this.CasinoTimer
-		this.InitHandler()
 		SetTimer, %timerFunction%, 20, 0
 		this.Casino() ;Is this useful here?
 	}
@@ -600,16 +599,11 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 		return True
 	}
 
-	Start() ;Overriden as we might need to get the process when launching this way
+	Start() ;Overriden as we don't need Melf mode & won't have had the structured resets of a farm runn
 	{
-		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
-		exeName:=g_IBM_Settings["IBM_Game_Exe"]
-		Process, Exist, %exeName%
-		g_SF.PID := ErrorLevel
-		g_SF.Memory.OpenProcessReader()
 		timerFunction:=this.CasinoTimer
 		SetTimer, %timerFunction%, 20, 0
-		g_Heroes[83].SetupDotMHandlerIfNeeded()
+		g_Heroes[83].SetupDotMHandlerIfNeeded() ;.Reset() is called by the constructor, and we create a new object every run (for some reason)
 		this.Casino()
 	}
 

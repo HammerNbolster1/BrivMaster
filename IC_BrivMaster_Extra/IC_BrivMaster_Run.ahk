@@ -1,6 +1,6 @@
 #Requires AutoHotkey 1.1.37+ <1.2
 #SingleInstance Force
-;Based on BrivGemFarm Preformance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the ReadMe.
+;Based on BrivGemFarm Performance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the ReadMe.
 
 ;=======================
 ;Script Optimization
@@ -35,7 +35,7 @@ global g_IBM_Settings:={}
 global g_IBM:=new IC_BrivMaster_GemFarm_Class
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
-global g_IBM_SettingsFromAddons:={}
+global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
 global g_InputManager:=new IC_BrivMaster_InputManager_Class()
 
@@ -45,31 +45,10 @@ SH_UpdateClass.UpdateClassFunctions(g_SharedData, IC_BrivMaster_SharedData_Class
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
 SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
 
-g_SharedData.IBM_Init() ;Loads settings so must be prior to the window launch settings
+g_SharedData.IBM_Init() ;Loads settings so must be prior to the icon set and Window:Show
 
-try
-{
-    if (g_IBM_Settings["IBM_Window_Dark_Icon"])
-		Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_D.ico
-	else
-		Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico
-}
 
-Gui, IBM_GemFarm:New, -Resize -MaximizeBox
-FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
-Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
-Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
-Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
-Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Settings_Update_Time, % formattedDateTime
-Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Game Version:"
-Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
-Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
-Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
-
-if(!g_IBM_Settings["IBM_Window_Hide"])
-{
-    Gui, IBM_GemFarm:Show,% "x" . g_IBM_Settings["IBM_Window_X"] . " y" . g_IBM_Settings["IBM_Window_Y"], Briv Master
-}
+g_IBM.CreateWindow()
 
 if(A_Args[1])
 {
@@ -79,7 +58,7 @@ if(A_Args[1])
 else
 {
     GuidCreate := ComObjCreate("Scriptlet.TypeLib")
-    guid := GuidCreate.Guid
+    guid := GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
     ObjRegisterActive(g_SharedData, guid)
     g_SF.WriteObjectToJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
 }
@@ -109,16 +88,6 @@ IBM_GemFarmGuiClose()
 
 class IC_BrivMaster_GemFarm_Class
 {
-	;TODO: Review all of these class variables for relevance, put ones we need in a proper __new() or in the setup of GemFarm() as appropriate
-	TimerFunctions := {}
-    TargetStacks := 0
-    GemFarmGUID := ""
-    StackFailAreasTally := {}
-    LastStackSuccessArea := 0
-    MaxStackRestartFails := 3
-    StackFailAreasThisRunTally := {}
-    StackFailRetryAttempt := 0
-
 	GemFarm()
     {
         static lastResetCount:=0
@@ -127,7 +96,7 @@ class IC_BrivMaster_GemFarm_Class
         exeName:=g_IBM_Settings["IBM_Game_Exe"]
         Process, Exist, %exeName%
         g_SF.PID:=ErrorLevel
-        Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority if needed - the SH launch will just leave it at normal. Trying script High and game Realtime
+        Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority if needed. Admin is required for RealTime, but will automatically use High if not elevated
         DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
 		g_SF.Memory.OpenProcessReader()
@@ -139,25 +108,17 @@ class IC_BrivMaster_GemFarm_Class
         g_SF.ResetServerCall()
         g_SF.PatronID:=g_SF.Memory.ReadPatronID()
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
-        if (this.PreFlightCheck() == -1) ; Did not pass pre flight check.
-            return -1
+        g_Heroes:=new IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
+		this.Logger:=new IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
+		this.LevelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
+		this.RouteMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
+		if (this.PreFlightCheck()==false) ; Did not pass pre flight check.
+            return false
         g_PreviousZoneStartTime := A_TickCount
-		FormatTime, formattedDateTime,, yyyyMMddTHHmmss ;Can't include : in a filename so using the less human friendly version here
-		LogDir:=A_LineFile . "\..\Logs\"
-		if (!FileExist(LogDir)) ;Create the log subdirectory if not present
-			FileCreateDir, %LogDir%
-		LogBase:=LogDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time
-		offRamp:=false ;Irisiri - trying to stop the script failing to stop a new run on time by limiting the code that runs at the end of a run
-		g_Heroes:=new IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
-		this.Logger:=new IC_BrivMaster_Logger_Class(LogBase . ".csv")
-		this.LevelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"])
-		this.RouteMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],LogBase)
-		this.RouteMaster.LoadRoute() ;Once per script run load of route TODO: Why isn't this in RouteMaster.__new()?
+		this.offRamp:=false ;Trying to stop the script failing to detect a new run on time by limiting the code that runs at the end of a run
 		this.EllywickCasino:=new IC_BrivMaster_EllywickDealer_Class()
-		;Diana Electrum Chest Cheese things
-		if (g_IBM_Settings["IBM_Level_Diana_Cheese"])
+		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=new IC_BrivMaster_DianaCheese_Class
-		;End Diana Cheese
 		this.DialogSwatter_Setup() ;This needs to be built in a more organised way, but will do for now
 		g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
 		Loop
@@ -167,7 +128,7 @@ class IC_BrivMaster_GemFarm_Class
 			{
 				g_SF.SafetyCheck()
 			}
-			if (!this.TriggerStart AND offRamp AND currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
+			if (!this.TriggerStart AND this.offRamp AND currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
 			{
 				this.TriggerStart:=true
 				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
@@ -183,7 +144,7 @@ class IC_BrivMaster_GemFarm_Class
 				currentZone:=this.IBM_WaitForZoneLoad(currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.Logger.NewRun()
-				offRamp:=false
+				this.offRamp:=false
 				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
                 this.routeMaster.Reset()
@@ -199,7 +160,7 @@ class IC_BrivMaster_GemFarm_Class
                 this.previousZone:=currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
 				currentZone:=g_SF.Memory.ReadCurrentZone()
             }
-			g_SharedData.IBM_UpdateOutbound("LoopString",offRamp ? "Off Ramp" : "Main Loop")
+			g_SharedData.IBM_UpdateOutbound("LoopString",this.offRamp ? "Off Ramp" : "Main Loop")
 			if (g_SF.Memory.ReadResetting())
 			{
 				this.Logger.ResetReached()
@@ -216,7 +177,7 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				this.routeMaster.SetFormation(true)
 				this.RouteMaster.TestForBlankOffline(currentZone)
-				if (!offRamp) ;Only do the below until near the end
+				if (!this.offRamp) ;Only do the below until near the end
 				{
 					needToStack := this.routeMaster.NeedToStack()
 					; Check for failed stack conversion
@@ -235,14 +196,14 @@ class IC_BrivMaster_GemFarm_Class
 						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
 					}
-					if (!offRamp) ;Only until we're nearly at the end of the run
+					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{
 						;Check for offRamp
 						if (!needToStack and (currentZone >= this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
 						{
 							If (this.routeMaster.EnoughHasteForCurrentRun())
 							{
-								offRamp:=True
+								this.offRamp:=True
 								this.EllywickCasino.Stop() ;Stop the Ellywick checker, to avoid it running as the next run starts
 								g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
 							}
@@ -266,36 +227,6 @@ class IC_BrivMaster_GemFarm_Class
 			DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
 		}
     }
-
-	RefreshGemFarmWindow() ;Updates the time settings were updated TODO: EN-CAP-SU-LATE EN-CAP-SU-LATE
-	{
-	   FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
-	   GuiControl, IBM_GemFarm:, IBM_GemFarm_Settings_Update_Time, % formattedDateTime
-	}
-
-	RefreshImportCheck()
-	{
-		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
-		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
-		importsMajor:=g_ImportsGameVersion64
-		importsMinor:=g_ImportsGameVersionPostFix64
-		colour:="cRed" ;Default
-		if (gameMajor!="" AND importsMajor!="") ;If both major versions are populated
-		{
-			if (gameMajor==importsMajor AND gameMinor==importsMinor) ;Full matching
-				colour:="cBlack"
-			else if (gameMajor==importsMajor) ;In this case the minor versions necessarily do not match
-				colour:="cFFA000" ;"cFFC000" Amber had insuffient contrast so darkened a bit
-		}
-		gameString:=gameMajor ? (gameMajor . (gameMinor ? gameMinor : "")) : "Unable to detect"
-		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "")) : "Unable to detect"
-		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Game
-		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
-		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString
-		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Imports, % importString
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Game
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
-	}
 
 	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
 	{
@@ -331,7 +262,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1
 	{
-		if (existingZone!="")
+		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop?
 			return existingZone
 		currentZone:=existingZone
 		startTime:=A_TickCount
@@ -587,68 +518,102 @@ class IC_BrivMaster_GemFarm_Class
 	;START PRE-FLIGHT CHECK
 	;TODO: Review all this against current script hub (PreFlightCheck() is quite an old override, the associated functions are newer), and make use of LevelManager formation data
 
-	;Overidden to allow for feat swap (Briv can be in E)
-	; Tests to make sure Gem Farm is properly set up before attempting to run.
-    PreFlightCheck()
+    PreFlightCheck() ;TODO: Add an optional way of checking for feats on champions here, e.g. to make sure Elly has 'Gem' & 'Astaria's Love', Thellora has 'Thin Their Ranks'
     {
-        memoryVersion := g_SF.Memory.GameManager.GetVersion()
-        ; Test Favorite Exists
-        txtCheck := "`n`nOther potential solutions:"
-        txtCheck .= "`n`n1. Be sure Imports are up to date. Current imports are for: v" . g_SF.Memory.GetImportsVersion()
-        txtCheck .= "`n`n2. Check the correct memory file is being used. Current version: " . memoryVersion
-        txtcheck .= "`n`n3. If IC is running with admin privileges, then the script will also require admin privileges."
-        if (_MemoryManager.is64bit)
-            txtcheck .= "`n4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
-
-        champion := 58   ; briv
-        formationQ := g_SF.FindChampIDinSavedFavorite( champion, favorite := 1, includeChampion := True )
-        if (formationQ == -1 AND this.RunChampionInFormationTests(champion, favorite := 1, includeChampion := True, txtCheck) == -1)
-            return -1
-
-        formationW := g_SF.FindChampIDinSavedFavorite( champion, favorite := 2, includeChampion := True  )
-        if (formationW == -1 AND this.RunChampionInFormationTests(champion, favorite := 2, includeChampion := True, txtCheck) == -1)
-            return -1
-
-		featSwapping:=g_IBM_Settings["IBM_Route_BrivJump_E"]!=0 ;Can't check via routeMaster as that won't have been instantiated yet
-        formationE := g_SF.FindChampIDinSavedFavorite( champion, favorite := 3, includeChampion := featSwapping  )
-        if (formationE == -1 AND this.RunChampionInFormationTests(champion, favorite := 3, includeChampion := featSwapping, txtCheck) == -1)
-            return -1
-
-        if ((ErrorMsg := g_SF.FormationFamiliarCheckByFavorite(favorite := 1, True)))
-            MsgBox, %ErrorMsg%
-        while (ErrorMsg := g_SF.FormationFamiliarCheckByFavorite(favorite := 2, False))
-        {
-            MsgBox, 5,, %ErrorMsg%
-            IfMsgBox, Retry
-            {
-                g_SF.OpenProcessReader()
-                ErrorMsg := g_SF.FormationFamiliarCheckByFavorite(favorite := 2, False)
-            }
-            IfMsgBox, Cancel
-            {
-                MsgBox, Canceling Run
-                return -1
-            }
-        }
-        if (ErrorMsg := g_SF.FormationFamiliarCheckByFavorite(favorite := 3, True))
-            MsgBox, %ErrorMsg%
+		;Check Briv is saved in the expected formations
+		brivInM:=this.LevelManager.IsChampInFormation(58,"M")
+        brivInQ:=this.LevelManager.IsChampInFormation(58,"Q")
+		brivInW:=this.LevelManager.IsChampInFormation(58,"W")
+		brivInE:=this.LevelManager.IsChampInFormation(58,"E") ;Briv should be present in E if and only if we are feat swapping
+		if (!brivInM OR !brivInQ OR !brivInW OR (this.RouteMaster.IsFeatSwap() != brivInE))
+		{
+			errorMsg:="Briv's presence in the saved formations is not as expected:`n"
+			errorMsg.="M	Expected: Yes	Saved: " . (brivInM ? "Yes" : "No") . "`n"
+			errorMsg.="Q	Expected: Yes	Saved: " . (brivInQ ? "Yes" : "No") . "`n"
+			errorMsg.="W	Expected: Yes	Saved: " . (brivInW ? "Yes" : "No") . "`n"
+			errorMsg.="E	Expected: " . (this.RouteMaster.IsFeatSwap() ? "Yes (FS)" : "No") . "	Saved: " . (brivInE ? "Yes" : "No") . "`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Briv Formations",errorMsg)
+			return false
+		}
+		;Check for familiars, M, Q and E should have 3, W always 0
+		familiarCountM:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetActiveModronFormationSaveSlot())
+		familiarCountQ:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetSavedFormationSlotByFavorite(1))
+		familiarCountW:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetSavedFormationSlotByFavorite(2))
+		familiarCountE:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetSavedFormationSlotByFavorite(3))
+        if (familiarCountM=="" OR familiarCountQ=="" OR familiarCountW=="" OR familiarCountE=="") ;Check for bad reads
+		{
+			errorMsg:="Familiars in saved formations could not be checked`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Familiars",errorMsg)
+			return false
+		}
+        if (familiarCountM==0 OR familiarCountQ==0 OR familiarCountW>0 OR familiarCountE==0) ;Check for the minimum viable config - failing this check causes an abort
+		{
+			errorMsg:="Familiars in saved formations are not as expected:`n"
+			errorMsg.="M	Expected: 3	Saved: " . familiarCountM . "`n"
+			errorMsg.="Q	Expected: 3	Saved: " . familiarCountQ . "`n"
+			errorMsg.="W	Expected: 0	Saved: " . familiarCountW . "`n"
+			errorMsg.="E	Expected: 3	Saved: " . familiarCountE . " (Feat Swap)`n"
+			this.PreFlightErrorMessage("Familiars",errorMsg) ;No generic message because we checked the memory reads for these are working above
+			return false
+		}
+		if (familiarCountM!=3 OR familiarCountQ!=3 OR familiarCountW>0 OR familiarCountE!=3) ;Check for the expected config - the user may choose to proceed in this case
+		{
+			errorMsg:="Familiars in saved formations are not as expected but do meet the minimum requirements:`n"
+			errorMsg.="M	Expected: 3	Saved: " . familiarCountM . "`n"
+			errorMsg.="Q	Expected: 3	Saved: " . familiarCountQ . "`n"
+			errorMsg.="W	Expected: 0	Saved: " . familiarCountW . "`n"
+			errorMsg.="E	Expected: 3	Saved: " . familiarCountE . " (Feat Swap)`n"
+			errorMsg.="Do you wish to continue?"
+			this.PreFlightErrorMessage("Familiars",errorMsg,32+4) ;32 is Question, 1 is Yes/No
+            IfMsgBox, No
+				return false
+		}
+		;Check Modron automation is active
 		modronEnabledF:=g_SF.Memory.ReadModronAutoFormation()==1
 		modronEnabledR:=g_SF.Memory.ReadModronAutoReset()==1
 		modronEnabledB:=g_SF.Memory.ReadModronAutoBuffs()==1
-		modronStatusB:=g_IBM_Settings["IBM_Allow_Modron_Buff_Off"] OR modronEnabledB ;Request to allow this for those who don't want to have the modron core use potions, and instead save a familiar in the formation. Which is apparently a thing. Not recommended
-		if (!modronEnabledF OR !modronEnabledR OR !modronStatusB) ;If any of the Modron core functions are not set TODO: Should buffs (potions) be optional? Not like you can't turn it on with nothing added...
+		modronStatusB:=g_IBM_Settings["IBM_Allow_Modron_Buff_Off"] OR modronEnabledB ;Request to allow this for those who don't want to have the modron core use potions, and instead save familiars in the formation. Which is apparently a thing. Not recommended, and the setting is not available in the GUI as a result
+		if (!modronEnabledF OR !modronEnabledR OR !modronStatusB) ;If any of the Modron core functions are not set
 		{
-			ErrorMsg:="All 3 Mordon Core automation functions must be enabled before starting the gem farm. Current status:`n"
-			ErrorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"
-			ErrorMsg.="Set Area Goal: " . (modronEnabledR ? "Enabled" : "Disabled") . "`n"
-			ErrorMsg.="Set Buffs: " . (modronEnabledB ? "Enabled" : "Disabled") . "`n"
-			Msgbox, %ErrorMsg% ;TODO: this comes up as the AHK file name. Give these sensible titles like 'Pre-flight Check: Modron'. Probably need a function for start-up abort errors - for example reading the heroID<>heroIndex mapping failing needs to error and stop
-			return -1
+			errorMsg:="All 3 Mordon Core automation functions must be enabled before starting the gem farm. Current status:`n"
+			errorMsg.="Set Formation: " . (modronEnabledF ? "Enabled" : "Disabled") . "`n"
+			errorMsg.="Set Area Goal: " . (modronEnabledR ? "Enabled" : "Disabled") . "`n"
+			errorMsg.="Set Buffs: " . (modronEnabledB ? "Enabled" : "Disabled") . "`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Modron",errorMsg)
+			return false
 		}
-        return 0
+		;Check the Heroes collection has been able to read the heroIndex map
+		if (!g_Heroes.Init())
+		{
+			errorMsg:="Unable to generate HeroID to HeroIndex map`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Hero Manager",ErrorMsg)
+			return false
+		}
+        return true
     }
+	
+	PreFlightCheck_GenericMessage() ;Generic error text for PreFlightCheck() errors that might relate to reading from the game
+	{
+        genericMsg:="`nOther potential solutions:`n"
+        genericMsg.="1. Be sure Imports are up to date. Current imports are for: v" . g_SF.Memory.GetImportsVersion() . "`n"
+        genericMsg.="2. Check the correct memory file is being used. Current version: " . g_SF.Memory.GameManager.GetVersion() . "`n"
+        genericMsg.="3. If IC is running with admin privileges, then the script will also require admin privileges.`n"
+        if (_MemoryManager.is64bit)
+            genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
+		return genericMsg
+	}
+	
+	PreFlightErrorMessage(failingStep,message,options:=16) ;16 is Stop/Error icon, the default of just an OK button (option 0) is used as standard
+	{
+		title:="Briv Master Startup: " . failingStep
+		Msgbox, % options, %title%, %message%
+	}
 
-	    ; Test that favorite exists
+	; Test that favorite exists
     TestFormationSlotByFavorite(favorite := "", txtCheck := "")
     {
         if (!favorite)
@@ -722,11 +687,71 @@ class IC_BrivMaster_GemFarm_Class
 	;Waits for modron to reset. Closes IC if it fails.
     ModronResetCheck()
     {
-        if (!g_SF.WaitForModronReset(50000))
+        if (!g_SF.WaitForModronReset(50000)) ;TODO: Should this use the timeout factor?
             g_SF.CheckifStuck(True)
         g_PreviousZoneStartTime := A_TickCount
 		this.TriggerStart := true
     }
+	
+	;GEM FARM WINDOW
+	CreateWindow()
+	{
+		global
+		try
+		{		
+			if (g_IBM_Settings["IBM_Window_Dark_Icon"])
+			Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_D.ico
+			else
+			Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico
+		}
+
+		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
+		FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
+		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
+		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
+		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Settings_Update_Time, % formattedDateTime
+		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Game Version:"
+		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
+		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
+		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
+
+		if(!g_IBM_Settings["IBM_Window_Hide"])
+		{
+			Gui, IBM_GemFarm:Show,% "x" . g_IBM_Settings["IBM_Window_X"] . " y" . g_IBM_Settings["IBM_Window_Y"], Briv Master
+		}			
+	}
+	
+	RefreshGemFarmWindow() ;Updates the time settings were updated
+	{
+	   FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+	   GuiControl, IBM_GemFarm:, IBM_GemFarm_Settings_Update_Time, % formattedDateTime
+	}
+
+	RefreshImportCheck()
+	{
+		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		importsMajor:=g_ImportsGameVersion64
+		importsMinor:=g_ImportsGameVersionPostFix64
+		colour:="cRed" ;Default
+		if (gameMajor!="" AND importsMajor!="") ;If both major versions are populated
+		{
+			if (gameMajor==importsMajor AND gameMinor==importsMinor) ;Full matching
+				colour:="cBlack"
+			else if (gameMajor==importsMajor) ;In this case the minor versions necessarily do not match
+				colour:="cFFA000" ;"cFFC000" Amber had insuffient contrast so darkened a bit
+		}
+		gameString:=gameMajor ? (gameMajor . (gameMinor ? gameMinor : "")) : "Unable to detect"
+		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "")) : "Unable to detect"
+		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Game
+		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
+		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString
+		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Imports, % importString
+		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Game
+		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
+	}
+	;END GEM FARM WINDOW
 
 	;DIALOGSWATTER BLOCK
 	DialogSwatter_Setup()
@@ -751,14 +776,9 @@ class IC_BrivMaster_GemFarm_Class
     DialogSwatter_Swat()
     {
         if (g_SF.Memory.ReadWelcomeBackActive())
-		{
-            ;g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;Is this necessary here? It shouldn't be, OpenIC()->SetLastActiveWindowWhileWaingForGameExe should set it as it opens
             this.KEY_ESC.KeyPress()
-        }
 		else if (A_TickCount > this.SwatterStartTime + 3000) ;3s should be enough to get the swat done
 			this.DialogSwatter_Stop() ;Stop the timer since we don't have anything to swat
     }
-
 	;END DIALOGSWATTER BLOCK
-
 }

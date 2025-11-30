@@ -69,6 +69,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_ForceOffline",false) ;Default to off
 		this.LastSafeStackZone:=this.GetLastSafeStackZone() ;No reason to re-calcuate this every zone
 		g_SharedData.IBM_UpdateOutbound("IBM_ProcessSwap",false) ;Allows the hub to detect process changes on restarts prompty
+		this.LoadRoute()
 	}
 
 	Reset()
@@ -1148,7 +1149,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		loop, % this.targetZone
 		{
-			if (!this.zones.hasKey(A_Index)) ;For most routes the majority will be calculated on the first iteration, with subsequent calls only populating a few zones  until it meets the existing route
+			if (!this.zones.hasKey(A_Index)) ;For most routes the majority will be calculated on the first iteration, with subsequent calls only populating a few zones until it meets the existing route
 			{
 				currentZone:=new IC_BrivMaster_RouteMaster_Zone_Class
 				currentZone.z:=A_Index

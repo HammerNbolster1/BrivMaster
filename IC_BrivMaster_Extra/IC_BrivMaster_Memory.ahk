@@ -250,4 +250,18 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         }
         return champList
     }
+	
+	IBM_GetFormationFieldFamiliarCountBySlot(slot)
+	{
+		familiarCount:=0
+		size:=this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List.size.Read()
+		if(size < 0 OR size > 10) ; sanity check, should be < 6 but set to 10 in case of future game field familiar increase.
+			return ""
+		loop %size%
+		{
+			if(this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List[A_Index - 1].Read()>=0) ;Negative numbers are used to store gaps in familiar layout, e.g. -3,13,-2 means '3 empty spaces, familiar ID 13, 2 empty spaces'
+				familiarCount++
+		}
+		return familiarCount
+	}
 }

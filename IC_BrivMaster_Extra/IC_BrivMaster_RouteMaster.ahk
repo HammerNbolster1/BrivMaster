@@ -1034,6 +1034,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
+					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly
 					startTime:=A_TickCount
 					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field. Using .ReadBenched() as it's a simple read, whereas ReadFielded() has to loop the formation
 					{

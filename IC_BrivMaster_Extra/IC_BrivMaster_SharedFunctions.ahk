@@ -211,13 +211,13 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	{
 		;Wait for user login, and ensure enough time has elapsed to trigger offline progress
 		targetTime:=g_IBM_Settings["IBM_OffLine_Delay_Time"] ;Amount of time we'd like to elapse before passing platform login
-		if (g_SF.Memory.IBM_ReadIsGameUserLoaded()!=1 AND (A_TickCount - g_IBM.routeMaster.offlineSaveTime < targetTime))
+		if (this.Memory.IBM_ReadIsGameUserLoaded()!=1 AND (A_TickCount - g_IBM.routeMaster.offlineSaveTime < targetTime))
 		{
 			g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for platform login...")
 			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() wait for platform login")
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			Critical On ;We need to catch the platform login completing before the game progresses to the userdata request
-			While (g_SF.Memory.IBM_ReadIsGameUserLoaded()!=1 AND ElapsedTime < targetTime) ;Wait for user loaded or we run out of time, then stop IC
+			while (this.Memory.IBM_ReadIsGameUserLoaded()!=1 AND ElapsedTime < targetTime) ;Wait for user loaded or we run out of time, then stop IC
 			{
 				Sleep 0 ;Need to be fast to catch this
 				ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
@@ -357,18 +357,15 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         g_IBM.RouteMaster.WaitForTransition()
     }
 	
-	;Override to use IBM levelling and progress management
-	; Wait for Thellora to activate her Rush ability.
-    DoRushWait(stopProgress:=false) ;Note: unknown what IBM_ThelloraTriggered returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
+	; Wait for Thellora (ID=139) to activate her Rush ability.
+    DoRushWait(stopProgress:=false) ;Note: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {
-		;OutputDebug % A_TickCount ":DoRushWait() - start`n"
         StartTime := A_TickCount
         ElapsedTime := 0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
 		g_SharedData.IBM_UpdateOutbound("LoopString","Rush Wait")
-		while (!(this.Memory.ReadCurrentZone() > 1 OR this.Memory.IBM_ThelloraTriggered()) AND ElapsedTime < 8000)
+		while (!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
         {
-			;OutputDebug % A_TickCount ":DoRushWait() - loop`n"
 			if (stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
 			{
 				if (this.Memory.ReadHighestZone() > 1)
@@ -385,7 +382,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			ElapsedTime := A_TickCount - StartTime
         }
         g_PreviousZoneStartTime := A_TickCount
-		;OutputDebug % A_TickCount ":DoRushWait() - end`n"
     }
 	
 	;Overriding to:
@@ -500,7 +496,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         }
         g_SharedData.IBM_UpdateOutbound("LoopString", "Loading z1...")
         g_IBM.IBM_Sleep(20)
-        while(!this.Memory.ReadUserIsInited() AND g_SF.Memory.ReadCurrentZone() < 1 AND ElapsedTime < timeout)
+        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone() < 1 AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
             ElapsedTime := A_TickCount - StartTime
@@ -573,79 +569,54 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         }
     }
 	
-	;A function that closes IC
-    CloseIC(string := "",usePID:=false)
+    CloseIC(string:="",usePID:=false)
     {
 		g_SharedData.IBM_UpdateOutbound("LastCloseReason",string)
-        ; check that server call object is updated before closing IC in case any server calls need to be made
-        ; by the script before the game restarts
-        this.ResetServerCall()
-        if ( string != "" )
-            string := ": " . string
+        this.ResetServerCall() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function
+        if (string!="")
+            string:=": " . string
         g_SharedData.IBM_UpdateOutbound("LoopString","Closing IC" . string)
         if (usePID)
-			sendMessageString := "ahk_pid " . this.PID ;TODO: When using PID we need to fall back to closing by exe name at some point, which will obviously ruin a relay, but it's possible we end up with the game and this.PID not being aligned. Maybe the standard CheckifStuck() logic will be enough?
+			sendMessageString := "ahk_pid " . this.PID
 		else
 			sendMessageString := "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
-		baseTimeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 10s. This is an initial value that is reduced once a save is detected
-		timeout:=baseTimeout
+		timeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 10s
 		if WinExist(sendMessageString)
-            SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
-		StartTime := A_TickCount
-		saveCompleteTime := -1 ;Unset
-		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout )
+			SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
+		StartTime:=A_TickCount
+		saveCompleteTime:=-1 ;Unset
+		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout)
         {
             g_IBM.IBM_Sleep(15)
-			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck()) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
 			{
 				saveCompleteTime:=A_TickCount
-				g_IBM.Logger.AddMessage("CloseIC() Standard Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 				g_IBM.routeMaster.CheckRelayRelease()
-				timeout:=MAX(1000,baseTimeout//4) ;Quarter the timeout post-save. Allow 1s even if this new timer would be elapsed TODO: This puts a floor on the baseTimeout value of 4000ms, which is a factor of 2, and is probably okay, but these numbers are all rather made up and need some structure
+				g_IBM.Logger.AddMessage("CloseIC() Standard Loop "  . (saveStatus==1 ? "Save" : "Reads Invalid") . " - saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 			}
         }
-        StartTime := A_TickCount
-		NextCloseAttempt:=A_TickCount
-		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Kill
-        {
-			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty())
-			{
-				saveCompleteTime:=A_TickCount
-				g_IBM.Logger.AddMessage("CloseIC() WinKill Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
-				g_IBM.routeMaster.CheckRelayRelease()
-				timeout:=baseTimeout//4 ;Quarter the timeout post-save
-			}
-			if (A_TickCount >= NextCloseAttempt) ;Throttle input whilst continuing to check rapidly for game save and window closure
-			{
-				g_IBM.Logger.AddMessage("IC failed to close cleanly: sending WinKill saveCompleteTime=[" . saveCompleteTime . "]")
-				WinKill, sendMessageString
-				NextCloseAttempt:=A_TickCount+500
-			}
-			g_IBM.IBM_Sleep(15)
-		}
-        StartTime := A_TickCount
-		NextCloseAttempt:=A_TickCount
-		timeout:=baseTimeout ;Reset the timeout, as we need to force the game closed if it doesn't want to close normally - continuing with old instances running will cause problems eventually
-		while ( WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder
+        StartTime:=A_TickCount
+		NextCloseAttempt:=A_TickCount ;Throttle input whilst continuing to check rapidly for game save and window closure
+		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder
 		{
-			if (saveCompleteTime==-1 AND !g_SF.Memory.IBM_ReadIsInstanceDirty()) ;Not reducing the timeout here, for the same reason it is reset prior to this
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck())
 			{
 				saveCompleteTime:=A_TickCount
-				g_IBM.Logger.AddMessage("CloseIC() TerminateProcess Loop Save Detected - SaveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 				g_IBM.routeMaster.CheckRelayRelease()
+				g_IBM.Logger.AddMessage("CloseIC() TerminateProgress Loop " . (saveStatus==1 ? "Save" : "Reads Invalid") . " - saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 			}
-			if (A_TickCount >= NextCloseAttempt) ;Throttle input whilst continuing to check rapidly for game save and window closure
+			if (A_TickCount >= NextCloseAttempt) 
 			{
 				hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", g_SF.PID, "Ptr")
 				if(hProcess)
 				{
-					g_IBM.Logger.AddMessage("IC failed to close cleanly: sending TerminateProcess saveCompleteTime=[" . saveCompleteTime . "]")
+					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: sending TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 					DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
 					DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
 				}
 				else
 				{
-					g_IBM.Logger.AddMessage("IC failed to close cleanly: failed to get process handle for TerminateProcess saveCompleteTime=[" . saveCompleteTime . "]")
+					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: failed to get process handle for TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
 					Break ;If we can't get the handle for the process trying again isn't going to help
 				}
 				NextCloseAttempt:=A_TickCount+500
@@ -653,12 +624,19 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			g_IBM.IBM_Sleep(15)
 		}
 		if (saveCompleteTime==-1) ;Failed to detect, going to have to go with current time
-		{
 			saveCompleteTime:=A_TickCount
-		}
         return saveCompleteTime
     }
-
+	
+	CloseIC_SaveCheck() ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
+	{
+		if(this.Memory.IBM_ReadIsInstanceDirty()=="" OR this.Memory.IBM_ReadCurrentSave()=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
+			return 2
+		else if (this.Memory.IBM_ReadIsInstanceDirty()==0 AND this.Memory.IBM_ReadCurrentSave()==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
+			return 1
+		return 0
+	}
+	
 	IBM_ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible
 	{
 		charIndex:=1

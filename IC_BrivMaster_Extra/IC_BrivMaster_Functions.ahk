@@ -21,7 +21,7 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
 		; Extract fields from LocalTime
 		Hour := NumGet(LocalTime, 8, "UShort")
 		Minute := NumGet(LocalTime, 10, "UShort")
-		Return Hour + Minute/60
+		return Hour + Minute/60
 	}
 
 	ReadCNETimeZone(TIME_ZONE_INFORMATION) ;Gets time data for CNE's Pacific standard time location. It's okay for this to error with message boxes as it's a one-off at startup TODO: This needs to be built into an organised pre-flight check
@@ -360,7 +360,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	ClearTimers()
 	{
-		timerFunction := this.CasinoTimer
+		timerFunction:=this.CasinoTimer
 		SetTimer, %timerFunction%, Off
 	}
 
@@ -493,7 +493,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	CanUseEllyWickUlt()
 	{
-		return g_Heroes[83].ReadFielded() AND this.IsEllywickUltReady()
+		return g_Heroes[83].ReadFielded() AND this.IsEllywickUltReady() ;TODO: Can we use !Benched which is a simple read, instead of ReadFielded, which iterates the formation? Applies to DM as well
 	}
 
 	IsEllywickUltReady()

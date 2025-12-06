@@ -257,7 +257,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			currentChargesInZones:=g_Heroes[139].ReadRushAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
 			thelloraNeedsAdditional:=MAX(0,thelloraNeedsZones-currentChargesInZones)
 			if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
+			{
 				zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
+			}
 			else
 				zonesRemaining:=MAX(0,this.targetZone-calcResult.zone)
 			if (zonesRemaining < thelloraNeedsAdditional)
@@ -459,7 +461,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if (currentZone < 0 OR currentZone >= this.targetZone) ; Don't test while modron resetting
             return false
         stackZone:=this.GetStackZone()
-		stacks := g_SF.Memory.ReadSBStacks()
+		stacks:=g_SF.Memory.ReadSBStacks()
 		targetStacks:=this.GetTargetStacks()
  		if (stacks < targetStacks)
 		{
@@ -510,7 +512,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return this.targetZone - this.zonesPerJumpQ * 5 ;TODO: Is it useful to check if this is after the Thellora target?
 	}
 
-	StackFarm()
+	StackFarm() ;TODO: Unclear why this really needs to be a separate function?
     {
         if (this.ShouldOfflineStack())
         {
@@ -523,35 +525,32 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.StartAutoProgressSoft()
     }
 
-	;START ULTRA STACK TESTING
-
 	StackUltra(highZone,maxOnlineStackTime := 300000)
     {
-        if (this.PostponeStacking(highZone))
+		if (this.PostponeStacking(highZone))
             return 0
 		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks
 		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
 		TYPE_SB:=MEMORY_SB_STAT.ValueType
-		startStacks:= stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+		startStacks:=stacks:=_MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
+		if (stacks>=targetStacks)
 			return
-		StartTime := A_TickCount
+		StartTime:=A_TickCount
 		this.UltraStackFarmSetup()
 		ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Stack Ultra")
-        g_SF.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
-		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
+        g_SF.FallBackFromBossZone() ;TODO: Can we end up on a boss zone without something very weird happening? Maybe using x/x-1J setups?
+		if (this.useBrivBoost)
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
 		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90)
-		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
+		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
         {
 			if (precisionMode)
-			{
 				Sleep, 0 ;Fast sleep
-			}
 			else
 			{
 				if (stacks > precisionTrigger) ;Once we have hit precisionTrigger stacks go critical and check faster to get maximum precision
@@ -562,8 +561,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				}
 				g_IBM.IBM_Sleep(15)
 			}
-			ElapsedTime := A_TickCount - StartTime
-			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+			ElapsedTime:=A_TickCount - StartTime
+			stacks:=_MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
         }
 		StartTime:=A_TickCount
 		ultRetryCount:=g_Heroes[58].UseUltimate()
@@ -607,14 +606,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		this.KEY_W.KeyPress_Bulk() ;Trying _Bulk() here, this is vulnerable but we are trying to get Melf deployed as fast as elvenly possible
 		g_IBM.levelManager.LevelFormation("W", "min")
-		StartTime := A_TickCount
-        ElapsedTime := 0
+        g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation") ;This is intentionally after the W/Levelup calls to avoid delaying them
+		StartTime:=A_TickCount
+        ElapsedTime:=0
 		TimeOut:=3000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
-        g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation")
         while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
         {
-			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
-            g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms
+			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode; will catch cases where the initial _Bulk failed due to lack of control focus
+			g_IBM.levelManager.LevelFormation("W", "min",0)
 			g_IBM.IBM_Sleep(15)
             ElapsedTime := A_TickCount - StartTime
         }
@@ -624,8 +623,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
 		}
     }
-
-	;END ULTRA STACK TESTING
 
 	StackNormal(maxOnlineStackTime := 300000) ;300s might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
     {
@@ -785,11 +782,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             return 1
         if (g_SF.Memory.ReadCurrentZone() == 1) ; likely modron has reset
             return 1
-        if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ; don't stack below min stack zone
+        if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ; don't stack below min stack zone ;TODO: Is this useful? Not making this check during Ultra stacking as we're looking at the highest zone, not the current one, and that should already be checked
             return 1
         return 0
     }
-
+	
 	StackRestart() ;TODO: Put rollback detection back into this?
     {
 		startStacks:= lastStacks := stacks := g_SF.Memory.ReadSBStacks()
@@ -1033,7 +1030,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
-					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly
+					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly, given issues with multiple key presses
 					startTime:=A_TickCount
 					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field. Using .ReadBenched() as it's a simple read, whereas ReadFielded() has to loop the formation
 					{

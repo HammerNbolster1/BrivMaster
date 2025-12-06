@@ -605,7 +605,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	UltraStackFarmSetup()
     {
-        this.KEY_W.KeyPress()
+		this.KEY_W.KeyPress_Bulk() ;Trying _Bulk() here, this is vulnerable but we are trying to get Melf deployed as fast as elvenly possible
 		g_IBM.levelManager.LevelFormation("W", "min")
 		StartTime := A_TickCount
         ElapsedTime := 0

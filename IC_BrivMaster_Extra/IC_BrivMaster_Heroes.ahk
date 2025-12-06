@@ -347,7 +347,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		return g_SF.Memory.GameManager.game.gameInstances[0].StatHandler.ServerStats[this.STAT_RUSH_TRIGGERED].Read()==1
 	}
 
-	ReadRushAreaCharges() ;How many zones does Thellora have stored?
+	ReadRushAreaCharges() ;How many zones does Thellora have stored? TODO: This has to iterate the whole stat dictionary to find the key string we provided - can we do something better here?
 	{
 		return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats[this.STAT_AREA_CHARGES].Read()
 	}

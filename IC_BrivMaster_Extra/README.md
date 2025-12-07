@@ -316,11 +316,11 @@ Champion List: Each champion is displayed with their seat and name, along with t
 
 	-Number: Shows the number of feats saved for this champion. If it is **not** followed by a '+' symbol then excluisive mode is enabled; the champion's equipped feats must be exactly those saved, otherwise if '+' is shown any feats can be present in addition to those saved. Mousing over this number will list the saved feats, if any.
 	
-> Author's Note: Exclusive mode is important to understand as it dramatically changes the meaning of the the number: '0' means 'No feats may be equipped', '0+' means 'Any feats may be equipped'.
+-> Author's Note: Exclusive mode is important to understand as it dramatically changes the meaning of the the number: '0' means 'No feats may be equipped', '0+' means 'Any feats may be equipped'.
 
-	-Left Arrow: Saves the champion's current feat setup as the Feat Guard requirement. If the champion has feats equipped they will be listed and you will be prompted if you wish to use exclusive mode or not. If the champion has no feats equipped you will just be prompted on exclusive mode.
+	- Left Arrow: Saves the champion's current feat setup as the Feat Guard requirement. If the champion has feats equipped they will be listed and you will be prompted if you wish to use exclusive mode or not. If the champion has no feats equipped you will just be prompted on exclusive mode.
 	
-	-Circle icon: Clears the saved feats.
+	- Circle icon: Clears the saved feats.
 
 > Author's Note: There is little value in including champions who have feats saved in the M formation in Feat Guard - just leave them on 0+. This is commonly the case for Briv in feat swap setups. 
 		

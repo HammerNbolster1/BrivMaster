@@ -6,12 +6,11 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		savedFormations:={} ;Formations as per standard memory reads
 		savedFormationChamps:={} ;Champions in each formation, eg savedFormationChamps["E",58]==true -> Briv is in E
 		currentWorkList:="" ;Current IC_BrivMaster_LevelManager_WorkList_Class object
-		levelSettings:=g_IBM_Settings["IBM_LevelManager_Levels",combine]
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(1),"Q")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(3),"E")
 		this.ExtractFormation(g_SF.Memory.GetActiveModronFormationSaveSlot(),"M")
-		this.ProcessFormation(levelSettings)
+		this.ProcessFormation(g_IBM_Settings["IBM_LevelManager_Levels",combine])
 		this.ResetLevellingDone()
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
 		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")

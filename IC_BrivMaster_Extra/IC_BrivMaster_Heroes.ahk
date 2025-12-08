@@ -1,5 +1,3 @@
-;TODO: When implementing this, remove my hacked for populating g_SF.Memory.HeroIDToIndexMap without the activeEffectKeyHandler code running. Done for _Run, still needs to be done for _Component
-
 class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but that's a longer word and I am not being paid by the letter
 {
 	__New()
@@ -342,14 +340,46 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	;---Hero related memory reads
 	;--------------------------------------------------------------------------------------
 
-	ReadRushTriggered() ;Has Thellora rushed yet this run?
+	ReadRushTriggered() ;Has Thellora rushed yet this run? Looking up this stat seems fairly fast, so need for caching like in ReadRushAreaCharges() 
 	{
 		return g_SF.Memory.GameManager.game.gameInstances[0].StatHandler.ServerStats[this.STAT_RUSH_TRIGGERED].Read()==1
 	}
 
-	ReadRushAreaCharges() ;How many zones does Thellora have stored? TODO: This has to iterate the whole stat dictionary to find the key string we provided - can we do something better here?
+	ReadRushAreaCharges() ;How many zones does Thellora have stored? The stat dictionary has ~570 items as of 08Dec25, so searching through it means calls can take >60ms on a fast PC. Cache the index instead, using a hard coded last-known value as the start point
 	{
-		return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats[this.STAT_AREA_CHARGES].Read()
+		static cachedIndex:=420 ;Default index taken from v673.1 08Dec25, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this
+		MEMORY_SERVERSTATS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats
+		key:=MEMORY_SERVERSTATS["key",cachedIndex].Read()
+		if(key==this.STAT_AREA_CHARGES) ;Valid cache
+		{
+			return MEMORY_SERVERSTATS["value", cachedIndex].Read()
+		}
+		size:=MEMORY_SERVERSTATS.size.Read()
+		if (size<0 OR size>5000) ;Sanity check
+			return 0
+		index:=cachedIndex ;First search from the cached index - it's more likely to have been pushed down the list by the addition of new stats than pulled up by one being deleted (I think...)
+		while(++index<size) ;++index as we've already checked index. < size because collection is 0-indexed, so if size=100 last valid index=99
+		{
+			key:=MEMORY_SERVERSTATS["key",index].Read()
+			if (key==this.STAT_AREA_CHARGES)
+			{
+				g_IBM.Logger.AddMessage("ReadRushAreaCharges() CACHE MISS cachedIndex=[" . cachedIndex . "] index=[" . index . "] please report this message") ;As the default may change we want to be informed
+				cachedIndex:=index
+				return:=MEMORY_SERVERSTATS["value", cachedIndex].Read()
+			}
+		}
+		index:=cachedIndex ;Secondly search backwards from the index, as if a stat has been removed it's probably just a few
+		while(--index>=0) ;--index as we checked index previously
+		{
+			key:=MEMORY_SERVERSTATS["key",index].Read()
+			if (key==this.STAT_AREA_CHARGES)
+			{
+				g_IBM.Logger.AddMessage("ReadRushAreaCharges() CACHE MISS cachedIndex=[" . cachedIndex . "] index=[" . index . "] please report this message")
+				cachedIndex:=index
+				return MEMORY_SERVERSTATS["value", cachedIndex].Read()
+			}
+		}
+		return 0
 	}
 
 	ReadRushTarget() ;Gets the base favour exponent which Thellora uses to cap her rush amount. Note this is much slower than using an ActiveEffectKeyHandler that is already set up for her, but much faster than having to set one up first

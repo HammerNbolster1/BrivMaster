@@ -404,16 +404,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_SF.CurrentZone:=startZone
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
-		if(this.ShouldWalk(g_SF.CurrentZone))
-		{
-			g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
-		}
-		else
-		{
-			g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
-		}
 		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
 		if (this.RelayBlankOffline)
 		{
@@ -807,16 +797,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             retryAttempt++               ; pre stackfarm call
             this.StackFarmSetup()
             g_SF.CurrentZone := g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-			if(this.ShouldWalk(g_SF.CurrentZone))
-			{
-				g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
-			}
-			else
-			{
-				g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
-			}
             if (this.targetZone != "" AND g_SF.CurrentZone > this.targetZone)
             {
                 g_SharedData.IBM_UpdateOutbound("LoopString","Attempted to offline stack after modron reset - verify settings")
@@ -1141,9 +1121,23 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	}
 	*/
 
-	ShouldWalk(currentZone)
+	ShouldWalk(zone)
 	{
-		return this.zones[currentZone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
+		return this.zones[zone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
+	}
+	
+	GetStandardFormationKey(zone) ;Returns the key object for Q or E as appropriate for the zone
+	{
+		if (this.ShouldWalk(zone))
+			return this.Key_E
+		return this.KEY_Q
+	}
+	
+	GetStandardFormation(zone) ;Returns Q or E formation from the level manager as appropriate for the zone
+	{
+		if (this.ShouldWalk(zone))
+			return g_IBM.levelManager.GetFormation("E")
+		return g_IBM.levelManager.GetFormation("Q")
 	}
 
 	LoadRoute() ;Once per script-run loading of the route

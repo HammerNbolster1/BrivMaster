@@ -8,7 +8,7 @@ This addon would not have been possible without the work of those who came befor
 
 Briv Master is available at https://github.com/RLee-EN/BrivMaster. It requires specific imports, the generator for which can be found at https://github.com/RLee-EN/BrivMaster-Imports. The latter respository also contains the imports themselves, however I cannot commit to always updating them promptly.
 
-This ReadMe has been written 13Nov25 for BrivMaster v0.2.1. Changes are actively being made so things may have changed by the time you read this. When reviewing settings note that many options which might not be intuitive have tooltips to aid you.
+This ReadMe has been written 06Dec25 for BrivMaster v0.2.7. Changes are actively being made so things may have changed by the time you read this. When reviewing settings note that many options which might not be intuitive have tooltips to aid you.
 
 # Environment
 
@@ -310,9 +310,21 @@ Champion List: Each champion is displayed with their seat and name, along with t
 		
 - Normal: The post-Casino level for this champion. This is frequenty the same as the Start level, but in the case of an extra champion as described in the Start text they might have a level here. A champion that Diana that gains a potentially desirable ability (Scavenger) could be set to Start 100 and Normal 200 so she picks up that Scavenger ability without interfering with the start of the run (although in that case, consider Dynamic Diana above).
 		
-Formations: This grid displays the formations that each champion is in, as an aid to configuration and also to aid in sharing your setup. Champion levels should always be rounded up to the next 100 unless the use of modifier levelling is specifically desired; remember that an x10/x25 level-up requires double the key actions as an x100, and is less reliable.
+- Formations: This grid displays the formations that each champion is in, as an aid to configuration and also to aid in sharing your setup. Champion levels should always be rounded up to the next 100 unless the use of modifier levelling is specifically desired; remember that an x10/x25 level-up requires double the key actions as an x100, and is less reliable.
+
+- Feats: Feat Guard allows a feat configuration to be saved for each champion, which is then checked on script start. If the expected feats are not present the gem farm will not start. For example, this can be used to ensure that Ellywick's 'Gem' feat is re-equipped after swapping it for 'Moon' whilst gold farming.
+
+	- Number: Shows the number of feats saved for this champion. If it is **not** followed by a '+' symbol then excluisive mode is enabled; the champion's equipped feats must be exactly those saved, otherwise if '+' is shown any feats can be present in addition to those saved. Mousing over this number will list the saved feats, if any.
+	
+        > Author's Note: Exclusive mode is important to understand as it dramatically changes the meaning of the the number: '0' means 'No feats may be equipped', '0+' means 'Any feats may be equipped'.
+
+    - Left Arrow: Saves the champion's current feat setup as the Feat Guard requirement. If the champion has feats equipped they will be listed and you will be prompted if you wish to use exclusive mode or not. If the champion has no feats equipped you will just be prompted on exclusive mode.
+	
+    - Circle icon: Clears the saved feats.
+
+> Author's Note: There is little value in including champions who have feats saved in the M formation in Feat Guard - just leave them on 0+. This is commonly the case for Briv in feat swap setups. 
 		
-The following provide the Author's current setup, which is an end-game farm using Dynahier (rather than a BBEG) and Baldric. The #scripting channel in the IC discord is a good place to ask for help for other setups.  
+The following provide the Author's current setup, which is an end-game farm using Dynaheir (rather than BBEG) and Baldric. The #scripting channel in the IC discord is a good place to ask for help for other setups.  
 
 | Champion | Start | Priority | Normal | Comment |
 | ------ | ----- | ----- | ----- | ----- |
@@ -326,11 +338,16 @@ The following provide the Author's current setup, which is an end-game farm usin
 | Tatyana | 100  | 4  | 100 | See comment on Briv.
 | Diana | 100 | 2 | 100
 | Ellywick | 200 | 4↓100 | 200 | See priority description above for the reason this is benefical, and also the comment on Briv.
-| Imoen | 50 | 0 | 50 | Imoen gains the ability we need at level 40, and an ability of non-trivial complexity at level 60 (Perseverance, counting Favoured Foe kills). As Imoen is not important at the start of the run, she can use modifier levelling with much impact to avoid that ability.
+| Imoen | 50 | 0 | 50 | Imoen gains the ability we need at level 40, and an ability of non-trivial complexity at level 60 (Perseverance, counting Favoured Foe kills). As Imoen is not important at the start of the run, she can use modifier levelling without much impact to avoid that ability.
 | Melf | 70 | 2 | 70 | This example has Baldric in M, so MElf cannot have a spec saved. This avoids his spec pop-up which would appear if 100 was used.
 | Baldric | 200 | 2 | 200
 		
 > Author's Note: When saving Briv Master's settings, level settings will be ignored if no champions are displayed at all. Take care if tweaking options whilst doing something else in-game, as it is a little bit too easy to overwrite your settings. Once you have things configured to your satisfaction making a backup of IC_BrivMaster_Settings.json might be sensible.
+
+## Hidden Settings
+Occasionally a setting may be added to Briv Master but not exposed via the GUI, most likely because it was a request with no opportunity cost, but not something that I necessarily agree with. Changing these settings requires editing the IC_BrivMaster_Settings.json file directly.
+
+- IBM_Allow_Modron_Buff_Off: Normally Briv Master will not start unless all three Modron core functions are enabled. Changing this from 0 to 1 allows the script to start with the Buffs portion disabled. This was added to allow potions to be used by familiars saved in the M formation instead. The user in question didn't want to have to change the options between different activities.
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 

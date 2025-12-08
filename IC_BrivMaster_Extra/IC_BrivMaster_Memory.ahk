@@ -171,9 +171,9 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         return true
     }
 
-	IBM_LevellingOverRideActive(seat) ;Is a modifier key combination being used to adjust levelling? This reads the specified seat although they should the same. TODO: Clickdamage would probably be a smarter way of doing this
+	IBM_ClickDamageLevelAmount() ;This is the base amount set per levelling seletion, e.g. always 1/10/25/100
 	{
-		this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].levelUpInfoHandler.OverrideLevelUpAmount.Read()
+		return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.clickDamageBox.levelUpAmount.Read()
 	}
 
 	IBM_GetFrontColumnSize() ;Used when we want to block champions from being levelled in the front formation slots so they do not share attacks with Briv

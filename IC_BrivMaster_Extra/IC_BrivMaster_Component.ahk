@@ -37,7 +37,7 @@ Class IC_IriBrivMaster_Component
 	Settings := ""
 	TimerFunction := ObjBindMethod(this, "UpdateStatus")
 	SharedRunData:=""
-	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff?
+	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff? Note the GUI file does use them
 	CONSTANT_serverRateBuy:=250
 	ServerCallFailCount:=0 ;Track the number of failed calls, so we can refresh the user data / servercall, but avoid doing so because one call happened to fail (e.g. at 20:00 UK the new game day starting tends to result in fails)
 	MemoryReadFailCount:=0 ;Separate tracker for memory reads, as these are expected to fail during resets etc (TODO: We could combine and just add different numbers, e.g. 5 for a call fail or 1 for a memory read fail?)
@@ -1139,12 +1139,16 @@ Class IC_IriBrivMaster_Component
 			return
         slots:=["Q","W","E"]
 		loop 3
+			this.IBM_GetGUIFormationData_ProcessFormation(championData,slots[A_Index],g_SF.Memory.GetFormationByFavorite(A_Index))
+		this.IBM_GetGUIFormationData_ProcessFormation(championData,"M",g_SF.Memory.GetActiveModronFormation())
+		listIndex:=1
+		for _, seatMembers in championData ;The listIndex has to be assigned after all formations are processed, as they are assigned seat by seat
 		{
-			formation:=g_SF.Memory.GetFormationByFavorite(A_Index)
-			this.IBM_GetGUIFormationData_ProcessFormation(championData,slots[A_Index],formation)
+			for _, champData in seatMembers
+			{
+				champData["ListIndex"]:=listIndex++
+			}
 		}
-		formation:=g_SF.Memory.GetActiveModronFormation()
-		this.IBM_GetGUIFormationData_ProcessFormation(championData,"M",formation)
 		return championData
 	}
 

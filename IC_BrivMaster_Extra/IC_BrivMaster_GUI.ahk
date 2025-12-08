@@ -14,6 +14,9 @@ class IC_IriBrivMaster_GUI
 	static IBM_SYMBOL_CONTROL_ACTIVE:="●"
 	static IBM_SYMBOL_UI_DOWN:="▼"
 	static IBM_SYMBOL_UI_CONFIG:="⚙"
+	static IBM_SYMBOL_UI_LEFT:="◀"
+	static IBM_SYMBOL_UI_CLEAR:="○"
+
 	levelDataSet:=""
 
 	Init()
@@ -158,22 +161,23 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Status_Resize gIBM_ChestsSnatcher_Status_Resize, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_DOWN
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Options gIBM_ChestsSnatcher_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Chest options
-		Gui, IBM_ChestSnatcher_Options:New , , Chest Options
+		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an OK button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy chests whilst you were typing 123 into the box)
 		Gui, IBM_ChestSnatcher_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_ChestSnatcher_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy gIBM_ChestSnatcher_Options_Min_Buy
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to buy per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold gIBM_ChestSnatcher_Options_Open_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver gIBM_ChestSnatcher_Options_Open_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Silver to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem gIBM_ChestSnatcher_Options_Min_Gem
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gems
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold gIBM_ChestSnatcher_Options_Min_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gold
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver gIBM_ChestSnatcher_Options_Min_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Silver
-		Gui, IBM_ChestSnatcher_Options:Add, CheckBox, xm+10 h18 0x200 vIBM_ChestSnatcher_Options_Claim gIBM_ChestSnatcher_Options_Claim, Claim Daily Rewards
+		Gui, IBM_ChestSnatcher_Options:Add, CheckBox, xm+10 h18 0x200 vIBM_ChestSnatcher_Options_Claim, Claim Daily Rewards
+		gui, IBM_ChestSnatcher_Options:Add, Button, xm+100 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
 		;Game Settings
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h50 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
@@ -309,7 +313,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h270, Briv Jumps
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+15 ys+20 h18 0x200 w10, Q:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w20 x+3 Number Limit2 vIBM_Route_BrivJump_Q_Edit gIBM_Route_BrivJump_Q_Edit		
+		Gui, ICScriptHub:Add, Edit, +cBlack  w20 x+3 Number Limit2 vIBM_Route_BrivJump_Q_Edit gIBM_Route_BrivJump_Q_Edit
 		Gui, ICScriptHub:Add, Text, xs+15 y+10 h18 0x200 w10, E:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w20 x+3 Number Limit2 vIBM_Route_BrivJump_E_Edit gIBM_Route_BrivJump_E_Edit
 		Gui, ICScriptHub:Add, Text, xs+15 y+10 h18 0x200 w10, M:
@@ -402,6 +406,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Window_Settings
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Window_Settings, Hide
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Window_Settings, Dark Icon
+
 		;LEVELS TAB
 		Gui, ICScriptHub:Tab, BM Levels
 		;Game location
@@ -452,15 +457,16 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h70 vIBM_LevelManager, Level Manager
 		Gui, ICScriptHub:Font, w400
-		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h20 w15 Left 0x200 vIBM_LevelRow_H_Seat, S
-		Gui, ICScriptHub:Add, Text, x+1 h20 w90 Left 0x200 vIBM_LevelRow_H_Name, Champion
+		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h20 w15 Left 0x200, S
+		Gui, ICScriptHub:Add, Text, x+1 h20 w90 Left 0x200, Champion
 		Gui, ICScriptHub:Add, Text, w40 h20 x+1 0x200 vIBM_LevelRow_H_z1, Start
 		GUIFunctions.AddToolTip( "IBM_LevelRow_H_z1", "Levels used for the first zone")
 		Gui, ICScriptHub:Add, Text, w55 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
 		GUIFunctions.AddToolTip( "IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
-		Gui, ICScriptHub:Add, Text, w40 h20 x+1 0x200 vIBM_LevelRow_H_min, Normal
-		Gui, ICScriptHub:Add, Text, w83 x+5 0x200 h20 Center 0x200 vIBM_LevelRow_H_Formations, Formations
-		Gui, ICScriptHub:Add, Button, w100 x+20 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh Formations
+		Gui, ICScriptHub:Add, Text, w40 h20 x+1 0x200, Normal
+		Gui, ICScriptHub:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
+		Gui, ICScriptHub:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
+		Gui, ICScriptHub:Add, Button, w50 x+10 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
 		;Level manager - create the maximum of 40 rows (4 formations x 10 champions), we will hide what we don't need when populating TODO: Decide if we really need 40 here, it's a complete solution...but also pointlessly overkill. 12 is relatively high (as of 23Aug25)
 		this.LevelRow_Priority_Value:=[5,4,3,2,1,0,-1,-2,-3,-4,-5,5,4,3,2,1,5,4,3,2,1]
 		this.LevelRow_Priority_Limit:=["","","","","","","","","","","",100,100,100,100,100,200,200,200,200,200]
@@ -553,14 +559,8 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:ChooseString, IBM_Level_Options_Mod_Key, % data.IBM_Level_Options_Mod_Key
 		GuiControl, ICScriptHub:ChooseString, IBM_Level_Options_Mod_Value, % data.IBM_Level_Options_Mod_Value
 		GuiControl, ICScriptHub:, IBM_Level_Diana_Cheese, % data.IBM_Level_Diana_Cheese
-		;Chest Options
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Claim, % data.IBM_DailyRewardClaim_Enable
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gem, % data.IBM_ChestSnatcher_Options_Min_Gem
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gold, % data.IBM_ChestSnatcher_Options_Min_Gold
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Silver, % data.IBM_ChestSnatcher_Options_Min_Silver
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Buy, % data.IBM_ChestSnatcher_Options_Min_Buy
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Gold, % data.IBM_ChestSnatcher_Options_Open_Gold
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Silver, % data.IBM_ChestSnatcher_Options_Open_Silver
+		;Chests
+		this.UpdateChestSnatcherOptions(data)
 		;Game settings
 		profile:=data.IBM_Game_Settings_Option_Profile
 		GuiControl, ICScriptHub:, IBM_Game_Settings_Profile_1, % profile==1
@@ -601,6 +601,17 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Game_Hide_Launcher, % data.IBM_Game_Hide_Launcher
     }
 
+	UpdateChestSnatcherOptions(data) ;ChestSnatcher options in a separate function so that the window can be updated when opened to overwrite unaccepted changes
+	{
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Claim, % data.IBM_DailyRewardClaim_Enable
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gem, % data.IBM_ChestSnatcher_Options_Min_Gem
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gold, % data.IBM_ChestSnatcher_Options_Min_Gold
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Silver, % data.IBM_ChestSnatcher_Options_Min_Silver
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Buy, % data.IBM_ChestSnatcher_Options_Min_Buy
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Gold, % data.IBM_ChestSnatcher_Options_Open_Gold
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Silver, % data.IBM_ChestSnatcher_Options_Open_Silver
+	}
+
 	CreateLevelRow(index)
 	{
 		global
@@ -618,6 +629,9 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_E, E
 		Gui, ICScriptHub:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_M, M
 		Gui, ICScriptHub:Font, Normal
+		Gui, ICScriptHub:Add, Text, x+5 w20 h20 0x200 CENTER Hidden vIBM_LevelRow_%index%_Feats_Selected
+		Gui, ICScriptHub:Add, Button, x+1 w20 h20 Hidden vIBM_LevelRow_%index%_Feats_Set gIBM_LevelRow_Feats_Set, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LEFT
+		Gui, ICScriptHub:Add, Button, x+1 w20 h20 Hidden vIBM_LevelRow_%index%_Feats_Clear gIBM_LevelRow_Feats_Clear, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CLEAR
 	}
 
 	RefreshLevelRows()
@@ -675,8 +689,27 @@ class IC_IriBrivMaster_GUI
 		textColour:=data["M"] ? IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_IN : IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
 		GuiControl, ICScriptHub: +%textColour%, IBM_LevelRow_%index%_M
 		GuiControl, ICScriptHub:Show, IBM_LevelRow_%index%_M
+		featCount:=data["Feat_List"] ? data["Feat_List"].Count() : 0
+		GuiControl, ICScriptHub:, IBM_LevelRow_%index%_Feats_Selected, % featCount . (data["Feat_Exclusive"] ? "" : "+")
+		GuiControl, ICScriptHub:Show, IBM_LevelRow_%index%_Feats_Selected
+		GUIFunctions.AddToolTip("IBM_LevelRow_" . index . "_Feats_Selected", this.GetFeatTooltip(data))
+		GuiControl, ICScriptHub:Show, IBM_LevelRow_%index%_Feats_Set
+		GuiControl, ICScriptHub:Show, IBM_LevelRow_%index%_Feats_Clear
 		GuiControlGet, placement, ICScriptHub:Pos, IBM_LevelRow_%index%_z1
 		return placementY+placementH ;Return the botton of the edit box controls, used to size things
+	}
+	
+	GetFeatTooltip(data)
+	{
+		featTooltip:=""
+		if(data["Feat_List"] AND data["Feat_List"].Count()>0)
+		{
+			for id,name in data["Feat_List"]
+			{
+				featTooltip.=name . " (" . id ")`n"
+			}
+		}
+		return featTooltip
 	}
 
 	HideLevelRow(index) ;Single row
@@ -702,6 +735,11 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:Hide, IBM_LevelRow_%index%_E
 		GuiControl, ICScriptHub: +%textColour%, IBM_LevelRow_%index%_M
 		GuiControl, ICScriptHub:Hide, IBM_LevelRow_%index%_M
+		GuiControl, ICScriptHub:, IBM_LevelRow_%index%_Feats_Selected, ""
+		g_MouseToolTips.Remove(GUIFunctions.GetToolTipTarget("IBM_LevelRow_" . index . "_Feats_Selected")) ;Remove tooltip
+		GuiControl, ICScriptHub:Hide, IBM_LevelRow_%index%_Feats_Selected
+		GuiControl, ICScriptHub:Hide, IBM_LevelRow_%index%_Feats_Set
+		GuiControl, ICScriptHub:Hide, IBM_LevelRow_%index%_Feats_Clear
 	}
 
 	GetLevelRowData() ;Extracts set levels
@@ -709,7 +747,7 @@ class IC_IriBrivMaster_GUI
 		currentLevels:=[]
 		If IsObject(this.levelDataSet) ;Do not refresh here, as the values entered will be based on the data displayed from the last refresh
 		{
-			index:=1
+			index:=1 ;TODO: Switch this to using champData["ListIndex"]
 			for seat, seatMembers in this.levelDataSet
 			{
 				for champID, champData in seatMembers
@@ -724,6 +762,8 @@ class IC_IriBrivMaster_GUI
 					GuiControlGet, value,, IBM_LevelRow_%index%_min
 					if (value)
 						currentLevels[champID,"min"]:=value
+					currentLevels[champID,"Feat_List"]:=champData["Feat_List"]
+					currentLevels[champID,"Feat_Exclusive"]:=champData["Feat_Exclusive"]
 					index++
 				}
 			}
@@ -745,6 +785,8 @@ class IC_IriBrivMaster_GUI
 					champData["min"]:=savedLevels[champID,"min"]
 					champData["prio"]:=savedLevels[champID,"prio"]
 					champData["priolimit"]:=savedLevels[champID,"priolimit"]
+					champData["Feat_List"]:=savedLevels[champID,"Feat_List"]
+					champData["Feat_Exclusive"]:=savedLevels[champID,"Feat_Exclusive"]
 				}
 				else
 				{
@@ -752,6 +794,8 @@ class IC_IriBrivMaster_GUI
 					champData["min"]:=""
 					champData["prio"]:=0
 					champData["priolimit"]:=""
+					champData["Feat_List"]:=""
+					champData["Feat_Exclusive"]:=false
 				}
 			}
 		}
@@ -872,7 +916,7 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:Text, IBM_Game_Settings_Status, %statusText%
 		;GuiControl, ICScriptHub:MoveDraw,IBM_Game_Settings_Status
 	}
-	
+
 	GetDPIScale()
 	{
 		hdc := DllCall("GetDC", "ptr", 0)
@@ -880,6 +924,90 @@ class IC_IriBrivMaster_GUI
 		DllCall("ReleaseDC", "ptr", 0, "ptr", hdc)
 		return dpi / 96
 	}
+}
+
+IBM_LevelRow_Feats_Set()
+{
+	RegExMatch(A_GuiControl,"IBM_LevelRow_(\d{1,2})_Feats_Set",row)
+	for _, seatMembers in g_IriBrivMaster_GUI.levelDataSet
+	{
+		for champID, champData in seatMembers
+		{
+			if(champData["ListIndex"]==row1)
+			{
+				g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData()) ;Makes sure new champions are in the data set before we attempt to make changes
+				savedLevels:=g_IriBrivMaster.Settings["IBM_LevelManager_Levels",g_IriBrivMaster.Settings["IBM_Route_Combine"]]
+				HERO_FEATS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.FeatHandler.heroFeatSlots[champID].List
+				size:=HERO_FEATS.size.Read()
+				currentFeats:={}
+				messageFeats:=""
+				Loop, %size%
+				{
+					id:=HERO_FEATS[A_Index - 1].ID.Read()
+					name:=HERO_FEATS[A_Index - 1].Name.Read()
+					if(id) ;heroFeatSlots always has the 4 slots
+					{
+						currentFeats[id]:=name
+						messageFeats.=name . " (" . id . ")`n"
+					}
+				}
+				if (currentFeats.Count()>0)
+				{
+					message:="Selecting the following feats as required for " . champData["Name"] . ":`n" . messageFeats . message.="`nMake this selection exclusive?"
+					Msgbox, 35, Feat Guard, %message% ;3 is Yes/No/Cancel, + 32 for Question icon
+					IfMsgBox Yes
+					{
+						savedLevels[ChampID,"Feat_Exclusive"]:=true
+					}
+					IfMsgBox No
+					{
+						savedLevels[ChampID,"Feat_Exclusive"]:=false
+					}
+					IfMsgBox Cancel
+					{
+						return
+					}
+					savedLevels[ChampID,"Feat_List"]:=currentFeats
+					g_IriBrivMaster_GUI.RefreshLevelRows()
+					return
+				}
+				else
+				{
+					message:="No feats are currently equipped on " . champData["Name"] . "`nMake this selection exclusive?"
+					savedLevels[ChampID,"Feat_List"]:=""
+					Msgbox, 33, Feat Guard, %message% ;1 is OK/Cancel, + 32 for Question icon
+					IfMsgBox OK
+					{
+						savedLevels[ChampID,"Feat_Exclusive"]:=true
+						g_IriBrivMaster_GUI.RefreshLevelRows()
+						return
+					}
+					savedLevels[ChampID,"Feat_Exclusive"]:=false
+					g_IriBrivMaster_GUI.RefreshLevelRows()
+					return
+				}
+			}
+		}
+	}
+}
+
+IBM_LevelRow_Feats_Clear()
+{
+	RegExMatch(A_GuiControl,"IBM_LevelRow_(\d{1,2})_Feats_Clear",row)
+	for _, seatMembers in g_IriBrivMaster_GUI.levelDataSet
+	{
+		for champID, champData in seatMembers
+		{
+			if(champData["ListIndex"]==row1)
+			{
+				g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData()) ;Makes sure new champions are in the data set before we attempt to make changes
+				savedLevels:=g_IriBrivMaster.Settings["IBM_LevelManager_Levels",g_IriBrivMaster.Settings["IBM_Route_Combine"]]
+				savedLevels[champID,"Feat_List"]:=""
+				savedLevels[champID,"Feat_Exclusive"]:=false
+			}
+		}
+	}
+	g_IriBrivMaster_GUI.RefreshLevelRows()
 }
 
 IBM_Level_Diana_Cheese()
@@ -1071,6 +1199,7 @@ IBM_ChestsSnatcher_Options()
 	}
 	else
 	{
+		g_IriBrivMaster_GUI.UpdateChestSnatcherOptions(g_IriBrivMaster.settings) ;TODO: Get this neater access to the settings?
 		GuiControlGet, StatusList, Hwnd, IBM_ChestsSnatcher_Status
 		WinGetPos, StatusListX, StatusListY,StatusListW,StatusListH, % "ahk_id " . StatusList
 		targetX:=StatusListX+StatusListW//2
@@ -1079,52 +1208,29 @@ IBM_ChestsSnatcher_Options()
 	}
 }
 
-IBM_ChestSnatcher_Options_Open_Gold()
-{
-	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Gold
-	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
-		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
-	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Open_Gold",value)
-}
-
-IBM_ChestSnatcher_Options_Open_Silver()
-{
-	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Silver
-	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
-		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
-	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Open_Silver",value)
-}
-
-IBM_ChestSnatcher_Options_Min_Gem()
-{
-	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Gem
-	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Gem",value)
-}
-
-IBM_ChestSnatcher_Options_Min_Gold()
-{
-	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Gold
-	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Gold",value)
-}
-
-IBM_ChestSnatcher_Options_Min_Silver()
-{
-	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Silver
-	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Silver",value)
-}
-
-IBM_ChestSnatcher_Options_Min_Buy()
+IBM_ChestSnatcher_Options_OK_Button() ;Applies all the the ChestSnatcher options
 {
 	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Buy
 	if (value>g_IriBrivMaster.CONSTANT_serverRateBuy) ;Can't buy more than 250 chests at a time
 		value:=g_IriBrivMaster.CONSTANT_serverRateBuy
 	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Buy",value)
-}
-
-IBM_ChestSnatcher_Options_Claim()
-{
+	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Gold
+	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
+		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
+	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Open_Gold",value)
+	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Silver
+	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
+		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
+	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Open_Silver",value)
+	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Gem
+	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Gem",value)
+	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Gold
+	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Gold",value)
+	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Silver
+	g_IriBrivMaster.UpdateSetting("IBM_ChestSnatcher_Options_Min_Silver",value)
 	GuiControlGet, value,, IBM_ChestSnatcher_Options_Claim
 	g_IriBrivMaster.UpdateSetting("IBM_DailyRewardClaim_Enable",value)
+	Gui, IBM_ChestSnatcher_Options:Hide
 }
 
 IBM_OffLine_Blank()

@@ -591,13 +591,16 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck()) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
 			{
 				saveCompleteTime:=A_TickCount
-				g_IBM.routeMaster.CheckRelayRelease()
 				g_IBM.Logger.AddMessage("CloseIC() Standard Loop "  . (saveStatus==1 ? "Save" : "Reads Invalid") . " - saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
+				g_IBM.routeMaster.CheckRelayRelease()
+				StartTime:=A_TickCount ;Reset timeout after save, there's no longer a reason not to close the game by force in the following loop
+				timeout:=500*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 2.5s
 			}
         }
+		timeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Reset to standard
         StartTime:=A_TickCount
 		NextCloseAttempt:=A_TickCount ;Throttle input whilst continuing to check rapidly for game save and window closure
-		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout ) ; Outright murder
+		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout) ; Outright murder
 		{
 			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck())
 			{

@@ -333,7 +333,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			ElapsedTime := A_TickCount - StartTime
         }
-		this.KEY_GameStartFormation.KeyPress()
+		currentZone:=this.Memory.ReadCurrentZone()
+		if(currentZone>1) ;Do not try to change formation if the current zone is either not valid (waste of time) or 1 (where it will override M and cause issues)
+			g_IBM.RouteMaster.GetStandardFormationKey(currentZone).KeyPress()
     }
 
 	;Override to use sleep, not sure why this spins the wheels in loops like this, but the base script does it a LOT

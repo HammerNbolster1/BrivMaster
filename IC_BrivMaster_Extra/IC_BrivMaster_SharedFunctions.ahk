@@ -166,30 +166,33 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		g_IBM.TriggerStart:=true
     }
 	
-	;Override to make it MASH KEYS FASTER, in an attempt to avoid fallbacks more reliably, and to use inputManager
-	RecoverFromGameClose() ;TODO: Read the zone and use the appropriate formation, and only fall back to the saved one if the read is not available
+	RecoverFromGameClose()
     {
-        StartTime := A_TickCount
-        ElapsedTime := 0
-        timeout := 10000 ;TODO: Does this make sense? Should it use the timeout factor?
-        if(this.Memory.ReadCurrentZone() == 1)
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        timeout:=10000 ;TODO: Does this make sense? Should it use the timeout factor?
+        currentZone:=this.Memory.ReadCurrentZone()
+		if(currentZone==1) ;TODO: What happens if the zone read is invalid, i.e. -1 or ""? The formation lookup will fail...which is probably appropriate
 			return
-        ElapsedTime := 0
-		isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
+		gameStartFormation:=g_IBM.RouteMaster.GetStandardFormation(currentZone)
+		KEY:=g_IBM.RouteMaster.GetStandardFormationKey(currentZone)
+        ElapsedTime:=0
+		isCurrentFormation:=this.IsCurrentFormation(gameStartFormation)
         while(!isCurrentFormation AND ElapsedTime < timeout AND !this.Memory.ReadNumAttackingMonstersReached())
         {
-			this.KEY_GameStartFormation.KeyPress() ;Note: Inputs in this function are covered by Critical being turned on previously via WaitForGameReady() calling WaitForFinalStatUpdates()
+			KEY.KeyPress() ;Note: Inputs in this function are covered by Critical being turned on previously via WaitForGameReady() calling WaitForFinalStatUpdates()
             g_IBM.IBM_Sleep(15) ;Fast as we do want to mash this to get it in before an enemy spawns
-			isCurrentFormation:=this.IsCurrentFormation(g_SF.GameStartFormation)
+			isCurrentFormation:=this.IsCurrentFormation(gameStartFormation)
 			ElapsedTime := A_TickCount - StartTime
         }
-        while(!isCurrentFormation AND (this.Memory.ReadNumAttackingMonstersReached() OR this.Memory.ReadNumRangedAttackingMonsters()) AND (ElapsedTime < (2 * timeout)))
+		timeout*=2 ;Double the timeout
+        while(!isCurrentFormation AND (this.Memory.ReadNumAttackingMonstersReached() OR this.Memory.ReadNumRangedAttackingMonsters()) AND (ElapsedTime < timeout))
         {
             ElapsedTime := A_TickCount - StartTime
             this.FallBackFromZone()
-            this.KEY_GameStartFormation.KeyPress()
+            KEY.KeyPress()
             g_IBM.RouteMaster.ToggleAutoProgress(1, true)
-            isCurrentFormation := this.IsCurrentFormation(g_SF.GameStartFormation)
+            isCurrentFormation:=this.IsCurrentFormation(gameStartFormation)
         }
 		Critical Off ;Turned On previously via WaitForGameReady() calling WaitForFinalStatUpdates()
         g_SharedData.IBM_UpdateOutbound("LoopString","Loading game finished")
@@ -330,7 +333,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			ElapsedTime := A_TickCount - StartTime
         }
-		this.KEY_GameStartFormation.KeyPress()
+		currentZone:=this.Memory.ReadCurrentZone()
+		if(currentZone>1) ;Do not try to change formation if the current zone is either not valid (waste of time) or 1 (where it will override M and cause issues)
+			g_IBM.RouteMaster.GetStandardFormationKey(currentZone).KeyPress()
     }
 
 	;Override to use sleep, not sure why this spins the wheels in loops like this, but the base script does it a LOT

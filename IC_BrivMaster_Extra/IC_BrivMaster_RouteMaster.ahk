@@ -4,14 +4,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 {
 	zoneCap:=2501
 	zones:={}
-	thelloraCap:=1 ;The ablity cap, so at 300 favour, 300
-	thelloraDirty:=true ;True if we have not actually read Thellora's data this run, due to her not being deployed yet
 	leftoverCalculated:=false ;True once this has been calculated - has to be done after Thellora has been fielded
 	leftoverHaste:=48
 	cycleCount:=0 ;Counts the number of runs since the last game restart
 	cycleMax:=1 ;Maximum runs per offline
 	cycleForceOffline:=false ;Stack offline in all cases
-	cycleDisableOffline:=false ;Stack online is all cases
+	cycleDisableOffline:=false ;Stack online in all cases
 	offlineSaveTime:=-1 ;Tracks the offline start time so it can be accessed globally
 	;Below has to be a string because array literals can't be this long. Going to 400 jumps is a bit overkill
 	static IRI_BRIVMASTER_JUMPCOST_METALBORN := "50,52,54,56,58,60,62,64,66,68,70,72,74,76,78,81,84,87,90,93,96,99,102,105,108,112,116,120,124,128,132,136,140,145,150,155,160,165,170,176,182,188,194,200,207,214,221,228,236,244,252,260,269,278,287,296,306,316,326,337,348,359,371,383,396,409,423,437,451,466,481,497,513,530,548,566,585,604,624,645,666,688,711,734,758,783,809,836,864,893,923,953,984,1017,1051,1086,1122,1159,1197,1237,1278,1320,1364,1409,1456,1504,1554,1605,1658,1713,1770,1828,1888,1950,2014,2081,2150,2221,2294,2370,2448,2529,2613,2699,2788,2880,2975,3073,3175,3280,3388,3500,3616,3736,3859,3987,4119,4255,4396,4541,4691,4846,5006,5171,5342,5519,5701,5889,6084,6285,6493,6708,6930,7159,7396,7640,7893,8154,8424,8702,8990,9287,9594,9911,10239,10577,10927,11288,11661,12046,12444,12855,13280,13719,14173,14642,15126,15626,16143,16677,17228,17798,18386,18994,19622,20271,20941,21633,22348,23087,23850,24638,25452,26293,27162,28060,28988,29946,30936,31959,33015,34106,35233,36398,37601,38844,40128,41455,42825,44241,45703,47214,48775,50387,52053,53774,55552,57388,59285,61245,63270,65362,67523,69755,72061,74443,76904,79446,82072,84785,87588,90483,93474,96564,99756,103054,106461,109980,113616,117372,121252,125260,129401,133679,138098,142663,147379,152251,157284,162483,167854,173403,179135,185057,191175,197495,204024,210769,217737,224935,232371,240053,247989,256187,264656,273405,282443,291780,301426,311390,321684,332318,343304,354653,366377,378489,391001,403927,417280,431074,445324,460045,475253,490964,507194,523961,541282,559176,577661,596757,616484,636864,657917,679666,702134,725345,749323,774094,799684,826120,853430,881643,910788,940897,972001,1004133,1037327,1071619,1107044,1143640,1181446,1220502,1260849,1302530,1345589,1390071,1436024,1483496,1532537,1583199,1635536,1689603,1745458,1803159,1862768,1924347,1987962,2053680,2121570,2191705,2264158,2339006,2416328,2496207,2578726,2663973,2752038,2843014,2936998,3034089,3134389,3238005,3345046,3455626,3569862,3687874,3809787,3935730,4065837,4200245,4339096,4482537,4630720,4783802,4941944,5105314,5274085,5448435,5628549,5814617,6006836,6205409,6410546,6622465,6841389,7067551,7301189,7542551,7791892,8049475,8315573,8590468,8874450,9167820,9470888,9783975,10107412,10441541,10786716,11143302,11511676,11892227,12285358,12691486,13111039,13544462,13992213,14454765,14932608,15426248,15936207,16463024,17007256,17569479,18150288,18750298,19370143,20010478,20671981,21355352"
@@ -96,7 +94,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			this.RelayData.Reset()
 		}
-		thelloraDirty:=true ;Cannot re-read her data yet as won't be fielded
 		this.UpdateStatusString()
 		this.SetInitialStackString()
 		g_SharedData.IBM_UpdateOutbound("IBM_ProcessSwap",false)
@@ -129,7 +126,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_StatusString","Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . ", using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone)
 	}
 
-	SetInitialStackString() ;Return the pre-stacking intent, ie on/offline and zone TODO: This doesn't know about blanks
+	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone
 	{
 		if (this.ShouldOfflineStack()) ;Offline
 		{
@@ -168,30 +165,22 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return g_SF.Memory.ReadSBStacks() < this.GetTargetStacks()
 	}
 
-	GetTargetStacks(ignoreHaste:=true, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run
+	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run. Ignore haste is used for the status string showing the expected per run stack usage, rather than in-run calculation
 	{
-		if ignoreHaste
-			return this.GetTargetStacksForFullRun()
+		if (ignoreHaste)
+			return this.GetTargetStacksForFullRun(true)
 		else
 		{
-			expectedNextRush:=this.UpdateLeftoverHaste(forceRecalc) ;Returns the number of Thellora rush stacks expected
-			stacksToGenerate:=this.GetTargetStacksForFullRun(expectedNextRush) - this.leftoverHaste
+			this.UpdateLeftoverHaste(forceRecalc)
+			stacksToGenerate:=this.GetTargetStacksForFullRun() - this.leftoverHaste
 			return CEIL(stacksToGenerate / this.stackConversionRate) ;Ceiling as the feat rounds down
 		}
 	}
 
-	UpdateThellora() ;TODO: Encapsulate the cap/dirty part of this in the Hero object? The target is route based and should probably stay here
+	UpdateThellora()
 	{
-		if (this.thelloraDirty)
-		{
-			cap:=g_Heroes[139].ReadRushTarget()
-			if (cap)
-			{
-				this.thelloraCap:=cap
-				this.thelloraTarget:=this.GetThelloraTarget(this.thelloraCap,this.combining)
-				this.thelloraDirty:=false
-			}
-		}
+		if (g_Heroes[139].UpdateRushTarget())
+			this.thelloraTarget:=this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining)
 	}
 
 	IsFeatSwap()
@@ -211,11 +200,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if(this.CombineModeThelloraBossAvoidance AND this.combining)
 		{
-			thelloraChargesUncapped:=FLOOR(g_Heroes[139].ReadRushAreaCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
-			thelloraCharges:=MIN(thelloraChargesUncapped,this.thelloraCap) ;Cap
-			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true) ;TODO: These have been split out for debug reasons, can be streamlined later
-			rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
-			if (rushTargetCombining < this.thelloraTarget AND MOD(rushTargetCombining,5)==0 AND MOD(rushTargetNonCombining,5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss. Note that as this is run at the very start of the script, this.thelloraTarget
+			thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
+			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true)
+			if (rushTargetCombining < this.thelloraTarget AND MOD(rushTargetCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,false),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
 			{
 				g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent Briv being levelled prior to completion of z1, breaking the combine
 				g_IBM.Logger.AddMessage("CTBR: Broke combine to avoid hitting boss")
@@ -223,17 +210,18 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	GetTargetStacksForFullRun(expectedNextRush:=false) ;Returns the expected total stacks for a full run
+	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
 	{
-		if (expectedNextRush)
-			thelloraTarget:=this.GetThelloraTarget(expectedNextRush,this.combining)
+		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call
+		if (rushNext)
+			thelloraTarget:=this.GetThelloraTarget(rushNext,this.combining)
 		else
 			thelloraTarget:=this.thelloraTarget
 		jumps:=this.zones[thelloraTarget].jumpsToFinish
 		if (this.combining) ;We need to do one jump to reach ThelloraTarget in this case
 		{
 			jumps++
-			if (expectedNextRush AND this.CombineModeThelloraBossAvoidance AND this.IsFeatSwap() AND this.zonesPerJumpM > this.zonesPerJumpE) ;If Thellora won't reach her target, we have boss recovery on, we are using feat swapping and the M jump would have been larger than an E jump, we need to generate an additional jump's worth of stacks, as replacing an M with an E would result in us needing 1 more jump Note: As this is a recovery mode trying to work out if the jump being replaced is Q or E doesn't seem worthwhile (it's made complex by her erratic behaviour if not in W)
+			if (rushNext AND this.CombineModeThelloraBossAvoidance AND this.IsFeatSwap() AND this.zonesPerJumpM > this.zonesPerJumpE) ;If Thellora won't reach her target, we have boss recovery on, we are using feat swapping and the M jump would have been larger than an E jump, we need to generate an additional jump's worth of stacks, as replacing an M with an E would result in us needing 1 more jump Note: As this is a recovery mode trying to work out if the jump being replaced is Q or E doesn't seem worthwhile (it's made complex by her erratic behaviour if not in W)
 			{
 				jumps++
 				g_IBM.Logger.AddThelloraCompensationMessage("GetTargetStacksForFullRun: Added extra jump for Thellora recovery for a total of: ",jumps)
@@ -242,33 +230,36 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return this.jumpCosts[jumps]
 	}
 
-	UpdateLeftoverHaste(forceRecalc:=false) ;Returns 0, or if Thellora won't make her target then it returns her skip number (NOT target)
+	UpdateLeftoverHaste(forceRecalc:=false)
 	{
 		if (this.leftoverCalculated AND !forceRecalc)
-			return 0
+			return
 		else
 		{
-			returnValue:=0
-			this.UpdateThellora() ;Ensure we have her cap read (mostly impacts the first run)
+			g_Heroes[139].rushNext:=0
 			calcResult:=this.UpdateLeftoverHaste_Calculate()
 			this.leftoverHaste:=calcResult.haste
-			;TODO: Consider changing the below to deal in charges not zones, it's rather confusing at the moment doing 5x then /5...
-			thelloraNeedsZones:=this.thelloraCap * 5 + (this.combining ? 0 : 1) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
-			currentChargesInZones:=g_Heroes[139].ReadRushAreaCharges() * 5 ;The memory read will for example be 50.2 for 50 zones and 1 of 5 towards the next, so with the x5 will be 251 in this example
-			thelloraNeedsAdditional:=MAX(0,thelloraNeedsZones-currentChargesInZones)
-			if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
+			if (g_Heroes[139].inA) ;If Thellora is in use
 			{
-				zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
+				this.UpdateThellora() ;Ensure we have her cap read (mostly impacts the first run)
+				targetCharges:=g_Heroes[139].rushCap + (this.combining ? 0 : 1/5) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
+				currentCharges:=g_Heroes[139].ReadRushAreaCharges()
+				remainingCharges:=MAX(0,targetCharges-currentCharges)
+				if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
+				{
+					zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
+				}
+				else
+					zonesRemaining:=MAX(0,this.targetZone-calcResult.zone)
+				if (zonesRemaining < remainingCharges*5)
+				{
+					g_Heroes[139].rushNext:=FLOOR(currentCharges + (zonesRemaining/5)) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
+				}
+				if (!g_Heroes[139].rushCapDirty AND g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
+					this.leftoverCalculated:=true
 			}
 			else
-				zonesRemaining:=MAX(0,this.targetZone-calcResult.zone)
-			if (zonesRemaining < thelloraNeedsAdditional)
-			{
-				returnValue:=FLOOR((currentChargesInZones + zonesRemaining) / 5) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
-			}
-			if (g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
 				this.leftoverCalculated:=true
-			return returnValue
 		}
 	}
 
@@ -380,7 +371,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayData.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
 		{
-			;OutputDebug % A_TickCount . ":TestForBlankOffline() ShouldBlankRestart=[" . this.ShouldBlankRestart() . "] EnoughHasteForCurrentRun=[" . this.EnoughHasteForCurrentRun() . "] RelayBlankOffline=[" . this.RelayBlankOffline . "] RelayData.IsActive=[" . this.RelayData.IsActive() . "] RelayData.State=[" . this.RelayData.State . "]`n"
 			restartZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
 			if (currentZone > restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
 			{
@@ -399,22 +389,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	BlankRestart() ;Restart without stacking TODO: We need an option to stop progress here for potatoes
     {
-		this.ToggleAutoProgress(0)
 		startStacks:=g_SF.Memory.ReadSBStacks()
 		offlineStartTime:=A_TickCount
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_SF.CurrentZone:=startZone
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
-		if(this.ShouldWalk(g_SF.CurrentZone))
-		{
-			g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
-		}
-		else
-		{
-			g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-			g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
-		}
 		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
 		if (this.RelayBlankOffline)
 		{
@@ -526,7 +505,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.StartAutoProgressSoft()
     }
 
-	StackUltra(highZone,maxOnlineStackTime := 300000)
+	StackUltra(highZone,maxOnlineStackTime:=300000)
     {
 		if (this.PostponeStacking(highZone))
             return 0
@@ -541,11 +520,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.UltraStackFarmSetup()
 		ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Stack Ultra")
-        g_SF.FallBackFromBossZone() ;TODO: Can we end up on a boss zone without something very weird happening? Maybe using x/x-1J setups?
+        this.FallBackFromBossZone() ;In recovery scenarios we can end up on a boss zone (e.g. out of stacks before normal stackzone)
 		if (this.useBrivBoost)
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout
+		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout TODO: If Melf's buff isn't active (especially without Tatyana) this is likely going to result in a timeout that is too low?
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90)
 		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
@@ -610,7 +589,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         g_SharedData.IBM_UpdateOutbound("LoopString","Setting stack farm formation") ;This is intentionally after the W/Levelup calls to avoid delaying them
 		StartTime:=A_TickCount
         ElapsedTime:=0
-		TimeOut:=3000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
+		TimeOut:=2000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
         while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
         {
 			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode; will catch cases where the initial _Bulk failed due to lack of control focus
@@ -657,7 +636,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.OnlineStackFarmSetup(fastMelf, g_IBM.LevelManager.Champions[59].Key)
         ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Stack Normal")
-        g_SF.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
+        this.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
@@ -744,7 +723,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             return false
 		if (currentZone > this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
 			return false
-		nextSpawnMoreRange := this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
+		nextSpawnMoreRange:=this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
 		if(nextSpawnMoreRange)
 		{
 			if (currentZone < nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
@@ -762,7 +741,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else ;No Spawn More available
 		{
-			if (this.zones[currentZone].stackZone == false) ;Even without spawn more, try to use a desired stackzone
+			if (this.zones[currentZone].stackZone==false) ;Even without spawn more, try to use a desired stackzone
 				return true
 		}
 		return false
@@ -808,16 +787,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             retryAttempt++               ; pre stackfarm call
             this.StackFarmSetup()
             g_SF.CurrentZone := g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-			if(this.ShouldWalk(g_SF.CurrentZone))
-			{
-				g_SF.KEY_GameStartFormation:=this.KEY_E ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("E")
-			}
-			else
-			{
-				g_SF.KEY_GameStartFormation:=this.KEY_Q ;TODO: Does this make sense for a blank? We could end up anywhere as we don't stop autoprogress
-				g_SF.GameStartFormation:=g_IBM.levelManager.GetFormation("Q")
-			}
             if (this.targetZone != "" AND g_SF.CurrentZone > this.targetZone)
             {
                 g_SharedData.IBM_UpdateOutbound("LoopString","Attempted to offline stack after modron reset - verify settings")
@@ -862,8 +831,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackFarmSetup()
     {
-		if (!g_SF.KillCurrentBoss() ) ; Previously/Alternatively FallBackFromBossZone()
-            g_SF.FallBackFromBossZone()
+		if (!g_SF.KillCurrentBoss())
+            this.FallBackFromBossZone()
         this.KEY_W.KeyPress()
         this.ToggleAutoProgress(0,false,true)
 		g_IBM.levelManager.LevelFormation("W", "min")
@@ -976,7 +945,26 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return
     }
 
-
+	FallBackFromBossZone(KEY:="", maxLoopTime := 5000 )
+    {
+        fellBack:=false
+        currentZone := g_SF.Memory.ReadCurrentZone()
+        if (Mod(currentZone, 5))
+            return fellBack
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        g_SharedData.IBM_UpdateOutbound("LoopString","Falling back from boss zone")
+        while (!Mod(g_SF.Memory.ReadCurrentZone(), 5) AND ElapsedTime < maxLoopTime)
+        {
+            this.KEY_LEFT
+			fellBack:=true
+			g_IBM.IBM_Sleep(15)
+			ElapsedTime:=A_TickCount - StartTime
+        }
+        this.WaitForTransition(KEY)
+        return fellBack
+    }
+	
 	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
 	{
 		isEZone:=this.zones[g_SF.Memory.ReadHighestZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
@@ -1142,9 +1130,23 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	}
 	*/
 
-	ShouldWalk(currentZone)
+	ShouldWalk(zone)
 	{
-		return this.zones[currentZone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
+		return this.zones[zone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
+	}
+	
+	GetStandardFormationKey(zone) ;Returns the key object for Q or E as appropriate for the zone
+	{
+		if (this.ShouldWalk(zone))
+			return this.Key_E
+		return this.KEY_Q
+	}
+	
+	GetStandardFormation(zone) ;Returns Q or E formation from the level manager as appropriate for the zone
+	{
+		if (this.ShouldWalk(zone))
+			return g_IBM.levelManager.GetFormation("E")
+		return g_IBM.levelManager.GetFormation("Q")
 	}
 
 	LoadRoute() ;Once per script-run loading of the route

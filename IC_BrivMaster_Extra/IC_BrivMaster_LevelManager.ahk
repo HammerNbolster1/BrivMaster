@@ -227,7 +227,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 	{
 		for heroID,_ in this.savedFormationChamps["A"]
 		{
-			g_Heroes[heroID].ApplyLevelSettings(levelSettings) ;g_Heroes' __get() will create the hero object if it doesn't already exist
+			g_Heroes[heroID].ApplyLevelSettings(levelSettings,this.savedFormationChamps) ;g_Heroes' __get() will create the hero object if it doesn't already exist
 		}
 	}
 

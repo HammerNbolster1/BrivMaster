@@ -520,7 +520,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.UltraStackFarmSetup()
 		ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Stack Ultra")
-        g_SF.FallBackFromBossZone() ;TODO: Can we end up on a boss zone without something very weird happening? Maybe using x/x-1J setups?
+        this.FallBackFromBossZone() ;In recovery scenarios we can end up on a boss zone (e.g. out of stacks before normal stackzone)
 		if (this.useBrivBoost)
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
@@ -636,7 +636,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.OnlineStackFarmSetup(fastMelf, g_IBM.LevelManager.Champions[59].Key)
         ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Stack Normal")
-        g_SF.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
+        this.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
@@ -831,8 +831,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackFarmSetup()
     {
-		if (!g_SF.KillCurrentBoss() ) ; Previously/Alternatively FallBackFromBossZone()
-            g_SF.FallBackFromBossZone()
+		if (!g_SF.KillCurrentBoss())
+            this.FallBackFromBossZone()
         this.KEY_W.KeyPress()
         this.ToggleAutoProgress(0,false,true)
 		g_IBM.levelManager.LevelFormation("W", "min")
@@ -945,7 +945,26 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return
     }
 
-
+	FallBackFromBossZone(KEY:="", maxLoopTime := 5000 )
+    {
+        fellBack:=false
+        currentZone := g_SF.Memory.ReadCurrentZone()
+        if (Mod(currentZone, 5))
+            return fellBack
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        g_SharedData.IBM_UpdateOutbound("LoopString","Falling back from boss zone")
+        while (!Mod(g_SF.Memory.ReadCurrentZone(), 5) AND ElapsedTime < maxLoopTime)
+        {
+            this.KEY_LEFT
+			fellBack:=true
+			g_IBM.IBM_Sleep(15)
+			ElapsedTime:=A_TickCount - StartTime
+        }
+        this.WaitForTransition(KEY)
+        return fellBack
+    }
+	
 	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
 	{
 		isEZone:=this.zones[g_SF.Memory.ReadHighestZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code

@@ -277,9 +277,9 @@ class IC_BrivMaster_GemFarm_Class
 		if (currentZone==1)
 		{
 
-			melfPresent:=this.levelManager.IsChampInFormation(59, "M")
-			tatyanaPresent:=this.levelManager.IsChampInFormation(97, "M")
-			BBEGPresent:=this.levelManager.IsChampInFormation(125, "M")
+			melfPresent:=g_Heroes[59].inM
+			tatyanaPresent:=g_Heroes[97].inM
+			BBEGPresent:=g_Heroes[125].inM
 			melfSpawningMore:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore()
 
 			if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
@@ -291,7 +291,6 @@ class IC_BrivMaster_GemFarm_Class
 
 			if (this.routeMaster.combining)
 			{
-				thelloraPresent:=this.levelManager.IsChampInFormation(139, "M") ;Maybe these need to be a table. Thellora is separate for (non)combining as her presence matters in M for combine, and Q/E for non-combine
 				this.routeMaster.CheckThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
 				if (!melfSpawningMore)
@@ -327,24 +326,16 @@ class IC_BrivMaster_GemFarm_Class
 					}
 				}
 				g_SharedData.IBM_UpdateOutbound("LoopString","Start Zone Levelling")
-				;OutputDebug % A_TickCount . ":Start Zone Levelling`n"
 				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
-				;OutputDebug % A_TickCount . ":Done Start Zone Levelling - raising BBEG level if needed`n"
 				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 					this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
-				;OutputDebug % A_TickCount . ":Pre-RushWait`n"
-				if (thelloraPresent)
+				if (g_Heroes[139].inM)
 					g_SF.DoRushWait(true)
-				;OutputDebug % A_TickCount . ":Post-RushWait - Force stop progress`n"
 				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
-				;OutputDebug % A_TickCount . ":Progress stopped - Starting Casino`n"
 				this.EllywickCasino.Start(melfSpawningMoreAfterRush) ;Start the Elly handler before rushwaiting, using the post-rush Melf status
 				g_SharedData.IBM_UpdateOutbound("LoopString","Standard Levelling: M")
-				;OutputDebug % A_TickCount . ":Casino Started - Standard Levelling: M`n"
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
-				;OutputDebug % A_TickCount . ":Done Standard Levelling - Updating Thellora`n"
 				this.routeMaster.UpdateThellora()
-				;OutputDebug % A_TickCount . ":Updated Thellora - Calling Casino`n"
 				g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Post-rush Casino")
 				this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
 
@@ -367,7 +358,6 @@ class IC_BrivMaster_GemFarm_Class
 			{
 
 				this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
-				thelloraPresent:=this.levelManager.IsChampInFormation(139, "Q") OR this.levelManager.IsChampInFormation(139, "E") ;TODO: Check based on z1 .ShouldWalk? Although having her in only one formation makes no sense at all
 				;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
 				;TODO: Update to check BBEGPresent
 				if (melfSpawningMore)
@@ -384,10 +374,6 @@ class IC_BrivMaster_GemFarm_Class
 				;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
 				;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
 				;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
-
-				;this.levelManager.LevelClickDamage() ;Do one tick of click damage levelling to make sure we oneshot things in z1. Calls in wait for gold mode: TODO: No such mode exists?!
-
-
 				frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
 				for _, v in frontColumn
 				{
@@ -436,12 +422,11 @@ class IC_BrivMaster_GemFarm_Class
 				;this.IBM_Sleep(15) ;sleep to allow the change to actually apply - Do we need to verify this?
 				;TODO: Is using Min here appropriate?
 				this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
-				if (thelloraPresent)
+				if (g_Heroes[139].inQ OR g_Heroes[139].inE)
 				{
 					g_SF.DoRushWait()
 					this.routeMaster.UpdateThellora()
 				}
-
 			}
 		}
 		else ;Not z1

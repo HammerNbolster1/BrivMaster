@@ -206,8 +206,13 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 		this.Current:=this.Master.Clone()
 	}
 
-	ApplyLevelSettings(levelsettings) ;Set up this champion's levelling related properties
+	ApplyLevelSettings(levelsettings,savedFormationChamps) ;Set up this champion's levelling and formation related properties
 	{
+		this.inM:=savedFormationChamps["M"].hasKey(this.ID)
+		this.inQ:=savedFormationChamps["Q"].hasKey(this.ID)
+		this.inW:=savedFormationChamps["W"].hasKey(this.ID)
+		this.inE:=savedFormationChamps["E"].hasKey(this.ID)
+		this.inA:=this.inM OR this.inQ OR this.inW OR this.inE
 		if (levelSettings.hasKey(this.ID))
 		{
 			champData:=levelSettings[this.ID]
@@ -334,6 +339,16 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		this.EFFECT_KEY_PoUR:="thellora_plateaus_of_unicorn_run"
 		this.STAT_RUSH_TRIGGERED:="thellora_plateaus_of_unicorn_run_has_triggered"
 		this.STAT_AREA_CHARGES:="thellora_plateaus_of_unicorn_run_areas"
+		this.rushCapDirty:=true ;True if the rush cap has not been read from her handler this run, needed as the handler is only available when she is fielded
+		this.rushCap:=1 ;Max rush zone TODO: Should we start with the assumption that the cap is min(308, targetZone/5)? Or just read the campaign gold...
+		this.rushNext:=0 ;If non-zero, the expected next rush zone, which could be lower than the cap if in recovery
+	}
+	
+	Reset()
+	{
+		base.Reset()
+		this.rushCapDirty:=true
+		this.rushNext:=0
 	}
 
 	;--------------------------------------------------------------------------------------
@@ -402,6 +417,29 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------
+	
+	UpdateRushTarget() ;Returns true memory read was available and the cap actually changed
+	{
+		if (this.rushCapDirty)
+		{
+			cap:=this.ReadRushTarget()
+			if (cap)
+			{
+				this.rushCapDirty:=false
+				if (this.rushCap!=cap) ;If we're actually making a change
+				{
+					this.rushCap:=cap
+					return true
+				}
+			}
+		}
+		return false
+	}
+	
+	GetCappedRushCharges() ;Assumes that the cap is current
+	{
+		return Min(this.ReadRushAreaCharges(),this.rushCap)
+	}
 }
 
 class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class

@@ -437,7 +437,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)
     {
-        if (g_Heroes[83].ReadFielded())
+        if (!g_Heroes[83].ReadBenched())
         {
 			frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()>0 ? false : true ;If there are no locked champions there's no need to check for unlocking them
 			ghostLevellingAllowed:=!allowGhostLevelling

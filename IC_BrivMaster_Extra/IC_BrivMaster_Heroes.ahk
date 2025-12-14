@@ -168,7 +168,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].overwhelm.Read()
     }
 
-	ReadFielded() ;In current formation
+	ReadFielded() ;In current formation. !ReadBenched() should be used in preferance to this
 	{
         FORMATION_SLOTS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.slots
 		size:=FORMATION_SLOTS.size.Read()

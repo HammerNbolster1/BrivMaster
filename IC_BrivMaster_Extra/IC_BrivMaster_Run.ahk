@@ -368,8 +368,7 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				else if (!tatyanaPresent)
 				{
-					BBEGInQ:=this.levelManager.IsChampInFormation(125, "Q")
-					this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",BBEGInQ ? 100 : 0)
+					this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",g_Heroes[125].inQ ? 100 : 0)
 				}
 				;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
 				;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
@@ -501,10 +500,10 @@ class IC_BrivMaster_GemFarm_Class
     PreFlightCheck()
     {
 		;Check Briv is saved in the expected formations
-		brivInM:=this.LevelManager.IsChampInFormation(58,"M")
-        brivInQ:=this.LevelManager.IsChampInFormation(58,"Q")
-		brivInW:=this.LevelManager.IsChampInFormation(58,"W")
-		brivInE:=this.LevelManager.IsChampInFormation(58,"E") ;Briv should be present in E if and only if we are feat swapping
+		brivInM:=g_Heroes[58].inM
+        brivInQ:=g_Heroes[58].inQ
+		brivInW:=g_Heroes[58].inW
+		brivInE:=g_Heroes[58].inE ;Briv should be present in E if and only if we are feat swapping
 		if (!brivInM OR !brivInQ OR !brivInW OR (this.RouteMaster.IsFeatSwap() != brivInE))
 		{
 			errorMsg:="Briv's presence in the saved formations is not as expected:`n"

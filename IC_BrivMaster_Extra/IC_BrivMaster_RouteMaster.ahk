@@ -19,7 +19,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.combining:=combine
 		
 		this.zonesPerJumpQ:=g_IBM_Settings["IBM_Route_BrivJump_Q"] + 1 ; We want the actual number of zones so adding 1 here, eg 9 jump goes from z1 to z11, so covers 10 zones (because it's the normal +1 progress plus the 9)
-		if (g_IBM.levelManager.IsChampInFormation(58, "E")) ;Feat swap, ignored if Briv is not saved in E
+		if (g_Heroes[58].inE) ;Feat swap, ignored if Briv is not saved in E
 			this.zonesPerJumpE:=g_IBM_Settings["IBM_Route_BrivJump_E"] + 1 ;As above
 		else
 			this.zonesPerJumpE:=1 ;Walking progresses 1 zone per 'jump'
@@ -328,7 +328,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		else ;Offline
 		{
 			stackZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
-			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_IBM.levelManager.IsChampInFormation(83, "W")) ;if enabled and Elly is specifically in formation 2, the stacking formation TODO: Check if Elly is actually enabled somewhere?
+			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_Heroes[83].inW) ;if enabled and Elly is specifically in W, the stacking formation
 			{
 				flames:=g_Heroes[83].GetNumFlamesCards()
 				if (flames>0)

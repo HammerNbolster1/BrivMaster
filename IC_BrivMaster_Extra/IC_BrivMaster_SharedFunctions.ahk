@@ -500,9 +500,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             try
             {
                 if (g_IBM_Settings["IBM_Game_Hide_Launcher"])
-					Run, %programLoc%,,Hide ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop. Consider if later timers might be impacted, however
+					Run, %programLoc%,,Hide, openPID
 				else
-					Run, %programLoc% ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop. Consider if later timers might be impacted, however
+					Run, %programLoc%,,,openPID
             }
             catch
             {
@@ -510,20 +510,41 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
                 ExitApp
             }
 			g_IBM.IBM_Sleep(15)
-            ; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of hte game
-            timeoutForPID := ElapsedTime + processWaitingTimeout 
-            while(!this.PID AND ElapsedTime < timeoutForPID AND ElapsedTime < timeoutLeft)
-            {
-                exeName := g_IBM_Settings["IBM_Game_Exe"]
-                Process, Exist, %exeName%
-                this.PID := ErrorLevel
-                g_IBM.IBM_Sleep(50)
-                ElapsedTime := A_TickCount - StartTime
-            }
-            ElapsedTime := A_TickCount - StartTime
-            g_IBM.IBM_Sleep(50)
+			if (this.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+				this.PID:=openPID
+			else
+			{
+				; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of the game
+				timeoutForPID:=ElapsedTime + processWaitingTimeout 
+				exeName:=g_IBM_Settings["IBM_Game_Exe"]
+				while(!this.PID AND ElapsedTime < timeoutForPID)
+				{
+					g_IBM.IBM_Sleep(50)
+					Process, Exist, %exeName%
+					this.PID:=ErrorLevel
+					ElapsedTime:=A_TickCount - StartTime
+				}
+				ElapsedTime:=A_TickCount - StartTime
+				g_IBM.IBM_Sleep(50)
+			}
         }
     }
+	
+	GetProcessName(processID) ;To check without a window being present
+	{
+		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
+		{
+			size:=VarSetCapacity(buf, 0x0104 << 1, 0)
+			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
+			{
+				SplitPath, % StrGet(&buf), processExeName
+				DllCall("CloseHandle", "ptr", hProcess)
+				return processExeName
+			}
+			DllCall("CloseHandle", "ptr", hProcess)
+		}
+		return false
+	}
 	
     CloseIC(string:="",usePID:=false)
     {

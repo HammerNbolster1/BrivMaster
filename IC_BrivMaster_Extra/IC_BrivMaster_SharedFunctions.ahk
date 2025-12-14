@@ -567,12 +567,17 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		timeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 10s
 		if WinExist(sendMessageString)
 			SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
-		StartTime:=A_TickCount
 		saveCompleteTime:=-1 ;Unset
+		;The memory reads through the usual game instance structure become invalid before the actual saveHandler object is gone, potentially resulting in us detecting a save early and killing the game before it is done - most likely to impact slow systems. Reading the handler directly prevents that
+		ADDRESS_DIRTY:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].isDirty.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].isDirty.FullOffsets*) 
+		TYPE_DIRTY:=g_SF.Memory.GameManager.game.gameInstances[0].isDirty.ValueType
+		ADDRESS_CURRENT_SAVE:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.FullOffsets*)
+		TYPE_CURRENT_SAVE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.ValueType
+		StartTime:=A_TickCount
 		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout)
         {
             g_IBM.IBM_Sleep(15)
-			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck()) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
 			{
 				saveCompleteTime:=A_TickCount
 				g_IBM.Logger.AddMessage("CloseIC() Standard Loop "  . (saveStatus==1 ? "Save" : "Reads Invalid") . " - saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
@@ -586,7 +591,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		NextCloseAttempt:=A_TickCount ;Throttle input whilst continuing to check rapidly for game save and window closure
 		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout) ; Outright murder
 		{
-			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck())
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE))
 			{
 				saveCompleteTime:=A_TickCount
 				g_IBM.routeMaster.CheckRelayRelease()
@@ -615,11 +620,13 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         return saveCompleteTime
     }
 	
-	CloseIC_SaveCheck() ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
+	CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE) ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
 	{
-		if(this.Memory.IBM_ReadIsInstanceDirty()=="" OR this.Memory.IBM_ReadCurrentSave()=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
+		dirty:=_MemoryManager.instance.read(ADDRESS_DIRTY,TYPE_DIRTY)
+		currentSave:=_MemoryManager.instance.read(ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)
+		if(dirty=="" OR currentSave=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
 			return 2
-		else if (this.Memory.IBM_ReadIsInstanceDirty()==0 AND this.Memory.IBM_ReadCurrentSave()==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
+		else if (dirty==0 AND currentSave==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
 			return 1
 		return 0
 	}

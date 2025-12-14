@@ -17,14 +17,15 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	__New(combine,logBase)
 	{
 		this.combining:=combine
-		this.thelloraTarget:=this.GetThelloraTarget(1,this.combining) ;Set as a default before we can get our first memory read, as that is only possible once Thellora is fielded
+		
 		this.zonesPerJumpQ:=g_IBM_Settings["IBM_Route_BrivJump_Q"] + 1 ; We want the actual number of zones so adding 1 here, eg 9 jump goes from z1 to z11, so covers 10 zones (because it's the normal +1 progress plus the 9)
-		if (g_IBM.levelManager.IsChampInFormation(58, "E")) ;Feat swap, ignored if Briv is not saved in E
+		if (g_Heroes[58].inE) ;Feat swap, ignored if Briv is not saved in E
 			this.zonesPerJumpE:=g_IBM_Settings["IBM_Route_BrivJump_E"] + 1 ;As above
 		else
 			this.zonesPerJumpE:=1 ;Walking progresses 1 zone per 'jump'
 		this.zonesPerJumpM:=g_IBM_Settings["IBM_Route_BrivJump_M"] + 1 ;Used when combining
 		this.targetZone:=g_SF.Memory.GetModronResetArea()
+		this.UpdateThellora(true) ;Must be done after the zones per jump are populated
 		this.jumpCosts:=strsplit(IC_BrivMaster_RouteMaster_Class.IRI_BRIVMASTER_JUMPCOST_METALBORN,",")
 		if (g_IBM_Settings[ "IBM_Online_Use_Melf"])
 		{
@@ -50,9 +51,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			OnExit(revokeFunc)
 		}
 		this.UltraStacking:=g_IBM_Settings["IBM_Online_Ultra_Enabled"]
-		PH_OPTION_USE_FARIDEH_ULT_FOR_STACK_NORMAL:=false
-		this.useFaridehUlt:=PH_OPTION_USE_FARIDEH_ULT_FOR_STACK_NORMAL
-		if (this.UltraStacking OR this.useFaridehUlt) ;Both need to check BUD
+		if (this.UltraStacking)
 		{
 			this.BUDTracker:= new IC_BrivMaster_BUD_Tracker_Class()
 		}
@@ -60,7 +59,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost)
 			this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
 		
-		this.UpdateThellora() ;Here so that she is read in at script start. Not in Reset() as her handler won't be available then
 		this.CombineModeThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to avoid combining into a boss by delaying the combine?
 		g_SharedData.IBM_UpdateOutbound("IBM_RestoreWindow_Enabled",g_IBM_Settings["IBM_Route_Offline_Restore_Window"])
 		g_SharedData.IBM_UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
@@ -177,9 +175,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	UpdateThellora()
+	UpdateThellora(force:=false)
 	{
-		if (g_Heroes[139].UpdateRushTarget())
+		if (g_Heroes[139].UpdateRushTarget() OR force)
 			this.thelloraTarget:=this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining)
 	}
 
@@ -241,7 +239,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.leftoverHaste:=calcResult.haste
 			if (g_Heroes[139].inA) ;If Thellora is in use
 			{
-				this.UpdateThellora() ;Ensure we have her cap read (mostly impacts the first run)
 				targetCharges:=g_Heroes[139].rushCap + (this.combining ? 0 : 1/5) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
 				currentCharges:=g_Heroes[139].ReadRushAreaCharges()
 				remainingCharges:=MAX(0,targetCharges-currentCharges)
@@ -255,7 +252,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				{
 					g_Heroes[139].rushNext:=FLOOR(currentCharges + (zonesRemaining/5)) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
 				}
-				if (!g_Heroes[139].rushCapDirty AND g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
+				if (g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
 					this.leftoverCalculated:=true
 			}
 			else
@@ -331,7 +328,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		else ;Offline
 		{
 			stackZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
-			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_IBM.levelManager.IsChampInFormation(83, "W")) ;if enabled and Elly is specifically in formation 2, the stacking formation TODO: Check if Elly is actually enabled somewhere?
+			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_Heroes[83].inW) ;if enabled and Elly is specifically in W, the stacking formation
 			{
 				flames:=g_Heroes[83].GetNumFlamesCards()
 				if (flames>0)
@@ -631,8 +628,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			fastMelf:=0
-		if (this.useFaridehUlt AND g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)) ;Set Farideh's level - currently ignoring BUD here as it can drop
-			this.levelManager.OverrideLevelByIDRaiseToMin(33,"min",125)
 		this.WaitForZoneCompleted() ;Complete the current zone
 		this.OnlineStackFarmSetup(fastMelf, g_IBM.LevelManager.Champions[59].Key)
         ElapsedTime := 0
@@ -642,17 +637,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
 		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout, leaving 30000ms @ x10
-		fariUltUsed:=false
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
-			if (this.useFaridehUlt AND !fariUltUsed AND g_SF.Memory.ReadActiveMonstersCount()>=100 AND this.BUDTracker.ReadBUD(0)<g_SF.Memory.IBM_ReadCurrentZoneMonsterHealthExponent())
-			{
-				g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack	
-				fariUltUsed:=true 
-			}
 			if (precisionMode)
 			{
 				Sleep, 0 ;Fast sleep
@@ -1004,9 +993,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	SetFormation(fastCheck:=false) ;To be called with FastCheck during straightforward progression, e.g. not after stacking, falling back, other fun things
     {
 		static trustRecent:=false ;Do we believe that the ReadMostRecentFormationFavorite() is respresentative? Needed as it changes even if the formation swap fails
-
-		;DEBUG_INITIAL_TRUST_RECENT:=trustRecent ;DEBUG!
-
 		if (!fastCheck)
 			trustRecent:=false ;Reset to false for all normal calls
 		isEZone:=this.ShouldWalk(g_SF.Memory.ReadCurrentZone()) ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
@@ -1022,7 +1008,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				{
 					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly, given issues with multiple key presses
 					startTime:=A_TickCount
-					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field. Using .ReadBenched() as it's a simple read, whereas ReadFielded() has to loop the formation
+					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field
 					{
 						g_IBM.IBM_Sleep(15)
 					}

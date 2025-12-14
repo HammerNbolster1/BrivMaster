@@ -4,7 +4,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 {
 	IBM_GetWebRootFriendly() ;Handle failures for user-facing reads (mainly the log). WebRoot uses the EngineSettings pointer that moves a lot
 	{
-		webRoot:=g_SF.Memory.ReadWebRoot()
+		webRoot:=this.ReadWebRoot()
 		if(!webRoot)
 			webRoot:="Unable to read WebRoot"
 		return webRoot
@@ -73,9 +73,45 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         significand:=round( 10 ** (decimated-exponent), 2 )
         return exponent + log(significand)
     }
+	
+	IBM_GetCurrentCampaignFavourExponent() ;Process the double directly to avoid AHK limits, or trying to manage it as a string
+	{
+		static indexCache:=""
+		currencyID:=this.GameManager.game.gameInstances[0].ActiveCampaignData.AdventureDef._campaignDef.ResetCurrencyID.Read()
+		if (currencyID=="")
+			return
+		RESET_DEFS:=this.GameManager.game.gameInstances[0].Controller.userData.ResetCurrencyHandler.ResetCurrencyDefs
+		if(!indexCache OR RESET_DEFS[indexCache].ID.Read()!=currencyID) ;If there's no cached index, or the cached index no longer points to the right ID
+		{
+			indexCache:="" ;Reset as invalid
+			size:=RESET_DEFS.size.Read()
+			if(size<0 OR size>500)
+				return
+			loop, %size%
+			{
+				if(RESET_DEFS[A_Index-1].ID.Read()==currencyID)
+				{
+					indexCache:=A_Index-1
+					break
+				}
+			}
+		}
+		CURRENCY:=RESET_DEFS[indexCache].CurrentAmount
+		first4Bytes:=CURRENCY.Read("Int")+0
+		SECOND_WORD:=CURRENCY.QuickClone()
+		lastOffsetIndex:=SECOND_WORD.FullOffsets.Count()
+		SECOND_WORD.FullOffsets[lastOffsetIndex]:=SECOND_WORD.FullOffsets[lastOffsetIndex] + 0x4
+		last4Bytes:=SECOND_WORD.Read("Int")+0
+		sign:=(last4Bytes & 0x80000000) >> 31
+		signMulti:=sign ? -1:1
+		exponent:=((last4Bytes & 0x7FF00000) >> 20) - 1023 ;For IEEE 754 double
+		mantissa:=(((last4Bytes & 0xFFFFF) << 32) + first4Bytes) / 0xFFFFFFFFFFFFF
+		favourExp:=exponent * LOG(2) + LOG(signMulti*(1+mantissa)) ;As an exponent, e.g. 306.6 for 10^306.6=4e306	
+		return floor(favourExp)
+	}
 
 	/*
-	IBM_GetTotalBrivSkipZones() ;Uses direct reads instead of a handler. This one is probably a bad idea...but is also not being used
+	IBM_GetTotalBrivSkipZones() ;Uses direct reads instead of a handler. This one is probably a bad idea...but is also not being used. Note memory reads for this have been removed
 	{
 		;Briv jumps a base amount + a chance for another zone. At an exact jump that chance is normally 1, so 9 amount + 1 = 10 Zones, aka 9J
 		;Accurate Acrobatics does reduce the chance to 0, so 12 + 0 = 12 Zones, aka 11J (given iLevels for 11.9998)
@@ -141,11 +177,6 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         return newObject.Read("Int64")
     }
 
-	IBM_IsSplashVideoActive() ;True if the loading screen videos are playing
-	{
-		return this.GameManager.game.loadingScreen.SplashScreen.IsActive_k__BackingField.Read()==1
-	}
-
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {
         size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
@@ -165,7 +196,7 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
 		loop %size%
         {
-            if (this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()="")
+            if (this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()=="")
 				return false
         }
         return true

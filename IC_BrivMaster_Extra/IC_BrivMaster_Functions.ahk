@@ -435,7 +435,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	GetNumCards() ;Not encapsulated yet as results used for error checking
 	{
 		size:=g_Heroes[83].EFFECT_HANDLER_CARDS.cardsInHand.size.Read()
-		if (size=="" AND g_Heroes[83].ReadFielded())
+		if (size=="" AND !g_Heroes[83].ReadBenched())
 		{
 			this.StatusString.="FAIL-GetNumCards() was empty & Elly(Level:" . g_Heroes[83].ReadLevel() . "):"
 		}
@@ -493,7 +493,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	CanUseEllyWickUlt()
 	{
-		return g_Heroes[83].ReadFielded() AND this.IsEllywickUltReady() ;TODO: Can we use !Benched which is a simple read, instead of ReadFielded, which iterates the formation? Applies to DM as well
+		return !g_Heroes[83].ReadBenched() AND this.IsEllywickUltReady()
 	}
 
 	IsEllywickUltReady()
@@ -531,7 +531,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	CanUseDMUlt()
 	{
-		return g_Heroes[99].ReadFielded() AND this.IsDMUltReady()
+		return !g_Heroes[99].ReadBenched() AND this.IsDMUltReady()
 	}
 
 	IsDMUltReady()

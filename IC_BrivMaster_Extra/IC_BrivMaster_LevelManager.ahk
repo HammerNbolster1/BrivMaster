@@ -43,7 +43,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		}
 	}
 
-	CreateWorklist(formationIndex,mode,surpressByID,waitForGold) 	;Formation - "Q", if not supplied uses current, mode - "min", supressByID - array of champion IDs to not include in levelling
+	CreateWorklist(formationIndex,mode,surpressByID,waitForGold) ;Formation - "Q", if not supplied uses current, mode - "min", supressByID - array of champion IDs to not include in levelling
 	{
 		if(formationIndex=="") ;Get current
 			championIDs:=g_SF.Memory.IBM_GetCurrentFormationChampions()
@@ -75,7 +75,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		while (g_SF.Memory.IBM_ReadClickLevel() < clickTarget AND g_SF.Memory.IBM_ReadClickLevelUpAllowed() > 0 AND A_TickCount - startTime < timeout)
 		{
 			this.KEY_ClickDmg.KeyPress() ;No value in trying to build this to be able to use _Bulk() as it will mostly only be one press at a time
-			g_IBM.IBM_Sleep(10)
+			g_IBM.IBM_Sleep(1) ;TODO: Is this useful? We've demonstrated during champion levelling that a delay isn't needed. Reduced to 1ms only for now
 		}
 		Critical Off
     }
@@ -106,16 +106,6 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.levelingDone["E"]:={"min":false,"z1":false}
 		this.levelingDone["M"]:={"min":false,"z1":false}
 		this.levelingDone["A"]:={"min":false,"z1":false}
-	}
-
-	IsChampInFormation(heroID, index) ;TODO: The order of parameters here is backwards vs the actual collection, probably best to be consistent
-	{
-		return this.savedFormationChamps[index].HasKey(heroID)
-	}
-
-	IsChampInAnyFormation(champID, index) ;index can be multiple, eg "QE" would return true if champID is in either Q or E
-	{
-		return (inStr(index,"Q") AND this.savedFormationChamps["Q",champID]) OR (inStr(index,"W") AND this.savedFormationChamps["W",champID]) OR (inStr(index,"E") AND this.savedFormationChamps["E",champID]) OR (inStr(index,"M") AND this.savedFormationChamps["M",champID])
 	}
 
 	ExtractFormation(slot,index) ;Extracts both the usual formation and the champ list in one go

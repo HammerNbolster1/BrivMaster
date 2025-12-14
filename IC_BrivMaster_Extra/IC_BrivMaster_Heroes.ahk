@@ -168,7 +168,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].overwhelm.Read()
     }
 
-	ReadFielded() ;In current formation
+	ReadFielded() ;In current formation. !ReadBenched() should be used in preferance to this
 	{
         FORMATION_SLOTS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.slots
 		size:=FORMATION_SLOTS.size.Read()
@@ -336,18 +336,15 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	__new(heroID,heroIndex)
 	{
 		base.__new(heroID,heroIndex)
-		this.EFFECT_KEY_PoUR:="thellora_plateaus_of_unicorn_run"
 		this.STAT_RUSH_TRIGGERED:="thellora_plateaus_of_unicorn_run_has_triggered"
 		this.STAT_AREA_CHARGES:="thellora_plateaus_of_unicorn_run_areas"
-		this.rushCapDirty:=true ;True if the rush cap has not been read from her handler this run, needed as the handler is only available when she is fielded
-		this.rushCap:=1 ;Max rush zone TODO: Should we start with the assumption that the cap is min(308, targetZone/5)? Or just read the campaign gold...
+		this.rushCap:=g_SF.Memory.IBM_GetCurrentCampaignFavourExponent()
 		this.rushNext:=0 ;If non-zero, the expected next rush zone, which could be lower than the cap if in recovery
 	}
 	
 	Reset()
 	{
 		base.Reset()
-		this.rushCapDirty:=true
 		this.rushNext:=0
 	}
 
@@ -362,7 +359,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 
 	ReadRushAreaCharges() ;How many zones does Thellora have stored? The stat dictionary has ~570 items as of 08Dec25, so searching through it means calls can take >60ms on a fast PC. Cache the index instead, using a hard coded last-known value as the start point
 	{
-		static cachedIndex:=420 ;Default index taken from v673.1 08Dec25, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this
+		static cachedIndex:=420 ;Default index taken from v673.1 08Dec25, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this (and closer to this than 0, more to the point)
 		MEMORY_SERVERSTATS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats
 		key:=MEMORY_SERVERSTATS["key",cachedIndex].Read()
 		if(key==this.STAT_AREA_CHARGES) ;Valid cache
@@ -380,7 +377,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 			{
 				g_IBM.Logger.AddMessage("ReadRushAreaCharges() CACHE MISS cachedIndex=[" . cachedIndex . "] index=[" . index . "] please report this message") ;As the default may change we want to be informed
 				cachedIndex:=index
-				return:=MEMORY_SERVERSTATS["value", cachedIndex].Read()
+				return MEMORY_SERVERSTATS["value", cachedIndex].Read()
 			}
 		}
 		index:=cachedIndex ;Secondly search backwards from the index, as if a stat has been removed it's probably just a few
@@ -397,41 +394,17 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		return 0
 	}
 
-	ReadRushTarget() ;Gets the base favour exponent which Thellora uses to cap her rush amount. Note this is much slower than using an ActiveEffectKeyHandler that is already set up for her, but much faster than having to set one up first
-	{
-		thelloraRushTarget:=""
-		EK_HANDLERS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
-		EK_HANDLERS_SIZE := EK_HANDLERS.size.Read()
-		loop, %EK_HANDLERS_SIZE%
-		{
-			EK_PARENT_HANDLER:=EK_HANDLERS["value", A_Index - 1].List[0].parentEffectKeyHandler
-			if (this.EFFECT_KEY_PoUR==EK_PARENT_HANDLER.def.Key.Read())
-			{
-				thelloraRushTarget:=EK_PARENT_HANDLER.activeEffectHandlers[0].baseFavorExponent.Read()
-				break
-			}
-		}
-		return thelloraRushTarget
-	}
-
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------
 	
-	UpdateRushTarget() ;Returns true memory read was available and the cap actually changed
+	UpdateRushTarget() ;Returns true if memory read was available and the cap actually changed
 	{
-		if (this.rushCapDirty)
+		cap:=g_SF.Memory.IBM_GetCurrentCampaignFavourExponent()
+		if (cap AND this.rushCap!=cap)
 		{
-			cap:=this.ReadRushTarget()
-			if (cap)
-			{
-				this.rushCapDirty:=false
-				if (this.rushCap!=cap) ;If we're actually making a change
-				{
-					this.rushCap:=cap
-					return true
-				}
-			}
+			this.rushCap:=cap
+			return true
 		}
 		return false
 	}

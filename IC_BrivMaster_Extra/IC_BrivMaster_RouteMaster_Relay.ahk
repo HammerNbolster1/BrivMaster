@@ -92,7 +92,7 @@ class IC_BrivMaster_Relay_Class
 			{
 				try
 				{
-					if (this.RelayData.RequestRelease)
+					if (this.RelayData.RequestRelease) ;TODO: Will block this relay script if the main script is in a Critical block. Probably needs to be it's own COM object controlled by the relay, so the main script can command the release?
 						this.ForceRelease:=true
 					nextReleaseCheck:=A_TickCount + 200
 				}
@@ -374,7 +374,7 @@ class IC_BrivMaster_Relay_Class
 			MaxTime:=A_TickCount + timeout
         if (A_TickCount < MaxTime)
 		{
-			this.PID := this.GetNewPID() ;We need to get a PID that is NOT the same as the one in the mail script
+			this.PID := this.GetNewPID() ;We need to get a PID that is NOT the same as the one in the main script
 			if (this.PID) ;If we pick up a PID just exit
 			{
 				this.LogString.=A_TickCount . " SetPID()=[" . this.PID . "] success after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"

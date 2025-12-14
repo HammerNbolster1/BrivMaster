@@ -30,7 +30,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             if(this.Memory.ReadResetting() AND this.Memory.ReadCurrentZone() <= 1 AND this.Memory.ReadCurrentObjID() == "")
                 this.WorldMapRestart()
             this.RecoverFromGameClose()
-            this.BadSaveTest() ;TODO: Replace this call, we're not making use of the zone variables in g_SF
+            this.BadSaveTest()
             return false
         }
         else if ( this.Memory.ReadCurrentZone() == "" )  ; game loaded but can't read zone? failed to load proper on last load? (Tests if game started without script starting it)
@@ -47,7 +47,14 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         return true
     }
 	
-	;Overridden for memory usage check and formation set on fallback
+	BadSaveTest() ;TODO: Given this is 4 lines of code, is there a need for it to be a separate function?
+    {
+        if(g_IBM.currentZone != "" and g_IBM.currentZone - 1 > g_SF.Memory.ReadCurrentZone())
+            g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
+        else if (g_IBM.currentZone != "" and g_IBM.currentZone < g_SF.Memory.ReadCurrentZone())
+			g_SharedData.IBM_UpdateOutbound_Increment("BadAutoProgress")
+    }
+	
 	;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
     CheckifStuck(isStuck:=false)
     {
@@ -95,45 +102,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         }
         return false
     }
-	
-	;Used to monitor IC's memory usage
-	/*
-    IBM_GetWorkingSetPrivateSize(processID)
-	{
-	   static SYSTEM_INFORMATION_CLASS := 0x5
-	   if (DllCall("Ntdll\NtQuerySystemInformation", "UInt", SYSTEM_INFORMATION_CLASS, "Ptr", 0, "UInt", 0, "UInt*", Size, "Int") != 0)
-	   {
-		  VarSetCapacity(SYSTEM_PROCESS_INFORMATION, Size), Offset := 0
-		  if (DllCall("Ntdll\NtQuerySystemInformation", "UInt", SYSTEM_INFORMATION_CLASS, "Ptr", &SYSTEM_PROCESS_INFORMATION, "UInt", Size, "UInt*", 0, "Int") = 0)
-		  {
-			 Loop
-			 {
-				WorkingSetPrivateSize := NumGet(SYSTEM_PROCESS_INFORMATION, Offset + 8, "Int64")
-				UniqueProcessId := NumGet(SYSTEM_PROCESS_INFORMATION, Offset + 56 + 3 * A_PtrSize, "Ptr")
-				if (UniqueProcessId = processID)
-				   return WorkingSetPrivateSize
-				NextEntryOffset := NumGet(SYSTEM_PROCESS_INFORMATION, Offset, "UInt")
-				Offset += NextEntryOffset
-			 } Until !NextEntryOffset
-		  }
-	   }
-	}
-	*/
-	/*
-	IBM_GetWorkingSetPrivateSize(processID) ;This version is not the private set - looks like commit charge? Which might be the relevant one for memory crashes
-	{
-		static PMC_EX, size := NumPut(VarSetCapacity(PMC_EX, 8 + A_PtrSize * 9, 0), PMC_EX, "uint")
-		if (hProcess := DllCall("OpenProcess", "uint", 0x1000, "int", 0, "uint", processID))
-		{
-			if !(DllCall("GetProcessMemoryInfo", "ptr", hProcess, "ptr", &PMC_EX, "uint", size))
-				if !(DllCall("psapi\GetProcessMemoryInfo", "ptr", hProcess, "ptr", &PMC_EX, "uint", size))
-					return (ErrorLevel := 2) & 0, DllCall("CloseHandle", "ptr", hProcess)
-			DllCall("CloseHandle", "ptr", hProcess)
-			return NumGet(PMC_EX, 8 + A_PtrSize * 8, "uptr")
-		}
-		return (ErrorLevel := 1) & 0
-	}
-	*/
 	
 	;Overridden to add logging for debugging problems and to handle effects that change Briv's stack conversion
 	;Uses server calls to test for being on world map, and if so, start an adventure (CurrentObjID). If force is declared, will use server calls to stop/start adventure.
@@ -217,7 +185,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		if (this.Memory.IBM_ReadIsGameUserLoaded()!=1 AND (A_TickCount - g_IBM.routeMaster.offlineSaveTime < targetTime))
 		{
 			g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for platform login...")
-			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() wait for platform login")
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			Critical On ;We need to catch the platform login completing before the game progresses to the userdata request
 			while (this.Memory.IBM_ReadIsGameUserLoaded()!=1 AND ElapsedTime < targetTime) ;Wait for user loaded or we run out of time, then stop IC
@@ -226,28 +193,19 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			}
 			Critical Off
-			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() platform login done - suspending process")
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			if (ElapsedTime >= targetTime) ;Don't suspend if we ran out of time waiting
 			{
-				;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() time ran out whilst waiting for user load")
 				return
 			}
 			this.IBM_SuspendProcess(g_SF.PID,True) 
-			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() suspended process - waiting for target time")
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			While (ElapsedTime < targetTime)
 			{
-				;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() waiting - elapsed:" . ElapsedTime . " target:" . targetTime)
 				g_IBM.IBM_Sleep(15)
 				ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			}
-			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() reactivating process")
 			this.IBM_SuspendProcess(g_SF.PID,False)
-		}
-		else
-		{
-			;g_IBM.routeMaster.DebugTick("IBM_WaitForUserLogin() not waiting for platform login")
 		}
 	}
 	
@@ -266,7 +224,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		lastInput:=-250 ;Input limiter for the escape key presses
 		while( ElapsedTime < timeout AND !gameStarted)
         {	
-            if (A_TickCount > lastInput+250 AND this.Memory.IBM_IsSplashVideoActive())
+            if (A_TickCount > lastInput+250 AND this.Memory.ReadIsSplashVideoActive())
 			{
 				g_IBM.KEY_ESC.KeyPress()
 				lastInput:=A_TickCount
@@ -448,7 +406,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     {
         StartTime := A_TickCount
         ; Process exists, wait for the window:
-        while(!(this.Hwnd := WinExist( "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])) AND ElapsedTime < timeoutLeft)
+        while(!(this.Hwnd:=WinExist( "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])) AND ElapsedTime < timeoutLeft)
         {
             WinGet, savedActive,, A ;Changed to the handle, multiple windows could have the same name
             this.SavedActiveWindow := savedActive
@@ -489,7 +447,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         ElapsedTime := 0
         g_SharedData.IBM_UpdateOutbound("LoopString","Modron Resetting...")
         this.SetUserCredentials()
-		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0). TODO: Determine if this ever triggers, or was just a duplicate call being made in the hopes one went through?
+		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
         {
 			g_IBM.Logger.AddMessage("Manual stack conversion: Converted Haste=[" . this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 			response:=g_serverCall.CallPreventStackFail(this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate), true)
@@ -538,10 +496,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	; Runs the process and set this.PID once it is found running. 
     OpenProcessAndSetPID(timeoutLeft := 32000)
     {
-        this.PID := 0
-        processWaitingTimeout := 10000 ;10s
-        ElapsedTime := 0
-        StartTime := A_TickCount
+        this.PID:=0
+        processWaitingTimeout:=10000 ;10s
+        ElapsedTime:=0
+        StartTime:=A_TickCount
         while (!this.PID AND ElapsedTime < timeoutLeft )
         {
             g_SharedData.IBM_UpdateOutbound("LoopString","Opening IC...")
@@ -549,9 +507,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             try
             {
                 if (g_IBM_Settings["IBM_Game_Hide_Launcher"])
-					Run, %programLoc%,,Hide ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop. Consider if later timers might be impacted, however
+					Run, %programLoc%,,Hide, openPID
 				else
-					Run, %programLoc% ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop. Consider if later timers might be impacted, however
+					Run, %programLoc%,,,openPID
             }
             catch
             {
@@ -559,20 +517,41 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
                 ExitApp
             }
 			g_IBM.IBM_Sleep(15)
-            ; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of hte game
-            timeoutForPID := ElapsedTime + processWaitingTimeout 
-            while(!this.PID AND ElapsedTime < timeoutForPID AND ElapsedTime < timeoutLeft)
-            {
-                exeName := g_IBM_Settings["IBM_Game_Exe"]
-                Process, Exist, %exeName%
-                this.PID := ErrorLevel
-                g_IBM.IBM_Sleep(50)
-                ElapsedTime := A_TickCount - StartTime
-            }
-            ElapsedTime := A_TickCount - StartTime
-            g_IBM.IBM_Sleep(50)
+			if (this.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+				this.PID:=openPID
+			else
+			{
+				; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of the game
+				timeoutForPID:=ElapsedTime + processWaitingTimeout 
+				exeName:=g_IBM_Settings["IBM_Game_Exe"]
+				while(!this.PID AND ElapsedTime < timeoutForPID)
+				{
+					g_IBM.IBM_Sleep(50)
+					Process, Exist, %exeName%
+					this.PID:=ErrorLevel
+					ElapsedTime:=A_TickCount - StartTime
+				}
+				ElapsedTime:=A_TickCount - StartTime
+				g_IBM.IBM_Sleep(50)
+			}
         }
     }
+	
+	GetProcessName(processID) ;To check without a window being present
+	{
+		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
+		{
+			size:=VarSetCapacity(buf, 0x0104 << 1, 0)
+			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
+			{
+				SplitPath, % StrGet(&buf), processExeName
+				DllCall("CloseHandle", "ptr", hProcess)
+				return processExeName
+			}
+			DllCall("CloseHandle", "ptr", hProcess)
+		}
+		return false
+	}
 	
     CloseIC(string:="",usePID:=false)
     {
@@ -588,12 +567,17 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		timeout:=2000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 10s
 		if WinExist(sendMessageString)
 			SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
-		StartTime:=A_TickCount
 		saveCompleteTime:=-1 ;Unset
+		;The memory reads through the usual game instance structure become invalid before the actual saveHandler object is gone, potentially resulting in us detecting a save early and killing the game before it is done - most likely to impact slow systems. Reading the handler directly prevents that
+		ADDRESS_DIRTY:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].isDirty.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].isDirty.FullOffsets*) 
+		TYPE_DIRTY:=g_SF.Memory.GameManager.game.gameInstances[0].isDirty.ValueType
+		ADDRESS_CURRENT_SAVE:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.FullOffsets*)
+		TYPE_CURRENT_SAVE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.ValueType
+		StartTime:=A_TickCount
 		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout)
         {
             g_IBM.IBM_Sleep(15)
-			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck()) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)) ;If saveStatus==2 then the game appears to have closed and we did not confirm the saved actually happened, but there's no value in doing a full wait when there is nothing to check so it is treated the same - either it saved and we missed it, or it won't ever save and there's no point waiting
 			{
 				saveCompleteTime:=A_TickCount
 				g_IBM.Logger.AddMessage("CloseIC() Standard Loop "  . (saveStatus==1 ? "Save" : "Reads Invalid") . " - saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
@@ -607,7 +591,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		NextCloseAttempt:=A_TickCount ;Throttle input whilst continuing to check rapidly for game save and window closure
 		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout) ; Outright murder
 		{
-			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck())
+			if (saveCompleteTime==-1 AND saveStatus:=this.CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE))
 			{
 				saveCompleteTime:=A_TickCount
 				g_IBM.routeMaster.CheckRelayRelease()
@@ -636,11 +620,13 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         return saveCompleteTime
     }
 	
-	CloseIC_SaveCheck() ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
+	CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE) ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
 	{
-		if(this.Memory.IBM_ReadIsInstanceDirty()=="" OR this.Memory.IBM_ReadCurrentSave()=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
+		dirty:=_MemoryManager.instance.read(ADDRESS_DIRTY,TYPE_DIRTY)
+		currentSave:=_MemoryManager.instance.read(ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)
+		if(dirty=="" OR currentSave=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
 			return 2
-		else if (this.Memory.IBM_ReadIsInstanceDirty()==0 AND this.Memory.IBM_ReadCurrentSave()==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
+		else if (dirty==0 AND currentSave==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
 			return 1
 		return 0
 	}

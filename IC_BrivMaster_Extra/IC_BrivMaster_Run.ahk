@@ -347,7 +347,7 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						this.routeMaster.SetFormation() ;Move to standard formation after waiting for the Casino if necessary
 						swapAttempts++
-					} until (brivShouldBeinEConfig == !g_SF.IsChampInFormation(58, g_SF.Memory.GetCurrentFormation()) OR swapAttempts > 10)
+					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 				}
 				this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
@@ -368,8 +368,7 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				else if (!tatyanaPresent)
 				{
-					BBEGInQ:=this.levelManager.IsChampInFormation(125, "Q")
-					this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",BBEGInQ ? 100 : 0)
+					this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",g_Heroes[125].inQ ? 100 : 0)
 				}
 				;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
 				;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
@@ -416,11 +415,7 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
 					swapAttempts++
-				} until (g_SF.IsChampInFormation(139, g_SF.Memory.GetCurrentFormation()) OR (swapAttempts > 10)) ;139 is Thellora
-				;if (swapAttempts > 1)
-					;OutputDebug % "IBM_FirstZone: Done loading z1 Formation. Required attempts: " . swapAttempts . "`n"
-				;this.IBM_Sleep(15) ;sleep to allow the change to actually apply - Do we need to verify this?
-				;TODO: Is using Min here appropriate?
+				} until (!g_Heroes[139].ReadBenched() OR (swapAttempts > 10)) ;139 is Thellora
 				this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
 				if (g_Heroes[139].inQ OR g_Heroes[139].inE)
 				{
@@ -437,7 +432,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)
     {
-        if (g_Heroes[83].ReadFielded())
+        if (!g_Heroes[83].ReadBenched())
         {
 			frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()>0 ? false : true ;If there are no locked champions there's no need to check for unlocking them
 			ghostLevellingAllowed:=!allowGhostLevelling
@@ -501,10 +496,10 @@ class IC_BrivMaster_GemFarm_Class
     PreFlightCheck()
     {
 		;Check Briv is saved in the expected formations
-		brivInM:=this.LevelManager.IsChampInFormation(58,"M")
-        brivInQ:=this.LevelManager.IsChampInFormation(58,"Q")
-		brivInW:=this.LevelManager.IsChampInFormation(58,"W")
-		brivInE:=this.LevelManager.IsChampInFormation(58,"E") ;Briv should be present in E if and only if we are feat swapping
+		brivInM:=g_Heroes[58].inM
+        brivInQ:=g_Heroes[58].inQ
+		brivInW:=g_Heroes[58].inW
+		brivInE:=g_Heroes[58].inE ;Briv should be present in E if and only if we are feat swapping
 		if (!brivInM OR !brivInQ OR !brivInW OR (this.RouteMaster.IsFeatSwap() != brivInE))
 		{
 			errorMsg:="Briv's presence in the saved formations is not as expected:`n"

@@ -141,11 +141,6 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
         return newObject.Read("Int64")
     }
 
-	IBM_IsSplashVideoActive() ;True if the loading screen videos are playing
-	{
-		return this.GameManager.game.loadingScreen.SplashScreen.IsActive_k__BackingField.Read()==1
-	}
-
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {
         size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()

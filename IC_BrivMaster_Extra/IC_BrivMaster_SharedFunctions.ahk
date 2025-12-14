@@ -217,7 +217,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		lastInput:=-250 ;Input limiter for the escape key presses
 		while( ElapsedTime < timeout AND !gameStarted)
         {	
-            if (A_TickCount > lastInput+250 AND this.Memory.IBM_IsSplashVideoActive())
+            if (A_TickCount > lastInput+250 AND this.Memory.ReadIsSplashVideoActive())
 			{
 				g_IBM.KEY_ESC.KeyPress()
 				lastInput:=A_TickCount

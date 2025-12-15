@@ -141,7 +141,7 @@ As the name suggests, this tool is not for use whilst farming, but leverages the
 	
 Min:Max: The target number of each card can be entered. The default of 4:5 Moon and 0:1 Fates means that any combination of 4 Moon and 1 Fate, or 5 Moon are accepted outcomes.  
 
-> Author's Note: I use these settings as I find 5 Moon takes to long to get, you are free to just set 5:5 Moon and the others to 0:0 if you have more patience than I do, but note that they are not saved.
+> Author's Note: I use these settings as I find 5 Moon takes to long to get, you are free to just set 5:5 Moon and the others to 0:0 if you have more patience than I do.
 	
 Start: Start re-rolling. The current status is displayed below the buttons, including the number of re-rolls used once completed.  
 

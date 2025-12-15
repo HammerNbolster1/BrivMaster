@@ -2,15 +2,14 @@
 #include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
-#include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Needed for import/export string functions TODO: Maybe bring them over? They are not relevant to the gem farm
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script. TODO: Might not be needed if Aug25 SH update is applied and has built-in methods for this
-SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well TODO: This doesn't actually work? Also what do we actually use from this now?
+SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
+SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster := new IC_IriBrivMaster_Component()
-global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI()
+global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI() ;TODO: Can we make this g_IriBrivMaster.GUI or something instead of a separate global?
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=new IC_BrivMaster_InputManager_Class()
@@ -34,15 +33,17 @@ Gui, ICScriptHub:Submit, NoHide
 
 Class IC_IriBrivMaster_Component
 {
-	Settings := ""
-	TimerFunction := ObjBindMethod(this, "UpdateStatus")
+	static BASE_64_CHARACTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" ;RFC 4648 S5 URL-safe, aka base64url
+
+	Settings:={}
+	TimerFunction:=ObjBindMethod(this, "UpdateStatus")
 	SharedRunData:=""
 	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff? Note the GUI file does use them
 	CONSTANT_serverRateBuy:=250
-	ServerCallFailCount:=0 ;Track the number of failed calls, so we can refresh the user data / servercall, but avoid doing so because one call happened to fail (e.g. at 20:00 UK the new game day starting tends to result in fails)
-	MemoryReadFailCount:=0 ;Separate tracker for memory reads, as these are expected to fail during resets etc (TODO: We could combine and just add different numbers, e.g. 5 for a call fail or 1 for a memory read fail?)
 	CONSTANT_goldCost:=500
 	CONSTANT_silverCost:=50
+	ServerCallFailCount:=0 ;Track the number of failed calls, so we can refresh the user data / servercall, but avoid doing so because one call happened to fail (e.g. at 20:00 UK the new game day starting tends to result in fails)
+	MemoryReadFailCount:=0 ;Separate tracker for memory reads, as these are expected to fail during resets etc (TODO: We could combine and just add different numbers, e.g. 5 for a call fail or 1 for a memory read fail?)
 
 	;START STUFF COPIED FROM IC_BrivGemFarm_Component.ahk
 
@@ -72,7 +73,7 @@ Class IC_IriBrivMaster_Component
 
     UpdateGUIDFromLast()
     {
-        this.GemFarmGUID := g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+        this.GemFarmGUID := this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
     }
 
     Stop_Clicked()
@@ -138,12 +139,11 @@ Class IC_IriBrivMaster_Component
 
 	Init()
     {
-        ; Read settings
-		this.GemFarmGUID:=g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json") ;TODO: Should be IC_IriBrivMaster_Component property? Probably best placed in .Init() - done, still needs further thought?
+		this.GemFarmGUID:=this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
-		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
+		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings global available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
         g_IriBrivMaster_StopFunctions.Push(ObjBindMethod(this, "Stop"))
@@ -229,13 +229,14 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Level_Diana_Cheese:=false
 		settings.IBM_Window_Dark_Icon:=false
 		settings.IBM_Allow_Modron_Buff_Off:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
+		settings.IBM_Ellywick_NonGemFarm_Cards:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
         return settings
     }
 
 	SaveSettings()
     {
         settings := this.Settings
-        g_SF.WriteObjectToJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
+        this.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
@@ -634,7 +635,7 @@ Class IC_IriBrivMaster_Component
 				return
 		}
 		profile:=this.settings.IBM_Game_Settings_Option_Profile
-		gameSettings:=this.LoadObjectFromAHKJSON(this.GameSettingFileLocation)
+		gameSettings:=this.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
 		changeCount:=0
 		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
 		this.SettingCheck(gameSettings,"PercentOfParticlesSpawned","Particles",false,changeCount,change)
@@ -653,7 +654,7 @@ Class IC_IriBrivMaster_Component
 			{
 				if (this.IsGameClosed())
 				{
-					this.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings)
+					this.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
 					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
 				}
 				else
@@ -709,13 +710,16 @@ Class IC_IriBrivMaster_Component
 		}
 	}
 
-	LoadObjectFromAHKJSON( FileName )
+	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
     {
         FileRead, oData, %FileName%
         data := ""
         try
         {
-            data := AHK_JSON_RAWBOOLEAN.Load( oData )
+            if (preserveBooleans)
+				data:=AHK_JSON_RAWBOOLEAN.Load(oData)
+			else
+				data:=AHK_JSON.Load(oData)
         }
         catch err
         {
@@ -725,9 +729,12 @@ Class IC_IriBrivMaster_Component
         return data
     }
 
-    WriteObjectToAHKJSON( FileName, ByRef object )
+    WriteObjectToAHKJSON(FileName, ByRef object,preserveBooleans:=false)
     {
-        objectJSON := AHK_JSON_RAWBOOLEAN.Dump( object,,"`t")
+        if (preserveBooleans)
+			objectJSON:=AHK_JSON_RAWBOOLEAN.Dump(object,,"`t")
+		else
+			objectJSON:=AHK_JSON.Dump(object,,"`t")
         if (!objectJSON)
             return
         FileDelete, %FileName%
@@ -1005,7 +1012,7 @@ Class IC_IriBrivMaster_Component
 		RegExMatch(routeString,"{([A-Za-z0-9-_]+),.*}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Jump:=IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBase64ToBinaryArray(routeMatches1)
+			this.settings.IBM_Route_Zones_Jump:=this.ConvertBase64ToBinaryArray(routeMatches1)
 			while (this.settings.IBM_Route_Zones_Jump.Length() > 50) ;The input will represent a multiple of 6 bits
 				this.settings.IBM_Route_Zones_Jump.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteJumpBoxes()
@@ -1013,7 +1020,7 @@ Class IC_IriBrivMaster_Component
 		RegExMatch(routeString,"{.*,([A-Za-z0-9-_]+)}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Stack:=IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBase64ToBinaryArray(routeMatches1)
+			this.settings.IBM_Route_Zones_Stack:=this.ConvertBase64ToBinaryArray(routeMatches1)
 			while (this.settings.IBM_Route_Zones_Stack.Length() > 50) ;The input will represent a multiple of 6 bits
 				this.settings.IBM_Route_Zones_Stack.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteStackBoxes()
@@ -1022,7 +1029,55 @@ Class IC_IriBrivMaster_Component
 
 	GetRouteExportString()
 	{
-		return "{" . IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
+		return "{" . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
+	}
+
+	ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible
+	{
+		charIndex:=1
+		chars:=[]
+		;OutputDebug % value.Length() . "`n"
+		loop, % value.Length()
+		{
+			if (!chars.HasKey(charIndex))
+				chars[charIndex]:=[]
+			chars[charIndex].Push(value[A_Index])
+			;OutputDebug % "Loop:" . charIndex . " " . chars[charIndex].Length() . "`n"
+			if (chars[charIndex].Length()==6)
+				charIndex++
+		}
+		while (chars[charIndex].Length() < 6) ;Pad the last character to 6 bits, otherwise 11 would convert to dec 3, as would 000011
+			chars[charIndex].Push(0)
+		accu:=""
+		loop, % chars.Length()
+		{
+			accu.=SubStr(IC_IriBrivMaster_Component.BASE_64_CHARACTERS,this.BinaryArrayToDec(chars[A_INDEX])+1,1) ;1 for 1-index array
+		}
+		return accu
+	}
+
+	BinaryArrayToDec(value)
+	{
+		charPos:=0
+		accu:=0
+		while value.Length() >= 1
+		{
+			accu+=value.Pop()*(2**charPos)
+			charPos++
+		}
+		return accu
+	}
+
+	ConvertBase64ToBinaryArray(value) ;Converts a base-64 value to a binary array, limited to the specified size Note this is NOT proper base64url as we've no interest in making it byte compatible. The result will always be a multiple of 6 bits TODO: Should we allow a size limit here (eg IBM_ConvertBase64ToBinaryArray(value,maxsize) )
+	{
+		length:=StrLen(value)
+		accu:=[]
+		loop, parse, value
+		{
+			base:=(InStr(IC_IriBrivMaster_Component.BASE_64_CHARACTERS,A_LoopField,true)-1) ;InStr must be set to case-sensitive
+			accu.Push((base & 0x20)>0,(base & 0x10)>0,(base & 0x08)>0,(base & 0x04)>0,(base & 0x02)>0,(base & 0x01)>0)
+		}
+		return accu
 	}
 
 	SetControl_OfflineStacking()
@@ -1084,7 +1139,7 @@ Class IC_IriBrivMaster_Component
     {
         needSave := false
         default := this.GetNewSettings()
-        this.Settings := settings := g_SF.LoadObjectFromJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
+        this.Settings := settings := this.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
         if (!IsObject(settings))
         {
             this.Settings := settings := default
@@ -1207,6 +1262,21 @@ Class IC_IriBrivMaster_Component
         return cards
     }
 
+	GetProcessName(processID) ;To check without a window being present TODO: This is duplicated with shared functions, but I'd rather not include all of that file just for this - need to decide how to share stuff like this (possibly by paring SF down a lot)
+	{
+		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
+		{
+			size:=VarSetCapacity(buf, 0x0104 << 1, 0)
+			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
+			{
+				SplitPath, % StrGet(&buf), processExeName
+				DllCall("CloseHandle", "ptr", hProcess)
+				return processExeName
+			}
+			DllCall("CloseHandle", "ptr", hProcess)
+		}
+		return false
+	}
 }
 
 ;Modifed AHK JSON Library for working with the game setting file - as JSON lacks a boolean type 'x'=false or 'y'=true ges turned into numeric values as standard
@@ -1216,7 +1286,7 @@ Class IC_IriBrivMaster_Component
  *     ingnore the ahk internal vars true/false and the string null wil be not empty
  */
 
-class AHK_JSON_RAWBOOLEAN extends AHK_JSON ;Irisiri - renamed as SH already has a JSON class powered by JavaScript
+class AHK_JSON_RAWBOOLEAN extends AHK_JSON ;Irisiri - renamed as SH already has a JSON class powered by JavaScript TODO: Can we instead modify the base class to take rawboolean as as parameter?
 {
 	class Load extends AHK_JSON.Load
 	{

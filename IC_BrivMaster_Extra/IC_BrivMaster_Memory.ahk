@@ -110,30 +110,6 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 		return floor(favourExp)
 	}
 
-	/*
-	IBM_GetTotalBrivSkipZones() ;Uses direct reads instead of a handler. This one is probably a bad idea...but is also not being used. Note memory reads for this have been removed
-	{
-		;Briv jumps a base amount + a chance for another zone. At an exact jump that chance is normally 1, so 9 amount + 1 = 10 Zones, aka 9J
-		;Accurate Acrobatics does reduce the chance to 0, so 12 + 0 = 12 Zones, aka 11J (given iLevels for 11.9998)
-		EK_HANDLER:=this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.HeroHandler.heroes[this.GetHeroHandlerIndexByChampID(58)].effects.effectKeysByHashedKeyName
-		EK_HANDLER_SIZE := EK_HANDLER.size.Read()
-		EllyUltActive:=""
-		loop, %EK_HANDLER_SIZE%
-		{
-			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
-			if ("briv_unnatural_haste" == PARENT_HANDLER.def.Key.Read())
-			{
-				brivSkipAmount:=PARENT_HANDLER.activeEffectHandlers[0].areaSkipAmount.Read() ;TODO: Should resolve offsets for activeEffectHandlers[0] once and re-use within the call instead of having it all twice
-				brivSkipChance:=PARENT_HANDLER.activeEffectHandlers[0].areaSkipChance.Read()
-				break
-			}
-		}
-		if (brivSkipAmount="" OR brivSkipChance="")
-			return ""
-		return brivSkipAmount + Round(brivSkipChance)
-	}
-	*/
-	
 	IBM_ReadAreaMonsterDamageMultiplier()
     {
         return g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].ActiveCampaignData.currentArea.AreaDef.MonsterDamageMultiplier.Read()
@@ -163,13 +139,13 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 		return data
     }
 
-	IBM_ReadGoldFirst8BytesBySeat(seat)
+	IBM_ReadGoldFirst8BytesBySeat(seat) ;Reads the first 8 bytes of the gold quad
     {
         return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
     }
 
-    ;reads the last 8 bytes of the quad value of gold
-    IBM_ReadGoldSecond8BytesBySeat(seat)
+
+    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad
     {
         newObject := this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
         goldOffsetIndex := newObject.FullOffsets.Count()

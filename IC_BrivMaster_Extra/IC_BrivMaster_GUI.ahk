@@ -702,7 +702,7 @@ class IC_IriBrivMaster_GUI
 		GuiControlGet, placement, ICScriptHub:Pos, IBM_LevelRow_%index%_z1
 		return placementY+placementH ;Return the botton of the edit box controls, used to size things
 	}
-	
+
 	GetFeatTooltip(data)
 	{
 		featTooltip:=""
@@ -1050,13 +1050,13 @@ IBM_Window_Settings()
 	if (g_IriBrivMaster_GUI.controlLock)
 		return
 	GuiControlGet, value,, IBM_Window_X
-	g_IriBrivMaster.UpdateSetting("IBM_Window_X",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Window_X",value+0)
 	GuiControlGet, value,, IBM_Window_Y
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Y",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Window_Y",value+0)
 	GuiControlGet, value,, IBM_Window_Hide
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Hide",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Window_Hide",value+0)
 	GuiControlGet, value,, IBM_Window_Dark_Icon
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Dark_Icon",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Window_Dark_Icon",value+0)
 }
 
 IBM_MainButtons_Start() {
@@ -1074,25 +1074,30 @@ IBM_MainButtons_Connect() {
 IBM_OffLine_Timeout_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Timeout_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Timeout",value)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Timeout",value+0)
 }
 
-IBM_Launch_Override() ;To allow use to use IBM game location settings TODO: The game launch routine should probably not be in the GUI file
+IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The game launch routine should probably not be in the GUI file. Also duplication with farm script side
 {
-	programLoc := g_IBM_Settings["IBM_Game_Launch"]
+	programLoc:=g_IriBrivMaster.settings.IBM_Game_Launch
     try
     {
-		if (g_IBM_Settings["IBM_Game_Hide_Launcher"])
-			Run, %programLoc%,,Hide ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop
+		if (g_IriBrivMaster.settings.IBM_Game_Hide_Launcher)
+			Run, %programLoc%,,Hide, openPID
 		else
-			Run, %programLoc% ;TODO: Take the PID from this if the EXE matches the game one; no need for the loop
+			Run, %programLoc%,,,openPID
     }
     catch
     {
         MsgBox, 48, % "Unable to launch game, `nVerify the game location is set properly in the Briv Master settings. If you do not wish to use Briv Master's location settings please disable the addon"
     }
-    Process, Exist, % g_IBM_Settings["IBM_Game_Exe"]
-    g_SF.PID := ErrorLevel
+	if (g_IriBrivMaster.GetProcessName(openPID)==g_IriBrivMaster.settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+		g_SF.PID:=openPID
+    else
+	{
+		Process, Exist, % g_IriBrivMaster.settings.IBM_Game_Exe
+		g_SF.PID:=ErrorLevel
+	}
 	Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority
 }
 
@@ -1156,7 +1161,7 @@ IBM_Game_Location_Settings()
 	GuiControlGet, value,, IBM_Game_Launch
 	g_IriBrivMaster.UpdateSetting("IBM_Game_Launch",value)
 	GuiControlGet, value,, IBM_Game_Hide_Launcher
-	g_IriBrivMaster.UpdateSetting("IBM_Game_Hide_Launcher",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Game_Hide_Launcher",value+0)
 }
 
 IBM_Game_Settings_Profile()
@@ -1204,7 +1209,10 @@ IBM_Game_Settings_Option_Change() ;This just updates everything, since we should
 		for setting,_ in g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex]
 		{
 			GuiControlGet, value,, IBM_Game_Settings_Option_%setting%_%profileIndex%
-			g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value
+			if value is integer ;Mixed types between the name (string) and values (int/bool)
+				g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value+0
+			else
+				g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value
 		}
 	}
 }
@@ -1271,11 +1279,11 @@ IBM_ChestSnatcher_Options_OK_Button() ;Applies all the the ChestSnatcher options
 IBM_OffLine_Blank()
 {
 	GuiControlGet, blankOn,, IBM_OffLine_Blank
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank",blankOn)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank",blankOn+0)
 	GuiControlGet, relayOn,, IBM_OffLine_Blank_Relay
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank_Relay",relayOn)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank_Relay",relayOn+0)
 	GuiControlGet, value,, IBM_OffLine_Blank_Relay_Zones
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank_Relay_Zones",value)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank_Relay_Zones",value+0)
 	IBM_Offline_Blank_EnableControls(blankOn,relayOn)
 
 }
@@ -1311,13 +1319,13 @@ IBM_Level_Options_Mod()
 IBM_OffLine_Delay_Time_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Delay_Time_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Delay_Time",value)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Delay_Time",value+0)
 }
 
 IBM_OffLine_Sleep_Time_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Sleep_Time_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Sleep_Time",value)
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Sleep_Time",value+0)
 }
 
 IBM_NonGemFarm_Elly_Start()
@@ -1333,57 +1341,57 @@ IBM_NonGemFarm_Elly_Stop()
 IBM_Casino_Target_Melf()
 {
 	GuiControlGet, value,, IBM_Casino_Target_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_Melf",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_Melf",value+0)
 }
 IBM_Casino_Redraws_Melf()
 {
 	GuiControlGet, value,, IBM_Casino_Redraws_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Redraws_Melf",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_Redraws_Melf",value+0)
 }
 IBM_Casino_MinCards_Melf()
 {
 	GuiControlGet, value,, IBM_Casino_MinCards_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Melf",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Melf",value+0)
 }
 
 IBM_Casino_Target_Base()
 {
 	GuiControlGet, value,, IBM_Casino_Target_Base
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_Base",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_Base",value+0)
 }
 IBM_Casino_Redraws_Base()
 {
 	GuiControlGet, value,, IBM_Casino_Redraws_Base
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Redraws_Base",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_Redraws_Base",value+0)
 }
 IBM_Casino_MinCards_Base()
 {
 	GuiControlGet, value,, IBM_Casino_MinCards_Base
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Base",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Base",value+0)
 }
 
 IBM_Casino_Target_InFlight()
 {
 	GuiControlGet, value,, IBM_Casino_Target_InFlight
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_InFlight",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_InFlight",value+0)
 }
 
 IBM_Route_BrivJump_Q_Edit()
 {
 	GuiControlGet, value,, IBM_Route_BrivJump_Q_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_Q",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_Q",value+0)
 }
 
 IBM_Route_BrivJump_E_Edit()
 {
 	GuiControlGet, value,, IBM_Route_BrivJump_E_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_E",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_E",value+0)
 }
 
 IBM_Route_BrivJump_M_Edit()
 {
 	GuiControlGet, value,, IBM_Route_BrivJump_m_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_M",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Route_BrivJump_M",value+0)
 }
 
 IBM_Level_Options_Input_Max()
@@ -1422,7 +1430,7 @@ IBM_Level_Options_BrivBoost_Use()
 IBM_Level_Options_BrivBoost_Multi()
 {
 	GuiControlGet, value,, IBM_Level_Options_BrivBoost_Multi
-	g_IriBrivMaster.UpdateSetting("IBM_LevelManager_Boost_Multi",value)
+	g_IriBrivMaster.UpdateSetting("IBM_LevelManager_Boost_Multi",value+0)
 }
 
 IBM_Level_Options_BrivBoost_Enable(enableControl)
@@ -1453,13 +1461,13 @@ IBM_Online_Melf_Use()
 IBM_Online_Melf_Min_Edit()
 {
 	GuiControlGet, value,, IBM_Online_Melf_Min_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Online_Melf_Min",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Online_Melf_Min",value+0)
 }
 
 IBM_Online_Melf_Max_Edit()
 {
 	GuiControlGet, value,, IBM_Online_Melf_Max_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Online_Melf_Max",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Online_Melf_Max",value+0)
 }
 
 IBM_Online_Melf_Enable(enableControl)
@@ -1491,13 +1499,13 @@ IBM_Route_Export_Button()
 IBM_OffLine_Stack_Zone_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Stack_Zone_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Offline_Stack_Zone",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Offline_Stack_Zone",value+0)
 }
 
 IBM_OffLine_Stack_Min_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Stack_Min_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_Offline_Stack_Min",value)
+	g_IriBrivMaster.UpdateSetting("IBM_Offline_Stack_Min",value+0)
 }
 
 IBM_Route_J_Click()
@@ -1629,7 +1637,7 @@ IBM_MainButtons_Save()
 	loop, 5
 		{
 			GuiControlGet, curZone,, IBM_OffLine_Flames_Zone_Edit_%A_Index%
-			flamesZones[A_Index]:=curZone
+			flamesZones[A_Index]:=curZone+0
 		}
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
 	g_IriBrivMaster.UpdateSetting("IBM_Ellywick_NonGemFarm_Cards",g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings())

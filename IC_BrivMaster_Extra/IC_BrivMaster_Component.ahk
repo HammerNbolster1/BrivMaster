@@ -73,7 +73,7 @@ Class IC_IriBrivMaster_Component
 
     UpdateGUIDFromLast()
     {
-        this.GemFarmGUID := g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+        this.GemFarmGUID := this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
     }
 
     Stop_Clicked()
@@ -139,8 +139,7 @@ Class IC_IriBrivMaster_Component
 
 	Init()
     {
-        ; Read settings
-		this.GemFarmGUID:=g_SF.LoadObjectFromJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json") ;TODO: Should be IC_IriBrivMaster_Component property? Probably best placed in .Init() - done, still needs further thought?
+		this.GemFarmGUID:=this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
@@ -237,7 +236,7 @@ Class IC_IriBrivMaster_Component
 	SaveSettings()
     {
         settings := this.Settings
-        g_SF.WriteObjectToJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
+        this.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
@@ -636,7 +635,7 @@ Class IC_IriBrivMaster_Component
 				return
 		}
 		profile:=this.settings.IBM_Game_Settings_Option_Profile
-		gameSettings:=this.LoadObjectFromAHKJSON(this.GameSettingFileLocation)
+		gameSettings:=this.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
 		changeCount:=0
 		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
 		this.SettingCheck(gameSettings,"PercentOfParticlesSpawned","Particles",false,changeCount,change)
@@ -655,7 +654,7 @@ Class IC_IriBrivMaster_Component
 			{
 				if (this.IsGameClosed())
 				{
-					this.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings)
+					this.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
 					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
 				}
 				else
@@ -711,13 +710,16 @@ Class IC_IriBrivMaster_Component
 		}
 	}
 
-	LoadObjectFromAHKJSON( FileName )
+	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
     {
         FileRead, oData, %FileName%
         data := ""
         try
         {
-            data := AHK_JSON_RAWBOOLEAN.Load( oData )
+            if (preserveBooleans)
+				data:=AHK_JSON_RAWBOOLEAN.Load(oData)
+			else
+				data:=AHK_JSON.Load(oData)
         }
         catch err
         {
@@ -727,9 +729,12 @@ Class IC_IriBrivMaster_Component
         return data
     }
 
-    WriteObjectToAHKJSON( FileName, ByRef object )
+    WriteObjectToAHKJSON(FileName, ByRef object,preserveBooleans:=false)
     {
-        objectJSON := AHK_JSON_RAWBOOLEAN.Dump( object,,"`t")
+        if (preserveBooleans)
+			objectJSON:=AHK_JSON_RAWBOOLEAN.Dump(object,,"`t")
+		else
+			objectJSON:=AHK_JSON.Dump(object,,"`t")
         if (!objectJSON)
             return
         FileDelete, %FileName%
@@ -1134,7 +1139,7 @@ Class IC_IriBrivMaster_Component
     {
         needSave := false
         default := this.GetNewSettings()
-        this.Settings := settings := g_SF.LoadObjectFromJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
+        this.Settings := settings := this.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
         if (!IsObject(settings))
         {
             this.Settings := settings := default
@@ -1257,6 +1262,21 @@ Class IC_IriBrivMaster_Component
         return cards
     }
 
+	GetProcessName(processID) ;To check without a window being present TODO: This is duplicated with shared functions, but I'd rather not include all of that file just for this - need to decide how to share stuff like this (possibly by paring SF down a lot)
+	{
+		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
+		{
+			size:=VarSetCapacity(buf, 0x0104 << 1, 0)
+			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
+			{
+				SplitPath, % StrGet(&buf), processExeName
+				DllCall("CloseHandle", "ptr", hProcess)
+				return processExeName
+			}
+			DllCall("CloseHandle", "ptr", hProcess)
+		}
+		return false
+	}
 }
 
 ;Modifed AHK JSON Library for working with the game setting file - as JSON lacks a boolean type 'x'=false or 'y'=true ges turned into numeric values as standard

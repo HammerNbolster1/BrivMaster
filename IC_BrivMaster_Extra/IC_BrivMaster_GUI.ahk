@@ -261,21 +261,21 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Button, x+20 yp-3 w50 vIBM_NonGemFarm_Elly_Start gIBM_NonGemFarm_Elly_Start, Start
 		Gui, ICScriptHub:Add, Button, x+5 w50 vIBM_NonGemFarm_Elly_Stop gIBM_NonGemFarm_Elly_Stop, Stop
 		Gui, ICScriptHub:Add, Text, w40 xs+10 y+5 h18 0x200, Min:Max
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_1,0
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_1
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_1,0
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_2,4
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_1
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_2
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_2,5
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_3,0
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_2
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_3
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_3,0
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_4,0
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_3
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_4
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_4,1
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_5,0
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_4
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_5
 		Gui, ICScriptHub:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5,0
+		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5
 		Gui, ICScriptHub:Add, Text, x+25 w130 vIBM_NonGemFarm_Elly_Status,
 
 		;ROUTE TAB
@@ -923,6 +923,31 @@ class IC_IriBrivMaster_GUI
 		dpi := DllCall("GetDeviceCaps", "ptr", hdc, "int", 88) ; LOGPIXELSY
 		DllCall("ReleaseDC", "ptr", 0, "ptr", hdc)
 		return dpi / 96
+	}
+
+	ReadNonGemFarmEllySettings()
+	{
+		cardOptions:=[]
+		loop, 5
+		{
+			GuiControlGet, value,, IBM_NonGemFarm_Elly_Min_%A_Index%
+			cardOptions.Push(value+0)
+			GuiControlGet, value,, IBM_NonGemFarm_Elly_Max_%A_Index%
+			cardOptions.Push(value+0)
+		}
+		return cardOptions
+	}
+
+	UpdateNonGemFarmEllySettings(cardOptions)
+	{
+		index:=1
+		loop, 5
+		{
+			GuiControl, ICScriptHub:, IBM_NonGemFarm_Elly_Min_%A_Index%, % cardOptions[index]
+			index++
+			GuiControl, ICScriptHub:, IBM_NonGemFarm_Elly_Max_%A_Index%, % cardOptions[index]
+			index++
+		}
 	}
 }
 
@@ -1597,6 +1622,7 @@ IBM_MainButtons_Save()
 			flamesZones[A_Index]:=curZone
 		}
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
+	g_IriBrivMaster.UpdateSetting("IBM_Ellywick_NonGemFarm_Cards",g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings())
 	;Level Manager
 	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things. TODO: A separate save button for these might be wise
 		g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())

@@ -229,6 +229,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Level_Diana_Cheese:=false
 		settings.IBM_Window_Dark_Icon:=false
 		settings.IBM_Allow_Modron_Buff_Off:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
+		settings.IBM_Ellywick_NonGemFarm_Cards:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
         return settings
     }
 

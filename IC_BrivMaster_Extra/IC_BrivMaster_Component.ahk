@@ -34,8 +34,10 @@ Gui, ICScriptHub:Submit, NoHide
 
 Class IC_IriBrivMaster_Component
 {
-	Settings := ""
-	TimerFunction := ObjBindMethod(this, "UpdateStatus")
+	static BASE_64_CHARACTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" ;RFC 4648 S5 URL-safe, aka base64url
+
+	Settings:={}
+	TimerFunction:=ObjBindMethod(this, "UpdateStatus")
 	SharedRunData:=""
 	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff? Note the GUI file does use them
 	CONSTANT_serverRateBuy:=250
@@ -1006,7 +1008,7 @@ Class IC_IriBrivMaster_Component
 		RegExMatch(routeString,"{([A-Za-z0-9-_]+),.*}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Jump:=IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBase64ToBinaryArray(routeMatches1)
+			this.settings.IBM_Route_Zones_Jump:=this.ConvertBase64ToBinaryArray(routeMatches1)
 			while (this.settings.IBM_Route_Zones_Jump.Length() > 50) ;The input will represent a multiple of 6 bits
 				this.settings.IBM_Route_Zones_Jump.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteJumpBoxes()
@@ -1014,7 +1016,7 @@ Class IC_IriBrivMaster_Component
 		RegExMatch(routeString,"{.*,([A-Za-z0-9-_]+)}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Stack:=IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBase64ToBinaryArray(routeMatches1)
+			this.settings.IBM_Route_Zones_Stack:=this.ConvertBase64ToBinaryArray(routeMatches1)
 			while (this.settings.IBM_Route_Zones_Stack.Length() > 50) ;The input will represent a multiple of 6 bits
 				this.settings.IBM_Route_Zones_Stack.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteStackBoxes()
@@ -1023,7 +1025,55 @@ Class IC_IriBrivMaster_Component
 
 	GetRouteExportString()
 	{
-		return "{" . IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . IC_BrivMaster_SharedFunctions_Class.IBM_ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
+		return "{" . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
+	}
+
+	ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible
+	{
+		charIndex:=1
+		chars:=[]
+		;OutputDebug % value.Length() . "`n"
+		loop, % value.Length()
+		{
+			if (!chars.HasKey(charIndex))
+				chars[charIndex]:=[]
+			chars[charIndex].Push(value[A_Index])
+			;OutputDebug % "Loop:" . charIndex . " " . chars[charIndex].Length() . "`n"
+			if (chars[charIndex].Length()==6)
+				charIndex++
+		}
+		while (chars[charIndex].Length() < 6) ;Pad the last character to 6 bits, otherwise 11 would convert to dec 3, as would 000011
+			chars[charIndex].Push(0)
+		accu:=""
+		loop, % chars.Length()
+		{
+			accu.=SubStr(IC_IriBrivMaster_Component.BASE_64_CHARACTERS,this.BinaryArrayToDec(chars[A_INDEX])+1,1) ;1 for 1-index array
+		}
+		return accu
+	}
+
+	BinaryArrayToDec(value)
+	{
+		charPos:=0
+		accu:=0
+		while value.Length() >= 1
+		{
+			accu+=value.Pop()*(2**charPos)
+			charPos++
+		}
+		return accu
+	}
+
+	ConvertBase64ToBinaryArray(value) ;Converts a base-64 value to a binary array, limited to the specified size Note this is NOT proper base64url as we've no interest in making it byte compatible. The result will always be a multiple of 6 bits TODO: Should we allow a size limit here (eg IBM_ConvertBase64ToBinaryArray(value,maxsize) )
+	{
+		length:=StrLen(value)
+		accu:=[]
+		loop, parse, value
+		{
+			base:=(InStr(IC_IriBrivMaster_Component.BASE_64_CHARACTERS,A_LoopField,true)-1) ;InStr must be set to case-sensitive
+			accu.Push((base & 0x20)>0,(base & 0x10)>0,(base & 0x08)>0,(base & 0x04)>0,(base & 0x02)>0,(base & 0x01)>0)
+		}
+		return accu
 	}
 
 	SetControl_OfflineStacking()

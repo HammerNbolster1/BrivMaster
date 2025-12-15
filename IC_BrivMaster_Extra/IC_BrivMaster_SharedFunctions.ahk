@@ -3,8 +3,6 @@
 
 class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 {
-	static BASE_64_CHARACTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" ;RFC 4648 S5 URL-safe, aka base64url
-	
 	;TODO: Determine if these class variables are needed
 	steelbones := ""
     sprint := ""
@@ -627,54 +625,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		else if (dirty==0 AND currentSave==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both
 			return 1
 		return 0
-	}
-	
-	IBM_ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible
-	{
-		charIndex:=1
-		chars:=[]
-		;OutputDebug % value.Length() . "`n"
-		loop, % value.Length()
-		{
-			if (!chars.HasKey(charIndex))
-				chars[charIndex]:=[]
-			chars[charIndex].Push(value[A_Index])
-			;OutputDebug % "Loop:" . charIndex . " " . chars[charIndex].Length() . "`n"
-			if (chars[charIndex].Length()==6)
-				charIndex++
-		}
-		while (chars[charIndex].Length() < 6) ;Pad the last character to 6 bits, otherwise 11 would convert to dec 3, as would 000011
-			chars[charIndex].Push(0)
-		accu:=""
-		loop, % chars.Length()
-		{
-			accu.=SubStr(IC_BrivMaster_SharedFunctions_Class.BASE_64_CHARACTERS,this.IBM_BinaryArrayToDec(chars[A_INDEX])+1,1) ;1 for 1-index array
-		}
-		return accu
-	}
-
-	IBM_BinaryArrayToDec(value)
-	{
-		charPos:=0
-		accu:=0
-		while value.Length() >= 1
-		{
-			accu+=value.Pop()*(2**charPos)
-			charPos++
-		}
-		return accu
-	}
-
-	IBM_ConvertBase64ToBinaryArray(value) ;Converts a base-64 value to a binary array, limited to the specified size Note this is NOT proper base64url as we've no interest in making it byte compatible. The result will always be a multiple of 6 bits TODO: Should we allow a size limit here (eg IBM_ConvertBase64ToBinaryArray(value,maxsize) )
-	{
-		length:=StrLen(value)
-		accu:=[]
-		loop, parse, value
-		{
-			base:=(InStr(IC_BrivMaster_SharedFunctions_Class.BASE_64_CHARACTERS,A_LoopField,true)-1) ;InStr must be set to case-sensitive
-			accu.Push((base & 0x20)>0,(base & 0x10)>0,(base & 0x08)>0,(base & 0x04)>0,(base & 0x02)>0,(base & 0x01)>0)
-		}
-		return accu
 	}
 	
 	IBM_CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use

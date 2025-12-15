@@ -17,7 +17,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	__New(combine,logBase)
 	{
 		this.combining:=combine
-		
 		this.zonesPerJumpQ:=g_IBM_Settings["IBM_Route_BrivJump_Q"] + 1 ; We want the actual number of zones so adding 1 here, eg 9 jump goes from z1 to z11, so covers 10 zones (because it's the normal +1 progress plus the 9)
 		if (g_Heroes[58].inE) ;Feat swap, ignored if Briv is not saved in E
 			this.zonesPerJumpE:=g_IBM_Settings["IBM_Route_BrivJump_E"] + 1 ;As above

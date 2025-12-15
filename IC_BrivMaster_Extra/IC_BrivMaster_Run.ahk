@@ -468,8 +468,6 @@ class IC_BrivMaster_GemFarm_Class
 			this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps,formationToLevelPostUnlock)
 			this.Logger.AddMessage("No Elly{z" . g_SF.Memory.ReadCurrentZone() . "}")
 		}
-		;if (g_SF.Memory.ReadCurrentZone()>321)
-		;	Send !{f10}
     }
 
 	IBM_EllywickCasino_UnderAttackCheck()

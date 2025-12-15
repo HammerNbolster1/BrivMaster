@@ -17,7 +17,7 @@ class IC_IriBrivMaster_GUI
 	static IBM_SYMBOL_UI_LEFT:="◀"
 	static IBM_SYMBOL_UI_CLEAR:="○"
 
-	levelDataSet:=""
+	levelDataSet:={}
 
 	Init()
 	{
@@ -1099,7 +1099,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 	if(!hWnd)
 	{
 		useExe:=currentExe
-		hWnd := WinExist("ahk_exe " . useExe)
+		hWnd:=WinExist("ahk_exe " . useExe)
 	}
 	if(hWnd) ;A game window exists
 	{

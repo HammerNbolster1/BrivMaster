@@ -492,9 +492,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		WinActivate, %savedActive%
     }
 	
-	;Overridden to handle Claim Daily Platinum - done here for blank restarts as we don't want to delay restarting the game - TODO: Except I moved Daily Platinum to the hub...
-	; Runs the process and set this.PID once it is found running. 
-    OpenProcessAndSetPID(timeoutLeft := 32000)
+    OpenProcessAndSetPID(timeoutLeft:=32000) ;Runs ICs and sets this.PID
     {
         this.PID:=0
         processWaitingTimeout:=10000 ;10s

@@ -5,12 +5,12 @@
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Needed for import/export string functions TODO: Maybe bring them over? They are not relevant to the gem farm
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script. TODO: Might not be needed if Aug25 SH update is applied and has built-in methods for this
-SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well TODO: This doesn't actually work? Also what do we actually use from this now?
+SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
+SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster := new IC_IriBrivMaster_Component()
-global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI()
+global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI() ;TODO: Can we make this g_IriBrivMaster.GUI or something instead of a separate global?
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=new IC_BrivMaster_InputManager_Class()
@@ -39,10 +39,10 @@ Class IC_IriBrivMaster_Component
 	SharedRunData:=""
 	CONSTANT_serverRateOpen:=1000 ;For chests TODO: Make a table of this stuff? Note the GUI file does use them
 	CONSTANT_serverRateBuy:=250
-	ServerCallFailCount:=0 ;Track the number of failed calls, so we can refresh the user data / servercall, but avoid doing so because one call happened to fail (e.g. at 20:00 UK the new game day starting tends to result in fails)
-	MemoryReadFailCount:=0 ;Separate tracker for memory reads, as these are expected to fail during resets etc (TODO: We could combine and just add different numbers, e.g. 5 for a call fail or 1 for a memory read fail?)
 	CONSTANT_goldCost:=500
 	CONSTANT_silverCost:=50
+	ServerCallFailCount:=0 ;Track the number of failed calls, so we can refresh the user data / servercall, but avoid doing so because one call happened to fail (e.g. at 20:00 UK the new game day starting tends to result in fails)
+	MemoryReadFailCount:=0 ;Separate tracker for memory reads, as these are expected to fail during resets etc (TODO: We could combine and just add different numbers, e.g. 5 for a call fail or 1 for a memory read fail?)
 
 	;START STUFF COPIED FROM IC_BrivGemFarm_Component.ahk
 
@@ -143,7 +143,7 @@ Class IC_IriBrivMaster_Component
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
-		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
+		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings global available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
         g_IriBrivMaster_StopFunctions.Push(ObjBindMethod(this, "Stop"))
@@ -1217,7 +1217,7 @@ Class IC_IriBrivMaster_Component
  *     ingnore the ahk internal vars true/false and the string null wil be not empty
  */
 
-class AHK_JSON_RAWBOOLEAN extends AHK_JSON ;Irisiri - renamed as SH already has a JSON class powered by JavaScript
+class AHK_JSON_RAWBOOLEAN extends AHK_JSON ;Irisiri - renamed as SH already has a JSON class powered by JavaScript TODO: Can we instead modify the base class to take rawboolean as as parameter?
 {
 	class Load extends AHK_JSON.Load
 	{

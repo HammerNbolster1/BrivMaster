@@ -1210,9 +1210,8 @@ IBM_Game_Settings_Option_Change() ;This just updates everything, since we should
 		{
 			GuiControlGet, value,, IBM_Game_Settings_Option_%setting%_%profileIndex%
 			if value is integer ;Mixed types between the name (string) and values (int/bool)
-				g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value+0
-			else
-				g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value
+				value:=value+0
+			g_IriBrivMaster.settings.IBM_Game_Settings_Option_Set[profileIndex,setting]:=value
 		}
 	}
 }

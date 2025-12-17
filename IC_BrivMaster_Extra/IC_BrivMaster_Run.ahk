@@ -563,7 +563,26 @@ class IC_BrivMaster_GemFarm_Class
 		{
 			errorMsg:="Unable to generate HeroID to HeroIndex map`n"
 			errorMsg.=this.PreFlightCheck_GenericMessage()
-			this.PreFlightErrorMessage("Hero Manager",ErrorMsg)
+			this.PreFlightErrorMessage("Hero Manager",errorMsg)
+			return false
+		}
+		;Check availability
+		gameInstanceID:=g_SF.Memory.IBM_GetActiveGameInstanceID() ;1 to 4, for the four parties
+		lockedHeroesString:=""
+		locked:=false
+		for heroID, _ in this.LevelManager.savedFormationChamps["A"] ;A is a meta-formation that is the union of the other 4 TODO: Should have levelManager return this via a function?
+		{
+			heroInstanceID:=g_Heroes[heroID].ReadActiveGameInstanceID()
+			if(heroInstanceID>0 AND heroInstanceID!=gameInstanceID) ;heroInstanceID of 0 means not assigned to an instance, which is fine
+			{
+				locked:=true
+				lockedHeroesString.=g_Heroes[heroID].ReadName() . " (" . heroID . ") - Party " . heroInstanceID . "`n"
+			}
+		}
+		if (locked)
+		{
+			errorMsg:="The following champions are configured for Briv Master but are currently active in other adventure parties:`n`n" . lockedHeroesString . "`nEither recall them or end their current adventures"
+			this.PreFlightErrorMessage("Hero Manager",errorMsg)
 			return false
 		}
 		;Check Feat Guard

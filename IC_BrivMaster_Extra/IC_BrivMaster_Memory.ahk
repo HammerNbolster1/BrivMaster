@@ -276,4 +276,9 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 		}
 		return familiarCount
 	}
+	
+	IBM_GetActiveGameInstanceID() ;This is the instance ID 1 to 4, NOT the ID if the instance in the gameInstances collection
+	{
+		return this.GameManager.game.gameInstances[0].InstanceUserData_k__BackingField.InstanceId.Read()
+	}
 }

@@ -199,9 +199,10 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 	{
 		if (this.LogEntries.HasKey("Run"))
 		{
-		if (zone > this.LogEntries.Run.LastZone)
-			this.LogEntries.Run.LastZone:=zone
+			if (zone > this.LogEntries.Run.LastZone)
+				this.LogEntries.Run.LastZone:=zone
 		}
+		;this.AddMessage("z" . zone . " intent: " . (g_IBM.routeMaster.ShouldWalk(zone) ? "E" : "Q") . " to z" . g_IBM.routeMaster.zones[zone].nextZone.z) ;Uncomment for debugging
 	}
 
 	OutputHeader()

@@ -612,7 +612,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			g_IBM.IBM_Sleep(15)
 		}
 		if (saveCompleteTime==-1) ;Failed to detect, going to have to go with current time
+		{
 			saveCompleteTime:=A_TickCount
+			g_IBM.Logger.AddMessage("CloseIC() fully timed out without detecting a save")
+		}
         return saveCompleteTime
     }
 	

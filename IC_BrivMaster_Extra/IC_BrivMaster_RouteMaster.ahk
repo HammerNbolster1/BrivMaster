@@ -162,7 +162,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return g_SF.Memory.ReadSBStacks() < this.GetTargetStacks()
 	}
 
-	GetTargetStacks(ignoreHaste:=true, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run. Ignore haste is used for the status string showing the expected per run stack usage, rather than in-run calculation
+	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run. Ignore haste is used for the status string showing the expected per run stack usage, rather than in-run calculation
 	{
 		if (ignoreHaste)
 			return this.GetTargetStacksForFullRun(true)

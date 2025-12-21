@@ -166,11 +166,8 @@ class IC_BrivMaster_GemFarm_Class
 			{
 				if (!Mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND Mod( g_SF.Memory.ReadHighestZone(), 5 ) AND !g_SF.Memory.ReadTransitioning())
 					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
-				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and retarting due to having enough for another run)
-				{
-					this.TriggerStart:=true
+				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
 					Continue ;Go straight back to the start of the loop
-				}
 				this.routeMaster.SetFormation(true)
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
@@ -214,10 +211,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.Logger.ResetReached()
 				g_SharedData.IBM_UpdateOutbound("LoopString","Pending modron reset")
 			}
-            if (g_SF.CheckifStuck())
-            {
-                this.TriggerStart:=true
-            }
+            g_SF.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
 			;Loop frequency check
 			this.IBM_SleepOffset(lastLoopEndTime,30)
 			DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
@@ -276,7 +270,6 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-
 			melfPresent:=g_Heroes[59].inM
 			tatyanaPresent:=g_Heroes[97].inM
 			BBEGPresent:=g_Heroes[125].inM

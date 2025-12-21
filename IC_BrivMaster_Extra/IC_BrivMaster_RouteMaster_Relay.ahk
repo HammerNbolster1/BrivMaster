@@ -104,7 +104,7 @@ class IC_BrivMaster_Relay_Class
 				Case 0: this.OpenProcess()
 				Case 1: this.SetPID(10000) ;For no apparent reason this usually takes a few hundred ms, but can take an extra 5000 now and then
 				Case 2: this.SetProcessToRealTime()
-				Case 3: this.SetLastActiveWindowWhileWaitingForGameExe(10000) ;Timeout has to be quite high as we might skip the SetPID stage if Run in OpenProcess() returns the PID
+				Case 3: this.SetLastActiveWindowWhileWaitingForGameExe(10000) ;Timeout has to be quite high as we might skip the SetPID stage if Run in OpenProcess() returns the PID TODO: Pass the timeout factor to the helper script and use it for the timers that are impacted by host performance?
 				Case 4: this.ActivateLastWindow()
 				Case 5: this.OpenProcessReader(5000)
 				Case 6: this.WaitForUserLogin(20000) ;Waits for platform login
@@ -330,7 +330,7 @@ class IC_BrivMaster_Relay_Class
 			if (!this.Hwnd)
 			{
 				WinGet, savedActive,, A
-				this.SavedActiveWindow := savedActive
+				this.SavedActiveWindow:=savedActive
 			}
 			else
 			{

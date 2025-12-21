@@ -31,7 +31,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             this.BadSaveTest()
             return false
         }
-        else if ( this.Memory.ReadCurrentZone() == "" )  ; game loaded but can't read zone? failed to load proper on last load? (Tests if game started without script starting it)
+        else if ( this.Memory.ReadCurrentZone() == "" )  ; game loaded but can't read zone? failed to load properly on last load? (Tests if game started without script starting it)
         {
             g_IBM.Logger.AddMessage("SafetyCheck() Resetting process reader - old PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] ")
 			gameExe := g_IBM_Settings["IBM_Game_Exe"]
@@ -225,7 +225,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         {	
             if (A_TickCount > lastInput+250 AND this.Memory.ReadIsSplashVideoActive())
 			{
-				g_IBM.KEY_ESC.KeyPress()
+				g_IBM.KEY_ESC.KeyPress() ;.KeyPress() sets critical if necessary
 				lastInput:=A_TickCount
 				g_IBM.IBM_Sleep(15) ;Short sleep as we've spent time on input already
 			}

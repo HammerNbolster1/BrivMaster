@@ -71,13 +71,11 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
     {
 		startTime:=A_TickCount
 		clickTarget:=this.GetClickDamageTargetLevel()
-		Critical On ;Prevent multiple inputs
 		while (g_SF.Memory.IBM_ReadClickLevel() < clickTarget AND g_SF.Memory.IBM_ReadClickLevelUpAllowed() > 0 AND A_TickCount - startTime < timeout)
 		{
 			this.KEY_ClickDmg.KeyPress() ;No value in trying to build this to be able to use _Bulk() as it will mostly only be one press at a time
 			g_IBM.IBM_Sleep(1) ;TODO: Is this useful? We've demonstrated during champion levelling that a delay isn't needed. Reduced to 1ms only for now
 		}
-		Critical Off
     }
 
 	SetupFailedConversion()

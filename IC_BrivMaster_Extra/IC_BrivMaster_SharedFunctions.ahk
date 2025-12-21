@@ -212,7 +212,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	; Waits for the game to be in a ready state
     WaitForGameReady(timeout := 90000,skipFinal:=false) ;skipFinal is for relay return where we might come back at any point in the offline calculation of the new instance, so waiting for a specific sequence of zone inactive/active/inactive won't necessarily work
     {
-        ;g_IBM.routeMaster.DebugTick("WaitForGameReady() start")
 		if (!g_IBM.routeMaster.HybridBlankOffline AND g_IBM.routeMaster.offlineSaveTime>=0) ;If this is set by stack restart
 			this.IBM_WaitForUserLogin()
 		timeoutTimerStart:=A_TickCount
@@ -400,19 +399,17 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
     }
 	
-	;Override to fix the typo in the name, and to use the Hwnd instead of window name
-	;Saves this.SavedActiveWindow as the last window and waits for the game exe to load its window.
-    SetLastActiveWindowWhileWaitingForGameExe(timeoutLeft := 32000)
+    SetLastActiveWindowWhileWaitingForGameExe(timeoutLeft:=32000)
     {
-        StartTime := A_TickCount
-        ; Process exists, wait for the window:
-        while(!(this.Hwnd:=WinExist( "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])) AND ElapsedTime < timeoutLeft)
+        StartTime:=A_TickCount
+        while(!(this.Hwnd:=WinExist("ahk_pid " . this.PID)) AND ElapsedTime < timeoutLeft) ;this.PID should be set before calling this function
         {
             WinGet, savedActive,, A ;Changed to the handle, multiple windows could have the same name
-            this.SavedActiveWindow := savedActive
-            ElapsedTime := A_TickCount - StartTime
-            g_IBM.IBM_Sleep(50)
+            this.SavedActiveWindow:=savedActive
+            g_IBM.IBM_Sleep(45)
+			ElapsedTime:=A_TickCount - StartTime
         }
+		g_IBM.Logger.AddMessage("SetLastActiveWindowWhileWaitingForGameExe() set Hwnd=[" . this.Hwnd . "]")
     }
 	
 	;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side
@@ -501,7 +498,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         while (!this.PID AND ElapsedTime < timeoutLeft )
         {
             g_SharedData.IBM_UpdateOutbound("LoopString","Opening IC...")
-            programLoc := g_IBM_Settings["IBM_Game_Launch"]
+            existingPIDs:=this.GetExistingPIDList() ;Save a list of existing PIDs so we can find the new one the Run command creates TODO: Instead of checking if the Run command is executing the exe directly at run time, work it out once from the name so we don't save this when not needed?
+			programLoc:=g_IBM_Settings["IBM_Game_Launch"]
             try
             {
                 if (g_IBM_Settings["IBM_Game_Hide_Launcher"])
@@ -516,7 +514,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             }
 			g_IBM.IBM_Sleep(15)
 			if (this.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+			{
 				this.PID:=openPID
+				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
+			}
 			else
 			{
 				; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of the game
@@ -524,16 +525,48 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				exeName:=g_IBM_Settings["IBM_Game_Exe"]
 				while(!this.PID AND ElapsedTime < timeoutForPID)
 				{
-					g_IBM.IBM_Sleep(50)
-					Process, Exist, %exeName%
-					this.PID:=ErrorLevel
+					g_IBM.IBM_Sleep(45)
+					this.PID:=this.GetNewPID(existingPIDs)
+					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via GetNewPID()")
 					ElapsedTime:=A_TickCount - StartTime
 				}
 				ElapsedTime:=A_TickCount - StartTime
-				g_IBM.IBM_Sleep(50)
 			}
         }
     }
+	
+	GetNewPID(oldPIDList) ;oldPIDList is a list of PIDs to NOT match. Requires the game window to have been created
+	{
+		WinGet, IDList, List, % "ahk_exe " . g_userSettings["ExeName"]
+		Loop % IDList
+		{
+			WinGet, newPID, PID, % "ahk_id " . IDList%A_Index%
+			isNew:=true
+			loop % oldPIDList.Count()
+			{
+				if(oldPIDList[A_Index]==newPID)
+				{
+					isNew:=false
+					break
+				}
+			}
+			if(isNew)
+				return newPID
+		}
+		return 0
+	}
+	
+	GetExistingPIDList() ;Returns any existing PIDs for the IC Exe, so we can detect a new instance even when things go weird
+	{
+		idList:=[]
+		WinGet, IDList, List, % "ahk_exe " . g_userSettings["ExeName"]
+		Loop % IDList
+		{
+			WinGet, existingPID, PID, % "ahk_id " . IDList%A_Index%
+			idList.Push(existingPID)
+		}
+		return idList
+	}
 	
 	GetProcessName(processID) ;To check without a window being present
 	{

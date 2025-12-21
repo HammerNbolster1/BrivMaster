@@ -520,15 +520,15 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			else
 			{
-				; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of the game
+				StartTimePID:=A_TickCount
+				ElapsedTimePID:=0
 				timeoutForPID:=ElapsedTime + processWaitingTimeout 
-				exeName:=g_IBM_Settings["IBM_Game_Exe"]
-				while(!this.PID AND ElapsedTime < timeoutForPID)
+				while(!this.PID AND ElapsedTimePID < processWaitingTimeout)
 				{
 					g_IBM.IBM_Sleep(45)
 					this.PID:=this.GetNewPID(existingPIDs)
 					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via GetNewPID()")
-					ElapsedTime:=A_TickCount - StartTime
+					ElapsedTimePID:=A_TickCount - StartTimePID
 				}
 				ElapsedTime:=A_TickCount - StartTime
 			}
@@ -537,13 +537,14 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	
 	GetNewPID(oldPIDList) ;oldPIDList is a list of PIDs to NOT match. Requires the game window to have been created
 	{
-		WinGet, IDList, List, % "ahk_exe " . g_userSettings["ExeName"]
+		WinGet, IDList, List, % "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
 		Loop % IDList
 		{
 			WinGet, newPID, PID, % "ahk_id " . IDList%A_Index%
 			isNew:=true
 			loop % oldPIDList.Count()
 			{
+				;OutputDebug % A_TickCount . ": GetNewPID() checking PID=[" . newPID . "]`n"
 				if(oldPIDList[A_Index]==newPID)
 				{
 					isNew:=false
@@ -559,11 +560,12 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	GetExistingPIDList() ;Returns any existing PIDs for the IC Exe, so we can detect a new instance even when things go weird
 	{
 		idList:=[]
-		WinGet, IDList, List, % "ahk_exe " . g_userSettings["ExeName"]
+		WinGet, IDList, List, % "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
 		Loop % IDList
 		{
 			WinGet, existingPID, PID, % "ahk_id " . IDList%A_Index%
 			idList.Push(existingPID)
+			;OutputDebug % A_TickCount . ": GetExistingPIDList() adding PID=[" . existingPID . "]`n"
 		}
 		return idList
 	}

@@ -140,11 +140,16 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			g_SharedData.IBM_UpdateOutbound("RunLog",AHK_JSON.Dump(this.LogEntries))
 			g_SharedData.IBM_UpdateOutbound("RunLogResetNumber",this.LogEntries.Run.ResetNumber)
 			;Output log
-			runString:=this.LogEntries.Run.ResetNumber . "," . this.LogEntries.Run.StartRealTime . "," . this.LogEntries.Run.Start . "," . this.LogEntries.Run.End - this.LogEntries.Run.Start . "," . this.LogEntries.Run.ResetReached - this.LogEntries.Run.Start . "," . this.LogEntries.Run.End - this.LogEntries.Run.ResetReached . "," . this.LogEntries.Run.Cycle . "," . this.LogEntries.Run.Fail . "," . this.LogEntries.Run.LastZone
+			loadTime:=this.LogEntries.Run.ActiveStart - this.LogEntries.Run.Start
+			resetTime:=this.LogEntries.Run.End - this.LogEntries.Run.ResetReached
+			runString:=this.LogEntries.Run.ResetNumber . "," . this.LogEntries.Run.StartRealTime . "," . this.LogEntries.Run.Start . "," ;Reset #,Start Time,Start Tick
+			runString.=this.LogEntries.Run.End - this.LogEntries.Run.Start . "," . this.LogEntries.Run.ResetReached - this.LogEntries.Run.ActiveStart . "," . loadTime + resetTime . "," ;Total,Active,Wait
+			runString.=loadTime . "," . resetTime . "," . this.LogEntries.Run.Cycle . "," ;Load,Reset,Cycle
+			runString.=this.LogEntries.Run.Fail . "," . this.LogEntries.Run.LastZone . "," . g_SF.Memory.ReadChestCountByID(282)  ;Fail,LastZone,Electrum
 			messageString:=""
 			for _,v in this.LogEntries.Messages
 				messageString.=v . ","
-			FileAppend, % runString . "," . g_SF.Memory.ReadChestCountByID(282) . "," . messageString . "`n", % this.logPath
+			FileAppend, % runString . "," . messageString . "`n", % this.logPath
 		}
 		;Reset for new
 		this.LogEntries.Messages:={}
@@ -159,11 +164,28 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		this.LogEntries.Run.Fail:=false
 		this.LogEntries.Run.Cycle:=""
 	}
+	
+	OutputHeader()
+	{
+		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum`n", % this.logPath
+	}
+	
+	ForceFail() ;The zone-based check does not capture runs that reach the target, but fail to reset, causing us to have Weird Stuff going on with no reported fails
+	{
+		if (this.LogEntries.HasKey("Run"))
+			this.LogEntries.Run.Fail:=true
+	}
 
 	SetRunCycle(cycleNumber) ;The routeMaster won't be .Reset() until after the log starts, so need to add the cylce number once available
 	{
 		if (this.LogEntries.HasKey("Run"))
 			this.LogEntries.Run.Cycle:=cycleNumber
+	}
+	
+	SetActiveStartTime() ;Called when z1 is Active
+	{
+		if (this.LogEntries.HasKey("Run"))
+			this.LogEntries.Run.ActiveStart:=A_TickCount
 	}
 
 	AddMessage(message)
@@ -204,12 +226,6 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		}
 		;this.AddMessage("z" . zone . " intent: " . (g_IBM.routeMaster.ShouldWalk(zone) ? "E" : "Q") . " to z" . g_IBM.routeMaster.zones[zone].nextZone.z) ;Uncomment for debugging
 	}
-
-	OutputHeader()
-	{
-		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Reset,Cycle,Fail,LastZone,Electrum`n", % this.logPath
-	}
-
 }
 
 class IC_BrivMaster_InputManager_Class ;A class for managing input related matters

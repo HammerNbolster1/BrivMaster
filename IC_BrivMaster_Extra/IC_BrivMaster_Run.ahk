@@ -137,9 +137,9 @@ class IC_BrivMaster_GemFarm_Class
 					this.Logger.AddMessage("Bosses:" . g_SharedData.BossesHitThisRun) ;Boss hits from previous run
 					g_SharedData.IBM_UpdateOutbound("BossesHitThisRun",0)
 				}
+				this.Logger.NewRun()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
-				this.Logger.NewRun()
 				this.offRamp:=false
 				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
@@ -166,11 +166,8 @@ class IC_BrivMaster_GemFarm_Class
 			{
 				if (!Mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND Mod( g_SF.Memory.ReadHighestZone(), 5 ) AND !g_SF.Memory.ReadTransitioning())
 					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
-				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and retarting due to having enough for another run)
-				{
-					this.TriggerStart:=true
+				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
 					Continue ;Go straight back to the start of the loop
-				}
 				this.routeMaster.SetFormation(true)
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
@@ -214,10 +211,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.Logger.ResetReached()
 				g_SharedData.IBM_UpdateOutbound("LoopString","Pending modron reset")
 			}
-            if (g_SF.CheckifStuck())
-            {
-                this.TriggerStart:=true
-            }
+            g_SF.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
 			;Loop frequency check
 			this.IBM_SleepOffset(lastLoopEndTime,30)
 			DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
@@ -256,9 +250,9 @@ class IC_BrivMaster_GemFarm_Class
 		}
 	}
 
-	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1
+	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
-		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop?
+		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
 			return existingZone
 		currentZone:=existingZone
 		startTime:=A_TickCount
@@ -276,7 +270,6 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-
 			melfPresent:=g_Heroes[59].inM
 			tatyanaPresent:=g_Heroes[97].inM
 			BBEGPresent:=g_Heroes[125].inM
@@ -662,7 +655,7 @@ class IC_BrivMaster_GemFarm_Class
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
-        if (!g_SF.WaitForModronReset(6000*g_IBM_Settings["IBM_OffLine_Timeout"])) ;Default is 5, so 30s. Note that BrivGemFarm used a fixed 50s here, which seemed rather high
+        if (!g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
             g_SF.CheckifStuck(true)
         g_PreviousZoneStartTime:=A_TickCount
 		this.TriggerStart:=true
@@ -751,7 +744,7 @@ class IC_BrivMaster_GemFarm_Class
     DialogSwatter_Swat()
     {
         if (g_SF.Memory.ReadWelcomeBackActive())
-            this.KEY_ESC.KeyPress()
+			this.KEY_ESC.KeyPress() ;.KeyPress() applies critical itself
 		else if (A_TickCount > this.SwatterStartTime + 3000) ;3s should be enough to get the swat done
 			this.DialogSwatter_Stop() ;Stop the timer since we don't have anything to swat
     }

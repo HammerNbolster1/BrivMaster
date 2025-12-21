@@ -89,7 +89,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ListView, IBM_Stats_Run_LV
 		LV_Add(,"Total","--.--","--.--","--.--","--.--")
 		LV_Add(,"Active","--.--","--.--","--.--","--.--")
-		LV_Add(,"Reset","--.--","--.--","--.--","--.--")
+		LV_Add(,"Wait","--.--","--.--","--.--","--.--")
 		LV_ModifyCol(1,"AutoHdr")
 		LV_ModifyCol(2,"AutoHdr")
 		LV_ModifyCol(3,"AutoHdr")
@@ -1641,8 +1641,50 @@ IBM_MainButtons_Save()
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
 	g_IriBrivMaster.UpdateSetting("IBM_Ellywick_NonGemFarm_Cards",g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings())
 	;Level Manager
-	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things. TODO: A separate save button for these might be wise
-		g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())
+	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things), and check if we've actually made changes
+	{
+		savedData:=g_IriBrivMaster.GetLevelSettings()
+		haveAdded:=false
+		addedString:=""
+		heroList:={} ;Used to check for removals later to avoid excessive loops around the seat->hero structure
+		for _, seatMembers in g_IriBrivMaster_GUI.levelDataSet
+		{
+			for heroID, heroData in seatMembers
+			{
+				heroList[heroID]:=heroData.Name
+				if(!savedData.hasKey(heroID))
+				{
+					haveAdded:=true
+					addedString.=heroData.Name . " (" . heroID . ")`n"
+				}
+			}
+		}
+		haveRemoved:=false
+		removedString:=""
+		for heroID,heroData in savedData
+		{
+			if(!heroList.hasKey(heroID))
+			{
+				haveRemoved:=true
+				heroName:=g_Heroes[heroID].ReadName() ;The name of the hero is not in current data, and might not be available at all
+				removedString.=(heroName ? heroName : "Unable to retrieve champion name") . " (" . heroID . ")`n"
+			}
+		}
+		if(haveAdded OR haveRemoved)
+		{
+			saveMsg:="The following champion changes have been made in the Level Manager:`n"
+			if(haveAdded)
+				saveMsg.="`nAdded:`n" . addedString . "`n"
+			if(haveRemoved)
+				saveMsg.="`nRemoved:`n" . removedString . "`n"
+			saveMsg.="`nSave Level Manager changes?"
+			Msgbox, 36, Briv Master Level Manager, %saveMsg% ;4 is Yes/No, + 32 for Question icon
+			ifMsgBox Yes
+				g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())
+		}
+		else
+			g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())
+	}
 	;Done with levels
 	g_IriBrivMaster.SaveSettings()
 	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Save

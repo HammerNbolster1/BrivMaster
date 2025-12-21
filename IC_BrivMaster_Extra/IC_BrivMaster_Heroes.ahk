@@ -196,7 +196,6 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 	{
 		return  g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].ActiveGameInstanceId_k__BackingField.Read()
 	}
-	
 
 	;------------------------------------------------------------------------------------
 	;---General functions

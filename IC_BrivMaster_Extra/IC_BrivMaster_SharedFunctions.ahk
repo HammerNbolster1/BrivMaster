@@ -79,7 +79,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         if (dtCurrentZoneTime > 45 AND fallBackTries < 3 AND dtCurrentZoneTime - lastCheck > 15) ; second check - Fall back to previous zone and try to continue
         {
             ; reset memory values in case they missed an update.
-            this.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
+            this.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open
             this.Memory.OpenProcessReader()
             this.ResetServerCall()
             ; try a fall back
@@ -210,18 +210,18 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	
 	;Overridden to better order the sleeps vs the checks
 	; Waits for the game to be in a ready state
-    WaitForGameReady( timeout := 90000)
+    WaitForGameReady(timeout := 90000,skipFinal:=false) ;skipFinal is for relay return where we might come back at any point in the offline calculation of the new instance, so waiting for a specific sequence of zone inactive/active/inactive won't necessarily work
     {
         ;g_IBM.routeMaster.DebugTick("WaitForGameReady() start")
 		if (!g_IBM.routeMaster.HybridBlankOffline AND g_IBM.routeMaster.offlineSaveTime>=0) ;If this is set by stack restart
 			this.IBM_WaitForUserLogin()
-		timeoutTimerStart := A_TickCount
+		timeoutTimerStart:=A_TickCount
         ElapsedTime:=0
 		; wait for game to start
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for game started...")
-        gameStarted := 0
+        gameStarted:=this.Memory.ReadGameStarted()
 		lastInput:=-250 ;Input limiter for the escape key presses
-		while( ElapsedTime < timeout AND !gameStarted)
+		while(ElapsedTime < timeout AND !gameStarted)
         {	
             if (A_TickCount > lastInput+250 AND this.Memory.ReadIsSplashVideoActive())
 			{
@@ -231,30 +231,31 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			else ;Longer sleep if not sending input
 				g_IBM.IBM_Sleep(45)
-			gameStarted := this.Memory.ReadGameStarted()
-            ElapsedTime := A_TickCount - timeoutTimerStart
+			gameStarted:=this.Memory.ReadGameStarted()
+            ElapsedTime:=A_TickCount - timeoutTimerStart
         }
 		g_IBM.RefreshImportCheck() ;The game has started so version memory reads should be available
         ; check if game has offline progress to calculate
-        offlineTime := this.Memory.ReadOfflineTime()
+        offlineTime:=this.Memory.ReadOfflineTime()
 		if(gameStarted AND offlineTime <= 0 AND offlineTime != "")
         {
 			return true ; No offline progress to calculate, game started
 		}
         ; wait for offline progress to finish
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress...")
-        offlineDone := 0
+        offlineDone:=this.Memory.ReadOfflineDone()
 		while( ElapsedTime < timeout AND !offlineDone)
         {
-            g_IBM.IBM_Sleep(50)
-            offlineDone := this.Memory.ReadOfflineDone()
-			ElapsedTime := A_TickCount - timeoutTimerStart
+            g_IBM.IBM_Sleep(45)
+            offlineDone:=this.Memory.ReadOfflineDone()
+			ElapsedTime:=A_TickCount - timeoutTimerStart
         }
         ; finished before timeout
         if(offlineDone)
         {
-			this.WaitForFinalStatUpdates()
-			g_PreviousZoneStartTime := A_TickCount
+			if(!skipFinal)
+				this.WaitForFinalStatUpdates()
+			g_PreviousZoneStartTime:=A_TickCount
             return true
         }
         this.CloseIC( "WaitForGameReady-Failed to finish in " . Floor(timeout/ 1000) . "s." )
@@ -267,10 +268,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     {
 		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() start")
 		g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
-        ElapsedTime := 0
+        ElapsedTime:=0
         ; Starts as 1, turns to 0, back to 1 when active again.
         StartTime := A_TickCount
-        while(this.Memory.ReadAreaActive() AND ElapsedTime < 5000) ;This was 1736ms, which it seems can be exceeded causing things to go wierd, better to wait here a little longer
+        while(this.Memory.ReadAreaActive() AND ElapsedTime<5000) ;This was 1736ms, which it seems can be exceeded causing things to go wierd, better to wait here a little longer
         {
             ElapsedTime := A_TickCount - StartTime
             g_IBM.IBM_Sleep(15)
@@ -278,7 +279,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() Area Active")
 		formationActive:=False
 		Critical On ;From here to the zone becoming active timing is important to maximise our chances of getting to the proper formation before something spawns and blocks us. This is not turned off by this function intentionally
-		while(!this.Memory.ReadAreaActive() AND ElapsedTime < 7000) ;2000ms beyond the initial loop
+		while(!this.Memory.ReadAreaActive() AND ElapsedTime<7000) ;2000ms beyond the initial loop
         {
             if (!formationActive)
 			{
@@ -354,7 +355,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     OpenIC(message:="")
     {
 		waitForReadyTimeout:=10000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 50s
-		timeoutVal := 5000*g_IBM_Settings["IBM_OffLine_Timeout"] + waitForReadyTimeout ;Default is 5, so 25s + the 50s above=75s
+		timeoutVal:=5000*g_IBM_Settings["IBM_OffLine_Timeout"] + waitForReadyTimeout ;Default is 5, so 25s + the 50s above=75s
         loadingDone := false
         g_SharedData.IBM_UpdateOutbound("LoopString","Starting Game" . (message ? " " . message : ""))
 		g_IBM.Logger.AddMessage("Starting Game" . (message ? " " . message : ""))
@@ -363,7 +364,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         StartTime := A_TickCount
         while ( !loadingZone AND ElapsedTime < timeoutVal )
         {
-			this.Hwnd := 0
+			this.Hwnd:=0
             ElapsedTime := A_TickCount - StartTime
             if(ElapsedTime < timeoutVal)
 			{
@@ -383,7 +384,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             if(loadingZone)
                 this.ResetServerCall()
 			else
-				g_IBM.IBM_Sleep(50) ;Moved this to an Else, otherwise it delays code progression when loading is sucessful
+				g_IBM.IBM_Sleep(15) ;Moved this to an Else, otherwise it delays code progression when loading is sucessful
             ElapsedTime := A_TickCount - StartTime
         }
         if(ElapsedTime >= timeoutVal)

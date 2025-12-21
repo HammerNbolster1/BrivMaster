@@ -1499,7 +1499,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		logText.="to PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]"
 		g_IBM.Logger.AddMessage(logText)
 		g_SF.Memory.OpenProcessReader(g_SF.PID)
-		if (g_SF.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"])) ;Default is 5, so 50s
+		if (g_SF.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one 
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")

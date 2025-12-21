@@ -340,7 +340,7 @@ Class IC_IriBrivMaster_Component
 		Gui, ListView, IBM_Stats_Run_LV
 		LV_Modify(1,,"Total","--.--","--.--","--.--","--.--")
 		LV_Modify(2,,"Active","--.--","--.--","--.--","--.--")
-		LV_Modify(3,,"Reset","--.--","--.--","--.--","--.--")
+		LV_Modify(3,,"Wait","--.--","--.--","--.--","--.--")
 		LV_ModifyCol(1,"AutoHdr")
 		LV_ModifyCol(2,"AutoHdr")
 		LV_ModifyCol(3,"AutoHdr")
@@ -432,13 +432,15 @@ Class IC_IriBrivMaster_Component
 					this.Stats.LastRun:=LogData.Run.ResetNumber
 
 					totalDuration:=LogData.Run.End - LogData.Run.Start
-					activeTime:=LogData.Run.ResetReached - LogData.Run.Start
+					activeTime:=LogData.Run.ResetReached - LogData.Run.ActiveStart
+					loadTime:=LogData.Run.ActiveStart - LogData.Run.Start
 					resetTime:=LogData.Run.End - LogData.Run.ResetReached
+					waitTime:=loadTime+resetTime
 					this.StatsUpdateFastSlow(this.Stats.Total,totalDuration)
 					if LogData.Run.HasKey("ResetReached") ;Failed runs may not have a reset value
 					{
 						this.StatsUpdateFastSlow(this.Stats.Active,activeTime)
-						this.StatsUpdateFastSlow(this.Stats.Reset,resetTime)
+						this.StatsUpdateFastSlow(this.Stats.Reset,waitTime)
 					}
 					this.Stats.TotalRuns++
 					this.Stats.PreviousRunEndTime:=LogData.Run.End
@@ -447,7 +449,7 @@ Class IC_IriBrivMaster_Component
 					GuiControl, -Redraw, IBM_Stats_Run_LV
 					LV_Modify(1,,"Total",ROUND(totalDuration/1000,2),ROUND((this.Stats.Total.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Total.Fast/1000,2),ROUND(this.Stats.Total.Slow/1000,2))
 					LV_Modify(2,,"Active",ROUND(activeTime/1000,2),ROUND((this.Stats.Active.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Active.Fast/1000,2),ROUND(this.Stats.Active.Slow/1000,2))
-					LV_Modify(3,,"Reset",ROUND(resetTime/1000,2),ROUND((this.Stats.Reset.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
+					LV_Modify(3,,"Reset",ROUND(waitTime/1000,2),ROUND((this.Stats.Reset.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
 					LV_ModifyCol(2,"AutoHdr")
 					LV_ModifyCol(3,"AutoHdr")
 					LV_ModifyCol(4,"AutoHdr")
@@ -1181,6 +1183,11 @@ Class IC_IriBrivMaster_Component
     {
         this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]] := levelData
     }
+	
+	GetLevelSettings() ;Returns the current level settings from the data (not UI) for the selected combine mode
+	{
+		return this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]]
+	}
 
 	UpdateRouteSetting(setting,toggleZone)
 	{

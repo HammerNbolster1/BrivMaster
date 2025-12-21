@@ -137,9 +137,9 @@ class IC_BrivMaster_GemFarm_Class
 					this.Logger.AddMessage("Bosses:" . g_SharedData.BossesHitThisRun) ;Boss hits from previous run
 					g_SharedData.IBM_UpdateOutbound("BossesHitThisRun",0)
 				}
+				this.Logger.NewRun()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
-				this.Logger.NewRun()
 				this.offRamp:=false
 				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
@@ -256,9 +256,9 @@ class IC_BrivMaster_GemFarm_Class
 		}
 	}
 
-	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1
+	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
-		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop?
+		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
 			return existingZone
 		currentZone:=existingZone
 		startTime:=A_TickCount

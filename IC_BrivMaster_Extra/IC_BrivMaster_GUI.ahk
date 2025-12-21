@@ -89,7 +89,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ListView, IBM_Stats_Run_LV
 		LV_Add(,"Total","--.--","--.--","--.--","--.--")
 		LV_Add(,"Active","--.--","--.--","--.--","--.--")
-		LV_Add(,"Reset","--.--","--.--","--.--","--.--")
+		LV_Add(,"Wait","--.--","--.--","--.--","--.--")
 		LV_ModifyCol(1,"AutoHdr")
 		LV_ModifyCol(2,"AutoHdr")
 		LV_ModifyCol(3,"AutoHdr")

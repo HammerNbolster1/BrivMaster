@@ -254,15 +254,19 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 	Level(maxKeyPresses,byRef waitForGold, forcePriority) ;WaitforGold is ByRef as we only want to call it on the first iteration
 	{
 		keyList100:=[]
-		keyList10:=[] ;Note this is the modifier list, which might no longer be x10...
+		keyList10:=[] ;Note this is the modifier list, which can now be either x10 or x25
 		this.GetKeyList(maxKeyPresses,keyList100,keyList10,forcePriority)
 		if (keyList100.Count()==0 AND keyList10.Count()==0) ;Due to z1c restrictions, it is possible that .Done() is false but there is nothing to do this iteration
 			return
-		g_InputManager.gameFocus() ;This might be a bit early when waitforgold is needed. Possibly checking adventure gold, then calling gameFocus(), then checking hero gold might be better for the first run
 		if (waitForGold) ;Wait for gold if requested, for start-of-run calls only
 		{
+			this.WaitForAreaActive()
+			g_IBM.Logger.SetActiveStartTime()
+			g_InputManager.gameFocus() ;Placed to be as close to the input as possible without delaying it
 			waitForGold:=!this.WaitForFirstGold(keyList100.Count()>0 ? keyList100[1].tag : keyList10[1].tag)
 		}
+		else
+			g_InputManager.gameFocus()
 		Critical On ;We do not want timers trying to also press keys whilst we are levelling, given 629+ issues with multiple keys, and the possible use of modifer keys
 		for _, key in keyList100
 			key.KeyPress_Bulk()
@@ -275,6 +279,15 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 		}
 		Critical Off
 		this.UpdateLevels()
+	}
+	
+	WaitForAreaActive()
+	{
+		StartTime:=A_TickCount
+		while (!g_SF.Memory.ReadAreaActive() AND A_TickCount - StartTime < 10000 )
+        {
+			Sleep 0
+        }
 	}
 
     WaitForFirstGold(checkSeat)

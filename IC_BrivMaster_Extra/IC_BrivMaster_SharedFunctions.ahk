@@ -106,6 +106,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	RestartAdventure( reason := "" )
     {
 		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting adventure")
+		g_IBM.Logger.ForceFail() ;As this can be after we've reached the zone target if the reset got stuck
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . this.Memory.ReadCurrentZone() . " with haste:" . this.Memory.ReadHasteStacks() . ")")
 		this.CloseIC(reason)
 		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Checking stack conversion")

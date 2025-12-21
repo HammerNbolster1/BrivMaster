@@ -257,7 +257,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			g_PreviousZoneStartTime:=A_TickCount
             return true
         }
-        this.CloseIC( "WaitForGameReady-Failed to finish in " . Floor(timeout/ 1000) . "s." )
+        this.CloseIC("WaitForGameReady-Failed to finish in " . Floor(timeout/ 1000) . "s")
         return false
     }
 	

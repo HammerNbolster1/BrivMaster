@@ -1494,8 +1494,8 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	ProcessSwap()
 	{
 		logText:="ProcessSwap() changing PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] "
-		g_SF.PID := this.RelayPID
-		g_SF.Hwnd := this.RelayHwnd
+		g_SF.PID:=this.RelayPID
+		g_SF.Hwnd:=this.RelayHwnd
 		logText.="to PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]"
 		g_IBM.Logger.AddMessage(logText)
 		g_SF.Memory.OpenProcessReader(g_SF.PID)

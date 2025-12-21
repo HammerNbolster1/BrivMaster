@@ -31,7 +31,6 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 	;Overridden to remove cruft and to take a PID instead of just finding it via a window name, in case there are multiple windows
 	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
     {
-        global g_UserSettings
         _MemoryManager.exeName := g_IBM_Settings["IBM_Game_Exe"]
         isExeRead := _MemoryManager.Refresh(,pid)
         if(isExeRead == -1)

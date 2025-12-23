@@ -533,6 +533,37 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				}
 				ElapsedTime:=A_TickCount - StartTime
 			}
+			if(!this.PID) ;We launched a process (or at least we think we did) but never found it via window. Terminate any IC process not in the existingPIDs list to clean up 
+			{
+				for gameProcess in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where Name='" . g_IBM_Settings["IBM_Game_Exe"] . "'") ;This seemed to have quite variable performance, but since this is a failure mode anyway being thorough is the older of the day (otherwise we'd be relying on Windows, which might nor might not have spawned)
+				{
+					isNew:=true
+					loop % existingPIDs.Count() ;Check each saved PID
+					{
+						if(existingPIDs[A_Index]==gameProcess.ProcessId)
+						{
+							isNew:=false
+							break
+						}
+					}
+					if(isNew) ;TODO: This only makes one attempt per process, add a loop perhaps, and de-duplicate with CloseIC()? I.e. Some 'MurderProcess' function that returns true if the murder call was sent and false otherwise
+					{
+						hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", gameProcess.ProcessId, "Ptr")
+						if(hProcess)
+						{
+							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup killing PID=[" . gameProcess.ProcessId . "]")
+							DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
+							DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
+						}
+						else
+						{
+							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup attempted to kill PID=[" . gameProcess.ProcessId . "] but could not find handle")
+						}
+					}
+					else
+						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
+				}
+			}
         }
     }
 	

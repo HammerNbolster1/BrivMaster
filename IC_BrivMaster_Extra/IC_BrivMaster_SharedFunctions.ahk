@@ -489,10 +489,11 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		WinActivate, %savedActive%
     }
 	
-    OpenProcessAndSetPID(timeoutLeft:=32000) ;Runs ICs and sets this.PID
+    OpenProcessAndSetPID() ;Runs ICs and sets this.PID
     {
         this.PID:=0
-        processWaitingTimeout:=10000 ;10s
+		timeoutLeft:=8000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 40s
+        processWaitingTimeout:=3000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 15s
         ElapsedTime:=0
         StartTime:=A_TickCount
         while (!this.PID AND ElapsedTime < timeoutLeft )

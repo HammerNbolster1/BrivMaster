@@ -421,7 +421,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				g_IBM.offramp:=false ;Reset offramp
-			g_IBM.previousZone:=returnZone ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+			g_IBM.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 			g_IBM.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 			g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
 			g_IBM.Logger.AddMessage("BlankRestart() Exit Rollback Detected,Start@z" . startZone . ",End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
@@ -1495,12 +1495,12 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	ProcessSwap()
 	{
 		logText:="ProcessSwap() changing PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] "
-		g_SF.PID := this.RelayPID
-		g_SF.Hwnd := this.RelayHwnd
+		g_SF.PID:=this.RelayPID
+		g_SF.Hwnd:=this.RelayHwnd
 		logText.="to PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]"
 		g_IBM.Logger.AddMessage(logText)
 		g_SF.Memory.OpenProcessReader(g_SF.PID)
-		if (g_SF.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"])) ;Default is 5, so 50s
+		if (g_SF.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one 
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")

@@ -449,7 +449,7 @@ Class IC_IriBrivMaster_Component
 					GuiControl, -Redraw, IBM_Stats_Run_LV
 					LV_Modify(1,,"Total",ROUND(totalDuration/1000,2),ROUND((this.Stats.Total.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Total.Fast/1000,2),ROUND(this.Stats.Total.Slow/1000,2))
 					LV_Modify(2,,"Active",ROUND(activeTime/1000,2),ROUND((this.Stats.Active.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Active.Fast/1000,2),ROUND(this.Stats.Active.Slow/1000,2))
-					LV_Modify(3,,"Reset",ROUND(waitTime/1000,2),ROUND((this.Stats.Reset.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
+					LV_Modify(3,,"Wait",ROUND(waitTime/1000,2),ROUND((this.Stats.Reset.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
 					LV_ModifyCol(2,"AutoHdr")
 					LV_ModifyCol(3,"AutoHdr")
 					LV_ModifyCol(4,"AutoHdr")

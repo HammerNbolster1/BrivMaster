@@ -79,7 +79,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         if (dtCurrentZoneTime > 45 AND fallBackTries < 3 AND dtCurrentZoneTime - lastCheck > 15) ; second check - Fall back to previous zone and try to continue
         {
             ; reset memory values in case they missed an update.
-            this.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
+            this.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open
             this.Memory.OpenProcessReader()
             this.ResetServerCall()
             ; try a fall back
@@ -210,18 +210,17 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 	
 	;Overridden to better order the sleeps vs the checks
 	; Waits for the game to be in a ready state
-    WaitForGameReady( timeout := 90000)
+    WaitForGameReady(timeout := 90000,skipFinal:=false) ;skipFinal is for relay return where we might come back at any point in the offline calculation of the new instance, so waiting for a specific sequence of zone inactive/active/inactive won't necessarily work
     {
-        ;g_IBM.routeMaster.DebugTick("WaitForGameReady() start")
 		if (!g_IBM.routeMaster.HybridBlankOffline AND g_IBM.routeMaster.offlineSaveTime>=0) ;If this is set by stack restart
 			this.IBM_WaitForUserLogin()
-		timeoutTimerStart := A_TickCount
+		timeoutTimerStart:=A_TickCount
         ElapsedTime:=0
 		; wait for game to start
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for game started...")
-        gameStarted := 0
+        gameStarted:=0 ;This can't check as we need the splash video check to run at least once, due to a bug on recent versions (up to at least 638.2) where the game can get stuck on the splash screen
 		lastInput:=-250 ;Input limiter for the escape key presses
-		while( ElapsedTime < timeout AND !gameStarted)
+		while(ElapsedTime < timeout AND !gameStarted)
         {	
             if (A_TickCount > lastInput+250 AND this.Memory.ReadIsSplashVideoActive())
 			{
@@ -231,33 +230,34 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			else ;Longer sleep if not sending input
 				g_IBM.IBM_Sleep(45)
-			gameStarted := this.Memory.ReadGameStarted()
-            ElapsedTime := A_TickCount - timeoutTimerStart
+			gameStarted:=this.Memory.ReadGameStarted()
+            ElapsedTime:=A_TickCount - timeoutTimerStart
         }
 		g_IBM.RefreshImportCheck() ;The game has started so version memory reads should be available
         ; check if game has offline progress to calculate
-        offlineTime := this.Memory.ReadOfflineTime()
+        offlineTime:=this.Memory.ReadOfflineTime()
 		if(gameStarted AND offlineTime <= 0 AND offlineTime != "")
         {
 			return true ; No offline progress to calculate, game started
 		}
         ; wait for offline progress to finish
         g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress...")
-        offlineDone := 0
+        offlineDone:=this.Memory.ReadOfflineDone()
 		while( ElapsedTime < timeout AND !offlineDone)
         {
-            g_IBM.IBM_Sleep(50)
-            offlineDone := this.Memory.ReadOfflineDone()
-			ElapsedTime := A_TickCount - timeoutTimerStart
+            g_IBM.IBM_Sleep(45)
+            offlineDone:=this.Memory.ReadOfflineDone()
+			ElapsedTime:=A_TickCount - timeoutTimerStart
         }
         ; finished before timeout
         if(offlineDone)
         {
-			this.WaitForFinalStatUpdates()
-			g_PreviousZoneStartTime := A_TickCount
+			if(!skipFinal)
+				this.WaitForFinalStatUpdates()
+			g_PreviousZoneStartTime:=A_TickCount
             return true
         }
-        this.CloseIC( "WaitForGameReady-Failed to finish in " . Floor(timeout/ 1000) . "s." )
+        this.CloseIC("WaitForGameReady-Failed to finish in " . Floor(timeout/ 1000) . "s")
         return false
     }
 	
@@ -267,10 +267,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     {
 		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() start")
 		g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
-        ElapsedTime := 0
+        ElapsedTime:=0
         ; Starts as 1, turns to 0, back to 1 when active again.
         StartTime := A_TickCount
-        while(this.Memory.ReadAreaActive() AND ElapsedTime < 5000) ;This was 1736ms, which it seems can be exceeded causing things to go wierd, better to wait here a little longer
+        while(this.Memory.ReadAreaActive() AND ElapsedTime<5000) ;This was 1736ms, which it seems can be exceeded causing things to go wierd, better to wait here a little longer
         {
             ElapsedTime := A_TickCount - StartTime
             g_IBM.IBM_Sleep(15)
@@ -278,7 +278,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() Area Active")
 		formationActive:=False
 		Critical On ;From here to the zone becoming active timing is important to maximise our chances of getting to the proper formation before something spawns and blocks us. This is not turned off by this function intentionally
-		while(!this.Memory.ReadAreaActive() AND ElapsedTime < 7000) ;2000ms beyond the initial loop
+		while(!this.Memory.ReadAreaActive() AND ElapsedTime<7000) ;2000ms beyond the initial loop
         {
             if (!formationActive)
 			{
@@ -354,7 +354,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
     OpenIC(message:="")
     {
 		waitForReadyTimeout:=10000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 50s
-		timeoutVal := 5000*g_IBM_Settings["IBM_OffLine_Timeout"] + waitForReadyTimeout ;Default is 5, so 25s + the 50s above=75s
+		timeoutVal:=5000*g_IBM_Settings["IBM_OffLine_Timeout"] + waitForReadyTimeout ;Default is 5, so 25s + the 50s above=75s
         loadingDone := false
         g_SharedData.IBM_UpdateOutbound("LoopString","Starting Game" . (message ? " " . message : ""))
 		g_IBM.Logger.AddMessage("Starting Game" . (message ? " " . message : ""))
@@ -363,7 +363,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         StartTime := A_TickCount
         while ( !loadingZone AND ElapsedTime < timeoutVal )
         {
-			this.Hwnd := 0
+			this.Hwnd:=0
             ElapsedTime := A_TickCount - StartTime
             if(ElapsedTime < timeoutVal)
 			{
@@ -383,7 +383,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             if(loadingZone)
                 this.ResetServerCall()
 			else
-				g_IBM.IBM_Sleep(50) ;Moved this to an Else, otherwise it delays code progression when loading is sucessful
+				g_IBM.IBM_Sleep(15) ;Moved this to an Else, otherwise it delays code progression when loading is sucessful
             ElapsedTime := A_TickCount - StartTime
         }
         if(ElapsedTime >= timeoutVal)
@@ -399,19 +399,17 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
     }
 	
-	;Override to fix the typo in the name, and to use the Hwnd instead of window name
-	;Saves this.SavedActiveWindow as the last window and waits for the game exe to load its window.
-    SetLastActiveWindowWhileWaitingForGameExe(timeoutLeft := 32000)
+    SetLastActiveWindowWhileWaitingForGameExe(timeoutLeft:=32000)
     {
-        StartTime := A_TickCount
-        ; Process exists, wait for the window:
-        while(!(this.Hwnd:=WinExist( "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])) AND ElapsedTime < timeoutLeft)
+        StartTime:=A_TickCount
+        while(!(this.Hwnd:=WinExist("ahk_pid " . this.PID)) AND ElapsedTime < timeoutLeft) ;this.PID should be set before calling this function
         {
             WinGet, savedActive,, A ;Changed to the handle, multiple windows could have the same name
-            this.SavedActiveWindow := savedActive
-            ElapsedTime := A_TickCount - StartTime
-            g_IBM.IBM_Sleep(50)
+            this.SavedActiveWindow:=savedActive
+            g_IBM.IBM_Sleep(45)
+			ElapsedTime:=A_TickCount - StartTime
         }
+		g_IBM.Logger.AddMessage("SetLastActiveWindowWhileWaitingForGameExe() set Hwnd=[" . this.Hwnd . "]")
     }
 	
 	;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side
@@ -491,16 +489,18 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		WinActivate, %savedActive%
     }
 	
-    OpenProcessAndSetPID(timeoutLeft:=32000) ;Runs ICs and sets this.PID
+    OpenProcessAndSetPID() ;Runs ICs and sets this.PID
     {
         this.PID:=0
-        processWaitingTimeout:=10000 ;10s
+		timeoutLeft:=8000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 40s
+        processWaitingTimeout:=3000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 15s
         ElapsedTime:=0
         StartTime:=A_TickCount
         while (!this.PID AND ElapsedTime < timeoutLeft )
         {
             g_SharedData.IBM_UpdateOutbound("LoopString","Opening IC...")
-            programLoc := g_IBM_Settings["IBM_Game_Launch"]
+            existingPIDs:=this.GetExistingPIDList() ;Save a list of existing PIDs so we can find the new one the Run command creates TODO: Instead of checking if the Run command is executing the exe directly at run time, work it out once from the name so we don't save this when not needed?
+			programLoc:=g_IBM_Settings["IBM_Game_Launch"]
             try
             {
                 if (g_IBM_Settings["IBM_Game_Hide_Launcher"])
@@ -515,24 +515,92 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             }
 			g_IBM.IBM_Sleep(15)
 			if (this.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+			{
 				this.PID:=openPID
+				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
+			}
 			else
 			{
-				; Add 10s (default) to ElapsedTime so each exe waiting loop will take at least 10s before trying to run a new instance of the game
+				StartTimePID:=A_TickCount
+				ElapsedTimePID:=0
 				timeoutForPID:=ElapsedTime + processWaitingTimeout 
-				exeName:=g_IBM_Settings["IBM_Game_Exe"]
-				while(!this.PID AND ElapsedTime < timeoutForPID)
+				while(!this.PID AND ElapsedTimePID < processWaitingTimeout)
 				{
-					g_IBM.IBM_Sleep(50)
-					Process, Exist, %exeName%
-					this.PID:=ErrorLevel
-					ElapsedTime:=A_TickCount - StartTime
+					g_IBM.IBM_Sleep(45)
+					this.PID:=this.GetNewPID(existingPIDs)
+					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via GetNewPID()")
+					ElapsedTimePID:=A_TickCount - StartTimePID
 				}
 				ElapsedTime:=A_TickCount - StartTime
-				g_IBM.IBM_Sleep(50)
+			}
+			if(!this.PID) ;We launched a process (or at least we think we did) but never found it via window. Terminate any IC process not in the existingPIDs list to clean up 
+			{
+				for gameProcess in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where Name='" . g_IBM_Settings["IBM_Game_Exe"] . "'") ;This seemed to have quite variable performance, but since this is a failure mode anyway being thorough is the older of the day (otherwise we'd be relying on Windows, which might nor might not have spawned)
+				{
+					isNew:=true
+					loop % existingPIDs.Count() ;Check each saved PID
+					{
+						if(existingPIDs[A_Index]==gameProcess.ProcessId)
+						{
+							isNew:=false
+							break
+						}
+					}
+					if(isNew) ;TODO: This only makes one attempt per process, add a loop perhaps, and de-duplicate with CloseIC()? I.e. Some 'MurderProcess' function that returns true if the murder call was sent and false otherwise
+					{
+						hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", gameProcess.ProcessId, "Ptr")
+						if(hProcess)
+						{
+							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup killing PID=[" . gameProcess.ProcessId . "]")
+							DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
+							DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
+						}
+						else
+						{
+							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup attempted to kill PID=[" . gameProcess.ProcessId . "] but could not find handle")
+						}
+					}
+					else
+						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
+				}
 			}
         }
     }
+	
+	GetNewPID(oldPIDList) ;oldPIDList is a list of PIDs to NOT match. Requires the game window to have been created
+	{
+		WinGet, IDList, List, % "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
+		Loop % IDList
+		{
+			WinGet, newPID, PID, % "ahk_id " . IDList%A_Index%
+			isNew:=true
+			loop % oldPIDList.Count()
+			{
+				;OutputDebug % A_TickCount . ": GetNewPID() checking PID=[" . newPID . "]`n"
+				if(oldPIDList[A_Index]==newPID)
+				{
+					isNew:=false
+					break
+				}
+			}
+			if(isNew)
+				return newPID
+		}
+		return 0
+	}
+	
+	GetExistingPIDList() ;Returns any existing PIDs for the IC Exe, so we can detect a new instance even when things go weird
+	{
+		idList:=[]
+		WinGet, IDList, List, % "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]
+		Loop % IDList
+		{
+			WinGet, existingPID, PID, % "ahk_id " . IDList%A_Index%
+			idList.Push(existingPID)
+			;OutputDebug % A_TickCount . ": GetExistingPIDList() adding PID=[" . existingPID . "]`n"
+		}
+		return idList
+	}
 	
 	GetProcessName(processID) ;To check without a window being present
 	{

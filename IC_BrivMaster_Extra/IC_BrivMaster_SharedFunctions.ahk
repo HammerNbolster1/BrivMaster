@@ -45,7 +45,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         return true
     }
 	
-	BadSaveTest() ;TODO: Given this is 4 lines of code, is there a need for it to be a separate function?
+	BadSaveTest() ;TODO: Given this is 4 lines of code, is there a need for it to be a separate function? Also TODO: This doesn't check the memory reads are actually valid, does it need to?
     {
         if(g_IBM.currentZone != "" and g_IBM.currentZone - 1 > g_SF.Memory.ReadCurrentZone())
             g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")

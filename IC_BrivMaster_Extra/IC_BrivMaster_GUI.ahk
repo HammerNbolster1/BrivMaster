@@ -184,7 +184,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h50 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Profile:
-		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1
+		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1 ;TODO: Disable wrapping on these, as it seems that can happen here?
 		Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile, Profile 2
 		Gui, ICScriptHub:Add, Text, x+10 h18 w220 0x200 vIBM_Game_Settings_Status, Not checked
 		Gui, ICScriptHub:Add, Button, xs+398 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
@@ -1199,7 +1199,7 @@ IBM_Game_Settings_Options()
 	}
 }
 
-IBM_Game_Settings_Option_Change() ;This just updates everything, since we shouldn't be screwing around in the game settings options screen constantly
+IBM_Game_Settings_Option_Change() ;This just updates everything, since we shouldn't be screwing around in the game settings options screen constantly TODO: Should this refresh the profile names in the main window? Probably should...
 {
 	if (g_IriBrivMaster_GUI.controlLock)
 		return

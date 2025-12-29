@@ -95,17 +95,12 @@ class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 				}
 			}
 		}
-		CURRENCY:=RESET_DEFS[indexCache].CurrentAmount
-		first4Bytes:=CURRENCY.Read("Int")+0
-		SECOND_WORD:=CURRENCY.QuickClone()
-		lastOffsetIndex:=SECOND_WORD.FullOffsets.Count()
-		SECOND_WORD.FullOffsets[lastOffsetIndex]:=SECOND_WORD.FullOffsets[lastOffsetIndex] + 0x4
-		last4Bytes:=SECOND_WORD.Read("Int")+0
-		sign:=(last4Bytes & 0x80000000) >> 31
+		full8bytes:=RESET_DEFS[indexCache].CurrentAmount.Read("Int64")+0
+		sign:=(full8bytes & 0x8000000000000000) >> 63
 		signMulti:=sign ? -1:1
-		exponent:=((last4Bytes & 0x7FF00000) >> 20) - 1023 ;For IEEE 754 double
-		mantissa:=(((last4Bytes & 0xFFFFF) << 32) + first4Bytes) / 0xFFFFFFFFFFFFF
-		favourExp:=exponent * LOG(2) + LOG(signMulti*(1+mantissa)) ;As an exponent, e.g. 306.6 for 10^306.6=4e306	
+		exponent:=((full8bytes & 0x7FF0000000000000) >> 52) - 1023 ;For IEEE 754 double
+		mantissa:=(full8bytes & 0x000FFFFFFFFFFFFF) / 0x000FFFFFFFFFFFFF
+		favourExp:=exponent * LOG(2) + LOG(signMulti*(1+mantissa)) ;As an exponent, e.g. 306.6 for 10^306.6=4e306
 		return floor(favourExp)
 	}
 

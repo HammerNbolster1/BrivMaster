@@ -138,6 +138,7 @@ class IC_BrivMaster_GemFarm_Class
 					g_SharedData.IBM_UpdateOutbound("BossesHitThisRun",0)
 				}
 				this.Logger.NewRun()
+				g_InputManager.ReleaseAll()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.offRamp:=false
@@ -389,8 +390,8 @@ class IC_BrivMaster_GemFarm_Class
 				else
 				{
 					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Express Casino")
-					this.EllywickCasino.Start() ;Start the Elly handler
-					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
+					this.EllywickCasino.Start() ;Start the Elly handler 
+					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case, also TODO: We might need to force Elly's priority here, as otherwise she might not be fielded before the check in this call
 				}
 				;Wait for zone completion so we can level Briv - this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 				quest := g_SF.Memory.ReadQuestRemaining()

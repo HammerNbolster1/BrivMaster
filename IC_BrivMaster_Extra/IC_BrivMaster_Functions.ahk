@@ -258,6 +258,18 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 		hwnd:=g_SF.Hwnd
 		ControlFocus,, ahk_id %hwnd%
 	}
+	
+	ReleaseAll() ;Sends a key-up for all used keys. Added to due to apparent input issues
+	{
+		this.gameFocus()
+		c:=0
+		for _,key in this.keyList
+		{
+			key.Release_Bulk()
+			c++
+		}
+		g_IBM.Logger.AddMessage("ReleaseAll() sent key-up for [" . c . "] keys") ;As the default may change we want to be informed
+	}
 }
 
 class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_BrivMaster_InputManager_Class

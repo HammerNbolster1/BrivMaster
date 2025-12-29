@@ -398,6 +398,8 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 		for champID,_ in this.Champs.Clone() ;Clone because we will be removing entries from the main list
 		{
 			this.Champs[champID].Current.PendingLevels:=0
+			if(champID==145)
+				g_IBM.Logger.AddMessage("UpdateLevels() processing Dynaheir NeedsLevelling=[" . this.Champs[champID].NeedsLevelling(this.Mode) . "] Level=[" . this.Champs[champID].Current.Level . "]")
 			if (!this.Champs[champID].NeedsLevelling(this.Mode))
 				this.Champs.Delete(champID)
 		}

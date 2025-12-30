@@ -2,7 +2,7 @@
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_SharedFunctions.ahk
 
 global g_PreviousZoneStartTime
-global g_SharedData:=New IC_BrivMaster_SharedData_Class
+global g_SharedData:=New IC_BrivMaster_SharedData_Class ;TODO: Create this in the main _Run file?
 
 class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
 {

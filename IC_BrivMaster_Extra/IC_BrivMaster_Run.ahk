@@ -41,7 +41,6 @@ global g_InputManager:=new IC_BrivMaster_InputManager_Class()
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
-SH_UpdateClass.UpdateClassFunctions(g_SharedData, IC_BrivMaster_SharedData_Class) ;Note: g_SharedData is populated by IC_SharedFunctions_Class
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
 SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
 

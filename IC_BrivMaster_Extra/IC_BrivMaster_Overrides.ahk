@@ -39,7 +39,7 @@ class IC_BrivMaster_SharedData_Class extends IC_SharedData_Class
         if (g_SF.Memory.ReadCurrentZone() == "") ; Invalid game state
             ExitApp
         g_IBM.RouteMaster.WaitForTransition()
-        g_SF.FallBackFromZone()
+        g_IBM.RouteMaster.FallBackFromZone()
         g_IBM.RouteMaster.ToggleAutoProgress(false, false, true)
         ExitApp
     }
@@ -60,7 +60,7 @@ class IC_BrivMaster_SharedData_Class extends IC_SharedData_Class
             return false
 		for k,v in settings ;Load all settings
 			g_IBM_Settings[k]:=v
-		if(g_IBM) ;If the gem farm exists (as it will not when this is called from the hub without the farm running)
+		if(g_IBM) ;If the gem farm exists (as it will not when this is called from the hub without the farm running) TODO: Why try to read the settings in that case?
 			g_IBM.RefreshGemFarmWindow()
     }
 	
@@ -112,7 +112,6 @@ class IBM_Memory_Manager extends _MemoryManager
         if (pid)
 		{
 			processLookup:="AHK_PID " . pid
-			;OutputDebug % A_TickCount . " _MemoryManager PID override applied for PID=[" . pid . "]`n"
 		}
 		else
 			processLookup:="AHK_EXE " . this._exeName
@@ -150,15 +149,10 @@ class IC_BrivMaster_GameObjectStructure_Add
 			this.Is64Bit := _MemoryManager.is64Bit
 			this.FullOffsets := Array()          ; Full list of offsets required to get from base pointer to this object
 			this.FullOffsetsHexString := ""      ; Same as above but in readable hex string format. (Enable commented lines assigning this value to use for debugging)
-			;this.ValueType := "Int"              ; What type of value should be expected for the memory read.
 			this.BaseAddressPtr := ""            ; The name of the pointer class that created this object.
 			this.Offset := 0x0                   ; The offset from last object to this object.
-			;TODO: Is forcing IsAddedIndex below appropriate? I think it is so that we can ReBase collection members without the next _get just overwriting it
+			;TODO: Is forcing IsAddedIndex below appropriate? I think it is so that we can ReBase collection members without the next read just overwriting it
 			this.IsAddedIndex := false           ; __Get lookups on non-existent keys will create key objects with this value being true. Prevents cloning non-existent values.
-			;this.DictionaryObject := {}
-			;this.LastDictIndex := {}
-			;this._CollectionKeyType := ""
-			;this._CollectionValType := ""
 		}
 		for k,v in this ;Recurse children
         {

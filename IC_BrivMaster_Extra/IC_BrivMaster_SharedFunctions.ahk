@@ -548,17 +548,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 					}
 					if(isNew) ;TODO: This only makes one attempt per process, add a loop perhaps, and de-duplicate with CloseIC()? I.e. Some 'MurderProcess' function that returns true if the murder call was sent and false otherwise
 					{
-						hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", gameProcess.ProcessId, "Ptr")
-						if(hProcess)
-						{
+						if(this.IBM_TerminateProcess(gameProcess.ProcessId))
 							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup killing PID=[" . gameProcess.ProcessId . "]")
-							DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
-							DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-						}
 						else
-						{
 							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup attempted to kill PID=[" . gameProcess.ProcessId . "] but could not find handle")
-						}
 					}
 					else
 						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
@@ -664,13 +657,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			if (A_TickCount >= NextCloseAttempt) 
 			{
-				hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", g_SF.PID, "Ptr")
-				if(hProcess)
-				{
+				if(this.IBM_TerminateProcess(g_SF.PID))
 					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: sending TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
-					DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
-					DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-				}
 				else
 				{
 					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: failed to get process handle for TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
@@ -687,6 +675,18 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
         return saveCompleteTime
     }
+	
+	IBM_TerminateProcess(targetPID) ;Returns true if a handle could be aquired and the terminate was sent. Does not check that the process actually exited
+	{
+		hProcess:=DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", targetPID, "Ptr")
+		if(hProcess)
+		{
+			DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
+			DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
+			return true
+		}
+		return false
+	}
 	
 	CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE) ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
 	{

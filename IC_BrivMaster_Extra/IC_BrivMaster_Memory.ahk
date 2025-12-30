@@ -1,4 +1,4 @@
-;No #include required as already in IC_SharedFunctions_Class.ahk
+#include %A_LineFile%\..\..\IC_Core\MemoryRead\IC_MemoryFunctions_Class.ahk
 
 class IC_BrivMaster_MemoryFunctions_Class extends IC_MemoryFunctions_Class
 {

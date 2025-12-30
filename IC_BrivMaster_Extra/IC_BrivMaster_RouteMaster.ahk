@@ -52,7 +52,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.UltraStacking:=g_IBM_Settings["IBM_Online_Ultra_Enabled"]
 		if (this.UltraStacking)
 		{
-			this.BUDTracker:= new IC_BrivMaster_BUD_Tracker_Class()
+			this.BUDTracker:=new IC_BrivMaster_BUD_Tracker_Class()
 		}
 		this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
 		if (this.useBrivBoost)
@@ -164,7 +164,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run. Ignore haste is used for the status string showing the expected per run stack usage, rather than in-run calculation
 	{
-		if (ignoreHaste)
+		if(ignoreHaste)
 			return this.GetTargetStacksForFullRun(true)
 		else
 		{
@@ -390,7 +390,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		startStacks:=g_SF.Memory.ReadSBStacks()
 		offlineStartTime:=A_TickCount
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-		g_SF.CurrentZone:=startZone
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
 		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
 		if (this.RelayBlankOffline)
@@ -435,8 +434,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	TestForSteelBonesStackFarming() ;Returns true if we have a failure, namely the out of stacks and need to force restart case
     {
-		currentZone := g_SF.Memory.ReadCurrentZone()
-        if (currentZone < 0 OR currentZone >= this.targetZone) ; Don't test while modron resetting
+		currentZone:=g_SF.Memory.ReadCurrentZone()
+        if (currentZone < 0 OR currentZone >= this.targetZone) ;Don't test while modron resetting
             return false
         stackZone:=this.GetStackZone()
 		stacks:=g_SF.Memory.ReadSBStacks()
@@ -547,7 +546,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ultRetryCount=="") ;No key found - ult not available (not fielded, not levelled enough)
 		{
 			g_IBM.Logger.AddMessage("Unable to exit Ultra stack as Briv ult key not available - falling back")
-			g_SF.FallBackFromZone()
+			this.FallBackFromZone()
 		}
 		else
 		{
@@ -561,7 +560,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (g_SF.Memory.ReadHighestZone()==highZone) ;If we still didn't proceed
 			{
 				g_IBM.Logger.AddMessage("Failed to exit Ultra stack after firing Briv's ultimate - falling back")
-				g_SF.FallBackFromZone()
+				this.FallBackFromZone()
 			}
 		}
         Critical Off
@@ -618,7 +617,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		this.SetFormation() ;Ensure the correct formation is set for the zone before we stop progress and try to stack
 		StartTime := A_TickCount ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
-		this.ToggleAutoProgress( 0, false, true )
+		this.ToggleAutoProgress(0, false, true)
         if (g_IBM.LevelManager.Champions.HasKey(59) AND g_IBM.LevelManager.Champions[59].NeedsLevelling()) ;If we're levelling Melf in the stack zone (e.g. due to using Baldric), we need to do his initial levelup as fast as possible after the formation swap to try and stop it failing TODO: Having Melf hard-coded like this is cludgy but I don't see a way around it...
 		{
 			if (g_IBM.LevelManager.Champions[59].GetLevelsRequired() < 100)
@@ -676,11 +675,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			;If we're at reset
 			if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
 			{
-				g_SF.FallBackFromZone()
+				this.FallBackFromZone()
 			}
 			else
 			{
-				this.ToggleAutoProgress( 1, false, true )
+				this.ToggleAutoProgress(1, false, true)
 			}
 		}
 		Critical Off
@@ -691,7 +690,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.SetFormation() ;Standard call to reset trustRecent
     }
 
-	WaitForZoneCompleted(maxTime := 3000)
+	WaitForZoneCompleted(maxTime:=3000)
     {
         this.SetFormation()
         StartTime := A_TickCount
@@ -717,17 +716,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if(nextSpawnMoreRange)
 		{
 			if (currentZone < nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
-			{
 				return true
-			}
 			else if (this.zones[currentZone].stackZone==false) ;Not on a stack zone
-            {
 				return true
-			}
 			else if (!this.MelfManager.IsMelfEffectSpawnMore(currentZone)) ;Not spawning more
-			{
 				return true
-			}
 		}
 		else ;No Spawn More available
 		{
@@ -776,8 +769,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.StackFailRetryAttempt++ ; per run
             retryAttempt++               ; pre stackfarm call
             this.StackFarmSetup()
-            g_SF.CurrentZone := g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
-            if (this.targetZone != "" AND g_SF.CurrentZone > this.targetZone)
+            if (this.targetZone != "" AND g_SF.Memory.ReadCurrentZone() > this.targetZone)
             {
                 g_SharedData.IBM_UpdateOutbound("LoopString","Attempted to offline stack after modron reset - verify settings")
                 break
@@ -821,7 +813,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackFarmSetup()
     {
-		if (!g_SF.KillCurrentBoss())
+		if (!this.KillCurrentBoss())
             this.FallBackFromBossZone()
         this.KEY_W.KeyPress()
         this.ToggleAutoProgress(0,false,true)
@@ -955,33 +947,59 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return fellBack
     }
 	
+	FallBackFromZone(maxLoopTime:=5000)
+    {
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        while(g_SF.Memory.ReadCurrentZone() == -1 AND ElapsedTime < maxLoopTime)
+        {
+			g_IBM.IBM_Sleep(15)
+			ElapsedTime:=A_TickCount-StartTime
+        }
+        currentZone:=g_SF.Memory.ReadCurrentZone()
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        g_SharedData.IBM_UpdateOutbound("LoopString","Falling back from zone...")
+        while(!g_SF.Memory.ReadTransitioning() AND ElapsedTime < maxLoopTime)
+        {
+            this.KEY_LEFT.KeyPress()
+			g_IBM.IBM_Sleep(15) ;Sleep as we don't want to go back multiple zones
+			ElapsedTime:=A_TickCount - StartTime
+        }
+        this.WaitForTransition()
+    }
+	
 	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
 	{
-		isEZone:=this.zones[g_SF.Memory.ReadHighestZone()].jumpZone==false ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
-		Critical On ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
+		isEZone:=this.ShouldWalk(g_SF.Memory.ReadHighestZone())
+		Thread, NoTimers ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
 		benchReturn:=this.BenchBrivConditions(isEZone) ;check to bench briv
 		lastFormation:=g_SF.Memory.ReadMostRecentFormationFavorite() ;New Sep25 read, used in all cases as it is part of the bad formation check
         if (benchReturn AND lastFormation!=3) ;New Sep25 read. Formation 3 is E
         {
 			this.KEY_E.KeyPress()
-			;OutputDebug % A_TickCount . " z" . g_SF.Memory.ReadCurrentZone() . " SetFormation() - STD E - fastCheck=[" . fastCheck . "] trustRecent=[" . DEBUG_INITIAL_TRUST_RECENT . ">>" . trustRecent . "] lastFormation=[" . lastFormation . "]`n"
-			If (benchReturn==2)
+			if (benchReturn==2)
 			{
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
+					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly, given issues with multiple key presses
 					startTime:=A_TickCount
-					while (g_SF.Memory.ReadFormationTransitionDir() == 4 and (A_TickCount-startTime)<5000)
+					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field
 					{
 						g_IBM.IBM_Sleep(15)
 					}
 					this.KEY_Q.KeyPress_Bulk() ;_Bulk as follows the E.KeyPress()
+					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND (A_TickCount-startTime)<1000) ;Having gone back to Q, wait for the transition to end (so we don't swap Briv straight back out again) TODO: We could block via a static variable or something instead of sleeping here? Not that transitions take overly long
+					{
+						g_IBM.IBM_Sleep(15)
+					}
 				}
 			}
-			Critical Off
+			Thread, NoTimers, False
             return
         }
 		else
-			Critical Off
+			Thread, NoTimers, False
 		;check to unbench briv
         if (this.UnBenchBrivConditions(isEZone) AND lastFormation!=1) ;Formation 1 is Q
         {
@@ -995,14 +1013,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		static trustRecent:=false ;Do we believe that the ReadMostRecentFormationFavorite() is respresentative? Needed as it changes even if the formation swap fails
 		if (!fastCheck)
 			trustRecent:=false ;Reset to false for all normal calls
-		isEZone:=this.ShouldWalk(g_SF.Memory.ReadCurrentZone()) ;TODO: Any reason this doesn't use this.ShouldWalk()? Seems to be duplicating the Thellora recovery option from there in the bench/unbench code
+		isEZone:=this.ShouldWalk(g_SF.Memory.ReadCurrentZone())
 		Thread, NoTimers ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
 		benchReturn:=this.BenchBrivConditions(isEZone) ;check to bench briv
 		lastFormation:=g_SF.Memory.ReadMostRecentFormationFavorite() ;New Sep25 read, used in all cases as it is part of the bad formation check
         if (benchReturn AND lastFormation!=3) ;New Sep25 read. Formation 3 is E
         {
 			this.KEY_E.KeyPress()
-			If (benchReturn==2)
+			if (benchReturn==2)
 			{
 				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
 				{
@@ -1058,7 +1076,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	 ;2 - bench for animation override
     BenchBrivConditions(isEZone)
     {
-		;Irisiri-Bench Briv if before Thellora's rush target so he doesn't do extra unplanned skips and run out of stacks (causing an early reset, and too few Thell stacks, causing a death spiral). Notes on the memory functions:
 		;ReadTransitionOverrideSize() 	| should read 1 if briv jump animation override is loaded to , 0 otherwise - REMOVED in 627
 		;ReadTransitionDirection() 		| 0 = Static (instant), 1 = Forward, 2 = Backward, 3=JumpDown, 4=FallDown
 		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OnFromTop, 3 = OffToLeft, 4 = OffToRight, 5 = OffToBottom
@@ -1225,8 +1242,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		If (g_SF.Memory.IBM_HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetSavedFormationSlotByFavorite(1)) or g_SF.Memory.IBM_HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetSavedFormationSlotByFavorite(3))) ;If there are feats saved in Q or E (which would overwrite any others in M)
 		{
-			thunderInQ:=g_SF.Memory.IBM_HeroHasFeatSavedInFormation(58, 2131 , g_SF.Memory.GetSavedFormationSlotByFavorite(1))
-			thunderInE:=g_SF.Memory.IBM_HeroHasFeatSavedInFormation(58, 2131 , g_SF.Memory.GetSavedFormationSlotByFavorite(3))
+			thunderInQ:=g_SF.Memory.IBM_HeroHasFeatSavedInFormation(58, 2131, g_SF.Memory.GetSavedFormationSlotByFavorite(1))
+			thunderInE:=g_SF.Memory.IBM_HeroHasFeatSavedInFormation(58, 2131, g_SF.Memory.GetSavedFormationSlotByFavorite(3))
 			return (thunderInQ OR thunderInE)
 		}
 		else if (g_SF.Memory.IBM_HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetActiveModronFormationSaveSlot())) ;Briv has feats in M
@@ -1689,16 +1706,16 @@ class IC_BrivMaster_MelfMaster_Class ;A class for tracking Melf's buffs
 	NextSpawnMore:={} ;Stores for each segment the next segment with the spawn-more buff
 	NextSpawnFaster:={} ;As above, but for the spawn-faster buff for fallback
 	lookahead:=5 ;Number of Melf runs to calculate ahead of the current run
-	minZone:=1
-	maxZone:=2500
-	zoneCap:=2500
+	minZone:=1 ;Min online stack zone
+	maxZone:=2500 ;Max online stack zone
+	zoneCap:=2500 ;This is the reset zone
 
 	__New(zoneCap) ;Called with the zone cap to avoid duplicating it everywhere
 	{
 		this.zoneCap:=zoneCap
 	}
 
-	Reset(minZone,maxZone,lookahead) ;To be called once per run at the start, this deletes old patterns and handles possible changes of settings
+	Reset(minZone,maxZone,lookahead) ;To be called once per run at the start, this deletes old patterns and handles possible changes of settings TODO: We currently support changing the min/max stack zone at runtime, which seems unnecessary? Likewise the lookhead is hard-coded
 	{
 		curReset:=g_SF.Memory.ReadResetsTotal()
 		removeAll:=(minZone!=this.minZone OR maxZone!=this.maxZone) ;if either change the NextSpawnMore segment field needs to be recalculated. We only need to do that part so removing everything is overkill, but we shouldn't be changing these mid-run with any frequency

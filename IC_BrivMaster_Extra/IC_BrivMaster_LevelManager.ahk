@@ -85,6 +85,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			this.OverrideMinToSoftCap()
 			this.failedConversionMode:=true
 			this.ResetLevellingDone()
+			g_IBM.Logger.AddMessage("SetupFailedConversion() Triggered")
 		}
 	}
 
@@ -268,7 +269,7 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 		Critical On ;We do not want timers trying to also press keys whilst we are levelling, given 629+ issues with multiple keys, and the possible use of modifer keys
 		for _, key in keyList100
 			key.KeyPress_Bulk()
-		if (keyList10.Count()>0) ;Check this one so modifier key is not used unnecessarily
+		if (keyList10.Count()>0) ;Check this one so the modifier key is not used unnecessarily
 		{
 			this.parent.SetModifierKey(true)
 			for _, key in keyList10

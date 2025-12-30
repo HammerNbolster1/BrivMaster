@@ -1,17 +1,91 @@
-#include %A_LineFile%\..\..\IC_Core\IC_SharedFunctions_Class.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
+#include %A_LineFile%\..\..\IC_Core\IC_SharedData_Class.ahk
+#include %A_LineFile%\..\..\..\SharedFunctions\SH_SharedFunctions.ahk
 
-class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
+global g_PreviousZoneStartTime
+global g_SharedData:=New IC_SharedData_Class
+
+class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
 {
-	;TODO: Determine if these class variables are needed
-	steelbones := ""
-    sprint := ""
-    PatronID := 0
-	
 	__new()
     {
-        this.Memory := New IC_BrivMaster_MemoryFunctions_Class(A_LineFile . "\..\..\IC_Core\MemoryRead\CurrentPointers.json")
+        this.Memory:=New IC_BrivMaster_MemoryFunctions_Class(A_LineFile . "\..\..\IC_Core\MemoryRead\CurrentPointers.json")
+		;TODO: Review all of the below
+		UserID:=""
+		UserHash:=""
+		InstanceID:=0
+		CurrentAdventure:=30 ; default cursed farmer
+		steelbones := "" ;steelbones and sprint are used as some sort of cache so they can be acted on once memory reads are invalid I think TODO: Review
+		sprint := ""
+		PatronID := 0
     }
+	
+	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max
+    {
+        return (FirstEight + (2.0**63)) * (2.0**SecondEight)
+    }
+	
+    IsCurrentFormation(testformation:="") ;Returns true if the formation array passed is the same as the formation currently on the game field. Always false on empty formation reads. Requires full formation.
+    {
+        if(!IsObject(testFormation))
+            return false
+        currentFormation := this.Memory.GetCurrentFormation()
+        if(!IsObject(currentFormation))
+            return false
+        if(currentFormation.Count() != testformation.Count())
+            return false
+        loop, % currentFormation.Count()
+            if(testformation[A_Index] != currentFormation[A_Index])
+                return false
+        return true
+    }
+	
+    WorldMapRestart() ;Forces an adventure restart through closing IC and using server calls
+    {
+        g_SharedData.IBM_UpdateOutbound("LoopString","Zone is -1. At world map?")
+        this.RestartAdventure( "Zone is -1. At world map?" )
+    }
+	
+	; Tests if there is an adventure (objective) loaded. If not, asks the user to verify they are using the correct memory files and have an adventure loaded
+    ; Returns -1 if failed to load adventure id. Returns current adventure's ID if successful in finding adventure.
+	;TODO: This should probably be tied to the pre-flight check? If nothing else, use the error text from there instead of duplicating it
+    VerifyAdventureLoaded()
+    {
+        CurrentObjID := this.Memory.ReadCurrentObjID()
+        while ( CurrentObjID == "" OR CurrentObjID <= 0 )
+        {
+            txtCheck := "Unable to read adventure data."
+            txtCheck .= "`n1. Please load into a valid adventure. Current adventure shows as: " . (CurrentObjID ? CurrentObjID : "-- Error --")
+            txtcheck .= "`n2. Make sure the game exe in Game Location settings is set to ""IdleDragons.exe"""
+            txtCheck .= "`n3. Check the correct memory file is being used. `n    Current version: " . this.Memory.GameManager.GetVersion()
+            txtcheck .= "`n4. If IC is running with admin privileges, then the script will also require admin privileges."
+            if (_MemoryManager.is64bit)
+                txtcheck .= "`n5. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
+            MsgBox, 5,, % txtCheck
+
+            IfMsgBox, Retry
+            {
+                this.Memory.OpenProcessReader()
+                CurrentObjID := this.Memory.ReadCurrentObjID()
+            }
+            IfMsgBox, Cancel
+            {
+                MsgBox, Stopping run.
+                return -1
+            }
+        }
+        return CurrentObjID
+    }
+	
+    IsBrivMetalborn() 	    ; Returns whether Briv's spec in the modron core is set to Metalborn. TODO: Check this in the pre-flight check
+    {
+        specID := this.Memory.GetCoreSpecializationForHero(58) ;TODO: Consider for Hero object (although being a modron core thing maybe not?) Also, how does this function handle champions with multiple spec choices
+        if (specID==3455)
+            return true
+        return false
+    }
+	
+	
 	
 	;Overriden to allow a string to be passed to OpenIC() to aid debugging, and to avoid using recursion
 	;Reopens Idle Champions if it is closed. Calls RecoverFromGameClose after opening IC. Returns true if window still exists.
@@ -83,7 +157,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             this.Memory.OpenProcessReader()
             this.ResetServerCall()
             ; try a fall back
-            this.FallBackFromZone()
+            g_IBM.RouteMaster.FallBackFromZone()
             g_IBM.RouteMaster.SetFormation() ;In the base script this just goes to Q, which might not be ideal, especially for feat swap
             g_IBM.RouteMaster.ToggleAutoProgress(1, true)
             lastCheck := dtCurrentZoneTime
@@ -156,7 +230,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         while(!isCurrentFormation AND (this.Memory.ReadNumAttackingMonstersReached() OR this.Memory.ReadNumRangedAttackingMonsters()) AND (ElapsedTime < timeout))
         {
             ElapsedTime := A_TickCount - StartTime
-            this.FallBackFromZone()
+            g_IBM.RouteMaster.FallBackFromZone()
             KEY.KeyPress()
             g_IBM.RouteMaster.ToggleAutoProgress(1, true)
             isCurrentFormation:=this.IsCurrentFormation(gameStartFormation)
@@ -208,9 +282,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
 	}
 	
-	;Overridden to better order the sleeps vs the checks
-	; Waits for the game to be in a ready state
-    WaitForGameReady(timeout := 90000,skipFinal:=false) ;skipFinal is for relay return where we might come back at any point in the offline calculation of the new instance, so waiting for a specific sequence of zone inactive/active/inactive won't necessarily work
+    WaitForGameReady(timeout := 90000,skipFinal:=false) ;Waits for the game to be in a ready state. skipFinal is for relay return where we might come back at any point in the offline calculation of the new instance, so waiting for a specific sequence of zone inactive/active/inactive won't necessarily work
     {
 		if (!g_IBM.routeMaster.HybridBlankOffline AND g_IBM.routeMaster.offlineSaveTime>=0) ;If this is set by stack restart
 			this.IBM_WaitForUserLogin()
@@ -261,11 +333,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         return false
     }
 	
-	;Override to send formation switch
-	; Waits until stats are finished updating from offline progress calculations.
-    WaitForFinalStatUpdates()
+    WaitForFinalStatUpdates() ;Waits until stats are finished updating from offline progress calculations
     {
-		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() start")
 		g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
         ElapsedTime:=0
         ; Starts as 1, turns to 0, back to 1 when active again.
@@ -275,7 +344,6 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             ElapsedTime := A_TickCount - StartTime
             g_IBM.IBM_Sleep(15)
         }
-		;g_IBM.routeMaster.DebugTick("WaitForFinalStatUpdates() Area Active")
 		formationActive:=False
 		Critical On ;From here to the zone becoming active timing is important to maximise our chances of getting to the proper formation before something spawns and blocks us. This is not turned off by this function intentionally
 		while(!this.Memory.ReadAreaActive() AND ElapsedTime<7000) ;2000ms beyond the initial loop
@@ -283,7 +351,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
             if (!formationActive)
 			{
 				g_IBM.IBM_Sleep(15) ;Only sleep whilst the formation is inactive, we want to react as fast as possible once the area is active
-				if (!this.Memory.IBM_IsCurrentFormationEmpty()) ;IRISIRI - Once champions start being placed we will try sending input. Was trying to make this mode responsive once the zone becomes available but that seems too early to be useful
+				if (!this.Memory.IBM_IsCurrentFormationEmpty()) ;Once champions start being placed we will try sending input. Was trying to make this mode responsive once the zone becomes available but that seems too early to be useful
 				{
 					formationActive:=True
 				}
@@ -295,45 +363,20 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			g_IBM.RouteMaster.GetStandardFormationKey(currentZone).KeyPress()
     }
 
-	;Override to use sleep, not sure why this spins the wheels in loops like this, but the base script does it a LOT
-	FallBackFromZone(maxLoopTime:=5000)
+    DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {
-        StartTime:=A_TickCount
         ElapsedTime:=0
-        while(this.Memory.ReadCurrentZone() == -1 AND ElapsedTime < maxLoopTime)
-        {
-            CurrentZone := this.Memory.ReadCurrentZone()
-			g_IBM.IBM_Sleep(15)
-			ElapsedTime := A_TickCount - StartTime
-        }
-        CurrentZone := this.Memory.ReadCurrentZone()
-        StartTime := A_TickCount
-        ElapsedTime:=0
-        g_SharedData.IBM_UpdateOutbound("LoopString","Falling back from zone...")
-        while(!this.Memory.ReadTransitioning() AND ElapsedTime < maxLoopTime)
-        {
-            g_IBM.RouteMaster.KEY_LEFT.KeyPress()
-			g_IBM.IBM_Sleep(15) ;Sleep for this one as we don't want to go back multiple zones
-			ElapsedTime := A_TickCount - StartTime
-        }
-        g_IBM.RouteMaster.WaitForTransition()
-    }
-	
-	; Wait for Thellora (ID=139) to activate her Rush ability.
-    DoRushWait(stopProgress:=false) ;Note: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
-    {
-        StartTime := A_TickCount
-        ElapsedTime := 0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
 		g_SharedData.IBM_UpdateOutbound("LoopString","Rush Wait")
-		while (!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
+		StartTime:=A_TickCount
+		while(!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
         {
 			if (stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
 			{
 				if (this.Memory.ReadHighestZone() > 1)
 				{
 					g_IBM.RouteMaster.ToggleAutoProgress(0)
-					stopProgress:=false ;No need to keep checking, and allows for levelling
+					stopProgress:=false ;No need to keep checking
 				}
 			}
 			if (levelTypeChampions)
@@ -341,16 +384,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			else
 				g_IBM.levelManager.LevelClickDamage(0) ;Level click damage
             levelTypeChampions:=!levelTypeChampions
-			ElapsedTime := A_TickCount - StartTime
+			ElapsedTime:=A_TickCount-StartTime
         }
-        g_PreviousZoneStartTime := A_TickCount
     }
 	
-	;Overriding to:
-	;1) launch with higher process priority (note that realtime requires things to be run as admin)
-	;2) lower the timeout on opening the game
-	;3) Address the loop Sleep applying after a sucessful load
-	; Attemps to open IC. Game should be closed before running this function or multiple copies could open
     OpenIC(message:="")
     {
 		waitForReadyTimeout:=10000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 50s
@@ -359,7 +396,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         g_SharedData.IBM_UpdateOutbound("LoopString","Starting Game" . (message ? " " . message : ""))
 		g_IBM.Logger.AddMessage("Starting Game" . (message ? " " . message : ""))
         WinGet, savedActive,, A ;Changed to the handle, multiple windows could have the same name
-        this.SavedActiveWindow := savedActive
+        this.SavedActiveWindow:=savedActive
         StartTime := A_TickCount
         while ( !loadingZone AND ElapsedTime < timeoutVal )
         {
@@ -377,7 +414,7 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
             this.ActivateLastWindow()
             this.Memory.OpenProcessReader()
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
             if(ElapsedTime < timeoutVal)
                 loadingZone := this.WaitForGameReady(waitForReadyTimeout) ;Override the default 90000ms timeout as that seems execessive NOTE: WaitForGameReady will turn Critical On via WaitForFinalStatUpdates
             if(loadingZone)
@@ -411,9 +448,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         }
 		g_IBM.Logger.AddMessage("SetLastActiveWindowWhileWaitingForGameExe() set Hwnd=[" . this.Hwnd . "]")
     }
-	
-	;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side
-    SetUserCredentials()
+
+    SetUserCredentials() ;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side
     {
         this.UserID:=this.Memory.ReadUserID()
         this.UserHash:=this.Memory.ReadUserHash()
@@ -483,8 +519,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
         if (!g_SharedData.IBM_RestoreWindow_Enabled)
             return
         g_IBM.IBM_Sleep(80)
-        hwnd := this.Hwnd
-        WinActivate, ahk_id %hwnd% ; Idle Champions likes to be activated before it can be deactivated Irisiri: Testing if this is true
+        hwnd:=this.Hwnd
+        WinActivate, ahk_id %hwnd% ; Idle Champions likes to be activated before it can be deactivated
         savedActive:="ahk_id " . this.SavedActiveWindow
 		WinActivate, %savedActive%
     }
@@ -528,9 +564,9 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 				{
 					g_IBM.IBM_Sleep(45)
 					this.PID:=this.GetNewPID(existingPIDs)
-					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via GetNewPID()")
 					ElapsedTimePID:=A_TickCount - StartTimePID
 				}
+				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via GetNewPID()")
 				ElapsedTime:=A_TickCount - StartTime
 			}
 			if(!this.PID) ;We launched a process (or at least we think we did) but never found it via window. Terminate any IC process not in the existingPIDs list to clean up 
@@ -548,17 +584,10 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 					}
 					if(isNew) ;TODO: This only makes one attempt per process, add a loop perhaps, and de-duplicate with CloseIC()? I.e. Some 'MurderProcess' function that returns true if the murder call was sent and false otherwise
 					{
-						hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", gameProcess.ProcessId, "Ptr")
-						if(hProcess)
-						{
+						if(this.IBM_TerminateProcess(gameProcess.ProcessId))
 							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup killing PID=[" . gameProcess.ProcessId . "]")
-							DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
-							DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-						}
 						else
-						{
 							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup attempted to kill PID=[" . gameProcess.ProcessId . "] but could not find handle")
-						}
 					}
 					else
 						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
@@ -664,13 +693,8 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 			}
 			if (A_TickCount >= NextCloseAttempt) 
 			{
-				hProcess := DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", g_SF.PID, "Ptr")
-				if(hProcess)
-				{
+				if(this.IBM_TerminateProcess(g_SF.PID))
 					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: sending TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
-					DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
-					DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-				}
 				else
 				{
 					g_IBM.Logger.AddMessage("CloseIC() failed to close cleanly: failed to get process handle for TerminateProcess saveCompleteTime=[" . saveCompleteTime . "] Timeout=[" . A_TickCount - StartTime . "/" . timeout . "]")
@@ -687,6 +711,18 @@ class IC_BrivMaster_SharedFunctions_Class extends IC_SharedFunctions_Class
 		}
         return saveCompleteTime
     }
+	
+	IBM_TerminateProcess(targetPID) ;Returns true if a handle could be aquired and the terminate was sent. Does not check that the process actually exited
+	{
+		hProcess:=DllCall("Kernel32.dll\OpenProcess", "UInt", 0x0001, "Int", false, "UInt", targetPID, "Ptr")
+		if(hProcess)
+		{
+			DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
+			DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
+			return true
+		}
+		return false
+	}
 	
 	CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE) ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
 	{

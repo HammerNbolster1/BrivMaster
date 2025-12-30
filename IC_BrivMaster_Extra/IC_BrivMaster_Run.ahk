@@ -175,8 +175,6 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					needToStack := this.routeMaster.NeedToStack()
 					; Check for failed stack conversion
-					if (g_SF.Memory.ReadHasteStacks() < 50 AND needToStack) ;TODO: Settings for this
-						this.levelManager.SetupFailedConversion() ;TODO: This gets nuked by the next LevelManager.Reset() in most cases; we need to avoid doing it when TestForSteelBonesStackFarming() is going to ForceReset us
 					if (this.currentZone>1)
 						this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
 				}
@@ -189,6 +187,8 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
+						if (!this.offRamp AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss
+							this.levelManager.SetupFailedConversion()
 					}
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{

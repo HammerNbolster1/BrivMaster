@@ -365,8 +365,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	{
 		static cachedIndex:=420 ;Default index taken from v673.1 08Dec25, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this (and closer to this than 0, more to the point)
 		MEMORY_SERVERSTATS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats
-		key:=MEMORY_SERVERSTATS["key",cachedIndex].Read()
-		if(key==this.STAT_AREA_CHARGES) ;Valid cache
+		if(MEMORY_SERVERSTATS["key",cachedIndex].Read()==this.STAT_AREA_CHARGES) ;Valid cache
 		{
 			return MEMORY_SERVERSTATS["value", cachedIndex].Read()
 		}
@@ -376,8 +375,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		index:=cachedIndex ;First search from the cached index - it's more likely to have been pushed down the list by the addition of new stats than pulled up by one being deleted (I think...)
 		while(++index<size) ;++index as we've already checked index. < size because collection is 0-indexed, so if size=100 last valid index=99
 		{
-			key:=MEMORY_SERVERSTATS["key",index].Read()
-			if (key==this.STAT_AREA_CHARGES)
+			if (MEMORY_SERVERSTATS["key",index].Read()==this.STAT_AREA_CHARGES)
 			{
 				g_IBM.Logger.AddMessage("ReadRushAreaCharges() CACHE MISS cachedIndex=[" . cachedIndex . "] index=[" . index . "] please report this message") ;As the default may change we want to be informed
 				cachedIndex:=index
@@ -387,8 +385,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		index:=cachedIndex ;Secondly search backwards from the index, as if a stat has been removed it's probably just a few
 		while(--index>=0) ;--index as we checked index previously
 		{
-			key:=MEMORY_SERVERSTATS["key",index].Read()
-			if (key==this.STAT_AREA_CHARGES)
+			if (MEMORY_SERVERSTATS["key",index].Read()==this.STAT_AREA_CHARGES)
 			{
 				g_IBM.Logger.AddMessage("ReadRushAreaCharges() CACHE MISS cachedIndex=[" . cachedIndex . "] index=[" . index . "] please report this message")
 				cachedIndex:=index
@@ -453,7 +450,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 			}
 		}
 		if (this.EFFECT_HANDLER_CARDS)
-			this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart. Doesn't work from the hub but isn't neccesary there as we don't really care about performance
+			this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart
 	}
 
 	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate

@@ -411,9 +411,7 @@ class IC_BrivMaster_GemFarm_Class
 			}
 		}
 		else ;Not z1
-		{
-			this.levelManager.LevelClickDamage() ;Level click damage to make sure we can move - otherwise we can be stuck since it's normally called in InitZone()
-		}
+			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
 
 	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)

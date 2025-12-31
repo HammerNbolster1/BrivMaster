@@ -6,8 +6,14 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
         DllCall( "RtlFillMemory", "Ptr",this.GetAddress("TZData"), "Ptr",172, "Char",0 ) ; Zero fill memory
         this.ReadCNETimeZone(this.GetAddress("TZData"))
 	}
+	
+	InWindow()
+	{
+		serverTime:=this.GetCNETime() 
+		return serverTime > 11.95 AND serverTime < 12.5 ;11:57 to 12:30. Reset is at 12:00 CNE time (Pacific local time)
+	}
 
-	GetCNETime()
+	GetCNETime() ;Returns hours with minutes as a fraction, e.g. 8.5 = 08:30, 23.95 = 23:57
 	{
 		; Get current UTC system time
 		VarSetCapacity(SYSTEMTIME, 16, 0)
@@ -341,6 +347,100 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 		lU:=this.lparamUp
 		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
 		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
+	}
+}
+
+class IC_BrivMaster_SharedData_Class
+{
+	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
+	
+	__New()
+	{
+		this.BossesHitThisRun:=0
+		this.TotalBossesHit:=0
+        this.TotalRollBacks:=0
+        this.BadAutoProgress:=0
+		this.IBM_RestoreWindow_Enabled:=false
+		this.IBM_RunControl_DisableOffline:=false
+		this.IBM_RunControl_ForceOffline:=false
+		this.IBM_ProcessSwap:=false
+		this.IBM_RunControl_CycleString:=""
+		this.IBM_RunControl_StatusString:=""
+		this.IBM_RunControl_StackString:=""
+		this.IBM_BuyChests:=false
+		this.RunLogResetNumber:=0
+		this.RunLog:=""
+		this.LoopString:=""
+		this.LastCloseReason:=""
+	}
+	
+	Close() ;Taken from what was IC_BrivGemFarmRun_SharedData_Class in IC_BrivGemFarm_Run.ahk
+    {
+        if (g_SF.Memory.ReadCurrentZone()=="") ; Invalid game state
+            ExitApp
+        g_IBM.RouteMaster.WaitForTransition()
+        g_IBM.RouteMaster.FallBackFromZone()
+        g_IBM.RouteMaster.ToggleAutoProgress(false, false, true)
+        ExitApp
+    }
+	
+	ShowGUI()
+    {
+        Gui, Show, NA
+    }
+	
+	ReloadSettings(ReloadSettingsFunc) ;Unused by BM, but might be relevant for addons TODO: Review
+    {
+        reloadFunc := Func(ReloadSettingsFunc)
+        reloadFunc.Call()
+    }
+
+	IBM_Init()
+    {
+        this.IBM_UpdateSettingsFromFile()
+		this.IBM_OutboundDirty:=false ;Track if we've made changes to the data so the hub doesn't make unnecessary checks
+    }
+
+    IBM_UpdateSettingsFromFile(fileName := "") ;Load settings from the GUI settings file.
+    {
+        if (fileName == "")
+            fileName := IC_BrivMaster_SharedData_Class.SettingsPath
+        settings:=g_SF.LoadObjectFromJSON(fileName)
+        if (!IsObject(settings))
+            return false
+		for k,v in settings ;Load all settings
+			g_IBM_Settings[k]:=v
+		if(g_IBM) ;If the gem farm exists (as it will not when this is called from the hub without the farm running) TODO: Why try to read the settings in that case?
+			g_IBM.RefreshGemFarmWindow()
+    }
+	
+	IBM_UpdateOutbound(key,value) ;Update if the value has changed at mark the outbound data as dirty
+	{
+		if (this[key]!=value)
+		{
+			this[key]:=value
+			this.IBM_OutboundDirty:=true
+		}
+	}
+	
+	IBM_ResetRunStats() ;Resets per-run stats from the main object (boss hits, rollbacks, bad autoprogression). This allows them to all be cleared in one go without spam setting the IBM_OutboundDirty flag 
+	{
+		this.BossesHitThisRun:=0
+		this.TotalBossesHit:=0
+        this.TotalRollBacks:=0
+        this.BadAutoProgress:=0
+		this.IBM_OutboundDirty:=true
+	}
+	
+	IBM_UpdateOutbound_Increment(key) ;Increment a value, used for things like boss hit tracking
+	{
+		if (this.HasKey(key))
+			this[key]++
+		else
+		{
+			this[key]:=1
+		}
+		this.IBM_OutboundDirty:=true
 	}
 }
 

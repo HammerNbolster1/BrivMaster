@@ -8,11 +8,11 @@ SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectSt
 SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
-global g_IriBrivMaster := new IC_IriBrivMaster_Component()
-global g_IriBrivMaster_GUI := new IC_IriBrivMaster_GUI() ;TODO: Can we make this g_IriBrivMaster.GUI or something instead of a separate global?
+global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
+global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI() ;TODO: Can we make this g_IriBrivMaster.GUI or something instead of a separate global?
 global g_Heroes:={}
 global g_IBM_Settings:={}
-global g_InputManager:=new IC_BrivMaster_InputManager_Class()
+global g_InputManager:=New IC_BrivMaster_InputManager_Class()
 
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions := {}
@@ -112,7 +112,7 @@ Class IC_IriBrivMaster_Component
             this.LEGACY_UpdateStatus("Gem Farm not running")
             return
         }
-        g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings[ "ExeName"])
+        g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
         g_SF.Memory.OpenProcessReader()
         for k,v in g_IriBrivMaster_StartFunctions
         {
@@ -824,7 +824,7 @@ Class IC_IriBrivMaster_Component
 			{
 				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
 				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-				this.ChestSnatcher_AddMessage("Claim", response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active")
+				this.ChestSnatcher_AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
 				if (response.daily_login_details.premium_active)
 					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
 				return
@@ -833,11 +833,11 @@ Class IC_IriBrivMaster_Component
 			{
 				if (response.daily_login_details.premium_active)
 				{
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . standardClaimed ? "" : "un" . "claimed and premium reward " . standardClaimed ? "" : "un" . "claimed. Claiming...")
+					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
 					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . standardClaimed ? "" : "un" . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
 				this.ChestSnatcher_AddMessage("Claim", messageString)
 			}
 		}

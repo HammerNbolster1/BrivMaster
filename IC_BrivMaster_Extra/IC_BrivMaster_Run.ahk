@@ -41,7 +41,6 @@ global g_InputManager:=new IC_BrivMaster_InputManager_Class()
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
-SH_UpdateClass.UpdateClassFunctions(g_SharedData, IC_BrivMaster_SharedData_Class) ;Note: g_SharedData is populated by IC_SharedFunctions_Class
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
 SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
 
@@ -95,7 +94,7 @@ class IC_BrivMaster_GemFarm_Class
         Process, Exist, %exeName%
         g_SF.PID:=ErrorLevel
         Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority if needed. Admin is required for RealTime, but will automatically use High if not elevated
-        DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once
+        DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once TODO: I think the frequency can be changed, so this might not be safe?
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
 		g_SF.Memory.OpenProcessReader()
 		this.RefreshImportCheck() ;Does the initial population of the import check
@@ -106,17 +105,17 @@ class IC_BrivMaster_GemFarm_Class
         g_SF.ResetServerCall()
         g_SF.PatronID:=g_SF.Memory.ReadPatronID()
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
-        g_Heroes:=new IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
-		this.Logger:=new IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
-		this.LevelManager:=new IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
-		this.RouteMaster:=new IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
+        g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
+		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
+		this.LevelManager:=New IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
+		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
 		if (this.PreFlightCheck()==false) ; Did not pass pre flight check.
             return false
         g_PreviousZoneStartTime := A_TickCount
-		this.offRamp:=false ;Trying to stop the script failing to detect a new run on time by limiting the code that runs at the end of a run
-		this.EllywickCasino:=new IC_BrivMaster_EllywickDealer_Class()
+		this.offRamp:=false ;Limit the code that runs at the end of a run
+		this.EllywickCasino:=New IC_BrivMaster_EllywickDealer_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
-			this.DianaCheeseHelper:=new IC_BrivMaster_DianaCheese_Class
+			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
 		this.DialogSwatter_Setup() ;This needs to be built in a more organised way, but will do for now
 		g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
 		Loop
@@ -187,7 +186,7 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
-						if (!this.offRamp AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss
+						if (!this.offRamp AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
 							this.levelManager.SetupFailedConversion()
 					}
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
@@ -195,17 +194,17 @@ class IC_BrivMaster_GemFarm_Class
 						;Check for offRamp
 						if (!needToStack and (this.currentZone >= this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
 						{
-							If (this.routeMaster.EnoughHasteForCurrentRun())
+							If(this.routeMaster.EnoughHasteForCurrentRun())
 							{
 								this.offRamp:=True
-								this.EllywickCasino.Stop() ;Stop the Ellywick checker, to avoid it running as the next run starts
+								this.EllywickCasino.Stop() ;Stop the Casino, to avoid it running as the next run starts
 								g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
 							}
 						}
 					}
 				}
 				else
-					this.routeMaster.StartAutoProgressSoft() ;InitZone() will handle this for new zones (which makes it odd it is separate...)
+					this.routeMaster.StartAutoProgressSoft() ;InitZone() will handle this for new zones (which makes it odd it is separate...) TODO: Checking this every single tick seems excessive?
 			}
 			else
 			{
@@ -271,18 +270,12 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-			melfPresent:=g_Heroes[59].inM
+			melfPresent:=g_Heroes[59].inM ;TODO: Copying these flags doesn't seem monsterously useful? It makes things a tiny bit easier to read I suppose...
 			tatyanaPresent:=g_Heroes[97].inM
 			BBEGPresent:=g_Heroes[125].inM
 			melfSpawningMore:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore()
-
-			if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
-			{
-				serverTime:=this.DianaCheeseHelper.GetCNETime() ;Returns hours with minutes as a fraction, e.g. 8.5 = 08:30, 23.95 = 23:57
-				if (serverTime > 11.95 AND serverTime < 12.5) ;11:57 to 12:30. Reset is at 12:00 CNE time (Pacific local time)
-					this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
-			}
-
+			if (g_IBM_Settings["IBM_Level_Diana_Cheese"] AND this.DianaCheeseHelper.InWindow()) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
+				this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
 			if (this.routeMaster.combining)
 			{
 				this.routeMaster.CheckThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
@@ -305,7 +298,6 @@ class IC_BrivMaster_GemFarm_Class
 					else
 						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
 				}
-
 				frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
 				for _, v in frontColumn
 				{
@@ -332,7 +324,6 @@ class IC_BrivMaster_GemFarm_Class
 				this.routeMaster.UpdateThellora()
 				g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Post-rush Casino")
 				this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
-
 				if (!this.routeMaster.IsFeatSwap()) ;If featswapping Briv will jump with whatever value he had at zone completion, so checking here isn't useful, for non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
 					brivShouldBeinEConfig:=this.routeMaster.ShouldWalk(g_SF.Memory.ReadCurrentZone())
@@ -350,7 +341,6 @@ class IC_BrivMaster_GemFarm_Class
 			}
 			else ;Non-combining
 			{
-
 				this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
 				;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
 				;TODO: Update to check BBEGPresent
@@ -383,23 +373,22 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
 				if (melfSpawningMore)
 				{
-					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Casino with Melf spawning more")
+					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Casino with Melf")
 					this.EllywickCasino.Start(melfSpawningMore) ;Start the Elly handler
 					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
 				}
 				else
 				{
-					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Express Casino")
+					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Casino without Melf")
 					this.EllywickCasino.Start() ;Start the Elly handler 
 					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case, also TODO: We might need to force Elly's priority here, as otherwise she might not be fielded before the check in this call
 				}
-				;Wait for zone completion so we can level Briv - this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
-				quest := g_SF.Memory.ReadQuestRemaining()
+				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 				while (quest > 0)
 				{
 					this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
 					this.IBM_Sleep(15)
-					quest := g_SF.Memory.ReadQuestRemaining()
+					quest:=g_SF.Memory.ReadQuestRemaining()
 				}
 				this.levelManager.LevelWorklist(,true) ;Force briv to z1 level (due to z1c he won't have been levelled by the earlier calls)
 				;TODO: This will stall without Thellora, or if formation is zerged. Need a cap, and need to actually compare Q/E to what we have
@@ -419,9 +408,7 @@ class IC_BrivMaster_GemFarm_Class
 			}
 		}
 		else ;Not z1
-		{
-			this.levelManager.LevelClickDamage() ;Level click damage to make sure we can move - otherwise we can be stuck since it's normally called in InitZone()
-		}
+			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
 
 	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)

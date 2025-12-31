@@ -1,23 +1,21 @@
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
-#include %A_LineFile%\..\..\IC_Core\IC_SharedData_Class.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_SharedFunctions.ahk
 
 global g_PreviousZoneStartTime
-global g_SharedData:=New IC_SharedData_Class
+global g_SharedData:=New IC_BrivMaster_SharedData_Class ;TODO: Create this in the main _Run file? That would mean it wouldn't be available in the hub, but it shouldn't be?
 
 class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
 {
 	__new()
     {
         this.Memory:=New IC_BrivMaster_MemoryFunctions_Class(A_LineFile . "\..\..\IC_Core\MemoryRead\CurrentPointers.json")
-		;TODO: Review all of the below
-		UserID:=""
-		UserHash:=""
-		InstanceID:=0
-		CurrentAdventure:=30 ; default cursed farmer
-		steelbones := "" ;steelbones and sprint are used as some sort of cache so they can be acted on once memory reads are invalid I think TODO: Review
-		sprint := ""
-		PatronID := 0
+		this.UserID:=""
+		this.UserHash:=""
+		this.InstanceID:=0
+		this.CurrentAdventure:=30 ; default cursed farmer ;TODO: Change this to Tall Tales? If it even makes sense to have a default
+		this.steelbones:="" ;steelbones and sprint are used as some sort of cache so they can be acted on once memory reads are invalid I think TODO: Review
+		this.sprint:=""
+		this.PatronID:=0
     }
 	
 	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max
@@ -40,7 +38,7 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
         return true
     }
 	
-    WorldMapRestart() ;Forces an adventure restart through closing IC and using server calls
+    WorldMapRestart() ;Forces an adventure restart through closing IC and using server calls TODO: 2 line function that is only used in one place?
     {
         g_SharedData.IBM_UpdateOutbound("LoopString","Zone is -1. At world map?")
         this.RestartAdventure( "Zone is -1. At world map?" )
@@ -77,14 +75,13 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
         return CurrentObjID
     }
 	
-    IsBrivMetalborn() 	    ; Returns whether Briv's spec in the modron core is set to Metalborn. TODO: Check this in the pre-flight check
+    IsBrivMetalborn() ; Returns whether Briv's spec in the modron core is set to Metalborn. TODO: Check this in the pre-flight check, also TODO: Make this a general function
     {
         specID := this.Memory.GetCoreSpecializationForHero(58) ;TODO: Consider for Hero object (although being a modron core thing maybe not?) Also, how does this function handle champions with multiple spec choices
         if (specID==3455)
             return true
         return false
     }
-	
 	
 	
 	;Overriden to allow a string to be passed to OpenIC() to aid debugging, and to avoid using recursion

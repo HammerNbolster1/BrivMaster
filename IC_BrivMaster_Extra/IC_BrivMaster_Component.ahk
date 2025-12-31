@@ -112,7 +112,7 @@ Class IC_IriBrivMaster_Component
             this.LEGACY_UpdateStatus("Gem Farm not running")
             return
         }
-        g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings[ "ExeName"])
+        g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
         g_SF.Memory.OpenProcessReader()
         for k,v in g_IriBrivMaster_StartFunctions
         {

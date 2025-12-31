@@ -31,16 +31,9 @@ class IC_BrivMaster_MemoryFunctions_Class
         this.GameSettings := new IC_GameSettings_Class(currentPointers.GameSettings.moduleAddress, currentPointers.GameSettings.staticOffset, currentPointers.GameSettings.moduleOffset)
         this.EngineSettings := new IC_EngineSettings_Class(currentPointers.EngineSettings.moduleAddress, currentPointers.EngineSettings.staticOffset, currentPointers.EngineSettings.moduleOffset)
         this.CrusadersGameDataSet := new IC_CrusadersGameDataSet_Class(currentPointers.CrusadersGameDataSet.moduleAddress, currentPointers.CrusadersGameDataSet.moduleOffset)
-		this.GameInstance:=0 ;Active GameInstance is 0 in the DLL so GameInstance should not need to change ;TODO: Remove if we just [0] all these
-		
-		;TODO: Review the below
-		this.ChestIndexByID := {} ; Map of ID/Chests for faster lookups
-		; HeroIDToNameMap := {} ; Map of champions IDs/Names
-		this.HeroIDToIndexMap := {} ; Map of champion IDs/Index in hero handler
-		this.FavoriteFormations := {} ;Irisiri - used by GetActiveModronFormationSaveSlot() as a cache by the looks of it
-		this.LastFormationSavesVersion := {} ;Irisiri - used by GetActiveModronFormationSaveSlot() as a cache by the looks of it
-		this.FormationsBySlot := {}
-		this.SlotFormations := {}
+		this.FavoriteFormations:={} ;Irisiri used for formation caching by the looks of it
+		this.LastFormationSavesVersion:={} ;Irisiri used for formation caching by the looks of it
+		this.SlotFormations:={} ;Irisiri used for formation caching by the looks of it
     }
 	
     GetPointersVersion() ;Used by About addon, not needed for BM

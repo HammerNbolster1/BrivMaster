@@ -824,7 +824,7 @@ Class IC_IriBrivMaster_Component
 			{
 				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
 				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-				this.ChestSnatcher_AddMessage("Claim", response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active")
+				this.ChestSnatcher_AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
 				if (response.daily_login_details.premium_active)
 					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
 				return
@@ -833,11 +833,11 @@ Class IC_IriBrivMaster_Component
 			{
 				if (response.daily_login_details.premium_active)
 				{
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . standardClaimed ? "" : "un" . "claimed and premium reward " . standardClaimed ? "" : "un" . "claimed. Claiming...")
+					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
 					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . standardClaimed ? "" : "un" . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
 				this.ChestSnatcher_AddMessage("Claim", messageString)
 			}
 		}

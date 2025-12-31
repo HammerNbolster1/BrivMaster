@@ -505,7 +505,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		if (this.PostponeStacking(highZone))
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks
+		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks
 		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
 		TYPE_SB:=MEMORY_SB_STAT.ValueType
 		startStacks:=stacks:=_MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
@@ -605,7 +605,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		; Melf stacking
         if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone()))
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks
+		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks
 		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
 		TYPE_SB:=MEMORY_SB_STAT.ValueType
 		startStacks:= stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
@@ -890,14 +890,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	DEBUG_FORMATION_STRING() ;Returns the formation size and members as a string
 	{
-		size := g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.formation.slots.size.Read()
+		size := g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
 		if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
 			return "X:[]"
 		formation:=":["
 		champCount:=0
 		loop, %size%
 		{
-			heroID := g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+			heroID := g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
 			if (heroID>0)
 				champCount++
 			else
@@ -1303,7 +1303,7 @@ class IC_BrivMaster_BUD_Tracker_Class ;Manages BUD calculations
 {
 	__New()
 	{
-		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].ActiveCampaignData
+		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData
 		this.minUltDPS:=LOG(MEMORY_ACD.minUltDPS.Read()) ;LOG10 as we are working in exponents
 		this.ultBasedOnDPS:=MEMORY_ACD.ultBasedOnDPS.Read()
 		this.ultFalloffExponent2:=MEMORY_ACD.ultFalloffExponent2.Read() ;The '2' is per the game source
@@ -1315,7 +1315,7 @@ class IC_BrivMaster_BUD_Tracker_Class ;Manages BUD calculations
 
 	ReadBUD(realTimeOffset:=0)
 	{
-		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].ActiveCampaignData
+		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData
 		first8:=MEMORY_ACD.highestHitDamage.Read("Int64") ;Quad
         newObject := MEMORY_ACD.highestHitDamage.QuickClone()
         offsetIndex := newObject.FullOffsets.Count()
@@ -1674,15 +1674,15 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 	DEBUG_UpgradeList()
 	{
 		heroIndex:=g_SF.Memory.GetHeroHandlerIndexByChampID(58) ;Legacy, this probably becomes part of the hero object?
-		;size:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId.size.Read()
+		;size:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId.size.Read()
 		size := g_SF.Memory.ReadHeroUpgradesSize(58) ;Would need replacing as removed, probably becomes part of the hero object?
 		upgradeList:={}
 		Loop, %size%
         {
-			id:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId["value",A_Index-1].Id.Read()
+			id:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId["value",A_Index-1].Id.Read()
             ;OutputDebug % "Calling g_SF.Memory.IBM_ReadHeroUpgradeRequiredLevelByIndex`n" ;Note - removed, take from IC Core if needed
-			level:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId[id].RequiredLevel.Read()
-			effectString:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId[id].Def.baseEffectString.Read()
+			level:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId[id].RequiredLevel.Read()
+			effectString:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[heroIndex].upgradeHandler.upgradesByUpgradeId[id].Def.baseEffectString.Read()
 			effectSplit:=StrSplit(effectString,",")
             if (effectSplit[1]=="health_add")
 			{

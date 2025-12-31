@@ -47,6 +47,11 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
         return this.PointerVersionString
     }
+	
+	GetImportsVersion() ;TODO: To be included in 32-bit sanitisation
+	{
+        return !_MemoryManager.is64Bit ? ( (g_ImportsGameVersion32 == "" ? " ---- " : (g_ImportsGameVersion32 . g_ImportsGameVersionPostFix32 )) . " (32 bit), ") : ( (g_ImportsGameVersion64 == "" ? " ---- " : (g_ImportsGameVersion64 . g_ImportsGameVersionPostFix64)) . " (64 bit)")
+    }
 
 	ReadBaseGameVersion()
 	{
@@ -60,32 +65,32 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	ReadResetting()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ResetHandler.Resetting.Read()
+        return this.GameManager.game.gameInstances[0].ResetHandler.Resetting.Read()
     }
 	
 	ReadTransitioning()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.areaTransitioner.IsTransitioning_k__BackingField.Read()
+        return this.GameManager.game.gameInstances[0].Controller.areaTransitioner.IsTransitioning_k__BackingField.Read()
     }
 	
     ReadTransitionDirection() ;0 = static (instant), 1 = right, 2 = left, 3 = JumpDown, 4 = FallDown (new)
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.areaTransitioner.transitionDirection.Read()
+        return this.GameManager.game.gameInstances[0].Controller.areaTransitioner.transitionDirection.Read()
     }
 	
     ReadFormationTransitionDir() ;0 = OnFromLeft, 1 = OnFromRight, 2 = OnFromTop, 3 = OffToLeft, 4 = OffToRight, 5 = OffToBottom (new)
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.transitionDir.Read()
+        return this.GameManager.game.gameInstances[0].Controller.formation.transitionDir.Read()
     }
 
 	ReadAreaActive()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.area.Active.Read()
+        return this.GameManager.game.gameInstances[0].Controller.area.Active.Read()
     }
 	
 	ReadUserIsInited()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.inited.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.inited.Read()
     }
 	
 	ReadIsSplashVideoActive()
@@ -95,18 +100,18 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	ReadClickLevel()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ClickLevel.Read()
+        return this.GameManager.game.gameInstances[0].ClickLevel.Read()
     }
 	
     ReadUserID()
 	{
-        ; return this.GameManager.game.gameUser.ID.Read() ; alternative
+        ; return this.GameManager.game.gameUser.ID.Read() ; alternative, not in imports currently
         return this.GameSettings.UserID.Read()
     }
 
     ReadUserHash()
 	{
-        ; return this.GameManager.game.gameUser.Hash.Read() ; Alternative
+        ; return this.GameManager.game.gameUser.Hash.Read() ; Alternative, not in imports currently
         return this.GameSettings.Hash.Read()
     }
 	
@@ -127,42 +132,42 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	ReadGems()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.redRubies.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.redRubies.Read()
     }
 	
 	ReadSBStacks()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
     }
 
     ReadHasteStacks()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.StatHandler.BrivSprintStacks.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSprintStacks.Read()
     }
 
 	ReadCurrentObjID()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentObjective.ID.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentObjective.ID.Read()
     }
 	
 	ReadQuestRemaining()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentArea.QuestRemaining.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.QuestRemaining.Read()
     }
 	
 	ReadCurrentZone()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentAreaID.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentAreaID.Read()
     }
 
     ReadHighestZone()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.highestAvailableAreaID.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.highestAvailableAreaID.Read()
     }
 	
 	ReadActiveGameInstance() ;TODO: Appears to duplicate IBM_GetActiveGameInstanceID via a different import, both are used currently
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ActiveUserGameInstance.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.ActiveUserGameInstance.Read()
     }
 	
 	  
@@ -178,7 +183,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	GetActiveModronFormationSaveSlot()
 	{
         favorite:="M" ; (M)odron
-        version:= this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2.__version.Read()
+        version:= this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2.__version.Read()
         if(this.FavoriteFormations[favorite]!="" AND version==this.LastFormationSavesVersion[favorite])
             return this.FavoriteFormations[favorite]
         ; Find the Campaign ID (e.g. 1 is Sword Cost, 2 is Tomb, 1400001 is Sword Coast with Zariel Patron, etc.)
@@ -203,17 +208,17 @@ class IC_BrivMaster_MemoryFunctions_Class
     GetModronFormationsSaveIDByFormationCampaignID(formationCampaignID) ;Uses FormationCampaignID to search the modron for the SaveID of the formation the active modron is using
 	{
         modronSavesSlot:=this.GetCurrentModronSaveSlot() ;Find which modron core is being used
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[modronSavesSlot].FormationSaves[formationCampaignID].Read() ;Find SaveID for given formationCampaignID
+        return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[modronSavesSlot].FormationSaves[formationCampaignID].Read() ;Find SaveID for given formationCampaignID
     }
 	  
     GetCurrentModronSaveSlot() ;Finds the index of the current modron in ModronHandlers
 	{
         activeGameInstance:=this.ReadActiveGameInstance()
-        modronSavesSize:=this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves.size.Read()
+        modronSavesSize:=this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves.size.Read()
         if(modronSavesSize <= 0 OR modronSavesSize > 20) ; sanity check, should be < 5 as of 2023-09-03
             return ""
         loop, %modronSavesSize%
-            if (this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[A_Index - 1].InstanceID.Read()==activeGameInstance)
+            if (this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[A_Index - 1].InstanceID.Read()==activeGameInstance)
                 return A_Index - 1
     }
 	
@@ -224,92 +229,91 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	GetCoreTargetAreaByInstance(InstanceID:=1)
 	{  
-        saveSize:=this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves.size.Read() ;reads memory for the number of cores  
+        saveSize:=this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves.size.Read() ;reads memory for the number of cores  
         if(saveSize <= 0 OR saveSize > 50000) ; sanity check, should be a positive integer and less than 2005 as that is max allowed area as of 2023-09-03 Irisiri - unclear why the reset zone would be relevant here, number of cores possibly?
             return ""
         loop, %saveSize%  ;cycle through saved formations to find save slot of Favorite
-            if (this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[A_Index - 1].InstanceID.Read()==InstanceID)
-                return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[A_Index - 1].targetArea.Read()
+            if (this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[A_Index - 1].InstanceID.Read()==InstanceID)
+                return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[A_Index - 1].targetArea.Read()
         return -1
     }
 	
 	ReadModronAutoFormation()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[0].Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[0].Read()
     }
 	
 	ReadModronAutoReset()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[1].Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[1].Read()
     }
 	
 	ReadModronAutoBuffs()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[2].Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[2].Read()
     }
 	 
-    GetCoreSpecializationForHero(heroID, specNum := 1) ;Will return the spec ID for the hero if it's in the modron formation and has the spec. Otherwise returns ""
+    GetCoreSpecializationForHero(heroID, specNum := 1) ;Will return the spec ID for the hero if it's in the modron formation and has the spec. Otherwise returns "" ;TODO: Use in preflight check for Metalborn? Also review how this handles heroes with multiple specs. Otherwise, remove this & associated import
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[this.GetActiveModronFormationSaveSlot()].Specializations[heroID].List[specNum - 1].Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[this.GetActiveModronFormationSaveSlot()].Specializations[heroID].List[specNum - 1].Read()
     }
 	
 	ReadNumAttackingMonstersReached()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.numAttackingMonstersReached.Read()
+        return this.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.Read()
     }
 	
 	ReadNumRangedAttackingMonsters()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.numRangedAttackingMonsters.Read()
+        return this.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.Read()
     }
 
 	   
     ReadFormationCampaignID() ;Reads the FormationCampaignID for the FormationSaves index passed in
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.FormationCampaignID.Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.FormationCampaignID.Read()
     }
 	
     ReadFormationSaveIDBySlot(slot:=0) ;Reads the SaveID for the FormationSaves index passed in
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].SaveID.Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].SaveID.Read()
     }
 	
 	ReadOfflineTime()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].OfflineHandler.OfflineTimeRequested_k__BackingField.Read()
+        return this.GameManager.game.gameInstances[0].OfflineHandler.OfflineTimeRequested_k__BackingField.Read()
     }
 	
 	ReadOfflineDone()
 	{
-        handlerState:=this.GameManager.game.gameInstances[this.GameInstance].OfflineHandler.CurrentState_k__BackingField.Read()
-        stopReason:=this.GameManager.game.gameInstances[this.GameInstance].OfflineHandler.CurrentStopReason_k__BackingField.Read()
+        handlerState:=this.GameManager.game.gameInstances[0].OfflineHandler.CurrentState_k__BackingField.Read()
+        stopReason:=this.GameManager.game.gameInstances[0].OfflineHandler.CurrentStopReason_k__BackingField.Read()
         return handlerState==0 AND stopReason != "" ; handlerstate is "inactive" and stopReason is not null
     }
 	
 	ReadResetsTotal()
 	{
-        return this.GameManager.game.gameInstances[g_SF.Memory.GameInstance].Controller.userData.StatHandler.Resets.Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.Resets.Read()
     }
 	
 	ReadResetsCount()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].ResetsSinceLastManual.Read()
+        return this.GameManager.game.gameInstances[0].ResetsSinceLastManual.Read()
     }
 	
 	ReadAutoProgressToggled()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.topBar.objectiveProgressBox.areaBar.autoProgressButton.toggled.Read()
+        return this.GameManager.game.gameInstances[0].Screen.uiController.topBar.objectiveProgressBox.areaBar.autoProgressButton.toggled.Read()
     }
 	
 	ReadWelcomeBackActive()
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.notificationManager.notificationDisplay.welcomeBackNotification.Active.Read()
+        return this.GameManager.game.gameInstances[0].Screen.uiController.notificationManager.notificationDisplay.welcomeBackNotification.Active.Read()
     }
 	
-	   
     GetFormationSaveBySlot(slot := 0, ignoreEmptySlots := 0) ;Read the champions saved in a given formation save slot. returns an array of champ ID with -1 representing an empty formation slot. When parameter ignoreEmptySlots is set to 1 or greater, empty slots (memory read value == -1) will not be added to the array. 
 	{
-        currentVersion:=this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Formation.__version.Read()
+        currentVersion:=this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation.__version.Read()
         if(currentVersion != "" AND currentVersion==this.LastFormationSavesVersion["slot" . slot] AND this.SlotFormations["slot" . slot] != "")
         {
             if(!ignoreEmptySlots)
@@ -323,12 +327,12 @@ class IC_BrivMaster_MemoryFunctions_Class
             return this.SlotFormations["slot" . slot . "1"]:=Formation.Clone()
         }
         Formation := {}
-        _size := this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Formation.size.Read()
+        _size := this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation.size.Read()
         if(_size <= 0 OR _size > 20) ; sanity check
             return ""
         loop, %_size%
         {
-            champID := this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Formation[A_Index - 1].Read()
+            champID := this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation[A_Index - 1].Read()
             if (!ignoreEmptySlots or champID != -1)
                 Formation.Push( champID )
         }
@@ -349,14 +353,14 @@ class IC_BrivMaster_MemoryFunctions_Class
         return ""
     }
 	
-	ReadMostRecentFormationFavorite() ;Note this is the most recent requested - it DOES update if the formation swap changes
+	ReadMostRecentFormationFavorite() ;Note this is the most recent requested - it DOES update if the formation swap fails, so is not reliable
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.mostRecentFormation.Favorite.Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.mostRecentFormation.Favorite.Read()
     }
 	
     GetFormationByFavorite(favorite:=0)  ;Returns the formation stored at the favorite value passed in.
 	{
-        version:= this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2.__version.Read()
+        version:= this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2.__version.Read()
         if(this.FavoriteFormations[favorite] != "" AND version == this.LastFormationSavesVersion[favorite])
             return this.FavoriteFormations[favorite]
         slot:=this.GetSavedFormationSlotByFavorite(favorite)
@@ -369,7 +373,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	   
     GetCurrentFormation() ;Returns an array containing the current formation. Note: Slots with no hero are converted from 0 to -1 to match other formation saves
 	{
-        size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
+        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
             return ""
         formation := Array()
@@ -383,57 +387,52 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	ReadChampIDBySlot(slot := 0)
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[slot].hero.def.ID.Read()
+        return this.GameManager.game.gameInstances[0].Controller.formation.slots[slot].hero.def.ID.Read()
     }
 	
 	 
     ReadFormationSavesSize() ;Read the number of saved formations for the active campaign
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2.size.Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2.size.Read()
     }
 
     ReadFormationFavoriteIDBySlot(slot:=0) ;reads if a formation save is a favorite 0 = not a favorite, 1 = favorite slot 1 (q), 2 = 2 (w), 3 = 3 (e)
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Favorite.Read()
+        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Favorite.Read()
     }
 
     ReadChestCountByID(chestID) ;Chests are stored in a dictionary under the "entries". It functions like a 32-Bit list but the ID is every 4th value. Item[0] = ID, item[1] = MAX, Item[2] = ID, Item[3] = count. They are each 4 bytes, not a pointer
 	{
-        return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.ChestHandler.chestCounts[chestID].Read()
+        return this.GameManager.game.gameInstances[0].Controller.userData.ChestHandler.chestCounts[chestID].Read()
     }
 
     ReadPatronID()
 	{
-        patronIDDef:=this.GameManager.game.gameInstances[this.GameInstance].PatronHandler.ActivePatron_k__BackingField.Read()
+        patronIDDef:=this.GameManager.game.gameInstances[0].PatronHandler.ActivePatron_k__BackingField.Read()
         if (patronIDDef==0 OR patronIDDef=="")
             return patronIDDef
-        patronID:=this.GameManager.game.gameInstances[this.GameInstance].PatronHandler.ActivePatron_k__BackingField.ID.Read()
+        patronID:=this.GameManager.game.gameInstances[0].PatronHandler.ActivePatron_k__BackingField.ID.Read()
         if(patronID < 0 OR patronID > 100) ; Ignore clearly bad memory reads.
             patronID:=""
         return patronID
     }
 	
-	GetImportsVersion() ;TODO: To be included in 32-bit sanitisation
-	{
-        return !_MemoryManager.is64Bit ? ( (g_ImportsGameVersion32 == "" ? " ---- " : (g_ImportsGameVersion32 . g_ImportsGameVersionPostFix32 )) . " (32 bit), ") : ( (g_ImportsGameVersion64 == "" ? " ---- " : (g_ImportsGameVersion64 . g_ImportsGameVersionPostFix64)) . " (64 bit)")
-    }
-	
 	HeroHasFeatSavedInFormation(heroID :=58, featID := 2131, formationSlot := 1)
 	{
-        size:=this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List.size.Read()
+        size:=this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List.size.Read()
         if(size=="")
             return ""
         if(size<=0 OR size>10) ; sanity check
             return false
         Loop, %size%
-            if (featID == this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List[A_Index - 1].Read())
+            if (featID == this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List[A_Index - 1].Read())
                 return true
         return false
     }
 	
 	HeroHasAnyFeatsSavedInFormation(heroID := 58, formationSlot := 1)
 	{
-        size:=this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List.size.Read()
+        size:=this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List.size.Read()
         if(size == "")
             return ""
         if(size <= 0 OR size > 10) ; sanity check
@@ -445,20 +444,14 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
         if (heroID < 1)
             return ""
-        size:=this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.FeatHandler.heroFeatSlots[heroID].List.size.Read()
+        size:=this.GameManager.game.gameInstances[0].Controller.userData.FeatHandler.heroFeatSlots[heroID].List.size.Read()
         if (size < 0 OR size > 10) ;Sanity check, should be < 4 but set to 10 in case of future feat num increase.
             return ""
         featList:=[]
         Loop, %size%
-            featList.Push(this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.FeatHandler.heroFeatSlots[heroID].List[A_Index - 1].ID.Read())
+            featList.Push(this.GameManager.game.gameInstances[0].Controller.userData.FeatHandler.heroFeatSlots[heroID].List[A_Index - 1].ID.Read())
         return featList
     }
-	
-	
-	
-	
-	
-	
 	
 	IBM_GetWebRootFriendly() ;Handle failures for user-facing reads (mainly the log). WebRoot uses the EngineSettings pointer that moves a lot
 	{
@@ -475,12 +468,12 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	IBM_IsBuffActive(buffName) ;Is a Gem Hunter potion active
 	{
-		buffSize:=this.GameManager.game.gameInstances[this.GameInstance].BuffHandler.activeBuffs.size.Read()
+		buffSize:=this.GameManager.game.gameInstances[0].BuffHandler.activeBuffs.size.Read()
 		if (buffSize < 0 OR size > 1000)
 			return false 
 		loop %buffSize%
 		{
-			if (this.GameManager.game.gameInstances[this.GameInstance].BuffHandler.activeBuffs[A_Index-1].Name.Read()==buffName) ;TODO: Find out if this gets localised; might need to use the effect name (although that would collide with anything else that gave +50% gems)
+			if (this.GameManager.game.gameInstances[0].BuffHandler.activeBuffs[A_Index-1].Name.Read()==buffName) ;TODO: Find out if this gets localised; might need to use the effect name (although that would collide with anything else that gave +50% gems)
 				return true
 		}
 		return false
@@ -503,7 +496,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	IBM_ReadBaseGameSpeed() ;Reads the game speed without the area transition multipier Diana applies, e.g. x10 will flick between x10 and x50 constantly - this will always return x10
 	{
-		areaTransMulti:=this.GameManager.game.gameInstances[this.GameInstance].areaTransitionTimeScaleMultiplier.Read()
+		areaTransMulti:=this.GameManager.game.gameInstances[0].areaTransitionTimeScaleMultiplier.Read()
         if (!areaTransMulti)
 			areaTransMulti:=1 ;So we don't divide by zero
 		return this.GameManager.TimeScale.Read() / areaTransMulti
@@ -511,7 +504,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	
 	IBM_ReadCurrentZoneMonsterHealthExponent() ;Returns 85.90308999 for 8e85 for example
 	{
-		MEMORY_HEALTH:=g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].ActiveCampaignData.currentArea.Health
+		MEMORY_HEALTH:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.Health
 		first8:=MEMORY_HEALTH.Read("Int64") ;Quad
         newObject := MEMORY_HEALTH.QuickClone()
         offsetIndex := newObject.FullOffsets.Count()
@@ -564,28 +557,28 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_ReadAreaMonsterDamageMultiplier()
     {
-        return g_SF.Memory.GameManager.game.gameInstances[g_SF.Memory.GameInstance].ActiveCampaignData.currentArea.AreaDef.MonsterDamageMultiplier.Read()
+        return g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.AreaDef.MonsterDamageMultiplier.Read()
     }
 
 	IBM_ReadCampaignMonsterDamageMultiplier()
     {
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentRules.MonsterDamageModifier.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentRules.MonsterDamageModifier.Read()
     }
 
 	IBM_ReadMonsterBaseDPS()
     {
-        return this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentRules.monsterbaseStats.BaseDPS.Read()
+        return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentRules.monsterbaseStats.BaseDPS.Read()
     }
 
 	IBM_ReadDPSGrowthCurve()
     {
-        size:=this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve.size.Read()
+        size:=this.GameManager.game.gameInstances[0].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve.size.Read()
 		data:={}
 		loop %size%
 		{
 			curvePoint:={}
-			curvePoint.level:=this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve["key",A_Index-1].Read()
-			curvePoint.value:=this.GameManager.game.gameInstances[this.GameInstance].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve[curvePoint.level].Read()
+			curvePoint.level:=this.GameManager.game.gameInstances[0].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve["key",A_Index-1].Read()
+			curvePoint.value:=this.GameManager.game.gameInstances[0].ActiveCampaignData.currentRules.monsterbaseStats.DPSGrowthRateCurve[curvePoint.level].Read()
 			data.Push(curvePoint)
 		}
 		return data
@@ -593,13 +586,13 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_ReadGoldFirst8BytesBySeat(seat) ;Reads the first 8 bytes of the gold quad
     {
-        return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
+        return this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
     }
 
 
     IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad
     {
-        newObject := this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
+        newObject := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
         goldOffsetIndex := newObject.FullOffsets.Count()
         newObject.FullOffsets[goldOffsetIndex] := newObject.FullOffsets[goldOffsetIndex] + 0x8
         return newObject.Read("Int64")
@@ -607,12 +600,12 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {
-        size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
+        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible TODO: If 12 is max why is this 14? (was based on g_SF.Memory.GetCurrentFormation() )
             return true ;Assumed that an invalid read means the formation is empty
         loop, %size%
         {
-            heroID := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+            heroID := this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
 			if (heroID>0)
 				return false
         }
@@ -621,10 +614,10 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_IsCurrentFormationFull()
     {
-        size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
+        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
 		loop %size%
         {
-            if (this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()=="")
+            if (this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()=="")
 				return false
         }
         return true
@@ -632,16 +625,16 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_ClickDamageLevelAmount() ;This is the base amount set per levelling seletion, e.g. always 1/10/25/100
 	{
-		return this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.clickDamageBox.levelUpAmount.Read()
+		return this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.clickDamageBox.levelUpAmount.Read()
 	}
 
 	IBM_GetFrontColumnSize() ;Used when we want to block champions from being levelled in the front formation slots so they do not share attacks with Briv
 	{
-		size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
+		size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         frontCount:=0
         loop, %size%
         {
-			if (this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].SlotDef.Column.Read()==0) ;TODO: Might be a problem if there is a Xaryxis-like escort at the front of a formation in the future, read slot validity first?
+			if (this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].SlotDef.Column.Read()==0) ;TODO: Might be a problem if there is a Xaryxis-like escort at the front of a formation in the future, read slot validity first?
 				frontCount++
         }
 		return frontCount
@@ -649,12 +642,12 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_ReadIsInstanceDirty() ;Dirty = unsaved data
 	{
-		return this.GameManager.game.gameInstances[this.GameInstance].isDirty.Read()
+		return this.GameManager.game.gameInstances[0].isDirty.Read()
 	}
 	
 	IBM_ReadCurrentSave() ;Pointer to the current save, 0 if there isn't one active, so we can test if it's 0 or not. Non-zero whilst the game is saving
 	{
-		return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.SaveHandler.currentSave.Read()
+		return this.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.Read()
 	}
 
 	IBM_ReadIsGameUserLoaded()
@@ -664,24 +657,24 @@ class IC_BrivMaster_MemoryFunctions_Class
 
     IBM_ReadClickLevelUpAllowed()
     {
-        value := this.GameManager.game.gameInstances[this.GameInstance].Screen.uiController.bottomBar.heroPanel.clickDamageBox.maxLevelUpAllowed.Read()
+        value := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.clickDamageBox.maxLevelUpAllowed.Read()
         return value == "" ? 1 : value
     }
 
 	IBM_ReadLastSave()
 	{
-		return this.GameManager.game.gameInstances[this.GameInstance].Controller.userData.SaveHandler.lastUserDataSaveTime.Read()
+		return this.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.lastUserDataSaveTime.Read()
 	}
 
 	IBM_GetCurrentFormationChampions() ;Returns the champions in the formation, without positioning data, eg data[58]==true
     {
-        size := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots.size.Read()
+        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
             return ""
         champList := []
         loop, %size%
         {
-            heroID := this.GameManager.game.gameInstances[this.GameInstance].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+            heroID := this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
             if (heroID > 0)
 				champList[heroID]:=true
         }
@@ -691,12 +684,12 @@ class IC_BrivMaster_MemoryFunctions_Class
 	IBM_GetFormationFieldFamiliarCountBySlot(slot)
 	{
 		familiarCount:=0
-		size:=this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List.size.Read()
+		size:=this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List.size.Read()
 		if(size < 0 OR size > 10) ; sanity check, should be < 6 but set to 10 in case of future game field familiar increase.
 			return ""
 		loop %size%
 		{
-			if(this.GameManager.game.gameInstances[this.GameInstance].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List[A_Index - 1].Read()>=0) ;Negative numbers are used to store gaps in familiar layout, e.g. -3,13,-2 means '3 empty spaces, familiar ID 13, 2 empty spaces'
+			if(this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Familiars["Clicks"].List[A_Index - 1].Read()>=0) ;Negative numbers are used to store gaps in familiar layout, e.g. -3,13,-2 means '3 empty spaces, familiar ID 13, 2 empty spaces'
 				familiarCount++
 		}
 		return familiarCount

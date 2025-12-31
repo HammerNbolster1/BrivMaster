@@ -6,8 +6,14 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
         DllCall( "RtlFillMemory", "Ptr",this.GetAddress("TZData"), "Ptr",172, "Char",0 ) ; Zero fill memory
         this.ReadCNETimeZone(this.GetAddress("TZData"))
 	}
+	
+	InWindow()
+	{
+		serverTime:=this.GetCNETime() 
+		return serverTime > 11.95 AND serverTime < 12.5 ;11:57 to 12:30. Reset is at 12:00 CNE time (Pacific local time)
+	}
 
-	GetCNETime()
+	GetCNETime() ;Returns hours with minutes as a fraction, e.g. 8.5 = 08:30, 23.95 = 23:57
 	{
 		; Get current UTC system time
 		VarSetCapacity(SYSTEMTIME, 16, 0)

@@ -273,14 +273,8 @@ class IC_BrivMaster_GemFarm_Class
 			tatyanaPresent:=g_Heroes[97].inM
 			BBEGPresent:=g_Heroes[125].inM
 			melfSpawningMore:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore()
-
-			if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
-			{
-				serverTime:=this.DianaCheeseHelper.GetCNETime() ;Returns hours with minutes as a fraction, e.g. 8.5 = 08:30, 23.95 = 23:57
-				if (serverTime > 11.95 AND serverTime < 12.5) ;11:57 to 12:30. Reset is at 12:00 CNE time (Pacific local time)
-					this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
-			}
-
+			if (g_IBM_Settings["IBM_Level_Diana_Cheese"] AND this.DianaCheeseHelper.InWindow()) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
+				this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
 			if (this.routeMaster.combining)
 			{
 				this.routeMaster.CheckThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine

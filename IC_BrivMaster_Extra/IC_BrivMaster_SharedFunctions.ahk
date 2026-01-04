@@ -1,8 +1,7 @@
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_SharedFunctions.ahk
 
-global g_PreviousZoneStartTime
-global g_SharedData:=New IC_BrivMaster_SharedData_Class ;TODO: Create this in the main _Run file? That would mean it wouldn't be available in the hub, but it shouldn't be?
+global g_PreviousZoneStartTime ;TODO: Why is this in here? It is used by CheckifStuck - move elsewhere if that function moves. Or possibly move it anyway...
 
 class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
 {

@@ -38,7 +38,8 @@ global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
-global g_InputManager:=new IC_BrivMaster_InputManager_Class()
+global g_InputManager:=New IC_BrivMaster_InputManager_Class()
+global g_SharedData:=New IC_BrivMaster_SharedData_Class 
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 

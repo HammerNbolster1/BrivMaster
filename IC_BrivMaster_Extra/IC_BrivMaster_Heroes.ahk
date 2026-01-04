@@ -73,7 +73,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 	{
 		return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].Benched.Read()
 	}
-	
+
 	ReadChampSeat()
     {
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].def.SeatID.Read()
@@ -187,15 +187,29 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 		return this.ID==g_SF.Memory.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[this.Seat - 1].hero.def.ID.read()
 	}
 
-    ReadName() ;Not stored as the main script doesn't need to know the names outside of the pre-flight check
+    ReadName() ;Not stored as the main script doesn't need to know the names outside of the pre-flight check, which is not performance sensitive
 	{
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].def.name.Read()
     }
-	
+
 	ReadActiveGameInstanceID() ;This is the instance ID 1 to 4, NOT the ID if the instance in the gameInstances collection
 	{
 		return  g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].ActiveGameInstanceId_k__BackingField.Read()
 	}
+
+	HasCoreSpec(specID) ;True if the hero has the specified specialisation saved in the current modron core
+	{
+        HERO_SPECS:=g_SF.Memory.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[g_SF.Memory.GetActiveModronFormationSaveSlot()].Specializations[this.ID].List
+		size:=HERO_SPECS.size.Read()
+		if(size<=0 OR size>5) ;Sanity check
+            return false
+		loop %size%
+		{
+			if(HERO_SPECS[A_Index-1].Read()==specID)
+				return true
+		}
+		return false
+    }
 
 	;------------------------------------------------------------------------------------
 	;---General functions
@@ -345,7 +359,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		this.rushCap:=g_SF.Memory.IBM_GetCurrentCampaignFavourExponent()
 		this.rushNext:=0 ;If non-zero, the expected next rush zone, which could be lower than the cap if in recovery
 	}
-	
+
 	Reset()
 	{
 		base.Reset()
@@ -356,7 +370,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	;---Hero related memory reads
 	;--------------------------------------------------------------------------------------
 
-	ReadRushTriggered() ;Has Thellora rushed yet this run? Looking up this stat seems fairly fast, so need for caching like in ReadRushAreaCharges() 
+	ReadRushTriggered() ;Has Thellora rushed yet this run? Looking up this stat seems fairly fast, so need for caching like in ReadRushAreaCharges()
 	{
 		return g_SF.Memory.GameManager.game.gameInstances[0].StatHandler.ServerStats[this.STAT_RUSH_TRIGGERED].Read()==1
 	}
@@ -398,7 +412,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------
-	
+
 	UpdateRushTarget() ;Returns true if memory read was available and the cap actually changed
 	{
 		cap:=g_SF.Memory.IBM_GetCurrentCampaignFavourExponent()
@@ -409,7 +423,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 		}
 		return false
 	}
-	
+
 	GetCappedRushCharges() ;Assumes that the cap is current
 	{
 		return Min(this.ReadRushAreaCharges(),this.rushCap)

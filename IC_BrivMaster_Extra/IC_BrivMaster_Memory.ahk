@@ -36,7 +36,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.SlotFormations:={} ;Irisiri used for formation caching by the looks of it
     }
 	
-    GetPointersVersion() ;Used by About addon, not needed for BM
+    GetPointersVersion() ;Used by About addon, not needed for BM TODO: So why have it in this class?
 	{
         return this.PointerVersionString
     }
@@ -244,11 +244,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 	ReadModronAutoBuffs()
 	{
         return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[2].Read()
-    }
-	 
-    GetCoreSpecializationForHero(heroID, specNum := 1) ;Will return the spec ID for the hero if it's in the modron formation and has the spec. Otherwise returns "" ;TODO: Use in preflight check for Metalborn? Also review how this handles heroes with multiple specs. Otherwise, remove this & associated import
-	{
-        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[this.GetActiveModronFormationSaveSlot()].Specializations[heroID].List[specNum - 1].Read()
     }
 	
 	ReadNumAttackingMonstersReached()
@@ -471,7 +466,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 		return false
 	}
 
-	;Overridden to remove cruft and to take a PID instead of just finding it via a window name, in case there are multiple windows
 	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
     {
         _MemoryManager.exeName := g_IBM_Settings["IBM_Game_Exe"]

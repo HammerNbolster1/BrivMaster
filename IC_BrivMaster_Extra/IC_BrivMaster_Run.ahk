@@ -21,6 +21,7 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Indirectly #includes IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Functions.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
+#include %A_LineFile%\..\IC_BrivMaster_GameMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
@@ -30,14 +31,15 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
-global g_SF:=new IC_BrivMaster_SharedFunctions_Class ; includes IBM-extended MemoryFunctions in g_SF.Memory
+global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM-extended MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
-global g_IBM:=new IC_BrivMaster_GemFarm_Class
+global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
-global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
+global g_SaveHelper:=New IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
-global g_InputManager:=new IC_BrivMaster_InputManager_Class()
+global g_InputManager:=New IC_BrivMaster_InputManager_Class()
+global g_SharedData:=New IC_BrivMaster_SharedData_Class 
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
@@ -89,31 +91,24 @@ class IC_BrivMaster_GemFarm_Class
     {
         static lastResetCount:=0
         this.TriggerStart:=true
-		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
-        exeName:=g_IBM_Settings["IBM_Game_Exe"]
-        Process, Exist, %exeName%
-        g_SF.PID:=ErrorLevel
-        Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority if needed. Admin is required for RealTime, but will automatically use High if not elevated
         DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once TODO: I think the frequency can be changed, so this might not be safe?
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
-		g_SF.Memory.OpenProcessReader()
+		this.GameMaster:=New IC_BrivMaster_GameMaster_Class()
 		this.RefreshImportCheck() ;Does the initial population of the import check
-        if (g_SF.VerifyAdventureLoaded() < 0)
-            return
-        g_SF.CurrentAdventure:=g_SF.Memory.ReadCurrentObjID()
         g_ServerCall.UpdatePlayServer()
         g_SF.ResetServerCall()
-        g_SF.PatronID:=g_SF.Memory.ReadPatronID()
+        g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
-		if (this.PreFlightCheck()==false) ; Did not pass pre flight check.
+		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
         g_PreviousZoneStartTime := A_TickCount
 		this.offRamp:=false ;Limit the code that runs at the end of a run
 		this.EllywickCasino:=New IC_BrivMaster_EllywickDealer_Class()
+		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
 		this.DialogSwatter_Setup() ;This needs to be built in a more organised way, but will do for now
@@ -122,7 +117,7 @@ class IC_BrivMaster_GemFarm_Class
         {
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
-				g_SF.SafetyCheck()
+				g_IBM.GameMaster.SafetyCheck()
 			if (!this.TriggerStart AND this.offRamp AND this.currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
 			{
 				this.TriggerStart:=true
@@ -140,7 +135,8 @@ class IC_BrivMaster_GemFarm_Class
 				g_InputManager.ReleaseAll()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
-				this.offRamp:=false
+				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
+				this.failedConversionMode:=false
 				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
                 this.routeMaster.Reset()
@@ -149,7 +145,7 @@ class IC_BrivMaster_GemFarm_Class
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
 				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
 					g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",true)
-                g_PreviousZoneStartTime := A_TickCount
+                g_PreviousZoneStartTime:=A_TickCount
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
 				g_SharedData.IBM_UpdateOutbound("LoopString","Main Loop")
@@ -172,7 +168,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
 				{
-					needToStack := this.routeMaster.NeedToStack()
+					needToStack:=this.routeMaster.NeedToStack()
 					; Check for failed stack conversion
 					if (this.currentZone>1)
 						this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
@@ -186,8 +182,11 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
-						if (!this.offRamp AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						if (!this.offRamp AND !this.failedConversionMode AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						{
+							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
+						}
 					}
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{
@@ -472,8 +471,17 @@ class IC_BrivMaster_GemFarm_Class
 
 	;START PRE-FLIGHT CHECK
 
-    PreFlightCheck()
+    PreFlightCheck() ;TODO: Pack some of this into functions - it's getting a bit large
     {
+		;Check for active adventure
+		if(this.GameMaster.CurrentAdventure=="" OR this.GameMaster.CurrentAdventure<=0)
+		{
+			errorMsg:="Unable to read adventure data."
+			errorMsg.="`nPlease load into a valid adventure. Current adventure shows as: " . (CurrentObjID ? CurrentObjID : "-- Error --`n")
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Adventure",errorMsg)
+			return false
+		}
 		;Check Briv is saved in the expected formations
 		brivInM:=g_Heroes[58].inM
         brivInQ:=g_Heroes[58].inQ
@@ -486,6 +494,14 @@ class IC_BrivMaster_GemFarm_Class
 			errorMsg.="Q	Expected: Yes	Saved: " . (brivInQ ? "Yes" : "No") . "`n"
 			errorMsg.="W	Expected: Yes	Saved: " . (brivInW ? "Yes" : "No") . "`n"
 			errorMsg.="E	Expected: " . (this.RouteMaster.IsFeatSwap() ? "Yes (FS)" : "No") . "	Saved: " . (brivInE ? "Yes" : "No") . "`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Briv Formations",errorMsg)
+			return false
+		}
+		;Check for Metalborn
+		if(!g_Heroes[58].HasCoreSpec(3455))
+		{
+			errorMsg:="Briv must have the Metalborn specialisation saved in the Modron formation.`n"
 			errorMsg.=this.PreFlightCheck_GenericMessage()
 			this.PreFlightErrorMessage("Briv Formations",errorMsg)
 			return false
@@ -708,33 +724,4 @@ class IC_BrivMaster_GemFarm_Class
 		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
 	}
 	;END GEM FARM WINDOW
-
-	;DIALOGSWATTER BLOCK
-	DialogSwatter_Setup()
-    {
-        this.SwatterTimer :=  ObjBindMethod(this, "DialogSwatter_Swat")
-		this.KEY_ESC:=g_InputManager.getKey("Esc")
-    }
-
-    DialogSwatter_Start()
-    {
-		timerFunction:=this.SwatterTimer
-		SetTimer, %timerFunction%, 100, 0
-		this.SwatterStartTime:=A_TickCount
-    }
-
-    DialogSwatter_Stop()
-    {
-        timerFunction:=this.SwatterTimer
-		SetTimer, %timerFunction%, Off
-    }
-
-    DialogSwatter_Swat()
-    {
-        if (g_SF.Memory.ReadWelcomeBackActive())
-			this.KEY_ESC.KeyPress() ;.KeyPress() applies critical itself
-		else if (A_TickCount > this.SwatterStartTime + 3000) ;3s should be enough to get the swat done
-			this.DialogSwatter_Stop() ;Stop the timer since we don't have anything to swat
-    }
-	;END DIALOGSWATTER BLOCK
 }

@@ -1,3 +1,35 @@
+;This file is intended for functions used in the gem farm script, but not the hub. Partitioning is WiP
+
+class IC_BrivMaster_DialogSwatter_Class ;A class for swatting dialogs that appears at game start
+{
+	__New()
+    {
+        this.Timer:=ObjBindMethod(this, "Swat")
+		this.KEY_ESC:=g_InputManager.getKey("Esc")
+    }
+
+    Start()
+    {
+		timerFunction:=this.Timer
+		SetTimer, %timerFunction%, 100, 0
+		this.StartTime:=A_TickCount
+    }
+
+    Stop()
+    {
+        timerFunction:=this.Timer
+		SetTimer, %timerFunction%, Off
+    }
+
+    Swat()
+    {
+        if (g_SF.Memory.ReadWelcomeBackActive())
+			this.KEY_ESC.KeyPress() ;.KeyPress() applies critical itself
+		else if (A_TickCount > this.StartTime + 3000) ;3s should be enough to get the swat done
+			this.Stop() ;Stop the timer since we don't have anything to swat
+    }
+}
+
 class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum drops
 {
 	__new()
@@ -103,7 +135,6 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
 			val := val - 0x100000000
 		return val
 	}
-
 
 	HexToUShort(hex)
 	{
@@ -261,7 +292,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 
 	gameFocus() ;We need a way to detect IC losing focus, as that appears to be the only case that this needs to be re-called
 	{
-		hwnd:=g_SF.Hwnd
+		hwnd:=g_IBM.GameMaster.Hwnd
 		ControlFocus,, ahk_id %hwnd%
 	}
 	
@@ -292,7 +323,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 
 	Press() ;Hold a key and do not release
 	{
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
 		mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
 		lD:=this.lparamDown
         ControlFocus,, ahk_id %hwnd%
@@ -301,7 +332,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 
 	Release() ;Release a key
 	{
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
 		mk:=this.mappedKey
 		lU:=this.lparamUp
         ControlFocus,, ahk_id %hwnd% ;As above
@@ -312,7 +343,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 	{
 		startCritical:=A_IsCritical ;Store existing state of critical
 		Critical, On
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
         mk:=this.mappedKey
 		lD:=this.lparamDown
 		lU:=this.lparamUp
@@ -325,7 +356,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 
 	Press_Bulk() ;The _Bulk versions do not set ControlFocus, and are intended for code that will send a lot of input together (e.g. levelling) and that code will be responsible for calling ControlFocus once
 	{
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
 		mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
 		lD:=this.lparamDown
     	SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
@@ -333,7 +364,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 
 	Release_Bulk() ;Release a key
 	{
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
 		mk:=this.mappedKey
 		lU:=this.lparamUp
 		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
@@ -341,7 +372,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 
 	KeyPress_Bulk() ;Press then release a key
 	{
-        hwnd:=g_SF.Hwnd
+        hwnd:=g_IBM.GameMaster.Hwnd
         mk:=this.mappedKey
 		lD:=this.lparamDown
 		lU:=this.lparamUp

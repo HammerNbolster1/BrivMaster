@@ -209,7 +209,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
 	{
-		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call
+		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call TODO: Why this weird use of separate assignments?
 		if (rushNext)
 			thelloraTarget:=this.GetThelloraTarget(rushNext,this.combining)
 		else
@@ -391,13 +391,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		offlineStartTime:=A_TickCount
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
-		g_SF.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
+		g_IBM.GameMaster.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
 		if (this.RelayBlankOffline)
 		{
 			g_IBM.Logger.AddMessage("BlankRestart() returning game in Relay mode")
 			this.RelayData.Release()
 			g_IBM.routeMaster.ResetCycleCount() ;TODO: Do these make sense here? Might need to be after picked up
-			g_IBM.DialogSwatter_Start() ;This seems a bit low-priority to happen this early, can we make it check later?
+			g_IBM.DialogSwatter.Start() ;This seems a bit low-priority to happen this early, can we make it check later?
 		}
 		else ;The sleep is to allow launcher like EGS to detect the game has closed, but that is not applicable to relay (which can't use the EGS launcher)
 		{
@@ -413,7 +413,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				}
 			}
 		}
-		g_SF.SafetyCheck() ;TODO: Does this do more harm than good during Blank offlines? It can potentially swap the process back to the wrong one if the window is still in existance? Need to roll our own for the blank codepath? Possibly needs to be changed for all runs
+		g_IBM.GameMaster.SafetyCheck() ;TODO: Does this do more harm than good during Blank offlines? It can potentially swap the process back to the wrong one if the window is still in existance? Need to roll our own for the blank codepath? Possibly needs to be changed for all runs
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
@@ -471,7 +471,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			else
 			{
 				g_IBM.Logger.AddMessage("Out of stacks:z" . currentZone)
-				g_SF.RestartAdventure("Out of haste @ z" . currentZone . " && have SB for next")
+				g_IBM.GameMaster.RestartAdventure("Out of haste @ z" . currentZone . " && have SB for next")
 				return true
 			}
         }
@@ -502,7 +502,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.StartAutoProgressSoft()
     }
 
-	StackUltra(highZone,maxOnlineStackTime:=300000)
+	StackUltra(highZone)
     {
 		if (this.PostponeStacking(highZone))
             return 0
@@ -521,7 +521,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost)
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout TODO: If Melf's buff isn't active (especially without Tatyana) this is likely going to result in a timeout that is too low?
+		maxOnlineStackTime:=this.GetOnlineStackTimeout()
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90)
 		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
@@ -566,8 +566,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         Critical Off
 		if (ElapsedTime >= maxOnlineStackTime)
         {
-			g_SF.RestartAdventure( "Ultra@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
-            g_SF.SafetyCheck()
+			g_IBM.GameMaster.RestartAdventure( "Ultra@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+            g_IBM.GameMaster.SafetyCheck()
             g_PreviousZoneStartTime:=A_TickCount
             return
         }
@@ -601,7 +601,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
     }
 
-	StackNormal(maxOnlineStackTime := 300000) ;300s might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	StackNormal() 
     {
 		; Melf stacking
         if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone()))
@@ -635,7 +635,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout, leaving 30000ms @ x10
+		maxOnlineStackTime:=this.GetOnlineStackTimeout()
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
@@ -652,7 +652,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					Critical On
 					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
 					precisionMode:=true
-					;g_IBM.Logger.AddMessage("Precision Mode at:" . stacks . " stacks")
 				}
 				g_IBM.IBM_Sleep(15)
 			}
@@ -663,8 +662,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_SF.RestartAdventure( "Normal@z" . currentZone . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
-            g_SF.SafetyCheck()
+			g_IBM.GameMaster.RestartAdventure( "Normal@z" . currentZone . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+            g_IBM.GameMaster.SafetyCheck()
             g_PreviousZoneStartTime := A_TickCount
             return
         }
@@ -689,6 +688,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (!runComplete)
 			this.SetFormation() ;Standard call to reset trustRecent
     }
+	
+	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	{
+		timeoutBase/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Reduces the 200s to 16s @ 12.5
+		if(g_IBM.failedConversionMode) ;In this case we're probably killing things as we've levelled champions, allow significantly more time
+			timeoutBase*=5
+		return timeoutBase
+	}
 
 	WaitForZoneCompleted(maxTime:=3000)
     {
@@ -774,7 +781,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
                 g_SharedData.IBM_UpdateOutbound("LoopString","Attempted to offline stack after modron reset - verify settings")
                 break
             }
-			this.offlineSaveTime:=g_SF.CloseIC( "StackRestart" . (this.StackFailRetryAttempt > 1 ? (" - Warning: Retry #" . this.StackFailRetryAttempt - 1 . ". Check Stack Settings."): "") )
+			this.offlineSaveTime:=g_IBM.GameMaster.CloseIC( "StackRestart" . (this.StackFailRetryAttempt > 1 ? (" - Warning: Retry #" . this.StackFailRetryAttempt - 1 . ". Check Stack Settings."): "") )
 			g_SharedData.IBM_UpdateOutbound("LoopString","Stack Sleep: ")
             ElapsedTime:=0
 			sleepStart:=A_TickCount ;Seperate to the save timer, this is the delay in restarting the game specifically
@@ -784,7 +791,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
                 g_IBM.IBM_Sleep(15)
 				ElapsedTime := A_TickCount - sleepStart
             }
-			g_SF.SafetyCheck()
+			g_IBM.GameMaster.SafetyCheck()
             stacks:=g_SF.Memory.ReadSBStacks()
             ;check if save reverted back to below stacking conditions
             if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Irisiri - this might need to consider the offline fallback?
@@ -1069,8 +1076,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
     }
 
-	 ; True/False on whether Briv should be benched based on game conditions.
-	 ;Irisiri - as part of drift checking, return changed as follows:
+	 ;Should be benched based on game conditions. As part of drift checking, return as follows:
 	 ;0 - as false before, do not bench
 	 ;1 - as true before for most conditions, bench
 	 ;2 - bench for animation override
@@ -1078,64 +1084,27 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		;ReadTransitionDirection() 		| 0 = Static (instant), 1 = Forward, 2 = Backward, 3=JumpDown, 4=FallDown
 		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OnFromTop, 3 = OffToLeft, 4 = OffToRight, 5 = OffToBottom
-		;if (this.ShouldDoThelloraRecovery()) ;Irisiri - to stop Briv being used before Thell is done
-		;	{
-		;		return 1
-		;	}
-		;bench briv if jump animation override is added to list and it isn't a quick transition (reading ReadFormationTransitionDir makes sure QT isn't read too early). We can't do this for feat swap as every formation has Briv
 		if (this.zonesPerJumpE == 1 AND g_SF.Memory.ReadTransitionDirection() == 1 AND g_SF.Memory.ReadFormationTransitionDir() == 4 )
-            {
-				return 2
-			}
-        ;bench briv not in a preferred briv jump zone
-        if (isEZone)
-			{
-				return 1
-			}
+			return 2
+        if (isEZone) 
+			return 1
         return 0
     }
 
-    ; True/False on whether Briv should be unbenched based on game conditions.
-    UnBenchBrivConditions(isEZone)
+    UnBenchBrivConditions(isEZone) ;True/False on whether Briv should be unbenched based on game conditions.
     {
-		; do not unbench Briv if before Thellora's rush target (as per the bench condition)
-		;if (this.ShouldDoThelloraRecovery())
-		;	{
-		;	return false
-		;	}
-		; do not unbench briv if party is not on a perferred briv jump zone.
         if (isEZone)
-			{
             return false
-			}
 		if (this.zonesPerJumpE > 1) ;Don't do transition-based checks when feat swapping
 			return true ;Not a walk zone so go to Q
-        ;if transition direction is "OnFromLeft"
-		if (g_SF.Memory.ReadFormationTransitionDir() != 4)
-		{
+		if (g_SF.Memory.ReadFormationTransitionDir()!=4) ;if transition direction is not "OffToRight"
 			return true
-		}
         return false
     }
 
-	/*
-	ShouldDoThelloraRecovery() ;True if we should walk to Thellora's skip zone regardless of the zone's setting
-	{
-		return false ;Testing stack-calc based recovery as walk based can't work for feat swap TODO: Option for this? Maybe a max number of zones to walk?
-		if (this.zonesPerJumpE > 1) ;If we're feat swapping we can't recover via walking. TODO: Should this actually check for Briv in E instead of using zonesPerJumpE as a proxy? Might be worth reading his presence in at the start of the run in Reset()
-			return false
-		currentZone:=g_SF.Memory.ReadCurrentZone()
-		if (currentZone < this.thelloraTarget) ;If we're before Thellora's target area, check if we have enough stacks (ie because it's the first run and we have low Thellora charges but lots of stacks)
-		{
-			return g_SF.Memory.ReadHasteStacks()<this.zones[currentZone].stacksToFinish ;Do we have enough stacks anyway?
-		}
-		return false
-	}
-	*/
-
 	ShouldWalk(zone)
 	{
-		return this.zones[zone].jumpZone==False ; Or this.ShouldDoThelloraRecovery()
+		return this.zones[zone].jumpZone==False
 	}
 	
 	GetStandardFormationKey(zone) ;Returns the key object for Q or E as appropriate for the zone
@@ -1384,8 +1353,8 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			this.HelperPID:=0
 			this.RelayZone:=""
 			this.RequestRelease:=false
-			this.MainPID:=g_SF.PID
-			this.MainHwnd:=g_SF.Hwnd
+			this.MainPID:=g_IBM.GameMaster.PID
+			this.MainHwnd:=g_IBM.GameMaster.Hwnd
 			this.RestoreWindow:=g_SharedData.IBM_RestoreWindow_Enabled ;This can be changed at run time
 			scriptLocation := A_LineFile . "\..\IC_BrivMaster_RouteMaster_Relay.ahk"
 			guid:=this.GUID
@@ -1410,12 +1379,12 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	{
 		if (this.State==5) ;Expected state, just resume process and move on
 		{
-			g_SF.IBM_SuspendProcess(this.RelayPID,False)
+			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 5 - resuming")
 		}
 		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery? TODO: This can be called when a second CloseIC() is called after the relay handover, e.g. because the run gets stuck
 		{
-			g_SF.IBM_SuspendProcess(this.RelayPID,False)
+			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 6 - resuming - DEBUG")
 		}
 		else if (this.State>0) ;Request release
@@ -1429,7 +1398,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	{
 		if (this.State==5) ;Expected state, just resume process and move on
 		{
-			g_SF.IBM_SuspendProcess(this.RelayPID,False)
+			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
 			this.ProcessSwap()
 			g_IBM.Logger.AddMessage("Relay Release() state 5")
 			this.State:=6 ;Complete
@@ -1484,40 +1453,39 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		g_IBM.Logger.AddMessage("Relay LogZone() at z[" . g_SF.Memory.ReadCurrentZone() . "] message=[" . message . "]")
 	}
 
-	CleanUpOnFail()
+	CleanUpOnFail() 
 	{
-		if (this.GetProcessName(this.HelperPID) == "AutoHotkey.exe") ;Kill the relay script
+		if (g_SF.GetProcessName(this.HelperPID) == "AutoHotkey.exe") ;Kill the relay script
 		{
 			g_IBM.Logger.AddMessage("CleanUpOnFail() found Relay AHK script PID=[" . this.HelperPID . "] still running - killing")
 			closeString:="ahk_pid " . this.HelperPID
-			WinKill, %closeString%
+			WinKill, %closeString% ;TODO: Should this use GameMaster.TerminateProcess?
 		}
 		WinGet, recoveryPID, PID, % "ahk_exe " . g_IBM_Settings["IBM_Game_Exe"] ;Check for IC processes
 		if (recoveryPID)
 		{
 			g_IBM.Logger.AddMessage("CleanUpOnFail() recovery PID found=[" . recoveryPID . "]")
-			g_SF.PID:=recoveryPID
-			g_SF.IBM_SuspendProcess(g_SF.PID,False) ;Ensure the process is not stuck suspended
-			g_SF.Hwnd:=WinExist("ahk_pid " . recoveryPID)
+			g_IBM.GameMaster.PID:=recoveryPID
+			g_IBM.GameMaster.SuspendProcess(g_IBM.GameMaster.PID,False) ;Ensure the process is not stuck suspended
+			g_IBM.GameMaster.Hwnd:=WinExist("ahk_pid " . recoveryPID)
 			g_SF.Memory.OpenProcessReader(recoveryPID) ;Open this PID specifically
 			g_SF.ResetServerCall()
 		}
 		else ;Otherwise open as normal
 		{
-			g_IBM.Logger.AddMessage("CleanUpOnFail() no recovery PID found - calling g_SF.OpenIC()")
-			g_SF.OpenIC()
+			g_IBM.Logger.AddMessage("CleanUpOnFail() no recovery PID found - calling OpenIC()")
+			g_IBM.GameMaster.OpenIC("CleanUpOnFail()")
 		}
 	}
 
 	ProcessSwap()
 	{
-		logText:="ProcessSwap() changing PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] "
-		g_SF.PID:=this.RelayPID
-		g_SF.Hwnd:=this.RelayHwnd
-		logText.="to PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]"
-		g_IBM.Logger.AddMessage(logText)
-		g_SF.Memory.OpenProcessReader(g_SF.PID)
-		if (g_SF.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one 
+		logText:="ProcessSwap() changing PID=[" . g_IBM.GameMaster.PID . "] and Hwnd=[" . g_IBM.GameMaster.Hwnd . "] "
+		g_IBM.GameMaster.PID:=this.RelayPID
+		g_IBM.GameMaster.Hwnd:=this.RelayHwnd
+		g_IBM.Logger.AddMessage(logText . "to PID=[" . g_IBM.GameMaster.PID . "] and Hwnd=[" . g_IBM.GameMaster.Hwnd . "]")
+		g_SF.Memory.OpenProcessReader(g_IBM.GameMaster.PID)
+		if (g_IBM.GameMaster.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one 
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")
@@ -1525,26 +1493,9 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		g_SharedData.IBM_UpdateOutbound("IBM_ProcessSwap",true) ;Allows the hub to react
 	}
 
-	GetProcessName(processID) ;To check without a window being present
-	{
-		if (hProcess := DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
-		{
-			size := VarSetCapacity(buf, 0x0104 << 1, 0)
-			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
-			{
-				SplitPath, % StrGet(&buf), processExeName
-				DllCall("CloseHandle", "ptr", hProcess)
-				return processExeName
-			}
-			DllCall("CloseHandle", "ptr", hProcess)
-		}
-		return false
-	}
-
-
 	RelayCloseMain() ;Called from the Relay script via COM to close the main IC process during recovery
 	{
-		g_SF.CloseIC("Relay failed to halt at platform login",true) ;Close via PID
+		g_IBM.GameMaster.CloseIC("Relay failed to halt at platform login",true) ;Close via PID
 		this.Release()
 	}
 

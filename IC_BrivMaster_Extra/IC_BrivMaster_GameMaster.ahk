@@ -12,6 +12,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         Process, Priority, % this.PID, Realtime ;Raises IC's priority. Admin is required for RealTime, but will automatically use High if not elevated
 		g_SF.Memory.OpenProcessReader()
 		this.CurrentAdventure:=g_SF.Memory.ReadCurrentObjID() ;This might fail, which will be checked in the pre-flight check
+		this.KEY_ESC:=g_InputManager.getKey("Esc") ;Used to dismiss the splash screen
 	}
 	
 	;-----------------------------------------------------------------------
@@ -206,7 +207,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         {	
             if (A_TickCount > lastInput+250 AND g_SF.Memory.ReadIsSplashVideoActive())
 			{
-				g_IBM.KEY_ESC.KeyPress() ;.KeyPress() sets critical if necessary
+				this.KEY_ESC.KeyPress() ;.KeyPress() sets critical if necessary
 				lastInput:=A_TickCount
 				g_IBM.IBM_Sleep(15) ;Short sleep as we've spent time on input already
 			}

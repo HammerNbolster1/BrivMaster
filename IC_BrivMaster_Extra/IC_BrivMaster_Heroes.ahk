@@ -197,6 +197,20 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 		return  g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].ActiveGameInstanceId_k__BackingField.Read()
 	}
 
+	HasCoreSpec(specID) ;True if the hero has the specified specialisation saved in the current modron core
+	{
+        HERO_SPECS:=g_SF.Memory.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[g_SF.Memory.GetActiveModronFormationSaveSlot()].Specializations[this.ID].List
+		size:=HERO_SPECS.size.Read()
+		if(size<=0 OR size>5) ;Sanity check
+            return false
+		loop %size%
+		{
+			if(HERO_SPECS[A_Index-1].Read()==specID)
+				return true
+		}
+		return false
+    }
+
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------

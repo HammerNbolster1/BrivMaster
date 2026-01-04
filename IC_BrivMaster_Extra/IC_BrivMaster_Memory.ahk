@@ -245,11 +245,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
         return this.GameManager.game.gameInstances[0].Controller.userData.ModronHandler.modronSaves[this.GetCurrentModronSaveSlot()].TogglePreferences[2].Read()
     }
-	 
-    GetCoreSpecializationForHero(heroID, specNum := 1) ;Will return the spec ID for the hero if it's in the modron formation and has the spec. Otherwise returns "" ;TODO: Use in preflight check for Metalborn? Also review how this handles heroes with multiple specs. Otherwise, remove this & associated import
-	{
-        return this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[this.GetActiveModronFormationSaveSlot()].Specializations[heroID].List[specNum - 1].Read()
-    }
 	
 	ReadNumAttackingMonstersReached()
 	{

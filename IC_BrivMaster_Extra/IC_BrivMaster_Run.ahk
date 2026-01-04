@@ -495,6 +495,14 @@ class IC_BrivMaster_GemFarm_Class
 			this.PreFlightErrorMessage("Briv Formations",errorMsg)
 			return false
 		}
+		;Check for Metalborn
+		if(!g_Heroes[58].HasCoreSpec(3455))
+		{
+			errorMsg:="Briv must have the Metalborn specialisation saved in the Modron formation.`n"
+			errorMsg.=this.PreFlightCheck_GenericMessage()
+			this.PreFlightErrorMessage("Briv Formations",errorMsg)
+			return false
+		}
 		;Check for familiars, M, Q and E should have 3, W always 0
 		familiarCountM:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetActiveModronFormationSaveSlot())
 		familiarCountQ:=g_SF.Memory.IBM_GetFormationFieldFamiliarCountBySlot(g_SF.Memory.GetSavedFormationSlotByFavorite(1))

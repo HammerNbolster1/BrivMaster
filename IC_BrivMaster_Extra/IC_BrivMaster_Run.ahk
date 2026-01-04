@@ -131,7 +131,8 @@ class IC_BrivMaster_GemFarm_Class
 				this.Logger.NewRun()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
-				this.offRamp:=false
+				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
+				this.failedConversionMode:=false
 				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
                 this.routeMaster.Reset()
@@ -177,8 +178,11 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
-						if (!this.offRamp AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						if (!this.offRamp AND !this.failedConversionMode AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						{
+							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
+						}
 					}
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{

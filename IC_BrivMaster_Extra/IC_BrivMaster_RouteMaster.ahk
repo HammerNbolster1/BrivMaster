@@ -501,7 +501,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.StartAutoProgressSoft()
     }
 
-	StackUltra(highZone,maxOnlineStackTime:=300000)
+	StackUltra(highZone)
     {
 		if (this.PostponeStacking(highZone))
             return 0
@@ -520,7 +520,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost)
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout TODO: If Melf's buff isn't active (especially without Tatyana) this is likely going to result in a timeout that is too low?
+		maxOnlineStackTime:=this.GetOnlineStackTimeout()
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90)
 		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
@@ -600,7 +600,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
     }
 
-	StackNormal(maxOnlineStackTime := 300000) ;300s might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	StackNormal() 
     {
 		; Melf stacking
         if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone()))
@@ -634,7 +634,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
 			this.BrivBoost.Apply()
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Factor timescale into the timeout, leaving 30000ms @ x10
+		maxOnlineStackTime:=this.GetOnlineStackTimeout()
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
@@ -688,6 +688,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (!runComplete)
 			this.SetFormation() ;Standard call to reset trustRecent
     }
+	
+	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	{
+		timeoutBase/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Reduces the 200s to 16s @ 12.5
+		if(g_IBM.failedConversionMode) ;In this case we're probably killing things as we've levelled champions, allow significantly more time
+			timeoutBase*=5
+		return timeoutBase
+	}
 
 	WaitForZoneCompleted(maxTime:=3000)
     {

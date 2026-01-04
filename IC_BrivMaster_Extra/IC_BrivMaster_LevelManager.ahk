@@ -15,7 +15,6 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
 		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")
 		this.ExtactFrontColumn()
-		this.failedConversionMode:=false
 		this.KEY_Modifier:=g_InputManager.getKey(g_IBM_Settings["IBM_Level_Options_Mod_Key"]=="Ctrl" ? "LCtrl" : g_IBM_Settings["IBM_Level_Options_Mod_Key"]) ;Modifer to hold - the game uses LeftControl in the keybindings, as much as it doesn't seem to make a lick of difference
 		this.modifierLevelUpAmount:=g_IBM_Settings["IBM_Level_Options_Mod_Value"] ;How many levels applying the modifier key will give per keypress
 	}
@@ -80,13 +79,9 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 
 	SetupFailedConversion()
 	{
-		if (!this.failedConversionMode)
-		{
-			this.OverrideMinToSoftCap()
-			this.failedConversionMode:=true
-			this.ResetLevellingDone()
-			g_IBM.Logger.AddMessage("SetupFailedConversion() Triggered")
-		}
+		this.OverrideMinToSoftCap()
+		this.ResetLevellingDone()
+		g_IBM.Logger.AddMessage("SetupFailedConversion() Triggered")
 	}
 
 	OverrideMinToSoftCap() ;Overrides all min levels to the champion's softcap, for failed conversion recovery
@@ -204,7 +199,6 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 	{
 		this.ResetLevellingDone()
 		g_Heroes.ResetAll()
-		this.failedConversionMode:=false
 		this.clickDamageTargetFinal:=g_IBM.routeMaster.targetZone ;These need a curve for post-z2000 HP. Done in Reset() as __New() is current called before the routemaster is set up
 		if (g_IBM.routeMaster.combining)
 			this.clickDamageTargetRush:=g_IBM.routeMaster.ThelloraTarget ;Only needs to be high enough for the Thellora target as we will stop there are do the Casino

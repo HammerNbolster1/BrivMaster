@@ -209,7 +209,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
 	{
-		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call
+		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call TODO: Why this weird use of separate assignments?
 		if (rushNext)
 			thelloraTarget:=this.GetThelloraTarget(rushNext,this.combining)
 		else
@@ -651,7 +651,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					Critical On
 					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
 					precisionMode:=true
-					;g_IBM.Logger.AddMessage("Precision Mode at:" . stacks . " stacks")
 				}
 				g_IBM.IBM_Sleep(15)
 			}

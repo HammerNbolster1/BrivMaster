@@ -262,7 +262,7 @@ Class IC_IriBrivMaster_Component
 
 	Start()
     {
-        g_SF.ResetServerCall() ;The process reader should have been set up by the main the script, but it doesn't instantiate the g_ServerCall object
+        g_SF.ResetServerCall()
 		fncToCallOnTimer := this.TimerFunction
         SetTimer, %fncToCallOnTimer%, 600, 0
 		this.SharedRunData:="" ;Reset this on start
@@ -1246,7 +1246,7 @@ Class IC_IriBrivMaster_Component
 			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Unable to read hero details")
 			return
 		}
-		this.Elly_NonGemFarm := new IC_BrivMaster_EllywickDealer_NonFarm_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
+		this.Elly_NonGemFarm:=New IC_BrivMaster_EllywickDealer_NonFarm_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
         this.Elly_NonGemFarm.Start()
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Started")
     }
@@ -1269,7 +1269,7 @@ Class IC_IriBrivMaster_Component
         return cards
     }
 
-	GetProcessName(processID) ;To check without a window being present TODO: This is duplicated with shared functions, but I'd rather not include all of that file just for this - need to decide how to share stuff like this (possibly by paring SF down a lot)
+	GetProcessName(processID) ;To check without a window being present TODO: This is duplicated with shared functions, use g_SF.GetProcessName() once shared vs 'unshared' functions are sorted out
 	{
 		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
 		{

@@ -31,11 +31,11 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
-global g_SF:=new IC_BrivMaster_SharedFunctions_Class ; includes IBM-extended MemoryFunctions in g_SF.Memory
+global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM-extended MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
-global g_IBM:=new IC_BrivMaster_GemFarm_Class
+global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
-global g_SaveHelper:=new IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
+global g_SaveHelper:=New IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
@@ -97,7 +97,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.RefreshImportCheck() ;Does the initial population of the import check
         g_ServerCall.UpdatePlayServer()
         g_SF.ResetServerCall()
-        g_SF.PatronID:=g_SF.Memory.ReadPatronID()
+        g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
@@ -143,7 +143,7 @@ class IC_BrivMaster_GemFarm_Class
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
 				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
 					g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",true)
-                g_PreviousZoneStartTime := A_TickCount
+                g_PreviousZoneStartTime:=A_TickCount
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
 				g_SharedData.IBM_UpdateOutbound("LoopString","Main Loop")
@@ -166,7 +166,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
 				{
-					needToStack := this.routeMaster.NeedToStack()
+					needToStack:=this.routeMaster.NeedToStack()
 					; Check for failed stack conversion
 					if (this.currentZone>1)
 						this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E

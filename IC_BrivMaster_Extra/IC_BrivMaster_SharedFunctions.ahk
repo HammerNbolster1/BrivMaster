@@ -1,9 +1,10 @@
+;This file is intended for functions used across both the gem farm script and the hub. Currently meeting that goal is a WiP
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_SharedFunctions.ahk
 
 global g_PreviousZoneStartTime ;TODO: Why is this in here? It is used by CheckifStuck - move elsewhere if that function moves. Or possibly move it anyway...
 
-class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
+class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions ;TODO: This has been separated from IC Core, but check what is going on in SH_SharedFunctions that might be redundant / undesireable? Does have some unneeded functions and includes
 {
 	__new()
     {
@@ -11,7 +12,6 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
 		this.UserID:=""
 		this.UserHash:=""
 		this.InstanceID:=0
-		this.CurrentAdventure:=30 ; default cursed farmer ;TODO: Change this to Tall Tales? If it even makes sense to have a default
 		this.steelbones:="" ;steelbones and sprint are used as some sort of cache so they can be acted on once memory reads are invalid I think TODO: Review
 		this.sprint:=""
 		this.PatronID:=0
@@ -86,7 +86,7 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
             g_IBM.RouteMaster.FallBackFromZone()
             g_IBM.RouteMaster.SetFormation() ;In the base script this just goes to Q, which might not be ideal, especially for feat swap
             g_IBM.RouteMaster.ToggleAutoProgress(1, true)
-            lastCheck := dtCurrentZoneTime
+            lastCheck:=dtCurrentZoneTime
             fallBackTries++
         }
         if (dtCurrentZoneTime > 65)
@@ -151,7 +151,7 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
         g_ServerCall.UpdateDummyData()
     }
 	
-	WaitForModronReset(timeout := 60000)
+	WaitForModronReset(timeout:=60000)
     {
         StartTime := A_TickCount
         ElapsedTime := 0
@@ -181,7 +181,6 @@ class IC_BrivMaster_SharedFunctions_Class extends SH_SharedFunctions
         return true
     }
 	
-	;Copied unaltered from BrivGemFarm
 	GetWebRoot()
     {
         tempWebRoot := this.Memory.ReadWebRoot()

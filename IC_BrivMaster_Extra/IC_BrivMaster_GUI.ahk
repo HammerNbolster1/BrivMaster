@@ -1091,7 +1091,7 @@ IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The g
     {
         MsgBox, 48, % "Unable to launch game, `nVerify the game location is set properly in the Briv Master settings. If you do not wish to use Briv Master's location settings please disable the addon"
     }
-	if (g_IriBrivMaster.GetProcessName(openPID)==g_IriBrivMaster.settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+	if (g_SF.GetProcessName(openPID)==g_IriBrivMaster.settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
 		g_SF.PID:=openPID
     else
 	{

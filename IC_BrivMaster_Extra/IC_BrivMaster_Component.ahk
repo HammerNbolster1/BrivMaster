@@ -1,4 +1,4 @@
-#include %A_LineFile%\..\IC_BrivMaster_Functions.ahk
+#include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
@@ -6,6 +6,7 @@
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
 SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
+SH_UpdateClass.AddClassFunctions(g_SF, IC_BrivMaster_SharedFunctions_Class) ;Make BM SharedFunctions available in standard instance. TODO: Not sure it makes sense to shoehorn all the contents (e.g. AHK JSON) into the base g_SF
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
@@ -13,12 +14,13 @@ global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI() ;TODO: Can we make this g
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
+global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to be in g_IBM.GameMaster.Hwnd, which is needed for the Elly tool TODO: Make this less horrible
 
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
-global g_IriBrivMaster_StartFunctions := {}
-global g_IriBrivMaster_StopFunctions := {}
+global g_IriBrivMaster_StartFunctions:={}
+global g_IriBrivMaster_StopFunctions:={}
 
-scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. This needs a more elegant solution
+scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. TODO: This needs a more elegant solution
 g_GlobalFontSize:=8
 g_IriBrivMaster.Init()
 g_GlobalFontSize:=scriptHubFontSize ;Restore default
@@ -73,7 +75,7 @@ Class IC_IriBrivMaster_Component
 
     UpdateGUIDFromLast()
     {
-        this.GemFarmGUID := this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+        this.GemFarmGUID := g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
     }
 
     Stop_Clicked()
@@ -139,7 +141,7 @@ Class IC_IriBrivMaster_Component
 
 	Init()
     {
-		this.GemFarmGUID:=this.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+		this.GemFarmGUID:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
@@ -236,7 +238,7 @@ Class IC_IriBrivMaster_Component
 	SaveSettings()
     {
         settings := this.Settings
-        this.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
+        g_SF.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
@@ -637,7 +639,7 @@ Class IC_IriBrivMaster_Component
 				return
 		}
 		profile:=this.settings.IBM_Game_Settings_Option_Profile
-		gameSettings:=this.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
+		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
 		changeCount:=0
 		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
 		this.SettingCheck(gameSettings,"PercentOfParticlesSpawned","Particles",false,changeCount,change)
@@ -656,7 +658,7 @@ Class IC_IriBrivMaster_Component
 			{
 				if (this.IsGameClosed())
 				{
-					this.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
+					g_SF.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
 					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
 				}
 				else
@@ -711,38 +713,6 @@ Class IC_IriBrivMaster_Component
 				gameSettings[CNEName]:=targetValue
 		}
 	}
-
-	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
-    {
-        FileRead, oData, %FileName%
-        data := ""
-        try
-        {
-            if (preserveBooleans)
-				data:=AHK_JSON_RAWBOOLEAN.Load(oData)
-			else
-				data:=AHK_JSON.Load(oData)
-        }
-        catch err
-        {
-            err.Message := err.Message . "`nFile:`t" . FileName
-            throw err
-        }
-        return data
-    }
-
-    WriteObjectToAHKJSON(FileName, ByRef object,preserveBooleans:=false)
-    {
-        if (preserveBooleans)
-			objectJSON:=AHK_JSON_RAWBOOLEAN.Dump(object,,"`t")
-		else
-			objectJSON:=AHK_JSON.Dump(object,,"`t")
-        if (!objectJSON)
-            return
-        FileDelete, %FileName%
-        FileAppend, %objectJSON%, %FileName%
-        return
-    }
 
 	GetSettingsFileLocation(checkTime)
 	{
@@ -1141,7 +1111,7 @@ Class IC_IriBrivMaster_Component
     {
         needSave := false
         default := this.GetNewSettings()
-        this.Settings := settings := this.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
+        this.Settings := settings := g_SF.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
         if (!IsObject(settings))
         {
             this.Settings := settings := default
@@ -1183,7 +1153,7 @@ Class IC_IriBrivMaster_Component
     {
         this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]] := levelData
     }
-	
+
 	GetLevelSettings() ;Returns the current level settings from the data (not UI) for the selected combine mode
 	{
 		return this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]]
@@ -1236,7 +1206,8 @@ Class IC_IriBrivMaster_Component
 
 	IBM_Elly_StartNonGemFarm()
 	{
-		g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
+		g_IBM.GameMaster:={}
+		g_SF.PID:=g_IBM.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
 		exeName:=g_IBM_Settings["IBM_Game_Exe"]
 		Process, Exist, %exeName%
 		g_SF.PID := ErrorLevel
@@ -1268,248 +1239,4 @@ Class IC_IriBrivMaster_Component
         }
         return cards
     }
-
-	GetProcessName(processID) ;To check without a window being present TODO: This is duplicated with shared functions, use g_SF.GetProcessName() once shared vs 'unshared' functions are sorted out
-	{
-		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
-		{
-			size:=VarSetCapacity(buf, 0x0104 << 1, 0)
-			if (DllCall("psapi\GetModuleFileNameEx", "ptr", hProcess, "ptr", 0, "ptr", &buf, "uint", size))
-			{
-				SplitPath, % StrGet(&buf), processExeName
-				DllCall("CloseHandle", "ptr", hProcess)
-				return processExeName
-			}
-			DllCall("CloseHandle", "ptr", hProcess)
-		}
-		return false
-	}
-}
-
-;Modifed AHK JSON Library for working with the game setting file - as JSON lacks a boolean type 'x'=false or 'y'=true ges turned into numeric values as standard
-
-/**
- * Modify by WarpRider, Member on https://www.autohotkey.com/boards
- *     ingnore the ahk internal vars true/false and the string null wil be not empty
- */
-
-class AHK_JSON_RAWBOOLEAN extends AHK_JSON ;Irisiri - renamed as SH already has a JSON class powered by JavaScript TODO: Can we instead modify the base class to take rawboolean as as parameter?
-{
-	class Load extends AHK_JSON.Load
-	{
-		Call(self, ByRef text, reviver:="")
-		{
-			this.rev := IsObject(reviver) ? reviver : false
-		; Object keys(and array indices) are temporarily stored in arrays so that
-		; we can enumerate them in the order they appear in the document/text instead
-		; of alphabetically. Skip if no reviver function is specified.
-			this.keys := this.rev ? {} : false
-
-			static quot := Chr(34), bashq := "\" . quot
-			     , json_value := quot . "{[01234567890-tfn"
-			     , json_value_or_array_closing := quot . "{[]01234567890-tfn"
-			     , object_key_or_object_closing := quot . "}"
-
-			key := ""
-			is_key := false
-			root := {}
-			stack := [root]
-			next := json_value
-			pos := 0
-
-			while ((ch := SubStr(text, ++pos, 1)) != "") {
-				if InStr(" `t`r`n", ch)
-					continue
-				if !InStr(next, ch, 1)
-					this.ParseError(next, text, pos)
-
-				holder := stack[1]
-				is_array := holder.IsArray
-
-				if InStr(",:", ch) {
-					next := (is_key := !is_array && ch == ",") ? quot : json_value
-
-				} else if InStr("}]", ch) {
-					ObjRemoveAt(stack, 1)
-					next := stack[1]==root ? "" : stack[1].IsArray ? ",]" : ",}"
-
-				} else {
-					if InStr("{[", ch) {
-					; Check if Array() is overridden and if its return value has
-					; the 'IsArray' property. If so, Array() will be called normally,
-					; otherwise, use a custom base object for arrays
-						static json_array := Func("Array").IsBuiltIn || ![].IsArray ? {IsArray: true} : 0
-
-					; sacrifice readability for minor(actually negligible) performance gain
-						(ch == "{")
-							? ( is_key := true
-							  , value := {}
-							  , next := object_key_or_object_closing )
-						; ch == "["
-							: ( value := json_array ? new json_array : []
-							  , next := json_value_or_array_closing )
-
-						ObjInsertAt(stack, 1, value)
-
-						if (this.keys)
-							this.keys[value] := []
-
-					} else {
-						if (ch == quot) {
-							i := pos
-							while (i := InStr(text, quot,, i+1)) {
-								value := StrReplace(SubStr(text, pos+1, i-pos-1), "\\", "\u005c")
-
-								static tail := A_AhkVersion<"2" ? 0 : -1
-								if (SubStr(value, tail) != "\")
-									break
-							}
-
-							if (!i)
-								this.ParseError("'", text, pos)
-
-							  value := StrReplace(value,  "\/",  "/")
-							, value := StrReplace(value, bashq, quot)
-							, value := StrReplace(value,  "\b", "`b")
-							, value := StrReplace(value,  "\f", "`f")
-							, value := StrReplace(value,  "\n", "`n")
-							, value := StrReplace(value,  "\r", "`r")
-							, value := StrReplace(value,  "\t", "`t")
-
-							pos := i ; update pos
-
-							i := 0
-							while (i := InStr(value, "\",, i+1)) {
-								if !(SubStr(value, i+1, 1) == "u")
-									this.ParseError("\", text, pos - StrLen(SubStr(value, i+1)))
-
-								uffff := Abs("0x" . SubStr(value, i+2, 4))
-								if (A_IsUnicode || uffff < 0x100)
-									value := SubStr(value, 1, i-1) . Chr(uffff) . SubStr(value, i+6)
-							}
-
-							if (is_key) {
-								key := value, next := ":"
-								continue
-							}
-
-						} else {
-							value := SubStr(text, pos, i := RegExMatch(text, "[\]\},\s]|$",, pos)-pos)
-							;MsgBox, "value=" %value%
-
-							static number := "number", integer :="integer"
-							if value is %number%
-							{
-								if value is %integer%
-									value += 0
-							}
-
-							;WarpRider 31.01.2023: hier wird value auf true oder false geprüft und behandelt, nach AHK wird das dann 0 oder 1,
-							;das ist aber falsch, da true/false für JSON keine boolschen Variablen sind, value muss unverändert übernommen werden
-							else if (value == "true" || value == "false")
-								value := value	;ORIGINAL: value := %value% + 0
-
-
-							else if (value == "null")
-								value := "null"									;WarpRider 31.01.2023: hier genauso, warum wird null nicht stur übernommen?
-							else
-							; we can do more here to pinpoint the actual culprit
-							; but that's just too much extra work.
-								this.ParseError(next, text, pos, i)
-
-							pos += i-1
-						}
-
-						next := holder==root ? "" : is_array ? ",]" : ",}"
-					} ; If InStr("{[", ch) { ... } else
-
-					is_array? key := ObjPush(holder, value) : holder[key] := value
-
-					if (this.keys && this.keys.HasKey(holder))
-						this.keys[holder].Push(key)
-				}
-
-			} ; while ( ... )
-
-			return this.rev ? this.Walk(root, "") : root[""]
-		}
-	}
-
-	class Dump extends AHK_JSON.Dump
-	{
-		Str(holder, key)
-		{
-			value := holder[key]
-
-			if (this.rep)
-				value := this.rep.Call(holder, key, ObjHasKey(holder, key) ? value : JSON.Undefined)
-
-			if IsObject(value) {
-			; Check object type, skip serialization for other object types such as
-			; ComObject, Func, BoundFunc, FileObject, RegExMatchObject, Property, etc.
-				static type := A_AhkVersion<"2" ? "" : Func("Type")
-				if (type ? type.Call(value) == "Object" : ObjGetCapacity(value) != "") {
-					if (this.gap) {
-						stepback := this.indent
-						this.indent .= this.gap
-					}
-
-					is_array := value.IsArray
-				; Array() is not overridden, rollback to old method of
-				; identifying array-like objects. Due to the use of a for-loop
-				; sparse arrays such as '[1,,3]' are detected as objects({}).
-					if (!is_array) {
-						for i in value
-							is_array := i == A_Index
-						until !is_array
-					}
-
-					str := ""
-					if (is_array) {
-						Loop, % value.Length() {
-							if (this.gap)
-								str .= this.indent
-
-							v := this.Str(value, A_Index)
-							str .= (v != "") ? v . "," : "null,"
-						}
-					} else {
-						colon := this.gap ? ": " : ":"
-						for k in value {
-							v := this.Str(value, k)
-							if (v != "") {
-								if (this.gap)
-									str .= this.indent
-
-								str .= this.Quote(k) . colon . v . ","
-							}
-						}
-					}
-
-					if (str != "") {
-						str := RTrim(str, ",")
-						if (this.gap)
-							str .= stepback
-					}
-
-					if (this.gap)
-						this.indent := stepback
-
-					return is_array ? "[" . str . "]" : "{" . str . "}"
-				}
-
-			}
-			;WarpRider 31.01.2023: alle Werte hier, ausser Zahlen werden durch die Funktion Quote() mit " eingefasst,
-			;das darf bei true,false,null eben nicht so sein, da true/false für JSON keine boolschen Variablen sind und null nicht leer werden
-			else ; is_number ? value : "value"
-			{
-			;MsgBox, vor.Str.return.raw.value=%value%
-			if (value == "true" || value == "false" || value == "null")
-			  return value
-			else
-			  return ObjGetCapacity([value], 1)=="" ? value : this.Quote(value)
-			}
-
-		}
-	}
 }

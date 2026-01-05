@@ -17,7 +17,6 @@ ListLines Off
 Process, Priority,, High
 CoordMode, Mouse, Client
 
-#include %A_LineFile%\..\..\..\SharedFunctions\json.ahk ;TODO: Move to AHK JSON lib
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Indirectly #includes IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Functions.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
@@ -31,7 +30,7 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
-global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM-extended MemoryFunctions in g_SF.Memory
+global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
@@ -52,14 +51,14 @@ g_IBM.CreateWindow()
 if(A_Args[1])
 {
     ObjRegisterActive(g_SharedData, A_Args[1])
-    g_SF.WriteObjectToJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", A_Args[1])
+    g_SF.WriteObjectToAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", A_Args[1])
 }
 else
 {
     GuidCreate := ComObjCreate("Scriptlet.TypeLib")
     guid := GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
     ObjRegisterActive(g_SharedData, guid)
-    g_SF.WriteObjectToJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
+    g_SF.WriteObjectToAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
 }
 
 g_IBM.GemFarm()
@@ -95,7 +94,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
 		this.GameMaster:=New IC_BrivMaster_GameMaster_Class()
 		this.RefreshImportCheck() ;Does the initial population of the import check
-        g_ServerCall.UpdatePlayServer()
+        g_ServerCall.UpdatePlayServer() ;TODO: Does doing this before ResetServerCall() make any sense? It won't have an instance yet?
         g_SF.ResetServerCall()
         g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
         g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
@@ -111,7 +110,6 @@ class IC_BrivMaster_GemFarm_Class
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
-		this.DialogSwatter_Setup() ;This needs to be built in a more organised way, but will do for now
 		g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
 		Loop
         {
@@ -224,7 +222,7 @@ class IC_BrivMaster_GemFarm_Class
 		while (currentTime < targetEndTime)
 		{
 			targetTick:=(targetTime - currentTime)//this.CounterFrequency
-			if (targetTick <= 5) ;With <5ms to go make individual 1ms calls
+			if (targetTick<=5) ;With <5ms to go make individual 1ms calls
 				tick:=1
 			else
 				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc

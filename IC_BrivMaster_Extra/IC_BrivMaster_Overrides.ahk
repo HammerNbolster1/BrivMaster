@@ -23,7 +23,7 @@ class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class
             }
             catch, ErrMsg
             {
-                g_SharedData.LoopString := "Failed to save Briv stacks"
+                g_SharedData.LoopString := "Failed to save Briv stacks" ;TODO: Log this instead
             }
         }
         return response
@@ -37,7 +37,7 @@ class IBM_Memory_Manager extends _MemoryManager
     Refresh(moduleName := "mono-2.0-bdwgc.dll", pid:="")
     {
 		moduleName1 := "mono-2.0-bdwgc.dll"
-        moduleName2 := "UnityPlayer.dll"
+        moduleName2 := "UnityPlayer.dll" ;TODO: Using this for the webroot does not work, remove, figure out how to deal with IC Core being as it is
         this.isInstantiated := false
         ;Open a process with sufficient access to read and write memory addresses (this is required before you can use the other functions)
         ;You only need to do this once. But if the process closes/restarts, then you will need to perform this step again. Refer to the notes section below.

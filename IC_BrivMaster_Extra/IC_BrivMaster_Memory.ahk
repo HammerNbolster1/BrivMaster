@@ -1,4 +1,3 @@
-#include %A_LineFile%\..\..\..\SharedFunctions\json.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH__MemoryManager.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH_MemoryPointer.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH_StaticMemoryPointer.ahk
@@ -19,7 +18,7 @@ class IC_BrivMaster_MemoryFunctions_Class
             Run, %versionPickerLoc%
             ExitApp
         }
-        currentPointers:=JSON.parse(oData) ;TODO: Swap to AHK JSON
+        currentPointers:=AHK_JSON.Load(oData)
         versionArray:=StrSplit(currentPointers.Version, ".")
         if(versionArray.Count() > 1)
             currentPointers.Version:=Round(currentPointers.Version, 1)

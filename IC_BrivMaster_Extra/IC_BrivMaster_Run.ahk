@@ -314,11 +314,11 @@ class IC_BrivMaster_GemFarm_Class
 				if (g_Heroes[139].inM)
 					g_SF.DoRushWait(true)
 				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
-				this.EllywickCasino.Start(melfSpawningMoreAfterRush) ;Start the Elly handler before rushwaiting, using the post-rush Melf status
+				this.EllywickCasino.Start() ;Start the Elly handler before rushwaiting, using the post-rush Melf status
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
-				g_SharedData.UpdateOutbound("LoopString","Elly Wait: Post-rush Casino")
+				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
 				this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
 				if (!this.routeMaster.IsFeatSwap()) ;If featswapping Briv will jump with whatever value he had at zone completion, so checking here isn't useful, for non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -367,18 +367,9 @@ class IC_BrivMaster_GemFarm_Class
 					}
 				}
 				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
-				if (melfSpawningMore)
-				{
-					g_SharedData.UpdateOutbound("LoopString","Elly Wait: Casino with Melf")
-					this.EllywickCasino.Start(melfSpawningMore) ;Start the Elly handler
-					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
-				}
-				else
-				{
-					g_SharedData.UpdateOutbound("LoopString","Elly Wait: Casino without Melf")
-					this.EllywickCasino.Start() ;Start the Elly handler 
-					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case, also TODO: We might need to force Elly's priority here, as otherwise she might not be fielded before the check in this call
-				}
+				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
+				this.EllywickCasino.Start() ;Start the Elly handler
+				this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
 				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 				while (quest > 0)
 				{

@@ -30,7 +30,7 @@ class IC_BrivMaster_SharedFunctions_Class
         }
         catch err
         {
-            err.Message := err.Message . "`nFile:`t" . FileName
+            err.Message:=err.Message . "`tFile:`t" . FileName
             throw err
         }
         return data

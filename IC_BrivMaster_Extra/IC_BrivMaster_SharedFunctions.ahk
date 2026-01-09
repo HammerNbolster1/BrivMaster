@@ -20,7 +20,7 @@ class IC_BrivMaster_SharedFunctions_Class
 	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
     {
         FileRead, oData, %FileName%
-        data := ""
+        data:=""
         try
         {
             if (preserveBooleans)
@@ -30,7 +30,7 @@ class IC_BrivMaster_SharedFunctions_Class
         }
         catch err
         {
-            err.Message := err.Message . "`nFile:`t" . FileName
+            err.Message:=err.Message . "`tFile:`t" . FileName
             throw err
         }
         return data
@@ -137,7 +137,7 @@ class IC_BrivMaster_SharedFunctions_Class
     {
         ElapsedTime:=0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
-		g_SharedData.IBM_UpdateOutbound("LoopString","Rush Wait")
+		g_SharedData.UpdateOutbound("LoopString","Rush Wait")
 		StartTime:=A_TickCount
 		while(!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
         {
@@ -187,9 +187,9 @@ class IC_BrivMaster_SharedFunctions_Class
     {
         StartTime := A_TickCount
         ElapsedTime := 0
-        g_SharedData.IBM_UpdateOutbound("LoopString","Modron Resetting...")
+        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
         this.SetUserCredentials()
-		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
+		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
         {
 			g_IBM.Logger.AddMessage("Manual stack conversion: Converted Haste=[" . this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 			response:=g_serverCall.CallPreventStackFail(this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate), true)
@@ -197,19 +197,17 @@ class IC_BrivMaster_SharedFunctions_Class
         while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
-        g_SharedData.IBM_UpdateOutbound("LoopString", "Loading z1...")
-        g_IBM.IBM_Sleep(20)
+        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
+		g_IBM.IBM_Sleep(20)
         while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone() < 1 AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
         if (ElapsedTime >= timeout)
-        {
-            return false
-        }
+			return false
         return true
     }
 	
@@ -222,6 +220,89 @@ class IC_BrivMaster_SharedFunctions_Class
     }    
 }
 
+class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location
+{
+	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
+	
+	__New()
+	{
+		this.BossesHitThisRun:=0
+		this.TotalBossesHit:=0
+        this.TotalRollBacks:=0
+        this.BadAutoProgress:=0
+		this.IBM_RestoreWindow_Enabled:=false
+		this.IBM_RunControl_DisableOffline:=false
+		this.IBM_RunControl_ForceOffline:=false
+		this.IBM_ProcessSwap:=false
+		this.IBM_RunControl_CycleString:=""
+		this.IBM_RunControl_StatusString:=""
+		this.IBM_RunControl_StackString:=""
+		this.IBM_BuyChests:=false
+		this.RunLogResetNumber:=0
+		this.RunLog:=""
+		this.LoopString:=""
+		this.LastCloseReason:=""
+	}
+	
+	Close() ;Taken from what was IC_BrivGemFarmRun_SharedData_Class in IC_BrivGemFarm_Run.ahk
+    {
+        if (g_SF.Memory.ReadUserIsInited()="") ; Invalid game state
+            ExitApp
+        g_IBM.RouteMaster.WaitForTransition()
+        g_IBM.RouteMaster.FallBackFromZone()
+        g_IBM.RouteMaster.ToggleAutoProgress(false, false, true)
+        ExitApp
+    }
+	
+	ShowGUI()
+    {
+        Gui, Show, NA
+    }
+
+	Init()
+    {
+        this.UpdateSettingsFromFile()
+		this.IBM_OutboundDirty:=false ;Track if we've made changes to the data so the hub doesn't make unnecessary checks
+    }
+
+    UpdateSettingsFromFile() ;Load settings from the GUI settings file.
+    {
+        settings:=g_SF.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
+        if (!IsObject(settings))
+            return false
+		for k,v in settings ;Load all settings
+			g_IBM_Settings[k]:=v
+		g_IBM.RefreshGemFarmWindow()
+    }
+	
+	UpdateOutbound(key,value) ;Update if the value has changed at mark the outbound data as dirty
+	{
+		if (this[key]!=value)
+		{
+			this[key]:=value
+			this.IBM_OutboundDirty:=true
+		}
+	}
+	
+	ResetRunStats() ;Resets per-run stats from the main object (boss hits, rollbacks, bad autoprogression). This allows them to all be cleared in one go without spam setting the IBM_OutboundDirty flag 
+	{
+		this.BossesHitThisRun:=0
+		this.TotalBossesHit:=0
+        this.TotalRollBacks:=0
+        this.BadAutoProgress:=0
+		this.IBM_OutboundDirty:=true
+	}
+	
+	UpdateOutbound_Increment(key) ;Increment a value, used for things like boss hit tracking
+	{
+		if (this.HasKey(key))
+			this[key]++
+		else
+			this[key]:=1
+		this.IBM_OutboundDirty:=true
+	}
+}
+
 class IC_BrivMaster_InputManager_Class ;A class for managing input related matters 
 {
 	keyList:={} ;Indexed by key per the script (e.g. "F1","ClickDmg"), contains the mapped Key, lParam for SendMessage for down, and lParam for SendMessage for up
@@ -230,7 +311,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 	{
 		this.KeyMap:={}
 		this.SCKeyMap:={}
-		KeyHelper.BuildVirtualKeysMap(this.KeyMap, this.SCKeyMap) ;Note: KeyHelper is in SH_KeyHelper.ahk, which is an #include in SH_SharedFunctions.ahk.
+		KeyHelper.BuildVirtualKeysMap(this.KeyMap, this.SCKeyMap) ;Note: KeyHelper is in SH_KeyHelper.ahk
 		this.gameFocus()
 	}
 
@@ -281,7 +362,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 		mk:=this.mappedKey
 		lU:=this.lparamUp
         ControlFocus,, ahk_id %hwnd% ;As above
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
+		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
 	}
 
 	KeyPress() ;Press then release a key
@@ -294,7 +375,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 		lU:=this.lparamUp
 		ControlFocus,, ahk_id %hwnd% ;As above
 		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
+		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
         if (!startCritical) ;Only turn critical off if wasn't on when we entered this function
 			Critical, Off
 	}
@@ -312,7 +393,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
         hwnd:=g_IBM.GameMaster.Hwnd
 		mk:=this.mappedKey
 		lU:=this.lparamUp
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
+		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
 	}
 
 	KeyPress_Bulk() ;Press then release a key
@@ -322,7 +403,7 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 		lD:=this.lparamDown
 		lU:=this.lparamUp
 		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,1000
+		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
 	}
 }
 
@@ -332,20 +413,17 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	static ULTIMATE_RESOLUTION_TIME:=300 ;Real world milliseconds. Normally seems to be 0 to 140ms
 
 	CasinoTimer := ObjBindMethod(this, "Casino")
-	GemCardsNeeded := {} ;These are pairs of base and melf mode values, eg {0:2,1:3} for 2 without melf and 3 with
-	MaxRedraws := {}
+	GemCardsNeeded:={} ;These are pairs of base and melf mode values, eg {0:2,1:3} for 2 without melf and 3 with
+	MaxRedraws:={}
 	MinCards:={}
-	GemCardsNeededInFlight:=0
-	Complete := false
-	Redraws := 0 ;Current redraws
-	UsedUlt := false ;Tracks Elly's ult being in progress, as her cards are only cleared when it ENDS, despite the visual
-	MelfMode:=false ;Is melf spawning more? Used to select the appropriate options
+	Complete:=false
+	Redraws:=0 ;Current redraws
+	UsedUlt:=false ;Tracks Elly's ult being in progress, as her cards are only cleared when it ENDS, despite the visual
 	StatusString:=" STATUS=" ;Used to return basic information on problems (eg DM fails)
 
-	Start(setMelfMode:=false)
+	Start()
 	{
-		this.MelfMode:=setMelfMode
-		timerFunction := this.CasinoTimer
+		timerFunction:=this.CasinoTimer
 		SetTimer, %timerFunction%, 20, 0
 		this.Casino() ;Is this useful here?
 	}
@@ -358,14 +436,12 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	Reset()
 	{
 		this.ClearTimers() ;Timers must be stopped BEFORE we set any variables, as otherwise the timer functions could 'un-reset' them afterwards
-		this.Complete := false
-		this.Redraws := 0
-		this.UsedUlt := false ;This assumes Reset() will only be called after an adventure resets
-		this.MaxRedraws := {0:g_IBM_Settings["IBM_Casino_Redraws_Base"],1:g_IBM_Settings["IBM_Casino_Redraws_Melf"]}
-		this.GemCardsNeeded := {0:g_IBM_Settings["IBM_Casino_Target_Base"],1:g_IBM_Settings["IBM_Casino_Target_Melf"]}
-		this.MinCards:={0:g_IBM_Settings["IBM_Casino_MinCards_Base"],1:g_IBM_Settings["IBM_Casino_MinCards_Melf"]}
-		this.GemCardsNeededInFlight:=g_IBM_Settings["IBM_Casino_Target_InFlight"]
-		this.MelfMode:=false
+		this.Complete:=false
+		this.Redraws:=0
+		this.UsedUlt:=false ;This assumes Reset() will only be called after an adventure resets
+		this.MaxRedraws:=g_IBM_Settings["IBM_Casino_Redraws_Base"]
+		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"]
+		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"]
 		this.StatusString:=""
 	}
 
@@ -387,8 +463,6 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 		{
 			if (this.RedrawsLeft() AND this.ShouldDrawMoreCards() AND this.ShouldRedraw() AND this.CanUseEllyWickUlt()) ;When we exit the waitroom early we might still need to do a re-roll
 				this.UseEllywickUlt()
-			else if (g_Heroes[83].GetNumGemCards() < this.GemCardsNeededInFlight AND this.GetNumCards() == 5 AND this.CanUseEllyWickUlt()) ;Use ultimate to redraw cards if Ellywick doesn't have GemCardsNeededInFlight (due to maxRedraws being less than the maximum possible)
-				this.UseEllywickUlt()
 		}
 		else if (this.ShouldDrawMoreCards())
 		{
@@ -397,7 +471,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 				 if (!this.UsedUlt AND this.ShouldRedraw())
 					this.UseEllywickUlt()
 			}
-			else if (this.GetMinCards() == 0 OR (!this.UsedUlt AND this.GetNumCards()>=this.GetMinCards())) ;If we want to release at a certain number of cards we need to wait for the ult to resolve to be able to count correctly
+			else if (this.MinCards == 0 OR (!this.UsedUlt AND this.GetNumCards()>=this.MinCards)) ;If we want to release at a certain number of cards we need to wait for the ult to resolve to be able to count correctly
 				this.WaitRoomExit()
 		}
 		else
@@ -407,13 +481,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	WaitRoomExit() ;Seperate so we can put some status strings in here
 	{
 		this.Complete:=true
-		if (g_Heroes[83].GetNumGemCards() >= this.GemCardsNeededInFlight) ;If we've reached our in-flight re-roll target in the waitroom there is no reason to keep the timer running
-			this.Stop()
-	}
-
-	GetMinCards()
-	{
-		return this.MinCards[this.melfMode]
+		this.Stop()
 	}
 
 	DrawsLeft()
@@ -423,24 +491,24 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 
 	RedrawsLeft()
 	{
-		return this.MaxRedraws[this.melfMode] - this.Redraws
+		return this.MaxRedraws - this.Redraws
 	}
 
 	ShouldDrawMoreCards()
 	{
-		if (this.GetNumCards() < this.GetMinCards())
+		if (this.GetNumCards() < this.MinCards)
 			return true
-		return g_Heroes[83].GetNumGemCards() < this.GemCardsNeeded[this.melfMode]
+		return g_Heroes[83].GetNumGemCards() < this.GemCardsNeeded
 	}
 
 	ShouldRedraw()
 	{
-		numCards := this.GetNumCards()
-		if (numCards == 5)
+		numCards:=this.GetNumCards()
+		if (numCards==5)
 			return true
-		else if (numCards == 0)
+		else if (numCards==0)
 			return false
-		return this.DrawsLeft() < this.GemCardsNeeded[this.melfMode] - g_Heroes[83].GetNumGemCards()
+		return this.DrawsLeft() < this.GemCardsNeeded - g_Heroes[83].GetNumGemCards()
 	}
 
 	GetNumCards() ;Not encapsulated yet as results used for error checking
@@ -497,7 +565,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 			else
 			{
 				this.StatusString.="FAIL-Elly(Level:" . g_Heroes[83].ReadLevel() . ") Ult not available-DM(Level:" . g_Heroes[99].ReadLevel() . ") Ult not available-Lowered Max Rerolls to " . this.Redraws . ":"
-				this.MaxRedraws[this.melfMode]:=this.Redraws ;Lower max re-rolls so we move on; this Casino is busted
+				this.MaxRedraws:=this.Redraws ;Lower max re-rolls so we move on; this Casino is busted
 			}
 		}
 	}
@@ -679,99 +747,6 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 	}
 }
 
-class IC_BrivMaster_SharedData_Class
-{
-	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
-	
-	__New()
-	{
-		this.BossesHitThisRun:=0
-		this.TotalBossesHit:=0
-        this.TotalRollBacks:=0
-        this.BadAutoProgress:=0
-		this.IBM_RestoreWindow_Enabled:=false
-		this.IBM_RunControl_DisableOffline:=false
-		this.IBM_RunControl_ForceOffline:=false
-		this.IBM_ProcessSwap:=false
-		this.IBM_RunControl_CycleString:=""
-		this.IBM_RunControl_StatusString:=""
-		this.IBM_RunControl_StackString:=""
-		this.IBM_BuyChests:=false
-		this.RunLogResetNumber:=0
-		this.RunLog:=""
-		this.LoopString:=""
-		this.LastCloseReason:=""
-	}
-	
-	Close() ;Taken from what was IC_BrivGemFarmRun_SharedData_Class in IC_BrivGemFarm_Run.ahk
-    {
-        if (g_SF.Memory.ReadCurrentZone()=="") ; Invalid game state
-            ExitApp
-        g_IBM.RouteMaster.WaitForTransition()
-        g_IBM.RouteMaster.FallBackFromZone()
-        g_IBM.RouteMaster.ToggleAutoProgress(false, false, true)
-        ExitApp
-    }
-	
-	ShowGUI()
-    {
-        Gui, Show, NA
-    }
-	
-	ReloadSettings(ReloadSettingsFunc) ;Unused by BM, but might be relevant for addons TODO: Review
-    {
-        reloadFunc := Func(ReloadSettingsFunc)
-        reloadFunc.Call()
-    }
-
-	IBM_Init()
-    {
-        this.IBM_UpdateSettingsFromFile()
-		this.IBM_OutboundDirty:=false ;Track if we've made changes to the data so the hub doesn't make unnecessary checks
-    }
-
-    IBM_UpdateSettingsFromFile(fileName := "") ;Load settings from the GUI settings file.
-    {
-        if (fileName == "")
-            fileName := IC_BrivMaster_SharedData_Class.SettingsPath
-        settings:=g_SF.LoadObjectFromAHKJSON(fileName)
-        if (!IsObject(settings))
-            return false
-		for k,v in settings ;Load all settings
-			g_IBM_Settings[k]:=v
-		if(g_IBM) ;If the gem farm exists (as it will not when this is called from the hub without the farm running) TODO: Why try to read the settings in that case?
-			g_IBM.RefreshGemFarmWindow()
-    }
-	
-	IBM_UpdateOutbound(key,value) ;Update if the value has changed at mark the outbound data as dirty
-	{
-		if (this[key]!=value)
-		{
-			this[key]:=value
-			this.IBM_OutboundDirty:=true
-		}
-	}
-	
-	IBM_ResetRunStats() ;Resets per-run stats from the main object (boss hits, rollbacks, bad autoprogression). This allows them to all be cleared in one go without spam setting the IBM_OutboundDirty flag 
-	{
-		this.BossesHitThisRun:=0
-		this.TotalBossesHit:=0
-        this.TotalRollBacks:=0
-        this.BadAutoProgress:=0
-		this.IBM_OutboundDirty:=true
-	}
-	
-	IBM_UpdateOutbound_Increment(key) ;Increment a value, used for things like boss hit tracking
-	{
-		if (this.HasKey(key))
-			this[key]++
-		else
-		{
-			this[key]:=1
-		}
-		this.IBM_OutboundDirty:=true
-	}
-}
 
 /**
  * Lib: JSON.ahk

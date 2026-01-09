@@ -14,8 +14,7 @@ global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI() ;TODO: Can we make this g
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
-global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to be in g_IBM.GameMaster.Hwnd, which is needed for the Elly tool TODO: Make this less horrible
-
+global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to be in g_IBM.GameMaster.Hwnd, which is needed for the Elly tool TODO: Make this less horrible. Possibly by actually having g_IBM used for IBM things?!
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
@@ -193,13 +192,9 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Route_BrivJump_Q:=4
 		settings.IBM_Route_BrivJump_E:=0
 		settings.IBM_Route_BrivJump_M:=4
-		settings.IBM_Casino_Target_Melf:=3
-		settings.IBM_Casino_Redraws_Melf:=1
-		settings.IBM_Casino_MinCards_Melf:=0
 		settings.IBM_Casino_Target_Base:=3
 		settings.IBM_Casino_Redraws_Base:=1
 		settings.IBM_Casino_MinCards_Base:=0
-		settings.IBM_Casino_Target_InFlight:=1
 		settings.IBM_OffLine_Delay_Time:=15000
 		settings.IBM_OffLine_Sleep_Time:=0
 		settings.IBM_Level_Options_Mod_Key:="Shift"
@@ -219,7 +214,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_ChestSnatcher_Options_Open_Gold:=0 ;TODO: These were set to 0 to prevent accidents when changing from using the main script settings, in the future update to more practical defauls
 		settings.IBM_ChestSnatcher_Options_Open_Silver:=0
 		settings.IBM_Game_Settings_Option_Profile:=1
-		settings.IBM_Game_Settings_Option_Set:={1:{Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false},2:{Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}}
+		settings.IBM_Game_Settings_Option_Set:={1:{Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,AllHero:true,Swap25100:false},2:{Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,AllHero:true,Swap25100:false}}
 		settings.IBM_Game_Exe:="IdleDragons.exe"
 		settings.IBM_Game_Path:="" ;Path and Launch command are user dependant so can't have a default
 		settings.IBM_Game_Launch:=""
@@ -232,6 +227,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Window_Dark_Icon:=false
 		settings.IBM_Allow_Modron_Buff_Off:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
 		settings.IBM_Ellywick_NonGemFarm_Cards:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
+		settings.IBM_Level_Recovery_Softcap:=0
         return settings
     }
 
@@ -242,7 +238,7 @@ Class IC_IriBrivMaster_Component
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
-			this.SharedRunData.IBM_UpdateSettingsFromFile()
+			this.SharedRunData.UpdateSettingsFromFile()
 		}
 		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the g_BrivUserSettingsFromAddons values available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
 		this.LEGACY_UpdateStatus("Settings saved")
@@ -333,7 +329,7 @@ Class IC_IriBrivMaster_Component
 
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
-			this.SharedRunData.IBM_ResetRunStats()
+			this.SharedRunData.ResetRunStats()
 		}
 
 		GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats"
@@ -649,9 +645,10 @@ Class IC_IriBrivMaster_Component
 		this.SettingCheck(gameSettings,"ReduceFramerateWhenNotInFocus","CapFPSinBG",true,changeCount,change)
 		this.SettingCheck(gameSettings,"FormationSaveIncludeFeatsCheck","SaveFeats",true,changeCount,change)
 		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,change)
-		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,change)
 		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,change)
 		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,change)
+		this.ForcedSettingCheck(gameSettings,"NarrowHeroBoxes","true",changeCount,change) ;Fixed, always true, note this needs to be a string for correct JSON output
+		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,change) ;Fixed, always 3 (x100 levelling)
 		if (changeCount)
 		{
 			if (change)
@@ -663,7 +660,7 @@ Class IC_IriBrivMaster_Component
 				}
 				else
 				{
-					MsgBox,,Game Running,Game settings cannot be changed whilst Idle Champions is running
+					MsgBox,48,Briv Master,Game settings cannot be changed whilst Idle Champions is running
 					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
 				}
 
@@ -711,6 +708,16 @@ Class IC_IriBrivMaster_Component
 			changeCount++
 			if (change)
 				gameSettings[CNEName]:=targetValue
+		}
+	}
+	
+	ForcedSettingCheck(gameSettings, CNEName, value, byRef changeCount,change:=false) ;For settings where we don't give or save an option
+	{
+		if gameSettings[CNEName]!=value
+		{
+			changeCount++
+			if (change)
+				gameSettings[CNEName]:=value
 		}
 	}
 
@@ -974,9 +981,9 @@ Class IC_IriBrivMaster_Component
 	SetControl_RestoreWindow() ;Toggles
 	{
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
-            this.SharedRunData.IBM_UpdateOutbound("IBM_RestoreWindow_Enabled",!this.SharedRunData.IBM_RestoreWindow_Enabled)
+            this.SharedRunData.UpdateOutbound("IBM_RestoreWindow_Enabled",!this.SharedRunData.IBM_RestoreWindow_Enabled)
 		else
-			Msgbox % "Failed to update script."
+			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
 	}
 
 	ParseRouteImportString(routeString)
@@ -1055,17 +1062,17 @@ Class IC_IriBrivMaster_Component
 	SetControl_OfflineStacking()
 	{
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
-            this.SharedRunData.IBM_UpdateOutbound("IBM_RunControl_DisableOffline",!this.SharedRunData.IBM_RunControl_DisableOffline) ;Toggle
+            this.SharedRunData.UpdateOutbound("IBM_RunControl_DisableOffline",!this.SharedRunData.IBM_RunControl_DisableOffline) ;Toggle
 		else
-			Msgbox % "Failed to update script."
+			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
 	}
 
 	SetControl_QueueOffline()
 	{
 		If (ComObjType(this.SharedRunData,"IID") OR this.RefreshComObject())
-			this.SharedRunData.IBM_UpdateOutbound("IBM_RunControl_ForceOffline",!this.SharedRunData.IBM_RunControl_ForceOffline) ; Toggle
+			this.SharedRunData.UpdateOutbound("IBM_RunControl_ForceOffline",!this.SharedRunData.IBM_RunControl_ForceOffline) ; Toggle
 		else
-			Msgbox % "Failed to update script."
+			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
 	}
 
 	UpdateStatus() ;Run by timer to update the GUI

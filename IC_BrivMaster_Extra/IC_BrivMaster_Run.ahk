@@ -45,7 +45,7 @@ global g_SharedData:=New IC_BrivMaster_SharedData_Class
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
 SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
 
-g_SharedData.IBM_Init() ;Loads settings so must be prior to the icon set and Window:Show in CreateWindow()
+g_SharedData.Init() ;Loads settings so must be prior to the icon set and Window:Show in CreateWindow()
 g_IBM.CreateWindow()
 
 if(A_Args[1])
@@ -110,7 +110,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
-		g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
+		g_SharedData.UpdateOutbound("IBM_BuyChests",false)
 		Loop
         {
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
@@ -123,11 +123,11 @@ class IC_BrivMaster_GemFarm_Class
 			}
 			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount() > lastResetCount) ; first loop or Modron has reset
             {
-				g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false)
+				g_SharedData.UpdateOutbound("IBM_BuyChests",false)
 				if (g_SharedData.BossesHitThisRun)
 				{
 					this.Logger.AddMessage("Bosses:" . g_SharedData.BossesHitThisRun) ;Boss hits from previous run
-					g_SharedData.IBM_UpdateOutbound("BossesHitThisRun",0)
+					g_SharedData.UpdateOutbound("BossesHitThisRun",0)
 				}
 				this.Logger.NewRun()
 				g_InputManager.ReleaseAll()
@@ -142,15 +142,15 @@ class IC_BrivMaster_GemFarm_Class
 				this.IBM_FirstZone(this.currentZone)
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
 				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
-					g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",true)
+					g_SharedData.UpdateOutbound("IBM_BuyChests",true)
                 g_PreviousZoneStartTime:=A_TickCount
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
-				g_SharedData.IBM_UpdateOutbound("LoopString","Main Loop")
+				g_SharedData.UpdateOutbound("LoopString","Main Loop")
                 this.previousZone:=this.currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
 				this.currentZone:=g_SF.Memory.ReadCurrentZone()
             }
-			g_SharedData.IBM_UpdateOutbound("LoopString",this.offRamp ? "Off Ramp" : "Main Loop")
+			g_SharedData.UpdateOutbound("LoopString",this.offRamp ? "Off Ramp" : "Main Loop")
 			if (g_SF.Memory.ReadResetting())
 			{
 				this.Logger.ResetReached()
@@ -178,9 +178,9 @@ class IC_BrivMaster_GemFarm_Class
 					this.RouteMaster.InitZone()
 					if ((!Mod( g_SF.Memory.ReadCurrentZone(), 5 )) AND (!Mod( g_SF.Memory.ReadHighestZone(), 5)))
 					{
-						g_SharedData.IBM_UpdateOutbound_Increment("TotalBossesHit")
-						g_SharedData.IBM_UpdateOutbound_Increment("BossesHitThisRun")
-						if (!this.offRamp AND !this.failedConversionMode AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						g_SharedData.UpdateOutbound_Increment("TotalBossesHit")
+						g_SharedData.UpdateOutbound_Increment("BossesHitThisRun")
+						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.offRamp AND !this.failedConversionMode AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
 						{
 							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
@@ -195,7 +195,7 @@ class IC_BrivMaster_GemFarm_Class
 							{
 								this.offRamp:=True
 								this.EllywickCasino.Stop() ;Stop the Casino, to avoid it running as the next run starts
-								g_SharedData.IBM_UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
+								g_SharedData.UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
 							}
 						}
 					}
@@ -206,7 +206,7 @@ class IC_BrivMaster_GemFarm_Class
 			else
 			{
 				this.Logger.ResetReached()
-				g_SharedData.IBM_UpdateOutbound("LoopString","Pending modron reset")
+				g_SharedData.UpdateOutbound("LoopString","Pending modron reset")
 			}
             g_SF.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
 			;Loop frequency check
@@ -308,18 +308,18 @@ class IC_BrivMaster_GemFarm_Class
 						this.levelManager.RaisePriorityForFrontRow(v)
 					}
 				}
-				g_SharedData.IBM_UpdateOutbound("LoopString","Start Zone Levelling")
+				g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
 				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 					this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
 				if (g_Heroes[139].inM)
 					g_SF.DoRushWait(true)
 				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
-				this.EllywickCasino.Start(melfSpawningMoreAfterRush) ;Start the Elly handler before rushwaiting, using the post-rush Melf status
-				g_SharedData.IBM_UpdateOutbound("LoopString","Standard Levelling: M")
+				this.EllywickCasino.Start() ;Start the Elly handler before rushwaiting, using the post-rush Melf status
+				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
-				g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Post-rush Casino")
+				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
 				this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
 				if (!this.routeMaster.IsFeatSwap()) ;If featswapping Briv will jump with whatever value he had at zone completion, so checking here isn't useful, for non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -368,18 +368,9 @@ class IC_BrivMaster_GemFarm_Class
 					}
 				}
 				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
-				if (melfSpawningMore)
-				{
-					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Casino with Melf")
-					this.EllywickCasino.Start(melfSpawningMore) ;Start the Elly handler
-					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
-				}
-				else
-				{
-					g_SharedData.IBM_UpdateOutbound("LoopString","Elly Wait: Casino without Melf")
-					this.EllywickCasino.Start() ;Start the Elly handler 
-					this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case, also TODO: We might need to force Elly's priority here, as otherwise she might not be fielded before the check in this call
-				}
+				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
+				this.EllywickCasino.Start() ;Start the Elly handler
+				this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
 				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 				while (quest > 0)
 				{

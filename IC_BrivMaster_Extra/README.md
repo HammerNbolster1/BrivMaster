@@ -226,7 +226,7 @@ Restore window: Whether focus is returned to the IC window when the game is rest
 	
 Blank restarts: The purpose of restarting during hybrid stacking is to clear memory bloat that slows the game. Blank restarts provide an alternative: always online stack, and simple close and immediately re-open the game to clear that bloat out.
 	
-> Author's Note: Whether this is beneficial or not will depend on how long online stacking takes verses offline stacking, which therefore also depends on the number of stacks required for each run, and therefore is very user-dependent. With an end-farm on a decent PC Blank restarts should be superior.
+> Author's Note: Whether this is beneficial or not will depend on how long online stacking takes verses offline stacking, which therefore also depends on the number of stacks required for each run, and therefore is very user-dependent. With an end-game farm on a decent PC Blank restarts should be superior.
 	
 Relay restarts: Instead of closing the game and immediately restarting it during a blank restart, this option starts a new instance of the game before the old one is closed, and holds it at platform login ready to go. This can significantly reduce the time required to preform a blank restart. This is not compatible with the EGS launcher which will not allow a second copy of the game to be started.
 	
@@ -235,19 +235,13 @@ Relay start offset: The number of zones prior to the Offline zone that the relay
 ### Ellywick's Casino  
 Ellywick's Gem cards provide an immense boost to our gem income. Briv Master allows for re-rolling using her ultimate, including a second use via Dungeon Master(DM)'s ultimate to increase the average number of gem cards. Options in this section control this.
 	
-> Author's Note: For early farms doing short runs (perhaps to z500 or less) the use of DM to get a second re-roll is not likely worth the large relative increase in run time.
+> Author's Note: For early farms doing short runs (perhaps to z500 or less), the use of DM to get a second re-roll is not likely worth the large relative increase in run time.
 	
-Target/Redraws/Min Gen: These are presented in two sets, one for Melf's spawn-more buff being inactive active in the Casino zone, and one for it being active. This is due to the increased spawns signficantly speeding up Ellywick's card draw, and therefore reducing the opportunity cost of re-rolls. These are generally the same when using the Gem feat.
-	
-- Target: The number of Gem cards to aim for; if this cannot be achived and a redraw is available, the re-roll will be used. This should be 3.
-- Redraws: The number of redraws allowed (via Ellywick's ultimate). This should be 1 without DM, or 2 with DM. DM should be used if available so this is normally 2.
-- Min: This is the minimum total cards to hold before leaving the Casino. If your route does not hit bosses, this should always be 0. If your route hits bosses, it should be set to allow Ellywick to reach a full hand before hitting your first boss. 5 is the 'safe' option, but it might be possible to use 4 and get the same result.
-	
-> Author's Note: This option pre-dates the Gem feat, and might be beneficial for this without it (although that should be addressed with a high priority). In that case using target/redraws of 3/1 base and 3/2 with Melf may be beneficial
-	
-Target post-Casino: If re-rolls are available after the Casino is exited, this is the number of Gem cards to re-roll for. This is not generally relevant and should be left at 2.
-	
-> Author's Note: This is a legacy setting, which was more relevant before Ellywick's Gem feat was released. With DM's ultimate being used for a 2nd re-roll where necessary in the Casino for a standard setup, it doesn't serve much purpose. When using the mixed 3/1 base 3/2 Melf setup described in the previous note, this allows for Elly's second ultimate to be used in-flight. Note that in-flight re-rolls have a significant risk of a game save occuring whilst holding few  / no gem cards, which would be rather determinental.
+Target Gem cards: The number of Gem cards to aim for; if this cannot be achived and a redraw is available, the re-roll will be used. This should be 3.
+
+Maximum redraws: The number of redraws allowed (via Ellywick's ultimate). This should be 1 without DM, or 2 with DM. DM should be used if available so this is normally 2.
+
+Minimum cards: This is the minimum total cards to hold before leaving the Casino. If your route does not hit bosses, this should always be 0. If your route hits bosses, it should be set to allow Ellywick to reach a full hand before hitting your first boss. 5 is the 'safe' option, but it might be possible to use 4 and get the same result.
 	
 ### Window Options  
 These options control the appearance of the farm script window.
@@ -291,6 +285,10 @@ Dynamic Diana: Diana can give excess chests after the daily reset. This option w
 	
 > Author's Note: This is attempting to profit from a bug, but perhaps if enough people do so it might get fixed...
 	
+Recovery Levelling: With this option selected, if Briv does not have enough stacks to jump but the minimum stack zone has yet to be reached, champions will be levelled to their last update when they first reach a boss zone. This can aid killing armoured bosses, but will raise the minimum zone required to gain online stacks.
+
+> Author's Note: This was a feature carried over from BrivGemFarmLevelUp, and previously always on, but since it's often undesiable it has been made an option. It will be considered for future removal. Generally if you can clear the armoured bosses prior to the minimum stack zone with standard levels this only hurts you.
+
 Smart Tatyana in Casino: When using a setup that has Melf in the M formation, this option will only level Tatyana (if also present) at the start of the run if Melf's spawn-more buff is not active. This may be beneficial because a decent level Melf (~30 spawn) is able to allow Ellywick to draw rapidly alone, and the extra champion plus load from having a full Tatyana wave active at once might not be worth it. If using this option, Tatyana's 'Start' level should be 0.
 	
 Surpress From Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason.

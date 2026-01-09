@@ -239,9 +239,9 @@ class IC_IriBrivMaster_GUI
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Console Portraits
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_ConsolePortraits_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_NarrowHero_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 Disabled Checked ;Disabled as this option must be on
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Narrow Hero Boxes
-		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_NarrowHero_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 Disabled Checked ;Disabled as this option must be on
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_AllHero_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Show All Heroes
@@ -387,16 +387,12 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+7 w%groupWidth% h50, % "Ellywick's Casino"
 		Gui, ICScriptHub:Font, w400
-		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Target / Redraws / Min. Gem	Base:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+2 Number Limit1 vIBM_Casino_Target_Base gIBM_Casino_Target_Base
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+3 Number Limit1 vIBM_Casino_Redraws_Base gIBM_Casino_Redraws_Base
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Casino_MinCards_Base
-		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, With Melf:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+2 Number Limit1 vIBM_Casino_Target_Melf gIBM_Casino_Target_Melf
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+3 Number Limit1 vIBM_Casino_Redraws_Melf gIBM_Casino_Redraws_Melf
-		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+3 Number Limit1 vIBM_Casino_MinCards_Melf gIBM_Casino_MinCards_Melf
-		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, Target post-Casino:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+2 Number Limit1 vIBM_Casino_Target_InFlight gIBM_Casino_Target_InFlight
+		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Target Gem cards:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+2 Number Limit1 vIBM_Casino_Target_Base gIBM_Casino_Target_Base
+		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Maximum redraws:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_Redraws_Base gIBM_Casino_Redraws_Base
+		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Minimum cards:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Casino_MinCards_Base
 		;Script Window Options
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%groupWidth% h50, % "Window Options"
@@ -448,6 +444,8 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip( "IBM_Level_Options_BrivBoost_Multi", "This is how many times greater Briv's HP should be than the incoming damage of 100 enemies. Useful range 8 (fast stacking) to 12 (slower stacking)")
 		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Level_Diana_Cheese gIBM_Level_Diana_Cheese, Dynamic Diana
 		GUIFunctions.AddToolTip( "IBM_Level_Diana_Cheese", "Diana can give excess chests after the daily reset. This option will raise her level to 200 for Electrum Chest Scavenger from 3 minutes before the daily reset to 30 minutes after. Her level in the main options should be left at 100")
+		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Level_Recovery_Softcap gIBM_Level_Recovery_Softcap, Recovery Levelling
+		GUIFunctions.AddToolTip( "IBM_Level_Recovery_Softcap", "With this option selected, champions will be levelled to their last update when reaching a boss zone in stack conversion recovery, that is when Briv has no stacks and the minimum stack zone has yet to be reached. This can aid killing armoured bosses, but will raise the minimum zone required to gain online stacks")
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_Limit_Tatyana gIBM_Level_Options_Limit_Tatyana, Smart Tatyana in Casino
 		GUIFunctions.AddToolTip( "IBM_Level_Options_Limit_Tatyana", "Only level Tatyana at the start of a run if Melf's Spawn More effect is not active in the Casino zone. To use this option her Start level should be set to 0")
 		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Level_Options_Suppress_Front gIBM_Level_Options_Suppress_Front, Surpress Front Row
@@ -561,6 +559,7 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:ChooseString, IBM_Level_Options_Mod_Key, % data.IBM_Level_Options_Mod_Key
 		GuiControl, ICScriptHub:ChooseString, IBM_Level_Options_Mod_Value, % data.IBM_Level_Options_Mod_Value
 		GuiControl, ICScriptHub:, IBM_Level_Diana_Cheese, % data.IBM_Level_Diana_Cheese
+		GuiControl, ICScriptHub:, IBM_Level_Recovery_Softcap, % data.IBM_Level_Recovery_Softcap
 		;Chests
 		this.UpdateChestSnatcherOptions(data)
 		;Game settings
@@ -573,13 +572,9 @@ class IC_IriBrivMaster_GUI
 		this.RefreshRouteJumpBoxes()
 		this.RefreshRouteStackBoxes()
 		;Ellywick's Casino
-		GuiControl, ICScriptHub:, IBM_Casino_Target_Melf, % data.IBM_Casino_Target_Melf
-		GuiControl, ICScriptHub:, IBM_Casino_Redraws_Melf, % data.IBM_Casino_Redraws_Melf
-		GuiControl, ICScriptHub:, IBM_Casino_MinCards_Melf, % data.IBM_Casino_MinCards_Melf
 		GuiControl, ICScriptHub:, IBM_Casino_Target_Base, % data.IBM_Casino_Target_Base
 		GuiControl, ICScriptHub:, IBM_Casino_Redraws_Base, % data.IBM_Casino_Redraws_Base
 		GuiControl, ICScriptHub:, IBM_Casino_MinCards_Base, % data.IBM_Casino_MinCards_Base
-		GuiControl, ICScriptHub:, IBM_Casino_Target_InFlight, % data.IBM_Casino_Target_InFlight
 		;Window
 		GuiControl, ICScriptHub:, IBM_Window_X, % data.IBM_Window_X
 		GuiControl, ICScriptHub:, IBM_Window_Y, % data.IBM_Window_Y
@@ -1327,6 +1322,12 @@ IBM_OffLine_Sleep_Time_Edit()
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Sleep_Time",value+0)
 }
 
+IBM_Level_Recovery_Softcap()
+{
+	GuiControlGet, value,, IBM_Level_Recovery_Softcap
+	g_IriBrivMaster.UpdateSetting("IBM_Level_Recovery_Softcap",value+0)
+}
+
 IBM_NonGemFarm_Elly_Start()
 {
 	g_IriBrivMaster.IBM_Elly_StartNonGemFarm()
@@ -1335,22 +1336,6 @@ IBM_NonGemFarm_Elly_Start()
 IBM_NonGemFarm_Elly_Stop()
 {
 	g_IriBrivMaster.IBM_Elly_StopNonGemFarm()
-}
-
-IBM_Casino_Target_Melf()
-{
-	GuiControlGet, value,, IBM_Casino_Target_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_Melf",value+0)
-}
-IBM_Casino_Redraws_Melf()
-{
-	GuiControlGet, value,, IBM_Casino_Redraws_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Redraws_Melf",value+0)
-}
-IBM_Casino_MinCards_Melf()
-{
-	GuiControlGet, value,, IBM_Casino_MinCards_Melf
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Melf",value+0)
 }
 
 IBM_Casino_Target_Base()
@@ -1367,12 +1352,6 @@ IBM_Casino_MinCards_Base()
 {
 	GuiControlGet, value,, IBM_Casino_MinCards_Base
 	g_IriBrivMaster.UpdateSetting("IBM_Casino_MinCards_Base",value+0)
-}
-
-IBM_Casino_Target_InFlight()
-{
-	GuiControlGet, value,, IBM_Casino_Target_InFlight
-	g_IriBrivMaster.UpdateSetting("IBM_Casino_Target_InFlight",value+0)
 }
 
 IBM_Route_BrivJump_Q_Edit()

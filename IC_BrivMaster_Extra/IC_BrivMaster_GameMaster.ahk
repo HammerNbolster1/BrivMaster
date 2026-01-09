@@ -24,7 +24,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		waitForReadyTimeout:=10000*g_IBM_Settings["IBM_OffLine_Timeout"] ;Default is 5, so 50s
 		timeoutVal:=5000*g_IBM_Settings["IBM_OffLine_Timeout"] + waitForReadyTimeout ;Default is 5, so 25s + the 50s above=75s
         loadingDone:=false
-        g_SharedData.IBM_UpdateOutbound("LoopString","Starting Game" . (message ? " " . message : ""))
+        g_SharedData.UpdateOutbound("LoopString","Starting Game" . (message ? " " . message : ""))
 		g_IBM.Logger.AddMessage("Starting Game" . (message ? " " . message : ""))
         WinGet, savedActive,, A ;Use handle as multiple windows could have the same name
         this.SavedActiveWindow:=savedActive
@@ -74,7 +74,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         StartTime:=A_TickCount
         while (!this.PID AND ElapsedTime < timeoutLeft )
         {
-            g_SharedData.IBM_UpdateOutbound("LoopString","Opening IC...")
+            g_SharedData.UpdateOutbound("LoopString","Opening IC...")
             existingPIDs:=this.GetExistingPIDList() ;Save a list of existing PIDs so we can find the new one the Run command creates TODO: Instead of checking if the Run command is executing the exe directly at run time, work it out once from the name so we don't save this when not needed?
 			programLoc:=g_IBM_Settings["IBM_Game_Launch"]
             try
@@ -200,7 +200,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		timeoutTimerStart:=A_TickCount
         ElapsedTime:=0
 		; wait for game to start
-        g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for game started...")
+        g_SharedData.UpdateOutbound("LoopString","Waiting for game started...")
         gameStarted:=0 ;This can't check as we need the splash video check to run at least once, due to a bug on recent versions (up to at least 638.2) where the game can get stuck on the splash screen
 		lastInput:=-250 ;Input limiter for the escape key presses
 		while(ElapsedTime < timeout AND !gameStarted)
@@ -224,7 +224,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			return true ; No offline progress to calculate, game started
 		}
         ; wait for offline progress to finish
-        g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress...")
+        g_SharedData.UpdateOutbound("LoopString","Waiting for offline progress...")
         offlineDone:=g_SF.Memory.ReadOfflineDone()
 		while( ElapsedTime < timeout AND !offlineDone)
         {
@@ -248,7 +248,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		targetTime:=g_IBM_Settings["IBM_OffLine_Delay_Time"] ;Amount of time we'd like to elapse before passing platform login
 		if (g_SF.Memory.IBM_ReadIsGameUserLoaded()!=1 AND (A_TickCount - g_IBM.routeMaster.offlineSaveTime < targetTime))
 		{
-			g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for platform login...")
+			g_SharedData.UpdateOutbound("LoopString","Waiting for platform login...")
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			Critical On ;We need to catch the platform login completing before the game progresses to the userdata request
 			while (g_SF.Memory.IBM_ReadIsGameUserLoaded()!=1 AND ElapsedTime < targetTime) ;Wait for user loaded or we run out of time, then stop IC
@@ -285,7 +285,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	
 	WaitForFinalStatUpdates() ;Waits until stats are finished updating from offline progress calculations
     {
-		g_SharedData.IBM_UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
+		g_SharedData.UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")
         ElapsedTime:=0
         ; Starts as 1, turns to 0, back to 1 when active again.
         StartTime := A_TickCount
@@ -319,11 +319,11 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	
 	CloseIC(string:="",usePID:=false)
     {
-		g_SharedData.IBM_UpdateOutbound("LastCloseReason",string)
+		g_SharedData.UpdateOutbound("LastCloseReason",string)
         g_SF.ResetServerCall() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function, should just be saving stacks?
         if (string!="")
             string:=": " . string
-        g_SharedData.IBM_UpdateOutbound("LoopString","Closing IC" . string)
+        g_SharedData.UpdateOutbound("LoopString","Closing IC" . string)
         if (usePID)
 			sendMessageString:="ahk_pid " . this.PID
 		else
@@ -468,30 +468,30 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
             isCurrentFormation:=g_SF.IsCurrentFormation(gameStartFormation)
         }
 		Critical Off ;Turned On previously via WaitForGameReady() calling WaitForFinalStatUpdates()
-        g_SharedData.IBM_UpdateOutbound("LoopString","Loading game finished")
+        g_SharedData.UpdateOutbound("LoopString","Loading game finished")
     }
 		
 	BadSaveTest() ;TODO: Given this is 4 lines of code used only in one place, is there a need for it to be a separate function? Also TODO: This doesn't check the memory reads are actually valid, does it need to? Also also, should this log?
     {
         if(g_IBM.currentZone != "" and g_IBM.currentZone - 1 > g_SF.Memory.ReadCurrentZone())
-            g_SharedData.IBM_UpdateOutbound_Increment("TotalRollBacks")
+            g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
         else if (g_IBM.currentZone != "" and g_IBM.currentZone < g_SF.Memory.ReadCurrentZone())
-			g_SharedData.IBM_UpdateOutbound_Increment("BadAutoProgress")
+			g_SharedData.UpdateOutbound_Increment("BadAutoProgress")
     }
 	
 	WorldMapRestart() ;Forces an adventure restart through closing IC and using server calls TODO: 2 line function that is only used in one place?
     {
-        g_SharedData.IBM_UpdateOutbound("LoopString","Zone is -1. At world map?")
+        g_SharedData.UpdateOutbound("LoopString","Zone is -1. At world map?")
         this.RestartAdventure( "Zone is -1. At world map?" )
     }
 	
 	RestartAdventure(reason:="")
     {
-		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting adventure")
+		g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure")
 		g_IBM.Logger.ForceFail() ;As this can be after we've reached the zone target if the reset got stuck
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . this.Memory.ReadCurrentZone() . " with haste:" . this.Memory.ReadHasteStacks() . ")")
 		this.CloseIC(reason)
-		g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Checking stack conversion")
+		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion")
 		if (g_SF.steelbones!="")
 			convertedSteelbones:=FLOOR(g_SF.steelbones * g_IBM.RouteMaster.stackConversionRate) ;Handle Thunder Step
 		if (g_SF.sprint != "" AND g_SF.steelbones != "" AND (g_SF.sprint + convertedSteelbones)<=176046)
@@ -503,12 +503,12 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		{
 			g_IBM.Logger.AddMessage("Servercall Save (Haste:" . g_SF.sprint . " Steelbones[Raw:" . g_SF.steelbones . " Converted:" . convertedSteelbones . "] for a total of:" . g_SF.sprint + convertedSteelbones . ")")
 			response:=g_serverCall.CallPreventStackFail(g_SF.sprint + convertedSteelbones)
-			g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting with >176k stacks, some stacks lost")
+			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting with >176k stacks, some stacks lost")
 		}
 		else
 		{
 			g_IBM.Logger.AddMessage("Servercall Save Not Required (Haste:" . g_SF.sprint . " raw Steelbones:" . g_SF.steelbones . " which should convert to:" . convertedSteelbones . ")")
-			g_SharedData.IBM_UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conv.)")
+			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conv.)")
 		}
 		response:=g_ServerCall.CallEndAdventure()
 		response:=g_ServerCall.CallLoadAdventure(this.CurrentAdventure)

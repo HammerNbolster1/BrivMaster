@@ -20,7 +20,7 @@ class IC_BrivMaster_SharedFunctions_Class
 	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
     {
         FileRead, oData, %FileName%
-        data := ""
+        data:=""
         try
         {
             if (preserveBooleans)
@@ -189,7 +189,7 @@ class IC_BrivMaster_SharedFunctions_Class
         ElapsedTime := 0
         g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
         this.SetUserCredentials()
-		if (this.steelbones != "" AND this.steelbones > 0 AND this.sprint != "" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
+		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
         {
 			g_IBM.Logger.AddMessage("Manual stack conversion: Converted Haste=[" . this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 			response:=g_serverCall.CallPreventStackFail(this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate), true)
@@ -197,19 +197,17 @@ class IC_BrivMaster_SharedFunctions_Class
         while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
         g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
 		g_IBM.IBM_Sleep(20)
         while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone() < 1 AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
         if (ElapsedTime >= timeout)
-        {
-            return false
-        }
+			return false
         return true
     }
 	
@@ -313,7 +311,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 	{
 		this.KeyMap:={}
 		this.SCKeyMap:={}
-		KeyHelper.BuildVirtualKeysMap(this.KeyMap, this.SCKeyMap) ;Note: KeyHelper is in SH_KeyHelper.ahk, which is an #include in SH_SharedFunctions.ahk.
+		KeyHelper.BuildVirtualKeysMap(this.KeyMap, this.SCKeyMap) ;Note: KeyHelper is in SH_KeyHelper.ahk
 		this.gameFocus()
 	}
 

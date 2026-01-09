@@ -34,10 +34,8 @@ class IBM_Memory_Manager extends _MemoryManager
 {
 
 	;Override to add option to take a PID to use instead of finding any process with the .exe name
-    Refresh(moduleName := "mono-2.0-bdwgc.dll", pid:="")
+    Refresh(moduleName:="mono-2.0-bdwgc.dll", pid:="")
     {
-		moduleName1 := "mono-2.0-bdwgc.dll"
-        moduleName2 := "UnityPlayer.dll" ;TODO: Using this for the webroot does not work, remove, figure out how to deal with IC Core being as it is
         this.isInstantiated := false
         ;Open a process with sufficient access to read and write memory addresses (this is required before you can use the other functions)
         ;You only need to do this once. But if the process closes/restarts, then you will need to perform this step again. Refer to the notes section below.
@@ -45,13 +43,11 @@ class IBM_Memory_Manager extends _MemoryManager
         ;Note: The program identifier can be any AHK windowTitle i.e.ahk_exe, ahk_class, ahk_pid, or simply the window title.
         ;handle is an optional variable in which the opened handle is stored.
         if (pid)
-		{
 			processLookup:="AHK_PID " . pid
-		}
 		else
 			processLookup:="AHK_EXE " . this._exeName
-		this.instance := new _ClassMemory(processLookup, "", handle)
-        this.handle := handle
+		this.instance:=New _ClassMemory(processLookup, "", handle)
+        this.handle:=handle
         if IsObject(this.instance)
         {
             this.isInstantiated := true
@@ -59,11 +55,9 @@ class IBM_Memory_Manager extends _MemoryManager
         else
         {
             this.baseAddress[moduleName1] := -1
-            this.baseAddress[moduleName2] := -1
             return False
         }
-        this.baseAddress[moduleName1] := this.instance.getModuleBaseAddress(moduleName1)
-        this.baseAddress[moduleName2] := this.instance.getModuleBaseAddress(moduleName2)
+        this.baseAddress[moduleName]:=this.instance.getModuleBaseAddress(moduleName)
         return true
     }
 }

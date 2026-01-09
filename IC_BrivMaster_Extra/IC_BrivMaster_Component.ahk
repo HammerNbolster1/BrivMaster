@@ -645,9 +645,10 @@ Class IC_IriBrivMaster_Component
 		this.SettingCheck(gameSettings,"ReduceFramerateWhenNotInFocus","CapFPSinBG",true,changeCount,change)
 		this.SettingCheck(gameSettings,"FormationSaveIncludeFeatsCheck","SaveFeats",true,changeCount,change)
 		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,change)
-		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,change) ;TODO: This needs to be forced on, as otherwise memory reads relating to the herobox won't work
 		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,change)
 		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,change)
+		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that and the appearance isn't subject, so it isn't forced
+		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,change) ;Fixed, always 3 (x100 levelling)
 		if (changeCount)
 		{
 			if (change)
@@ -659,7 +660,7 @@ Class IC_IriBrivMaster_Component
 				}
 				else
 				{
-					MsgBox,,Game Running,Game settings cannot be changed whilst Idle Champions is running
+					MsgBox,48,Briv Master,Game settings cannot be changed whilst Idle Champions is running
 					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
 				}
 
@@ -707,6 +708,16 @@ Class IC_IriBrivMaster_Component
 			changeCount++
 			if (change)
 				gameSettings[CNEName]:=targetValue
+		}
+	}
+	
+	ForcedSettingCheck(gameSettings, CNEName, value, byRef changeCount,change:=false) ;For settings where we don't give or save an option
+	{
+		if gameSettings[CNEName]!=value
+		{
+			changeCount++
+			if (change)
+				gameSettings[CNEName]:=value
 		}
 	}
 

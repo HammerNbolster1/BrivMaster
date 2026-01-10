@@ -4,7 +4,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 {
 	__New(logDir)
 	{
-		FormatTime, formattedDateTime,, yyyyMMddTHHmmss ;Can't include : in a filename so using the less human friendly version here
+		FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss ;Can't include : in a filename so using the less human friendly version here
 		if (!FileExist(logDir)) ;Create the log subdirectory if not present
 			FileCreateDir, %logDir%
 		this.logBase:=LogDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time, e.g. RunLog_20250101T000000.csv from this class and RunLog_20250101T000000_Relay.csv
@@ -49,7 +49,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		this.LogEntries.Thellora:={}
 		this.LogEntries.Run:={}
 		this.LogEntries.Run.Start:=startTime
-		FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+		FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
 		this.LogEntries.Run.StartRealTime:=formattedDateTime
 		this.LogEntries.Run.ResetNumber:=g_SF.Memory.ReadResetsTotal()
 		this.LogEntries.Run.GHActive:=g_SF.Memory.IBM_IsBuffActive("Potion of the Gem Hunter") ;Does this break in non-English clients?

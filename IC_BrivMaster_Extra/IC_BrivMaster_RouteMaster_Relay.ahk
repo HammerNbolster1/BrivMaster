@@ -57,7 +57,7 @@ class IC_BrivMaster_Relay_Class
 			}
 			catch
 			{
-				FormatTime, formattedDateTime,, yyyyMMddTHHmmss ;Can't include : in a filename so using the less human friendly version here
+				FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss ;Can't include : in a filename so using the less human friendly version here
 				this.LogFile:=A_LineFile . "\..\RelayFail_" . formattedDateTime . ".csv" ;Create a log for the fail
 				FileAppend, % A_TickCount . " Failed to connect to Relay Data COM object`n", % this.LogFile ;Save
 				ExitApp
@@ -65,7 +65,7 @@ class IC_BrivMaster_Relay_Class
 		}
 		else
 		{
-			FormatTime, formattedDateTime,, yyyyMMddTHHmmss ;Can't include : in a filename so using the less human friendly version here
+			FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss ;Can't include : in a filename so using the less human friendly version here
 			this.LogFile:=A_LineFile . "\..\RelayFail_" . formattedDateTime . ".csv" ;Create a log for the fail
 			FileAppend, % A_TickCount . " Relay launched without Relay Data COM object GUID`n", % this.LogFile ;Save
 			ExitApp

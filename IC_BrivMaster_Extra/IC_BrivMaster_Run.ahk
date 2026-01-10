@@ -667,7 +667,7 @@ class IC_BrivMaster_GemFarm_Class
 		}
 
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
-		FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+		FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
@@ -685,7 +685,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	RefreshGemFarmWindow() ;Updates the time settings were updated
 	{
-	   FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+	   FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
 	   GuiControl, IBM_GemFarm:, IBM_GemFarm_Settings_Update_Time, % formattedDateTime
 	}
 

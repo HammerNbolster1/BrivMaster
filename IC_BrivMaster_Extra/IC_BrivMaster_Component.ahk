@@ -535,7 +535,7 @@ Class IC_IriBrivMaster_Component
 						GH_colour:="c000000"
 					GuiControl, ICScriptHub:+%GH_colour%, IBM_Stats_Gem_Hunter
 					GuiControl, ICScriptHub:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
-					FormatTime, formattedDateTime,, yyyy-MM-ddTHH:mm:ss
+					FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
 					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (" . formattedDateTime . ")"
 				}
 			}

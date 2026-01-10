@@ -214,7 +214,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_ChestSnatcher_Options_Open_Gold:=0 ;TODO: These were set to 0 to prevent accidents when changing from using the main script settings, in the future update to more practical defauls
 		settings.IBM_ChestSnatcher_Options_Open_Silver:=0
 		settings.IBM_Game_Settings_Option_Profile:=1
-		settings.IBM_Game_Settings_Option_Set:={1:{Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false},2:{Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}}
+		settings.IBM_Game_Settings_Option_Set:={1:{Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,AllHero:true,Swap25100:false},2:{Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,AllHero:true,Swap25100:false}}
 		settings.IBM_Game_Exe:="IdleDragons.exe"
 		settings.IBM_Game_Path:="" ;Path and Launch command are user dependant so can't have a default
 		settings.IBM_Game_Launch:=""
@@ -312,6 +312,7 @@ Class IC_IriBrivMaster_Component
 		this.Stats.Reset.Fast:=""
 		this.Stats.Reset.Slow:=""
 		this.Stats.Reset.TotalTime:=0
+		this.WebRoot:="ps"
 
 		this.Stats.FailTotalTime:=0 ;We could add the rest to this?
 
@@ -349,6 +350,7 @@ Class IC_IriBrivMaster_Component
 		GuiControl, ICScriptHub:, IBM_Stats_Total_Time, 0s (0h)
 		GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, 0
 		GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, 0s
+		GuiControl, ICScriptHub:, IBM_PlayServer, ps
 		GuiControl, ICScriptHub:, IBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
 
 		GuiControl, ICScriptHub:, IBM_Stats_BPH, BPH: --.--
@@ -462,11 +464,13 @@ Class IC_IriBrivMaster_Component
 					{
 						this.Stats.StartTime:=LogData.Run.Start
 					}
+					this.WebRoot := RegExReplace(g_SF.Memory.ReadWebRoot(), "[^0-9]", "")
 					totalTime:=LogData.Run.End - this.Stats.StartTime
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
+					GuiControl, ICScriptHub:, IBM_PlayServer, % "ps" .  this.WebRoot 
 
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
@@ -647,7 +651,7 @@ Class IC_IriBrivMaster_Component
 		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,change)
 		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,change)
 		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,change)
-		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that and the appearance isn't subject, so it isn't forced
+		this.ForcedSettingCheck(gameSettings,"NarrowHeroBoxes","true",changeCount,change) ;Fixed, always true, note this needs to be a string for correct JSON output
 		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,change) ;Fixed, always 3 (x100 levelling)
 		if (changeCount)
 		{

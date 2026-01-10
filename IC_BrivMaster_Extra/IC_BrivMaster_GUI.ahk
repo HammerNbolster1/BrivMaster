@@ -106,7 +106,9 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_Stats_Fail_Runs, -
 		Gui, ICScriptHub:Add, Text, xs+250 y+4 w85, Failed Run Time:
 		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_Stats_Fail_Time, -
-
+		Gui, ICScriptHub:Add, Text, xs+250 y+4 w85, PlayServer:
+		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_PlayServer, -
+		
 		highlightWidth:=FLOOR((groupWidth-21)/2)
 		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
 		Gui, ICScriptHub:Add, Text, xs+10 y%highlightY% w%highlightWidth% Center vIBM_Stats_BPH, BPH
@@ -239,9 +241,9 @@ class IC_IriBrivMaster_GUI
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Console Portraits
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_ConsolePortraits_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_NarrowHero_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 Disabled Checked ;Disabled as this option must be on
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Narrow Hero Boxes
-		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_NarrowHero_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 Disabled Checked ;Disabled as this option must be on
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_AllHero_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Show All Heroes

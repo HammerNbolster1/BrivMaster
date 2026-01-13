@@ -1,33 +1,159 @@
-class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class
+#include %A_LineFile%\..\..\..\ServerCalls\IC_ServerCalls_Class.ahk ;For IC_ServerCalls_Class override
+
+class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class ;TODO: IC_ServerCalls_Class extends SH_ServerCalls which includes the Javascript-based json.ahk
 {
-	; Copied from an older (mid-2025) verison of BrivGemFarmPerformance, as we're not using the separate servercalls script for everything
-	; forces an attempt for the server to remember stacks
-    CallPreventStackFail(stacks, launchScript:=false) ;TODO: This could possibly do the Thunder Step multiplier directly? If so needs removing from both the RestartAdventure() and WaitForModronReset() calls
+    CallPreventStackFail(sprint, steelbones, message,launchScript:=false) ;This function should be called after checking sprint & steelbones are valid - i.e. move 0 if no value is present. TODO: Can maybe bring this in too?
     {
-        response:= ""
-        stacks:= g_SaveHelper.GetEstimatedStackValue(stacks)
-        userData:= g_SaveHelper.GetCompressedDataFromBrivStacks(stacks)
-        checksum:= g_SaveHelper.GetSaveCheckSumFromBrivStacks(stacks)
-        save:=g_SaveHelper.GetSave(userData, checksum, this.userID, this.userHash, this.networkID, this.clientVersion, this.instanceID)
-        if (launchScript) ; do server call from new script to prevent hanging script due to network issues.
+        stacks:=sprint + FLOOR(steelbones * g_IBM.RouteMaster.stackConversionRate)
+		g_IBM.Logger.AddMessage("Servercall Save via: "  . message . " Converted Haste=[" . stacks . "] from Haste=[" . sprint . "] and Steelbones=[" . steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
+		jsonString:="{""stats"":{""briv_steelbones_stacks"":0,""briv_sprint_stacks"":" . stacks . "}}"
+		boundaryHeader:=this.GetBoundryHeader()
+		save:=this.GetSaveFromJSON(jsonString,boundaryHeader)
+		if(launchScript) ;Do server call from new script to prevent hanging script due to network issues.
         {
-            webRoot := this.webRoot
-            scriptLocation := A_LineFile . "\..\IC_BrivMaster_SaveStacks.ahk"
-            Run, %A_AhkPath% "%scriptLocation%" "%webRoot%" "%save%"
+            webRoot:=this.webRoot
+            scriptLocation:=A_LineFile . "\..\IC_BrivMaster_SaveStacks.ahk"
+            Run, %A_AhkPath% "%scriptLocation%" "%webRoot%" "%save%" "%boundaryHeader%"
         }
         else
         {
             try
+                response:=this.ServerCallSave(save,boundaryHeader)
+            catch
+                g_IBM.Logger.AddMessage("Failed to save Briv stacks")
+        }
+    }
+	
+    ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specifically for use with saves. saveBody must be encoded before using this call.
+    {
+        response:=""
+        WR:=ComObjCreate( "WinHttp.WinHttpRequest.5.1" )
+        ; https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
+        WR.SetTimeouts( "0", "15000", "7500", "30000" )
+        Try 
+		{
+            WR.Open("POST",this.webroot . "post.php?call=saveuserdetails&", true)
+            WR.SetRequestHeader("Accept-Encoding", "identity")
+			WR.SetRequestHeader("Content-Type", "multipart/form-data; boundary=""" . boundaryHeader . """")
+            WR.SetRequestHeader("User-Agent", "BestHTTP")
+            WR.Send(saveBody)
+            WR.WaitForResponse(-1)
+            data:=WR.ResponseText
+            Try
             {
-                response:=this.ServerCallSave(save)
-            }
-            catch, ErrMsg
-            {
-                g_SharedData.LoopString := "Failed to save Briv stacks" ;TODO: Log this instead
+                response:=JSON.parse(data)
+                if(!(response.switch_play_server==""))
+                {
+                    retryNum++
+                    this.WebRoot:=response.switch_play_server
+                    if(retryNum<=3) 
+                        return this.ServerCallSave(saveBody,boundaryHeader,retryNum) 
+                }
             }
         }
         return response
     }
+
+	__New(userID:=0, userHash:=0, instanceID:=0 )
+    {
+        this.userID := userID
+        this.userHash := userHash
+        this.instanceID := instanceID
+        this.shinies := 0
+        this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+        return this ;TODO: Does this achieve anything?
+    }
+
+    __Delete() ;Free library after use
+    {
+        DllCall("FreeLibrary", "Ptr", this.md5Module)
+    }
+
+    MD5Save(stringVal) ;Creates a salted md5 checksum for a save string. Modified from https://www.autohotkey.com/boards/viewtopic.php?f=6&t=21
+    {
+        stringVal:=stringVal . "somethingpoliticallycorrect"
+        VarSetCapacity(MD5_CTX, 104, 0)
+		DllCall("advapi32\MD5Init", "Ptr", &MD5_CTX)
+        DllCall("advapi32\MD5Update", "Ptr", &MD5_CTX, "AStr", stringVal, "UInt", StrLen(stringVal))
+        DllCall("advapi32\MD5Final", "Ptr", &MD5_CTX)
+        loop, 16
+            o.=Format("{:02" (case ? "X" : "x") "}", NumGet(MD5_CTX, 87 + A_Index, "UChar"))
+        StringLower, o,o
+        return o
+    }
+
+    GetSaveFromJSON(jsonString,boundaryHeader,timeStamp:="0") ;Converts user's data into form data that can be submitted for a save
+    {
+		userData:=g_zlib.Deflate(jsonString)
+		checksum:=this.MD5Save(jsonString)
+		Random, r1, 0, 65535
+		Random, r2, 0, 65535
+		boundrySuffix:=Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
+        mimicSave:="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""call""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 15`r`n`r`n"
+        mimicSave.="saveuserdetails`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""language_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 1`r`n`r`n"
+        mimicSave.="1`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""user_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.userID)  "`r`n`r`n"
+        mimicSave.=this.userID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""hash""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 32`r`n`r`n"
+        mimicSave.=this.userHash . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""details_compressed""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  (StrLen(userData))  "`r`n`r`n"
+        mimicSave.=userData . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""checksum""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 32`r`n`r`n"
+        mimicSave.=checksum . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""timestamp""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(timeStamp)  "`r`n`r`n"
+        mimicSave.=timeStamp . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""request_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 1`r`n`r`n"
+        mimicSave.="1`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""network_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: " StrLen(this.networkID)  "`r`n`r`n"
+        mimicSave.=this.networkID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""mobile_client_version""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.clientVersion)  "`r`n`r`n"
+        mimicSave.=this.clientVersion . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""instance_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.instanceID)  "`r`n`r`n"
+        mimicSave.=this.instanceID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "--`r`n"
+        return mimicSave
+    }
+	
+	GetBoundryHeader()
+	{
+		Random, r1, 0, 65535
+		Random, r2, 0, 65535
+		return "BestHTTP_HTTPMultiPartForm_" . Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
+	}
 }
 
 class IBM_Memory_Manager extends _MemoryManager
@@ -54,7 +180,7 @@ class IBM_Memory_Manager extends _MemoryManager
         }
         else
         {
-            this.baseAddress[moduleName1] := -1
+            this.baseAddress[moduleName1]:=-1
             return False
         }
         this.baseAddress[moduleName]:=this.instance.getModuleBaseAddress(moduleName)

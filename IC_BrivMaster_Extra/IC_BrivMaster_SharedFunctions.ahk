@@ -16,7 +16,7 @@ class IC_BrivMaster_SharedFunctions_Class
 		this.sprint:=""
 		this.PatronID:=0
     }
-	
+
 	LoadObjectFromAHKJSON(FileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
     {
         FileRead, oData, %FileName%
@@ -48,7 +48,7 @@ class IC_BrivMaster_SharedFunctions_Class
         FileAppend, %objectJSON%, %FileName%
         return
     }
-	
+
 	GetProcessName(processID) ;To check without a window being present TODO: Used in multiple places, this might make sense for SharedFunctions as a result
 	{
 		if(hProcess:=DllCall("OpenProcess", "uint", 0x0410, "int", 0, "uint", processID, "ptr"))
@@ -64,12 +64,12 @@ class IC_BrivMaster_SharedFunctions_Class
 		}
 		return false
 	}
-	
+
 	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max
     {
         return (FirstEight + (2.0**63)) * (2.0**SecondEight)
     }
-	
+
     IsCurrentFormation(testformation:="") ;Returns true if the formation array passed is the same as the formation currently on the game field. Always false on empty formation reads. Requires full formation.
     {
         if(!IsObject(testFormation))
@@ -84,7 +84,7 @@ class IC_BrivMaster_SharedFunctions_Class
                 return false
         return true
     }
-	
+
 	;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
     CheckifStuck(isStuck:=false)
     {
@@ -123,7 +123,7 @@ class IC_BrivMaster_SharedFunctions_Class
         }
         if (dtCurrentZoneTime > 65)
         {
-            g_IBM.GameMaster.RestartAdventure( "Game is stuck z[" . this.Memory.ReadCurrentZone() . "]" )
+            g_IBM.GameMaster.RestartAdventure("Game is stuck z[" . this.Memory.ReadCurrentZone() . "]" )
             g_IBM.GameMaster.SafetyCheck()
             g_PreviousZoneStartTime:=A_TickCount
             lastCheck := 0
@@ -132,7 +132,7 @@ class IC_BrivMaster_SharedFunctions_Class
         }
         return false
     }
-	
+
     DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {
         ElapsedTime:=0
@@ -158,42 +158,39 @@ class IC_BrivMaster_SharedFunctions_Class
         }
     }
 
-    SetUserCredentials() ;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side
+    SetUserCredentials() ;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side TODO: Is there any reason to keep this stuff in g_SF, rather than servercall? Seems like duplication
     {
         this.UserID:=this.Memory.ReadUserID()
-        this.UserHash:=this.Memory.ReadUserHash()
-        this.InstanceID:=this.Memory.ReadInstanceID()
-        this.sprint:=this.Memory.ReadHasteStacks() ;TODO: Calling Haste 'Sprint' here is confusing; need to check throughout IC_Core if replacing it however (N.B. The reason for this naming is that the stat in the game is called 'BrivSprintStacks')
+		this.UserHash:=this.Memory.ReadUserHash()
+		this.InstanceID:=this.Memory.ReadInstanceID()
+        this.sprint:=this.Memory.ReadHasteStacks() ;TODO: Calling Haste 'Sprint' here is confusing; need to check throughout IC_Core if replacing it however (N.B. The reason for this naming is that the stat in the game is called 'BrivSprintStacks'). Possibly using that stat name in full would be clearer?
         this.steelbones:=this.Memory.ReadSBStacks()
     }
-	
+
 	;Removed saving of Servercall information to a JSON file, which never appeared to get used
 	; sets the user information used in server calls such as user_id, hash, active modron, etc.
     ResetServerCall()
     {
         this.SetUserCredentials()
-        g_ServerCall := new IC_BrivMaster_ServerCall_Class( this.UserID, this.UserHash, this.InstanceID )
-        version := this.Memory.ReadBaseGameVersion()
+        g_ServerCall:=New IC_BrivMaster_ServerCall_Class(this.UserID,this.UserHash,this.InstanceID)
+        version:=this.Memory.ReadBaseGameVersion()
         if (version != "")
             g_ServerCall.clientVersion := version
-        this.GetWebRoot()            
+        this.GetWebRoot()
         g_ServerCall.networkID := this.Memory.ReadPlatform() ? this.Memory.ReadPlatform() : g_ServerCall.networkID
         g_ServerCall.activeModronID := this.Memory.ReadActiveGameInstance() ? this.Memory.ReadActiveGameInstance() : 1 ; 1, 2, 3 for modron cores 1, 2, 3
         g_ServerCall.activePatronID := this.PatronID ;this.Memory.ReadPatronID() == "" ? g_ServerCall.activePatronID : this.Memory.ReadPatronID() ; 0 = no patron
         g_ServerCall.UpdateDummyData()
     }
-	
+
 	WaitForModronReset(timeout:=60000)
     {
-        StartTime := A_TickCount
-        ElapsedTime := 0
+        StartTime:=A_TickCount
+        ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
         this.SetUserCredentials()
-		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="" AND (this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) <= 176046)) ;Only try and manually save if it hasn't already happened - (steelbones > 0)
-        {
-			g_IBM.Logger.AddMessage("Manual stack conversion: Converted Haste=[" . this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate) . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
-			response:=g_serverCall.CallPreventStackFail(this.sprint + FLOOR(this.steelbones * g_IBM.RouteMaster.stackConversionRate), true)
-		}	
+		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="") ;Only try and manually save if it hasn't already happened - (steelbones > 0)
+			g_serverCall.CallPreventStackFail(this.sprint,this.steelbones,"WaitForModronReset()",true)
         while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
         {
             g_IBM.IBM_Sleep(20)
@@ -201,29 +198,29 @@ class IC_BrivMaster_SharedFunctions_Class
         }
         g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
 		g_IBM.IBM_Sleep(20)
-        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone() < 1 AND ElapsedTime < timeout)
+        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
         {
             g_IBM.IBM_Sleep(20)
             ElapsedTime:=A_TickCount - StartTime
         }
-        if (ElapsedTime >= timeout)
+        if (ElapsedTime>=timeout)
 			return false
         return true
     }
-	
+
 	GetWebRoot()
     {
         tempWebRoot := this.Memory.ReadWebRoot()
         httpString := StrSplit(tempWebRoot,":")[1]
         isWebRootValid := httpString == "http" or httpString == "https"
         g_ServerCall.webroot := isWebRootValid ? tempWebRoot : g_ServerCall.webroot
-    }    
+    }
 }
 
 class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location
 {
 	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
-	
+
 	__New()
 	{
 		this.BossesHitThisRun:=0
@@ -243,7 +240,7 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
 		this.LoopString:=""
 		this.LastCloseReason:=""
 	}
-	
+
 	Close() ;Taken from what was IC_BrivGemFarmRun_SharedData_Class in IC_BrivGemFarm_Run.ahk
     {
         if (g_SF.Memory.ReadUserIsInited()="") ; Invalid game state
@@ -253,7 +250,7 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
         g_IBM.RouteMaster.ToggleAutoProgress(false, false, true)
         ExitApp
     }
-	
+
 	ShowGUI()
     {
         Gui, Show, NA
@@ -274,7 +271,7 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
 			g_IBM_Settings[k]:=v
 		g_IBM.RefreshGemFarmWindow()
     }
-	
+
 	UpdateOutbound(key,value) ;Update if the value has changed at mark the outbound data as dirty
 	{
 		if (this[key]!=value)
@@ -283,8 +280,8 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
 			this.IBM_OutboundDirty:=true
 		}
 	}
-	
-	ResetRunStats() ;Resets per-run stats from the main object (boss hits, rollbacks, bad autoprogression). This allows them to all be cleared in one go without spam setting the IBM_OutboundDirty flag 
+
+	ResetRunStats() ;Resets per-run stats from the main object (boss hits, rollbacks, bad autoprogression). This allows them to all be cleared in one go without spam setting the IBM_OutboundDirty flag
 	{
 		this.BossesHitThisRun:=0
 		this.TotalBossesHit:=0
@@ -292,7 +289,7 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
         this.BadAutoProgress:=0
 		this.IBM_OutboundDirty:=true
 	}
-	
+
 	UpdateOutbound_Increment(key) ;Increment a value, used for things like boss hit tracking
 	{
 		if (this.HasKey(key))
@@ -303,7 +300,7 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
 	}
 }
 
-class IC_BrivMaster_InputManager_Class ;A class for managing input related matters 
+class IC_BrivMaster_InputManager_Class ;A class for managing input related matters
 {
 	keyList:={} ;Indexed by key per the script (e.g. "F1","ClickDmg"), contains the mapped Key, lParam for SendMessage for down, and lParam for SendMessage for up
 

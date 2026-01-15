@@ -347,6 +347,10 @@ Occasionally a setting may be added to Briv Master but not exposed via the GUI, 
 
 - IBM_Allow_Modron_Buff_Off: Normally Briv Master will not start unless all three Modron core functions are enabled. Changing this from 0 to 1 allows the script to start with the Buffs portion disabled. This was added to allow potions to be used by familiars saved in the M formation instead. The user in question didn't want to have to change the options between different activities.
 
+- IBM_Format_Date_Display: AutoHotKey date format string (per https://www.autohotkey.com/docs/v1/lib/FormatTime.htm) to be used for date and time display.
+
+- IBM_Format_Date_File: As above, but must only use characters valid in file names. This notably means the colon is not permitted.
+
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 
 Irisiri / R. Lee. It turns out I'm not actually a Night Elf rogue...

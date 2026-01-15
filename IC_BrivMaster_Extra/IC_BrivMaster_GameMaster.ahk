@@ -491,23 +491,12 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		g_IBM.Logger.ForceFail() ;As this can be after we've reached the zone target if the reset got stuck
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . this.Memory.ReadCurrentZone() . " with haste:" . this.Memory.ReadHasteStacks() . ")")
 		this.CloseIC(reason)
-		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion")
-		if (g_SF.steelbones!="")
-			convertedSteelbones:=FLOOR(g_SF.steelbones * g_IBM.RouteMaster.stackConversionRate) ;Handle Thunder Step
-		if (g_SF.sprint != "" AND g_SF.steelbones != "" AND (g_SF.sprint + convertedSteelbones)<=176046)
-		{
-			g_IBM.Logger.AddMessage("Servercall Save (Haste:" . g_SF.sprint . " Steelbones[Raw:" . g_SF.steelbones . " Converted:" . convertedSteelbones . "] for a total of:" . g_SF.sprint + convertedSteelbones . ")")
-			response:=g_serverCall.CallPreventStackFail(g_SF.sprint + convertedSteelbones)
-		}
-		else if (g_SF.sprint != "" AND g_SF.steelbones != "")
-		{
-			g_IBM.Logger.AddMessage("Servercall Save (Haste:" . g_SF.sprint . " Steelbones[Raw:" . g_SF.steelbones . " Converted:" . convertedSteelbones . "] for a total of:" . g_SF.sprint + convertedSteelbones . ")")
-			response:=g_serverCall.CallPreventStackFail(g_SF.sprint + convertedSteelbones)
-			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting with >176k stacks, some stacks lost")
-		}
+		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion") ;This message would ideally be shown only momentarily, but if the server is having issues the servercall will run to timeout and this allows us to see that it is that holding the script up
+		if (g_SF.sprint!="" AND g_SF.steelbones!="")
+			g_serverCall.CallPreventStackFail(g_SF.sprint,g_SF.steelbones,"RestartAdventure()")
 		else
 		{
-			g_IBM.Logger.AddMessage("Servercall Save Not Required (Haste:" . g_SF.sprint . " raw Steelbones:" . g_SF.steelbones . " which should convert to:" . convertedSteelbones . ")")
+			g_IBM.Logger.AddMessage("Servercall Save Not Required (Haste:" . g_SF.sprint . " raw Steelbones:" . g_SF.steelbones . ")")
 			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conv.)")
 		}
 		response:=g_ServerCall.CallEndAdventure()

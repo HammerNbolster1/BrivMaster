@@ -24,8 +24,6 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
-#include %A_LineFile%\..\..\..\ServerCalls\SH_ServerCalls_Includes.ahk
-#include %A_LineFile%\..\..\IC_Core\IC_SaveHelper_Class.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
@@ -33,12 +31,12 @@ CoordMode, Mouse, Client
 global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
+global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it TODO: Set up to be used without an instance?
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
-global g_SaveHelper:=New IC_SaveHelper_Class ;TODO: This doesn't really need to be a global? Stacks is RouteMaster business, so should possibly be there. Otherwise Servercalls?
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
-global g_SharedData:=New IC_BrivMaster_SharedData_Class 
+global g_SharedData:=New IC_BrivMaster_SharedData_Class
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
@@ -130,7 +128,6 @@ class IC_BrivMaster_GemFarm_Class
 					g_SharedData.UpdateOutbound("BossesHitThisRun",0)
 				}
 				this.Logger.NewRun()
-				g_InputManager.ReleaseAll()
 				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
@@ -667,7 +664,7 @@ class IC_BrivMaster_GemFarm_Class
 		}
 
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
-		FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
+		FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
@@ -685,7 +682,7 @@ class IC_BrivMaster_GemFarm_Class
 
 	RefreshGemFarmWindow() ;Updates the time settings were updated
 	{
-	   FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
+	   FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 	   GuiControl, IBM_GemFarm:, IBM_GemFarm_Settings_Update_Time, % formattedDateTime
 	}
 

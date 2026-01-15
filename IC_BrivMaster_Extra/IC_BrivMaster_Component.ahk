@@ -228,6 +228,8 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Allow_Modron_Buff_Off:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
 		settings.IBM_Ellywick_NonGemFarm_Cards:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
 		settings.IBM_Level_Recovery_Softcap:=0
+		settings.IBM_Format_Date_Display:="yyyy-MM-ddTHH:mm:ss" ;Hidden setting for date / time display
+		settings.IBM_Format_Date_File:="yyyyMMddTHHmmss" ;Hidden setting for date / time output in filenames, as : is not a valid character there
         return settings
     }
 
@@ -312,7 +314,6 @@ Class IC_IriBrivMaster_Component
 		this.Stats.Reset.Fast:=""
 		this.Stats.Reset.Slow:=""
 		this.Stats.Reset.TotalTime:=0
-		this.WebRoot:="ps"
 
 		this.Stats.FailTotalTime:=0 ;We could add the rest to this?
 
@@ -350,7 +351,6 @@ Class IC_IriBrivMaster_Component
 		GuiControl, ICScriptHub:, IBM_Stats_Total_Time, 0s (0h)
 		GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, 0
 		GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, 0s
-		GuiControl, ICScriptHub:, IBM_PlayServer, ps
 		GuiControl, ICScriptHub:, IBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
 
 		GuiControl, ICScriptHub:, IBM_Stats_BPH, BPH: --.--
@@ -464,13 +464,11 @@ Class IC_IriBrivMaster_Component
 					{
 						this.Stats.StartTime:=LogData.Run.Start
 					}
-					this.WebRoot := RegExReplace(g_SF.Memory.ReadWebRoot(), "[^0-9]", "")
 					totalTime:=LogData.Run.End - this.Stats.StartTime
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
-					GuiControl, ICScriptHub:, IBM_PlayServer, % "ps" .  this.WebRoot 
 
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
@@ -539,7 +537,7 @@ Class IC_IriBrivMaster_Component
 						GH_colour:="c000000"
 					GuiControl, ICScriptHub:+%GH_colour%, IBM_Stats_Gem_Hunter
 					GuiControl, ICScriptHub:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
-					FormatTime, formattedDateTime,, dd-MM-yyyy_HH.mm.ss
+					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (" . formattedDateTime . ")"
 				}
 			}

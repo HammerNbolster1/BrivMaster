@@ -615,7 +615,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_GetFrontColumnSize() ;Used when we want to block champions from being levelled in the front formation slots so they do not share attacks with Briv
 	{
-		size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
+		size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         frontCount:=0
         loop, %size%
         {
@@ -642,8 +642,8 @@ class IC_BrivMaster_MemoryFunctions_Class
 
     IBM_ReadClickLevelUpAllowed()
     {
-        value := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.clickDamageBox.maxLevelUpAllowed.Read()
-        return value == "" ? 1 : value
+        value:=this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.clickDamageBox.maxLevelUpAllowed.Read()
+        return value=="" ? 1 : value ;TODO: Why does this default to 1 not 0?
     }
 
 	IBM_ReadLastSave()
@@ -653,13 +653,13 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_GetCurrentFormationChampions() ;Returns the champions in the formation, without positioning data, eg data[58]==true
     {
-        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
-        if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible.
+        size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
+        if(size<=0 OR size>14) ; sanity check, 12 is the max number of concurrent champions possible.
             return ""
-        champList := []
+        champList:=[]
         loop, %size%
         {
-            heroID := this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+            heroID:=this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
             if (heroID > 0)
 				champList[heroID]:=true
         }

@@ -51,6 +51,7 @@ class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class ;TODO: IC_Serv
                 }
             }
         }
+		WR:=""
         return response
     }
 

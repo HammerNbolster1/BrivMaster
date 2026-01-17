@@ -471,7 +471,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			else
 			{
 				g_IBM.Logger.AddMessage("Out of stacks:z" . currentZone)
-				g_IBM.GameMaster.RestartAdventure("Out of haste @ z" . currentZone . " && have SB for next")
+				g_IBM.GameMaster.RestartAdventure("Out of haste and have SB for next")
 				return true
 			}
         }
@@ -566,7 +566,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         Critical Off
 		if (ElapsedTime >= maxOnlineStackTime)
         {
-			g_IBM.GameMaster.RestartAdventure( "Ultra@z" . g_SF.Memory.ReadCurrentZone() . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_IBM.GameMaster.RestartAdventure( "Ultra took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
             g_PreviousZoneStartTime:=A_TickCount
             return
@@ -662,7 +662,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_IBM.GameMaster.RestartAdventure( "Normal@z" . currentZone . " took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_IBM.GameMaster.RestartAdventure( "Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
             g_PreviousZoneStartTime := A_TickCount
             return
@@ -845,17 +845,17 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	;This is called when trying to stack, if for some reason we're trying to stack on a boss zone A) things have gone weird (fallback maybe?) and B) We should complete on the expected formation to stay on-route. If that jumps us into the Modron reset that's a route setup issue (although perhaps we should check for it)
 	KillCurrentBoss(maxLoopTime:=25000 )
     {
-        currentZone := this.Memory.ReadCurrentZone()
+        currentZone := g_SF.Memory.ReadCurrentZone()
         if mod(currentZone, 5)
             return 1
         StartTime := A_TickCount
         ElapsedTime := 0
         g_SharedData.UpdateOutbound("LoopString","Killing boss before stacking")
-        while ( !mod( this.Memory.ReadCurrentZone(), 5 ) AND ElapsedTime < maxLoopTime )
+        while ( !mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND ElapsedTime < maxLoopTime )
         {
             ElapsedTime := A_TickCount - StartTime
             this.SetFormation()
-            if(!this.Memory.ReadQuestRemaining()) ; Quest complete, still on boss zone. Skip boss bag.
+            if(!g_SF.Memory.ReadQuestRemaining()) ; Quest complete, still on boss zone. Skip boss bag.
                 this.ToggleAutoProgress(1,0,false)
             g_IBM.IBM_Sleep(50)
         }

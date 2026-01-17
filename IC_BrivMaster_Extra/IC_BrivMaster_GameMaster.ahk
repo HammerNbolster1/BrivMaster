@@ -43,6 +43,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				this.SetLastActiveWindowWhileWaitingForGameExe(timeoutVal - ElapsedTime)
             this.ActivateLastWindow()
             g_SF.Memory.OpenProcessReader()
+			g_SharedData.UpdateOutbound("IBM_ProcessSwap",true) ;Prompt the hub to update as well
             ElapsedTime:=A_TickCount - StartTime
             if(ElapsedTime < timeoutVal)
                 loadingZone:=this.WaitForGameReady(waitForReadyTimeout) ;NOTE: WaitForGameReady will turn Critical On via WaitForFinalStatUpdates
@@ -419,7 +420,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				this.CloseIC("Failed to start Idle Champions")
 				openResult:=this.OpenIC("Called from SafetyCheck() loop")
             }
-            if(this.Memory.ReadResetting() AND this.Memory.ReadCurrentZone() <= 1 AND this.Memory.ReadCurrentObjID() == "")
+            if(g_SF.Memory.ReadResetting() AND g_SF.Memory.ReadCurrentZone() <= 1 AND g_SF.Memory.ReadCurrentObjID() == "")
                 this.WorldMapRestart()
             this.RecoverFromGameClose()
             this.BadSaveTest()
@@ -482,14 +483,14 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	WorldMapRestart() ;Forces an adventure restart through closing IC and using server calls TODO: 2 line function that is only used in one place?
     {
         g_SharedData.UpdateOutbound("LoopString","Zone is -1. At world map?")
-        this.RestartAdventure( "Zone is -1. At world map?" )
+        this.RestartAdventure( "At world map?" )
     }
 	
 	RestartAdventure(reason:="")
     {
 		g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure")
 		g_IBM.Logger.ForceFail() ;As this can be after we've reached the zone target if the reset got stuck
-		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . this.Memory.ReadCurrentZone() . " with haste:" . this.Memory.ReadHasteStacks() . ")")
+		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . g_SF.Memory.ReadCurrentZone() . " with haste:" . g_SF.Memory.ReadHasteStacks() . ")")
 		this.CloseIC(reason)
 		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion") ;This message would ideally be shown only momentarily, but if the server is having issues the servercall will run to timeout and this allows us to see that it is that holding the script up
 		if (g_SF.sprint!="" AND g_SF.steelbones!="")

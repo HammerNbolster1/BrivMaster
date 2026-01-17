@@ -1,6 +1,6 @@
 ;This file is intended for functions used in the gem farm script, but not the hub
 
-class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. Badly. This is aimed at strings of <100 characters and only supports a single 32K block
+class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. Badly. This is aimed at strings of <100 characters
 {
 	__New() ;Pre-computes binary values for various things to improve run-time performance
 	{

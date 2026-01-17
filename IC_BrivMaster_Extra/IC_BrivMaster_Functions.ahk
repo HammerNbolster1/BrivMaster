@@ -45,8 +45,8 @@ class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. B
 				while(match AND pos+curLookahead<=inputLength AND curLookahead<=maxMatch)
 				{
 					lookAhead:=SubStr(inputString,pos,curLookahead)
-					match:=inStr(output,lookAhead,,0) ;Look for an exact match, looking backwards (right to left)
-					if(match)
+					match:=inStr(output,lookAhead,1,0) ;Look for an exact match, looking backwards (right to left). MUST be case-sensitive
+					if(match AND pos-match<=32768)
 					{
 						distance:=pos-match
 						lastFoundlookAhead:=lookAhead

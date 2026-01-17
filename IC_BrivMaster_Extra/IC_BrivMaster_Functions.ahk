@@ -37,12 +37,12 @@ class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. B
 		outputBinary:="00011110" . "01011011" . "110" ;2 bytes of header (LSB first), 3 bits of block header
 		while(pos<=inputLength)
 		{
-			if(inputLength-pos>=minMatch) ;If there are enough characters left for a minimum match
+			if(inputLength-pos+1>=minMatch) ;If there are enough characters left for a minimum match. +1 is there because the character in the current position is included
 			{
 				match:=1
 				distance:=0
 				curLookahead:=minMatch
-				while(match AND pos+curLookahead<=inputLength AND curLookahead<=maxMatch)
+				while(match AND pos+curLookahead-1<=inputLength AND curLookahead<=maxMatch) ;-1 as the current character is included (i.e. SubStr(haystack,startPosition,3) takes 3 characters starting from position 1, so ends at startPosition+2
 				{
 					lookAhead:=SubStr(inputString,pos,curLookahead)
 					match:=inStr(output,lookAhead,1,0) ;Look for an exact match, looking backwards (right to left). MUST be case-sensitive

@@ -1,6 +1,6 @@
 ;This file is intended for functions used in the gem farm script, but not the hub
 
-class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. Badly. This is aimed at strings of <100 characters and only supports a single 32K block
+class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. Badly. This is aimed at strings of <100 characters
 {
 	__New() ;Pre-computes binary values for various things to improve run-time performance
 	{
@@ -37,16 +37,16 @@ class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. B
 		outputBinary:="00011110" . "01011011" . "110" ;2 bytes of header (LSB first), 3 bits of block header
 		while(pos<=inputLength)
 		{
-			if(inputLength-pos>=minMatch) ;If there are enough characters left for a minimum match
+			if(inputLength-pos+1>=minMatch) ;If there are enough characters left for a minimum match. +1 is there because the character in the current position is included
 			{
 				match:=1
 				distance:=0
 				curLookahead:=minMatch
-				while(match AND pos+curLookahead<=inputLength AND curLookahead<=maxMatch)
+				while(match AND pos+curLookahead-1<=inputLength AND curLookahead<=maxMatch) ;-1 as the current character is included (i.e. SubStr(haystack,startPosition,3) takes 3 characters starting from position 1, so ends at startPosition+2
 				{
 					lookAhead:=SubStr(inputString,pos,curLookahead)
-					match:=inStr(output,lookAhead,,0) ;Look for an exact match, looking backwards (right to left)
-					if(match)
+					match:=inStr(output,lookAhead,1,0) ;Look for an exact match, looking backwards (right to left). MUST be case-sensitive
+					if(match AND pos-match<=32768)
 					{
 						distance:=pos-match
 						lastFoundlookAhead:=lookAhead
@@ -240,17 +240,17 @@ class IC_BrivMaster_Budget_Zlib_Class ;A class for applying z-lib compression. B
 		else if(length<=114)
 			return "0010111" . this.IntToBinaryStringLSB(length-99,4)
 		else if(length<=130)
-			return "00011000" . this.IntToBinaryStringLSB(length-115,4)
+			return "11000000" . this.IntToBinaryStringLSB(length-115,4)
 		else if(length<=162)
-			return "00011001" . this.IntToBinaryStringLSB(length-131,5)
+			return "11000001" . this.IntToBinaryStringLSB(length-131,5)
 		else if(length<=194)
-			return "00011010" . this.IntToBinaryStringLSB(length-163,5)
+			return "11000010" . this.IntToBinaryStringLSB(length-163,5)
 		else if(length<=226)
-			return "00011011" . this.IntToBinaryStringLSB(length-195,5)
+			return "11000011" . this.IntToBinaryStringLSB(length-195,5)
 		else if(length<=257)
-			return "00011100" . this.IntToBinaryStringLSB(length-227,5)
+			return "11000100" . this.IntToBinaryStringLSB(length-227,5)
 		else if(length==258)
-			return "00011101"
+			return "11000101"
 	}
 
 	CalcDistanceCode(distance)

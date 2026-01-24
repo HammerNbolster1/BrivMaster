@@ -181,7 +181,7 @@ class IBM_Memory_Manager extends _MemoryManager
         }
         else
         {
-            this.baseAddress[moduleName1]:=-1
+            this.baseAddress[moduleName]:=-1
             return False
         }
         this.baseAddress[moduleName]:=this.instance.getModuleBaseAddress(moduleName)

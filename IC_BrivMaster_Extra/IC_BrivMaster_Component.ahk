@@ -10,7 +10,7 @@ SH_UpdateClass.AddClassFunctions(g_SF, IC_BrivMaster_SharedFunctions_Class) ;Mak
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
-global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI() ;TODO: Can we make this g_IriBrivMaster.GUI or something instead of a separate global?
+global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
@@ -18,6 +18,7 @@ global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
+global g_Zlib:={} ;Instantiated only on demand, since it's only used for offset updates which are not common
 
 scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. TODO: This needs a more elegant solution
 g_GlobalFontSize:=8
@@ -142,9 +143,11 @@ Class IC_IriBrivMaster_Component
     {
 		this.GemFarmGUID:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
-		g_IriBrivMaster_GUI.Init()
 		this.LoadSettings()
 		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings global available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
+		g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Overwrite with IBM class entirely
+		g_IriBrivMaster_GUI.Init() ;Must follow IBM memory manager being set up in g_SF
+		g_IriBrivMaster_GUI.UpdateGUISettings(this.settings) ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
         g_IriBrivMaster_StopFunctions.Push(ObjBindMethod(this, "Stop"))
@@ -162,12 +165,16 @@ Class IC_IriBrivMaster_Component
 		this.Chests.OpenedGold:=0
 		this.Chests.OpenedSilver:=0
 		this.Chests.OpenedGold:=0
+		if(this.settings.IBM_Version_Check)
+			this.RunVersionCheck() ;TODO: It might make sense to delay this via a timer?
+		if(this.settings.IBM_Offsets_Check)
+			this.CheckOffsetVersions() ;TODO: Again a timer perhaps?
     }
 
 	; Returns an object with default values for all settings.
     GetNewSettings()
     {
-        settings := {}
+        settings:={}
         settings.IBM_Chests_TimePercent := 90
         settings.IBM_Offline_Stack_Zone:=500
 		settings.IBM_Offline_Stack_Min:=300
@@ -230,13 +237,17 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Level_Recovery_Softcap:=0
 		settings.IBM_Format_Date_Display:="yyyy-MM-ddTHH:mm:ss" ;Hidden setting for date / time display
 		settings.IBM_Format_Date_File:="yyyyMMddTHHmmss" ;Hidden setting for date / time output in filenames, as : is not a valid character there
+		settings.IBM_Version_Check:=false
+		settings.IBM_Offsets_Check:=false
+		settings.IBM_Offsets_Lock_Pointers:=false
+		settings.IBM_Offsets_URL:="https://raw.githubusercontent.com/RLee-EN/BrivMaster-Imports/refs/heads/main/" ;Hidden setting to allow a different offset source to be used if wanted
         return settings
     }
 
 	SaveSettings()
     {
         settings := this.Settings
-        g_SF.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
+        IC_BrivMaster_SharedFunctions_Class.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 		{
@@ -716,7 +727,7 @@ Class IC_IriBrivMaster_Component
 				gameSettings[CNEName]:=targetValue
 		}
 	}
-	
+
 	ForcedSettingCheck(gameSettings, CNEName, value, byRef changeCount,change:=false) ;For settings where we don't give or save an option
 	{
 		if gameSettings[CNEName]!=value
@@ -989,7 +1000,7 @@ Class IC_IriBrivMaster_Component
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
             this.SharedRunData.UpdateOutbound("IBM_RestoreWindow_Enabled",!this.SharedRunData.IBM_RestoreWindow_Enabled)
 		else
-			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
+			Msgbox 48, "BrivMaster",Failed to update script ;48 is excamation, +0 for just OK
 	}
 
 	ParseRouteImportString(routeString)
@@ -1070,7 +1081,7 @@ Class IC_IriBrivMaster_Component
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
             this.SharedRunData.UpdateOutbound("IBM_RunControl_DisableOffline",!this.SharedRunData.IBM_RunControl_DisableOffline) ;Toggle
 		else
-			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
+			Msgbox 48, "BrivMaster",Failed to update script ;48 is excamation, +0 for just OK
 	}
 
 	SetControl_QueueOffline()
@@ -1078,7 +1089,7 @@ Class IC_IriBrivMaster_Component
 		If (ComObjType(this.SharedRunData,"IID") OR this.RefreshComObject())
 			this.SharedRunData.UpdateOutbound("IBM_RunControl_ForceOffline",!this.SharedRunData.IBM_RunControl_ForceOffline) ; Toggle
 		else
-			Msgbox 48, "BrivMaster","Failed to update script." ;48 is excamation, +0 for just OK
+			Msgbox 48, "BrivMaster",Failed to update script ;48 is excamation, +0 for just OK
 	}
 
 	UpdateStatus() ;Run by timer to update the GUI
@@ -1124,7 +1135,7 @@ Class IC_IriBrivMaster_Component
     {
         needSave := false
         default := this.GetNewSettings()
-        this.Settings := settings := g_SF.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
+        this.Settings := settings := IC_BrivMaster_SharedFunctions_Class.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath) ;Cannot use the instance as it might not be set up yet - it needs the exe location from these settings to set up .Memory
         if (!IsObject(settings))
         {
             this.Settings := settings := default
@@ -1153,8 +1164,6 @@ Class IC_IriBrivMaster_Component
         }
         if (needSave)
             this.SaveSettings()
-        ; Set the state of GUI buttons with saved settings.
-        g_IriBrivMaster_GUI.UpdateGUISettings(settings)
     }
 
     UpdateSetting(setting, value)
@@ -1252,4 +1261,353 @@ Class IC_IriBrivMaster_Component
         }
         return cards
     }
+
+	RunVersionCheck() ;Main version check wrapper
+	{
+		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.VersionCheckSH()
+		this.VersionCheckAddons()
+		this.BasicServerCaller:=""
+	}
+
+	VersionCheckSH() ;SH has the version on line 25 of the main ICScriptHub.ahk file
+    {
+        currentVersionLine:=GetScriptHubVersion() ;e.g. "v4.4.6, 2025-11-03"
+        remoteURL:="https://raw.githubusercontent.com/antilectual/Idle-Champions/refs/heads/main/ICScriptHub.ahk" ;This would ideally be a global variable somewhere in ICScriptHub.ahk
+		remoteScript:=this.BasicServerCaller.BasicServerCall(remoteURL)
+        line:=StrSplit(remoteScript, "`n", "`r")
+        remoteVersionLine:=line[25]
+        comparison:=this.VersionComparison(remoteVersionLine,currentVersionLine)
+        versionString:="Script Hub: "
+		if(comparison.GT)
+		{
+            versionString.=currentVersionLine . " - New version " . comparison.TestVersion . " available"
+			colour:="cFFC000" ;Amber
+		}
+        else if(comparison.E)
+        {
+			versionString.=currentVersionLine
+			colour:="cGreen"
+		}
+		else
+        {
+			versionString.=currentVersionLine . " - Server version " . comparison.TestVersion
+			colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
+		}
+		GuiControl, ICScriptHub:, IBM_Version_Text_SH, %versionString% ;Update UI
+		GuiControl, ICScriptHub:+%colour%, IBM_Version_Status_SH
+		GuiControl, ICScriptHub:MoveDraw,IBM_Version_Status_SH ;Required to update the colour as we don't change the text
+	}
+
+	VersionCheckAddons()
+    {
+		index:=1
+		for k,v in AddonManagement.EnabledAddons
+        {
+            remoteURL:=this.ExtractAddonUrl(v.Url)
+			versionString:=v.Name . ": " . v.Version
+			if(remoteURL)
+			{
+				addonDetails:=this.BasicServerCaller.BasicServerCall(remoteURL)
+				comparison:=this.VersionComparison(addonDetails.Version,v.Version)
+				if(comparison.GT)
+				{
+					versionString.=" - New version " . comparison.TestVersion . " available"
+					colour:="cFFC000" ;Amber
+				}
+				else if(comparison.E)
+				{
+					colour:="cGreen" ;Nothing to add to the text here
+				}
+				else
+				{
+					versionString.=" - Server version " . comparison.TestVersion
+					colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
+				}
+			}
+			else
+				versionString.="`t Check Failed"
+			GuiControl, ICScriptHub:, IBM_Version_Text_Addon_%index%, %versionString% ;Update UI
+			GuiControl, ICScriptHub:+%colour%, IBM_Version_Status_Addon_%index%
+			GuiControl, ICScriptHub:MoveDraw,IBM_Version_Status_Addon_%index% ;Required to update the colour as we don't change the text
+			index++
+        }
+    }
+
+	ExtractAddonUrl(url) ;The addon URL will have a format like https://github.com/RLee-EN/BrivMaster/tree/main/IC_BrivMaster_Extra, but directly downloading the file requires https://raw.githubusercontent.com/RLee-EN/BrivMaster/refs/heads/main/IC_BrivMaster_Extra. Returns "" if the URL is not in the expected format
+	{
+		found:=RegExMatch(url,"O)^https://github.com/(.+)/tree/(.+)$",Matches)
+		if(found)
+			return "https://raw.githubusercontent.com/" . Matches[1] . "/refs/heads/" . Matches[2] . "/Addon.json"
+		else
+			return ""
+	}
+
+	VersionComparison(versionStringTest,versionStringBase) ;Returns an object with the extracted versions. Version numbers must be the first numbers/periods in the string, comparison is test against base, so VersionComparsion(3,2) is greater than
+	{
+		result:={}
+		result.GT:=false ;Greater than
+		result.LT:=false
+		result.E:=false
+		foundBase:=RegExMatch(versionStringBase,"[\d.]+",versionsBase) ;Extract 1.2.3 etc
+		foundTest:=RegExMatch(versionStringTest,"[\d.]+",versionsTest)
+		result.BaseVersion:=versionsBase
+		result.TestVersion:=versionsTest
+		if(foundBase AND foundTest)
+		{
+			partsBase:=StrSplit(versionsBase,".")
+			partsTest:=StrSplit(versionsTest,".")
+			loops:=Max(partsBase.Count(),partsTest.Count())
+			loop %loops%
+			{
+				if(A_Index > partsBase.Count()) ;Test must have more elements, as A_Index cannot be greater than loops
+				{
+					result.GT:=true
+					return result
+				}
+				else if (A_Index > partsTest.Count()) ;Base must have more elements
+				{
+					result.LT:=true
+					return result
+				}
+				else if (partsTest[A_Index] > partsBase[A_Index])
+				{
+					result.GT:=true
+					return result
+				}
+				else if (partsTest[A_Index] < partsBase[A_Index])
+				{
+					result.LT:=true
+					return result
+				} ;Otherwise we move on to the next element
+			}
+		}
+		else if(foundTest)
+		{
+			result.GT:=true
+			return result ;If test has a value and base does not, it is considered greater
+		}
+		else if(foundBase)
+		{
+			result.LT:=false
+			return result
+		}
+		result.E:=true ;Neither valid or both fully equal, so they are the same
+		return result
+	}
+
+	GetPlatformString() ;Converts a numeric platform ID to a text string, e.g. 11 -> Steam (11)
+	{
+		platformID:=g_SF.Memory.ReadPlatform()
+		if(platformID)
+			return this.GetPlatform(platformID)
+		else
+			return "<Unable to read>"
+	}
+
+	GetPlatform(platformID)
+	{
+		switch platformID
+		{
+			case 5: return "Kongregate (" . platformID . ")"
+			case 6: return "Armor Games (" . platformID . ")"
+			case 11: return "Steam (" . platformID . ")"
+			case 13: return "Servers (" . platformID . ")"
+			case 14: return "Servers (" . platformID . ")"
+			case 16: return "Sony (" . platformID . ")"
+			case 17: return "Xbox (" . platformID . ")"
+			case 18: return "CNE Games (" . platformID . ")"
+			case 20: return "Kartridge (" . platformID . ")"
+			case 21: return "EGS (" . platformID . ")" ;Note this is the full 'Epic Games Store' in the client
+			Default: return "UNKNOWN (" . platformID . ")"
+		}
+	}
+
+	GetPlayServerFriendly()
+	{
+		webRoot:=g_SF.Memory.ReadWebRoot()
+		if(webRoot)
+		{
+			if(RegExMatch(webRoot,"ps\d+\.[^/]+",match))
+				return match
+			else
+				return "Invalid URL"
+		}
+		else
+			webRoot:="Invalid memory read"
+		return webRoot
+	}
+
+	CheckOffsetVersions()
+	{
+		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		currentPointers:=this.GetPointersVersion()
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
+		currentImports:=g_SF.Memory.GetImportsVersion()
+		comparison:=this.VersionComparison(gameVersion,currentImports)
+		if(comparison.GT)
+			colour:="cRed"
+		else
+			colour:="cBlack"
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
+		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
+		platformID:=g_SF.Memory.ReadPlatform()
+		if(!platformID)
+		{
+			prompt:="Briv Master was unable to read your platform ID from the game. Please enter one of the following:"
+			prompt.="`nSteam: 11"
+			prompt.="`nEpic Games Store: 21"
+			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
+			platformID:=Trim(platformID)
+			if(platformID!=11 AND platformID!=21)
+			{
+				return
+			}
+		}
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
+		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
+		splitCSV:=StrSplit(offsetHeader,",")
+		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
+		{
+			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
+			if(comparison.GT)
+				colour:="cRed"
+			else
+				colour:="cBlack"
+			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
+			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
+			comparison:=this.VersionComparison(splitCSV[1],currentImports)
+			if(comparison.GT)
+				colour:="cRed"
+			else
+				colour:="cBlack"
+			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
+			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
+
+		}
+		else
+			Msgbox 48, Briv Master, Unable to read offset header ;48 is excamation, +0 for just OK
+		this.BasicServerCaller:=""
+	}
+
+	DownloadOffsets() ;TODO: Resolve the massive duplication with CheckOffsetVersions()
+	{
+		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		currentPointers:=this.GetPointersVersion()
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
+		currentImports:=g_SF.Memory.GetImportsVersion()
+		comparison:=this.VersionComparison(gameVersion,currentImports)
+		if(comparison.GT)
+			colour:="cRed"
+		else
+			colour:="cBlack"
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
+		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
+		platformID:=g_SF.Memory.ReadPlatform()
+		if(!platformID)
+		{
+			prompt:="Briv Master was unable to read your platform ID from the game. Please enter one of the following:"
+			prompt.="`nSteam: 11"
+			prompt.="`nEpic Games Store: 21"
+			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
+			platformID:=Trim(platformID)
+			if(platformID!=11 AND platformID!=21)
+			{
+				return
+			}
+		}
+		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
+		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
+		splitCSV:=StrSplit(offsetHeader,",")
+		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
+		{
+			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
+			if(comparison.GT)
+				colour:="cRed"
+			else
+				colour:="cBlack"
+			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
+			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
+			comparison:=this.VersionComparison(splitCSV[1],currentImports)
+			if(comparison.GT)
+				colour:="cRed"
+			else
+				colour:="cBlack"
+			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
+			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
+			prompt:="Confirm download of the following:"
+			prompt.=this.settings.IBM_Offsets_Lock_Pointers ? "`nPointers preserved" : "`nPointers: " . splitCSV[3] . " " . splitCSV[4]
+			prompt.="`nImports: " . splitCSV[1] . " " . splitCSV[2]
+			Msgbox 36, Briv Master, %prompt% ;32 is question, 4 is Yes/No
+			ifMsgBox Yes
+			{
+				remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Data_P" . platformID . ".zlib"
+				offsetZlib:=this.BasicServerCaller.BasicServerCall(remoteURL)
+				if(offsetZlib)
+				{
+					if(g_Zlib.__Class!="IC_BrivMaster_Budget_Zlib_Class") ;Create a zlib instance if needed
+						g_Zlib:=new IC_BrivMaster_Budget_Zlib_Class
+					offsetJSON:=g_Zlib.Inflate(offsetZlib)
+					offsetData:=AHK_JSON.Load(offsetJSON)
+					Splitpath A_LineFile,,scriptDir
+					offsetDirectory:=scriptDir . "\Offsets\"
+					if !InStr(FileExist(offsetDirectory), "D") ;Create the directory if missing
+						FileCreateDir, %offsetDirectory%
+					for importFile,importString in offsetData["Imports"]
+					{
+						Splitpath A_LineFile,,scriptDir
+						dataPath:=scriptDir . "\Offsets\IC_" . importFile .  "_Import.ahk"
+						FileDelete, %dataPath%
+						FileAppend, %importString%, %dataPath%
+					}
+					dataPath:=scriptDir . "\Offsets\IC_Offsets.json"
+					if(this.settings.IBM_Offsets_Lock_Pointers) ;In this case we have to load the existing pointer file, update the import versions, and re-output
+					{
+						FileRead, existingJSON, %dataPath%
+						existingData:=AHK_JSON.Load(existingJSON)
+						existingData["Import_Version_Major"]:=offsetData["Pointers","Import_Version_Major"]
+						existingData["Import_Version_Minor"]:=offsetData["Pointers","Import_Version_Minor"]
+						existingData["Import_Revision"]:=offsetData["Pointers","Import_Revision"]
+						if(existingData["Platform"]!=offsetData["Pointers","Platform"])
+							Msgbox 48, Briv Master, % "Update imports only selected but downloaded platform differs from existing:`nExisting: " . existingData["Platform"] . "`nDownloaded: " . offsetData["Pointers","Platform"] . "`nPlease review"
+						existingJSON:=AHK_JSON.Dump(existingData,,"`t") ;This should be formatted as we might need to manually review pointers
+						FileDelete, %dataPath%
+						FileAppend, %existingJSON%, %dataPath%
+					}
+					else ;Just output
+					{
+						offsetJSON:=AHK_JSON.Dump(offsetData["Pointers"],,"`t") ;This should be formatted as we might need to manually review pointers
+						FileDelete, %dataPath%
+						FileAppend, % offsetJSON, %dataPath%
+					}
+					prompt:="Download complete. Script Hub and the Gem Farm, if running, must be restarted independantly to use the new offsets.`nRestart Script Hub now?"
+					Msgbox 36, Briv Master, %prompt% ;32 for question, +4 for Yes/No
+					ifMsgBox Yes
+					{
+						Reload_Clicked()
+					}
+				}
+				else
+					Msgbox 48, Briv Master, Unable to read offset data ;48 is excamation, +0 for just OK
+			}
+		}
+		else
+			Msgbox 48, Briv Master, Unable to read offset header ;48 is excamation, +0 for just OK
+		this.BasicServerCaller:=""
+	}
+
+	GetPointersVersion() ;As only used in the hub, no point putting the logic in a shared file
+	{
+		return g_SF.Memory.Versions.Pointer_Version_Major . g_SF.Memory.Versions.Pointer_Version_Minor . " " . g_SF.Memory.Versions.Pointer_Revision . " " . this.GetPlatform(g_SF.Memory.Versions.Platform)
+	}
 }

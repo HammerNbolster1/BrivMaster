@@ -146,6 +146,70 @@ Min:Max: The target number of each card can be entered. The default of 4:5 Moon 
 Start: Start re-rolling. The current status is displayed below the buttons, including the number of re-rolls used once completed.  
 
 Stop: Stop the tool early.  
+
+## BM Game
+
+This tab contains on the game and memory read setup along with addon information
+
+### Game Location  
+This section specifies where the game is and how it is launched. It can be populated automatically whilst pressing the 'Copy from IC' button. If using the EGS launcher, select the EGS tickbox first.
+	
+Executable: The name of the game executable, normally IdleDragons.exe. This shoulld not need to be changed.
+	
+> Author's Note: Some methods of running two farms on the same PC require one of the executables to be renamed, which is why this is editable at all.
+	
+Location: The game install location.
+	
+Launch Command: The command used to launch the game. For non-EGS setups this will just be the Executable and Location fields combined, however for EGS it will either be the EGS URI for the game, or if using an alternative to the EGS Launcher the appropriate command will need to be added here.
+	
+Hide launcher: Selecting this option will hide the window created by invoking the Launch Command. Use this only for 3rd party EGS launchers that might otherwise pop up a command window. Using it with the game directly will cause it to fail to start.
+	
+EGS & Copy from IC: Described in the introduction to this group.
+
+### Offsets
+
+Offsets are the distance from one memory location to another. We use this to allow us to find a small number of lower level objects in memory and then determine the locations of the many individual items we need from those.
+- Pointers: These define the locations of the small number of lower level objects. They take significant effort to find, but fortunately change rarely; usually only when the Unity version the game is based on changes.
+- Imports: These define path from one of the lower level objects in the Pointers to a specific variable in memory that the script needs.  There are large numbers of them but they are generated as a single operation. They usually change with every major game version. Minor versions tend not to require new imports.
+This group provides an overview of the game version and the offsets currently installed.
+
+Check now: Check the current offsets against those available on the Offsets GitHub for your platform. This updates the two 'GitHub' entries.
+Download: Download the latest Offsets (or only imports, per Update imports only below) from the Offsets Github. This will request your platform ID if it cannot read it from the game (e.g. because you currently have very outdated offsets, or those for another platform)
+
+> Author's Note: The Briv Master respository does not include Offsets, for ease of updating, as one platform would constantly have to switch back. As a result new installs will need to manually pick their platform. Those one the CNE client can use the Steam option.
+
+Check Automatically: When this option is selected the Offset versions will be checked when Script Hub starts, equivallent to pressing Check Now above
+
+Update imports only: When selected pointer data will be presevered when using the Download button above. This is useful for those who've found that they needed to make tweaks to the pointer data.
+
+### Server
+
+This group shows the play server last read from the game. This can be useful when discussing issues, e.g. to see if others are experiencing slow resets on that server. This does not automatically refresh.
+
+Refresh: Updates the play server.
+
+### Core Versions
+
+This group shows the Script Hub and AHK versions in use. If versions are checked the circular indicator to the left will show a colour based on the version status:
+-Green: Current version is installed.
+-Amber: Current version is out of date.
+-Blue: Current version is newer than the one on github
+
+> Author's Note: Blue will be seen by those developing add-ons.
+
+A link to the Readme is also provided.
+
+### Version Check Sidebar
+
+This group controls checking of versions.
+
+On Load: When this option is selected the Script Hub and Addon versions will be checked against GitHub when Script Hub starts.
+
+Check now: Use to manually perform a version check.
+
+### Addon Versions
+
+This group lists all enabled addons along with version information. Refer to the Core Versions group.
 	
 ## BM Route
 
@@ -255,21 +319,6 @@ Dark Icon: Select to use a window icon with a black background instead of the de
 ## BM Levels
 This tab focuses mostly on champion levelling. After a little side quest, anyway.
 	
-### Game Location  
-This section specifies where the game is and how it is launched. It can be populated automatically whilst pressing the 'Copy from IC' button. If using the EGS launcher, select the EGS tickbox first.
-	
-Executable: The name of the game executable, normally IdleDragons.exe. This shoulld not need to be changed.
-	
-> Author's Note: Some methods of running two farms on the same PC require one of the executables to be renamed, which is why this is editable at all.
-	
-Location: The game install location.
-	
-Launch Command: The command used to launch the game. For non-EGS setups this will just be the Executable and Location fields combined, however for EGS it will either be the EGS URI for the game, or if using an alternative to the EGS Launcher the appropriate command will need to be added here.
-	
-Hide launcher: Selecting this option will hide the window created by invoking the Launch Command. Use this only for 3rd party EGS launchers that might otherwise pop up a command window. Using it with the game directly will cause it to fail to start.
-	
-EGS & Copy from IC: Described in the introduction to this group.
-	
 ### Levelling Options  
 Max sequential keys: The maximum number of levelling commands that will be send in a batch. A higher number increases the likelyhood of drifting whilst levelling, a lower number means more overhead in the script and may delay levelling of important champions at the start of the run. This setting has a minimum of 2 to allow modifier keys to be used along with an F-key.
 	
@@ -291,7 +340,7 @@ Recovery Levelling: With this option selected, if Briv does not have enough stac
 
 Smart Tatyana in Casino: When using a setup that has Melf in the M formation, this option will only level Tatyana (if also present) at the start of the run if Melf's spawn-more buff is not active. This may be beneficial because a decent level Melf (~30 spawn) is able to allow Ellywick to draw rapidly alone, and the extra champion plus load from having a full Tatyana wave active at once might not be worth it. If using this option, Tatyana's 'Start' level should be 0.
 	
-Surpress From Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason.
+Supress Front Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason.
 	
 Ghost Level: During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining, and should normally be enabled.
 	
@@ -300,7 +349,7 @@ This section allows the levelling of champions to be configured. The formations 
 	
 Refresh Formations: Updates the list of champions from the saved formations in-game.
 	
-Champion List: Each champion is displayed with their seat and name, along with their level selections
+Champion List: Each champion is displayed with their seat and name, along with their level selections.
 - Start: The level this champion is to be raised to at the start of a run; prior to the end of the Casino. This should only be set for farming-relevant champions, e.g. if bringing a champion along for their Scavenger effect, or for achievement progress, they should have a Start level of 0. 
 - Priority: The priority to be applied to levelling this champion at the start of a run (only, it does not apply to the Normal selection). A higher number is a higher priority. Options with a prioirty number followed by a second number apply that priority only until the champion has been raised to the level specified by the second number, after which it becomes 0. This is useful for champions that need to be placed and gain early abilities, but do not need to be fully levelled urgently. 4↓100 means 'Priority 4 until level 100, after which 0'. Priority 1 is used automatically by the script for some functions, so it's generally best to use the values above 1 to meet specific requriements.
 		
@@ -335,21 +384,19 @@ The following provide the Author's current setup, which is an end-game farm usin
 | Hew Maan | 220 | 0 | 220  | This example has Tatyana in M, so Hew Maan cannot have a spec saved. This avoids his spec pop-up which would appear if 300 was used.
 | Tatyana | 100  | 4  | 100 | See comment on Briv.
 | Diana | 100 | 2 | 100
-| Ellywick | 200 | 4↓100 | 200 | See priority description above for the reason this is benefical, and also the comment on Briv.
+| Ellywick | 200 | 4↓100 | 200 | See priority description above for the reason this is beneficial, and also the comment on Briv.
 | Imoen | 50 | 0 | 50 | Imoen gains the ability we need at level 40, and an ability of non-trivial complexity at level 60 (Perseverance, counting Favoured Foe kills). As Imoen is not important at the start of the run, she can use modifier levelling without much impact to avoid that ability.
-| Melf | 70 | 2 | 70 | This example has Baldric in M, so MElf cannot have a spec saved. This avoids his spec pop-up which would appear if 100 was used.
+| Melf | 70 | 2 | 70 | This example has Baldric in M, so Melf cannot have a spec saved. This avoids his spec pop-up which would appear if 100 was used.
 | Baldric | 200 | 2 | 200
 		
 > Author's Note: When saving Briv Master's settings, level settings will be ignored if no champions are displayed at all. Take care if tweaking options whilst doing something else in-game, as it is a little bit too easy to overwrite your settings. Once you have things configured to your satisfaction making a backup of IC_BrivMaster_Settings.json might be sensible.
 
 ## Hidden Settings
 Occasionally a setting may be added to Briv Master but not exposed via the GUI, most likely because it was a request with no opportunity cost, but not something that I necessarily agree with. Changing these settings requires editing the IC_BrivMaster_Settings.json file directly.
-
 - IBM_Allow_Modron_Buff_Off: Normally Briv Master will not start unless all three Modron core functions are enabled. Changing this from 0 to 1 allows the script to start with the Buffs portion disabled. This was added to allow potions to be used by familiars saved in the M formation instead. The user in question didn't want to have to change the options between different activities.
-
 - IBM_Format_Date_Display: AutoHotKey date format string (per https://www.autohotkey.com/docs/v1/lib/FormatTime.htm) to be used for date and time display.
-
 - IBM_Format_Date_File: As above, but must only use characters valid in file names. This notably means the colon is not permitted.
+- IBM_Offsets_URL: The GitHub URL to check for Offsets. Change this if you do not wish to use my repository.
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 

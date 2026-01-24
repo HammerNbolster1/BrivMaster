@@ -1,14 +1,8 @@
 {
 	"Name":"Briv Master",
-	"Version": "v0.2.15",
+	"Version": "v0.3.0",
     "Includes" : "IC_BrivMaster_Component.ahk",
     "Author" : "Irisiri",
-    "Url" : "https://github.com/RLee-EN/BrivMaster",
-    "Info" : "Consolidated Briv Gem Farming script",
-    "Dependencies" : [
-        {
-            "Name":"IC Core",
-            "Version":"v0.2.3"
-        }
-    ]
+    "Url" : "https://github.com/RLee-EN/BrivMaster/tree/main/IC_BrivMaster_Extra",
+    "Info" : "Consolidated Briv Gem Farming script"
 }

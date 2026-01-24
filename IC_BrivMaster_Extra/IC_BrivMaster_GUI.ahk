@@ -1,4 +1,5 @@
 ﻿GUIFunctions.AddTab("Briv Master")
+GUIFunctions.AddTab("BM Game")
 GUIFunctions.AddTab("BM Route")
 GUIFunctions.AddTab("BM Levels")
 
@@ -16,13 +17,14 @@ class IC_IriBrivMaster_GUI
 	static IBM_SYMBOL_UI_CONFIG:="⚙"
 	static IBM_SYMBOL_UI_LEFT:="◀"
 	static IBM_SYMBOL_UI_CLEAR:="○"
-
+	static IBM_SYMBOL_UI_LIGHT:="⬤"
+	
 	levelDataSet:={}
 	controlLock:=false
 
 	Init()
 	{
-		global ;required for control variables
+		global ;Required for GUI control variables
 		GUIFunctions.UseThemeTextColor()
 		GuiControl, ICScriptHub: +gIBM_Launch_Override, LaunchClickButton ;Override the main launch button to use IBM settings
 		groupWidth:=480
@@ -46,11 +48,11 @@ class IC_IriBrivMaster_GUI
         GUIFunctions.AddToolTip("IBM_MainButtons_Save", "Save Briv Master settings from all tabs")
 		GUIFunctions.AddToolTip("IBM_MainButtons_Reset", "Reset stats")
 		;Cycle
-		Gui, ICScriptHub:Add, Groupbox, xm+385 yp-8 w100 h34
+		Gui, ICScriptHub:Add, Groupbox, xm+385 yp-8 w100 h38
 		Gui, ICScriptHub:Add, Text, xp+5 yp+12 w90 0x200 h18 Center vIBM_RunControl_Cycle, % "Cycle -/-"
 		;Run control
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+5 w%groupWidth% h130 vIBM_RunControl_Group, Run Control
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+5 w%groupWidth% h141 vIBM_RunControl_Group, Run Control
 		Gui, ICScriptHub:Font, w400
 		;>Group for offline control options
 		Gui, ICScriptHub:Add, Groupbox, xs+8 ys+10 w290 h41
@@ -71,18 +73,17 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, xs+10 yp+35 w460 vIBM_RunControl_Status, -
 		Gui, ICScriptHub:Add, Text, xs+10 yp+15 w460 vIBM_RunControl_Stack, -
 		Gui, ICScriptHub:Add, Text, xs+10 yp+15, Stage:
-		Gui, ICScriptHub:Add, Text, x+3 w180 vIBM_Stats_Loop, -
-		Gui, ICScriptHub:Add, Text, xs+230 yp+0, Last Close:
-		Gui, ICScriptHub:Add, Text, x+3 w180 vIBM_Stats_Last_Close, -
+		Gui, ICScriptHub:Add, Text, x+3 w400 vIBM_Stats_Loop, -
+		Gui, ICScriptHub:Add, Text, xs+10 yp+15, Last Close:
+		Gui, ICScriptHub:Add, Text, x+3 w400 vIBM_Stats_Last_Close, -
 		Gui, ICScriptHub:Add, Text, xs+10 yp+15, Current Area / Run (s):
 		Gui, ICScriptHub:Add, Text, x+3 w80 vIBM_Stats_Current_Area_Run_Time, -
 		Gui, ICScriptHub:Add, Text, xs+230 yp+0, Current SB / Haste Stacks:
 		Gui, ICScriptHub:Add, Text, x+3 w80 vIBM_Stats_Current_Briv, -
 		;Stats
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h220 vIBM_Stats_Group, Run Stats
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%groupWidth% h220 vIBM_Stats_Group, Run Stats
 		Gui, ICScriptHub:Font, w400
-
 		Gui, ICScriptHub:Add, ListView , +cBlack xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, ICScriptHub:Default
@@ -106,9 +107,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_Stats_Fail_Runs, -
 		Gui, ICScriptHub:Add, Text, xs+250 y+4 w85, Failed Run Time:
 		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_Stats_Fail_Time, -
-		Gui, ICScriptHub:Add, Text, xs+250 y+4 w85, PlayServer:
-		Gui, ICScriptHub:Add, Text, x+3 w140 vIBM_PlayServer, -
-		
 		highlightWidth:=FLOOR((groupWidth-21)/2)
 		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
 		Gui, ICScriptHub:Add, Text, xs+10 y%highlightY% w%highlightWidth% Center vIBM_Stats_BPH, BPH
@@ -281,6 +279,109 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5
 		Gui, ICScriptHub:Add, Text, x+25 w130 vIBM_NonGemFarm_Elly_Status,
 
+		;GAME TAB
+		Gui, ICScriptHub:Tab, BM Game
+		;Game location
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+10 w%groupWidth% h126, Game Location
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w170 vIBM_Game_Exe gIBM_Game_Location_Settings
+		GUIFunctions.AddToolTip( "IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
+		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
+		GUIFunctions.AddToolTip( "IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to the window it creates. Do not use when launching the game directly")
+		Gui, ICScriptHub:Add, Button, xs+400 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
+		Gui, ICScriptHub:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Path gIBM_Game_Location_Settings
+		GUIFunctions.AddToolTip( "IBM_Game_Path", "The game install location")
+		Gui, ICScriptHub:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
+		GUIFunctions.AddToolTip( "IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
+		;Offsets
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+6 w%groupWidth% h106, Offsets
+		Gui, ICScriptHub:Font, w400
+		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
+		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
+		Gui, ICScriptHub:Add, Text, w150 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		Gui, ICScriptHub:Add, Text, w120 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+				
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers" 
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, Text, w150 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
+		Gui, ICScriptHub:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
+		Gui, ICScriptHub:Add, Button, xs+400 yp+0 w70 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now, Check now
+		
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Text, w45 xs+5 y+2 h18 0x200, % "Imports" 
+		Gui, ICScriptHub:Font, w400
+		
+		currentImports:=g_SF.Memory.GetImportsVersion()
+		comparison:=g_IriBrivMaster.VersionComparison(gameVersion,currentImports)
+		if(comparison.GT)
+			colour:="cRed"
+		else
+			colour:="cBlack"
+		Gui, ICScriptHub:Add, Text, w150 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
+		Gui, ICScriptHub:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"		
+		Gui, ICScriptHub:Add, Button, xs+400 yp+0 w70 vIBM_Offsets_Download gIBM_Offsets_Download, Download
+		
+		Gui, ICScriptHub:Add, CheckBox, xs+5 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Offsets_Check, Check automatically
+		GUIFunctions.AddToolTip( "IBM_Offsets_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		Gui, ICScriptHub:Add, CheckBox, x+10 w120 h18 0x200 Center vIBM_Offsets_Lock_Pointers gIBM_Offsets_Lock_Pointers, Update imports only
+		GUIFunctions.AddToolTip( "IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
+		;Server
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+6 w%groupWidth% h43, Server
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, Text, w400 xs+5 ys+15 h18 0x200 vIBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
+		Gui, ICScriptHub:Add, Button, xs+415 yp+0 w55 vIBM_Server_Check gIBM_Server_Check, Refresh
+		;Versions - core, static
+		Gui, ICScriptHub:Font, w700
+		sideBarWidth:=90
+		mainWidth:=groupWidth-sideBarWidth-5
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%mainWidth% h63, Core Versions
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
+		Gui, ICScriptHub:Add, Text, x+5 w350 h18 0x200 vIBM_Version_Text_SH, % "Script Hub: " . GetScriptHubVersion() ;This is a script-level function. Will be replaced with check data if checking is enabled
+		readMeLocation:=A_ScriptDir . "\ReadMe.md"
+		if(FileExist(readMeLocation))
+			Gui, ICScriptHub:Add, Link, xs+335 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
+		Gui, ICScriptHub:Add, Text, w350 xs+5 yp+20 h18 0x200, % "AHK Version: " . A_AhkVersion
+		
+		;Versions - check options sidebar
+		sideBarOffset:=mainWidth+10
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, CheckBox, xs+12 yp+15 w65 h18 0x200 vIBM_Version_Check gIBM_Version_Check, On load
+		GUIFunctions.AddToolTip( "IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		Gui, ICScriptHub:Add, Button, xs+10 yp+20 w70 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
+		
+		;Versions - addons, dynamic based on number of enabled addons. Addons cannot be enabled / disabled without restarting script hub, so this can be done at set up only, and having other items follow is therefore possible
+		Gui, ICScriptHub:Font, w700
+		AddonGroupHeight:=AddonManagement.EnabledAddons.Count() * 20 + 25
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%groupWidth% h%AddonGroupHeight% vIBM_Version_Groupbox, Addon Versions ;Height must be adjusted later
+		Gui, ICScriptHub:Font, w400
+		currentIndex:=1
+		GuiControlGet, AddonGroupPos, ICScriptHub:Pos, IBM_Version_Groupbox
+		yPos:=AddonGroupPosY + 16
+		for _,v in AddonManagement.Addons ;AddonManagement.EnabledAddons does not contain the directory for the ReadMe check
+        {
+			if(v.Enabled)
+			{
+				Gui, ICScriptHub:Add, Text, xs+10 y%yPos% w10 h18 0x200 vIBM_Version_Status_Addon_%currentIndex%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
+				Gui, ICScriptHub:Add, Text, w350 x+5 y%yPos% h18 0x200 vIBM_Version_Text_Addon_%currentIndex%, % v.Name ": " . v.Version ;Will be updated later
+				readMeLocation:=A_ScriptDir . "\Addons\" . v.Dir . "\ReadMe.md"
+				if(FileExist(readMeLocation))
+					Gui, ICScriptHub:Add, Link, xs+430 yp+0 w45 h18 0x200 vIBM_Version_Readme_Addon_%currentIndex%, % "<a href=""" . readMeLocation . """>Readme</a>"
+				yPos+=20
+				currentIndex++
+			}
+        }
+
 		;ROUTE TAB
 		Gui, ICScriptHub:Tab, BM Route
 		;Combine
@@ -408,24 +509,6 @@ class IC_IriBrivMaster_GUI
 
 		;LEVELS TAB
 		Gui, ICScriptHub:Tab, BM Levels
-		;Game location
-		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+10 w%groupWidth% h125, Game Location
-		Gui, ICScriptHub:Font, w400
-		Gui, ICScriptHub:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w170 vIBM_Game_Exe gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
-		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
-		GUIFunctions.AddToolTip( "IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to the window it creates. Do not use when launching the game directly")
-		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Game_EGS, EGS ;Note: Not a setting, only used by Copy from IC
-		GUIFunctions.AddToolTip( "IBM_Game_EGS", "Selecting this option and pressing Copy from IC will populate the launch path with the standard EGS launch command for Idle Champions")
-		Gui, ICScriptHub:Add, Button, x+10 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
-		Gui, ICScriptHub:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Path gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Path", "The game install location")
-		Gui, ICScriptHub:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
 		;Levelling Options
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+7 w%groupWidth% h102, Levelling Options
@@ -569,6 +652,11 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Game_Settings_Profile_1, % profile==1
 		GuiControl, ICScriptHub:, IBM_Game_Settings_Profile_2, % !(profile==1)
 		this.GameSettings_Update(data)
+		;Offsets
+		GuiControl, ICScriptHub:, IBM_Offsets_Check, % data.IBM_Offsets_Check
+		GuiControl, ICScriptHub:, IBM_Offsets_Lock_Pointers, % data.IBM_Offsets_Lock_Pointers
+		;Versions
+		GuiControl, ICScriptHub:, IBM_Version_Check, % data.IBM_Version_Check
 		;Levelling
 		this.RefreshLevelRows()
 		this.RefreshRouteJumpBoxes()
@@ -952,6 +1040,22 @@ class IC_IriBrivMaster_GUI
 	}
 }
 
+IBM_Server_Check()
+{
+	GuiControl, ICScriptHub:Text, IBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
+}
+
+IBM_Version_Check()
+{
+	GuiControlGet, value,, IBM_Version_Check
+	g_IriBrivMaster.UpdateSetting("IBM_Version_Check",value+0)
+}
+
+IBM_Version_Check_Now()
+{
+	g_IriBrivMaster.RunVersionCheck()
+}
+
 IBM_LevelRow_Feats_Set()
 {
 	RegExMatch(A_GuiControl,"IBM_LevelRow_(\d{1,2})_Feats_Set",row)
@@ -1015,6 +1119,28 @@ IBM_LevelRow_Feats_Set()
 			}
 		}
 	}
+}
+
+IBM_Offsets_Download()
+{
+	g_IriBrivMaster.DownloadOffsets()
+}
+
+IBM_Offsets_Check_Now()
+{
+	g_IriBrivMaster.CheckOffsetVersions()
+}
+
+IBM_Offsets_Check()
+{
+	GuiControlGet, value,, IBM_Offsets_Check
+	g_IriBrivMaster.UpdateSetting("IBM_Offsets_Check",value+0)
+}
+
+IBM_Offsets_Lock_Pointers()
+{
+	GuiControlGet, value,, IBM_Offsets_Lock_Pointers
+	g_IriBrivMaster.UpdateSetting("IBM_Offsets_Lock_Pointers",value+0)
 }
 
 IBM_LevelRow_Feats_Clear()
@@ -1100,7 +1226,6 @@ IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The g
 
 IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. Note that using WinGet ProcessPath will return odd values for some mounted devices
 {
-	GuiControlGet, isEGS,, IBM_Game_EGS
 	GuiControlGet, currentExe,, vIBM_Game_Exe
 	useExe:="IdleDragons.exe" ;Standard .exe name
 	hWnd:=WinExist("ahk_exe " . useExe)
@@ -1112,7 +1237,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 	if(hWnd) ;A game window exists
 	{
 		location:=IBM_Game_Copy_From_Game_Location_Helper(useExe) . "\" ;Trailing \ is removed
-		if (isEGS)
+		if (g_SF.Memory.ReadPlatform()==21) ;21 is the EGS platform code
 			launch:="explorer.exe ""com.epicgames.launcher://apps/7e508f543b05465abe3a935960eb70ac%3A48353a502e72433298f25827e03dbff0%3A40cb42e38c0b4a14a1bb133eb3291572?action=launch&silent=true"""
 		else
 		{

@@ -4,8 +4,8 @@
 #NoEnv ; Avoids checking empty variables to see if they are environment variables.
 ListLines Off
 
-#include %A_LineFile%\..\..\..\SharedFunctions\json.ahk ;TODO: Move to AHK JSON, which moves having that in a separate file somewhere
-global g_webRoot:=A_Args[1] ? A_Args[1] : "http://ps22.idlechampions.com/~idledragons/"
+#include %A_LineFile%\..\..\..\SharedFunctions\json.ahk ;TODO: Move to AHK JSON, which means having that in a separate file somewhere
+global g_webRoot:=A_Args[1] ? A_Args[1] : "http://ps22.idlechampions.com/~idledragons/" ;TODO: Just pass this to the function instead of making it a global?
 ServerCallSave(A_Args[2],A_Args[3])
 ExitApp
 

@@ -227,6 +227,8 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         ; wait for offline progress to finish
         g_SharedData.UpdateOutbound("LoopString","Waiting for offline progress...")
         offlineDone:=g_SF.Memory.ReadOfflineDone()
+		if(!offlineDone)
+			timeout*=2 ;Increase timeout to ensure offline progress can complete after server issues TODO: Check something else in this loop to make sure the game is actually alive?
 		while( ElapsedTime < timeout AND !offlineDone)
         {
             g_IBM.IBM_Sleep(45)
@@ -321,7 +323,8 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	CloseIC(string:="",usePID:=false)
     {
 		g_SharedData.UpdateOutbound("LastCloseReason",string)
-        g_SF.ResetServerCall() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function, should just be saving stacks?
+		g_IBM.Logger.AddMessage("Closing Game" . (string ? " " . string : ""))
+		g_SF.ResetServerCall() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function, should just be saving stacks?
         if (string!="")
             string:=": " . string
         g_SharedData.UpdateOutbound("LoopString","Closing IC" . string)

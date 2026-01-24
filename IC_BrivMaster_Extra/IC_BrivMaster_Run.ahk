@@ -645,10 +645,11 @@ class IC_BrivMaster_GemFarm_Class
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
-        if (!g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
-            g_SF.CheckifStuck(true)
-        g_PreviousZoneStartTime:=A_TickCount
-		this.TriggerStart:=true
+        if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
+            this.TriggerStart:=true ;Only set this if the reset works - at the time of writing RestartAdventure() sets it anyway in all fail cases, but that needs to change. Older comment follows | TODO: If the reset fails, we might still be in the original run - need to detect this. Only force if CheckifStuck() not triggered? This creates a difficulty with run 1, where forcing a restart creates another run 1. Possibly force ONLY for run 1, just to reduce the total impact, as a workaround. Maybe we need to process the return values from the RestartAdventure() server calls to determine if it actually went through?
+		else
+			g_SF.CheckifStuck(true) ;A dedicated handler might be better than this odd forced option in CheckifStuck()
+       g_PreviousZoneStartTime:=A_TickCount
     }
 
 	;GEM FARM WINDOW
@@ -690,8 +691,8 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
-		importsMajor:=g_ImportsGameVersion64
-		importsMinor:=g_ImportsGameVersionPostFix64
+		importsMajor:=g_SF.Memory.Versions.Import_Version_Major
+		importsMinor:=g_SF.Memory.Versions.Import_Version_Minor
 		colour:="cRed" ;Default
 		if (gameMajor!="" AND importsMajor!="") ;If both major versions are populated
 		{
@@ -701,7 +702,7 @@ class IC_BrivMaster_GemFarm_Class
 				colour:="cFFA000" ;"cFFC000" Amber had insuffient contrast so darkened a bit
 		}
 		gameString:=gameMajor ? (gameMajor . (gameMinor ? gameMinor : "")) : "Unable to detect"
-		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "")) : "Unable to detect"
+		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "") . " " . g_SF.Memory.Versions.Import_Revision) : "Unable to detect"
 		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Game
 		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
 		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString

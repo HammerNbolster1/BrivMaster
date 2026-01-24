@@ -286,11 +286,11 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
     WaitForFirstGold(checkSeat)
     {
         StartTime := A_TickCount
-		gold:=g_SF.ConvQuadToDouble(g_SF.Memory.IBM_ReadGoldFirst8BytesBySeat(checkSeat), g_SF.Memory.IBM_ReadGoldSecond8BytesBySeat(checkSeat))
+		gold:=g_SF.Memory.IBM_ReadGoldFirst8BytesBySeat(checkSeat) ;Reading the first 8 bytes is sufficent since the test is just for 0, and x^y==0 is true iff x==0
 		while ((gold==0 OR gold=="") AND A_TickCount - StartTime < 10000 ) ;Note that the seat gold value will be null whilst the new run gets set up by the game
         {
 			Sleep 0
-			gold:=g_SF.ConvQuadToDouble(g_SF.Memory.IBM_ReadGoldFirst8BytesBySeat(checkSeat), g_SF.Memory.IBM_ReadGoldSecond8BytesBySeat(checkSeat))
+			gold:=g_SF.Memory.IBM_ReadGoldFirst8BytesBySeat(checkSeat)
         }
 		return gold>0
     }

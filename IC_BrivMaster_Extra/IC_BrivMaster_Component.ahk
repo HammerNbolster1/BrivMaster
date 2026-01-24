@@ -5,8 +5,6 @@
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
-SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
-SH_UpdateClass.AddClassFunctions(g_SF, IC_BrivMaster_SharedFunctions_Class) ;Make BM SharedFunctions available in standard instance. TODO: Not sure it makes sense to shoehorn all the contents (e.g. AHK JSON) into the base g_SF
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()

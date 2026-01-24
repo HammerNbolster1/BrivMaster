@@ -304,8 +304,8 @@ class IC_IriBrivMaster_GUI
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		Gui, ICScriptHub:Add, Text, w150 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
-		Gui, ICScriptHub:Add, Text, w120 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+		Gui, ICScriptHub:Add, Text, w200 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		Gui, ICScriptHub:Add, Text, w200 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 				
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers" 
@@ -345,7 +345,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%mainWidth% h63, Core Versions
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
-		Gui, ICScriptHub:Add, Text, x+5 w350 h18 0x200 vIBM_Version_Text_SH, % "Script Hub: " . GetScriptHubVersion() ;This is a script-level function. Will be replaced with check data if checking is enabled
+		Gui, ICScriptHub:Add, Text, x+5 w305 h18 0x200 vIBM_Version_Text_SH, % "Script Hub: " . GetScriptHubVersion() ;This is a script-level function. Will be replaced with check data if checking is enabled
 		readMeLocation:=A_ScriptDir . "\ReadMe.md"
 		if(FileExist(readMeLocation))
 			Gui, ICScriptHub:Add, Link, xs+335 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"

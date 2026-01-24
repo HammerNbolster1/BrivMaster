@@ -5,8 +5,6 @@
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
-SH_UpdateClass.AddClassFunctions(g_SF.Memory, IC_BrivMaster_MemoryFunctions_Class) ;Make memory overrides available as well
-SH_UpdateClass.AddClassFunctions(g_SF, IC_BrivMaster_SharedFunctions_Class) ;Make BM SharedFunctions available in standard instance. TODO: Not sure it makes sense to shoehorn all the contents (e.g. AHK JSON) into the base g_SF
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
@@ -480,7 +478,6 @@ Class IC_IriBrivMaster_Component
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
-
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 					{
@@ -1447,7 +1444,7 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 			colour:="cRed"
 		else
-			colour:="cBlack"
+			colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"])) ;TODO: Need to wrap this...maybe extend GUIFunctions. See 2 instances below as well
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1474,14 +1471,14 @@ Class IC_IriBrivMaster_Component
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 

@@ -1417,12 +1417,12 @@ Class IC_IriBrivMaster_Component
 		}
 	}
 
-	GetPlayServerFriendly()
+	GetPlayServerFriendly() ;Finds the ps19.idlechampions.com portion, or returns a descriptive error
 	{
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
-			if(RegExMatch(webRoot,"ps\d+\.[^/]+",match))
+			if(RegExMatch(webRoot,"ps\d+[^/]+",match)) 
 				return match
 			else
 				return "Invalid URL"

@@ -208,16 +208,6 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].Controller.userData.redRubies.Read()
     }
 
-	ReadSBStacks()
-	{
-        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
-    }
-
-    ReadHasteStacks()
-	{
-        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSprintStacks.Read()
-    }
-
 	ReadCurrentObjID()
 	{
         return this.GameManager.game.gameInstances[0].ActiveCampaignData.currentObjective.ID.Read()

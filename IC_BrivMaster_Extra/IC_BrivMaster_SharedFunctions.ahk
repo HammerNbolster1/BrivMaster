@@ -64,11 +64,13 @@ class IC_BrivMaster_SharedFunctions_Class
 		}
 		return false
 	}
-
-	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max
+	
+	/*
+	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max TODO: Not currently used as only checking if gold=0 or not
     {
         return (FirstEight + (2.0**63)) * (2.0**SecondEight)
     }
+	*/ 
 
     IsCurrentFormation(testformation:="") ;Returns true if the formation array passed is the same as the formation currently on the game field. Always false on empty formation reads. Requires full formation.
     {

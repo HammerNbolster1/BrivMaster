@@ -655,14 +655,15 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
     }
 
-
-    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad
+	/*
+    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad. 2026-01-25 - not in use as we're only checking for gold=0 or not, for which the exponent is not necessary
     {
         newObject := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
         goldOffsetIndex := newObject.FullOffsets.Count()
         newObject.FullOffsets[goldOffsetIndex] := newObject.FullOffsets[goldOffsetIndex] + 0x8
         return newObject.Read("Int64")
     }
+	*/
 
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {

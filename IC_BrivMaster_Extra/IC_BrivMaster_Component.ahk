@@ -18,7 +18,6 @@ global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
-global g_Zlib:={} ;Instantiated only on demand, since it's only used for offset updates which are not common
 
 scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. TODO: This needs a more elegant solution
 g_GlobalFontSize:=8
@@ -1550,9 +1549,9 @@ Class IC_IriBrivMaster_Component
 				offsetZlib:=this.BasicServerCaller.BasicServerCall(remoteURL)
 				if(offsetZlib)
 				{
-					if(g_Zlib.__Class!="IC_BrivMaster_Budget_Zlib_Class") ;Create a zlib instance if needed
-						g_Zlib:=new IC_BrivMaster_Budget_Zlib_Class
-					offsetJSON:=g_Zlib.Inflate(offsetZlib)
+					zlib:=new IC_BrivMaster_Budget_Zlib_Class ;Currently zlib is only used for offset updates, which should be rare, so create and free an instance just for this
+					offsetJSON:=zlib.Inflate(offsetZlib)
+					zlib:="" ;Free as above
 					offsetData:=AHK_JSON.Load(offsetJSON)
 					Splitpath A_LineFile,,scriptDir
 					offsetDirectory:=scriptDir . "\Offsets\"

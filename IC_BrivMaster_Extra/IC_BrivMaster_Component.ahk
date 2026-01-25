@@ -3,6 +3,8 @@
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
 

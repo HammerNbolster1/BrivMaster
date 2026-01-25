@@ -1445,7 +1445,7 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 			colour:="cRed"
 		else
-			colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"])) ;TODO: Need to wrap this...maybe extend GUIFunctions. See 2 instances below as well
+			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1472,14 +1472,14 @@ Class IC_IriBrivMaster_Component
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
@@ -1502,7 +1502,7 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 			colour:="cRed"
 		else
-			colour:="cBlack"
+			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1529,14 +1529,14 @@ Class IC_IriBrivMaster_Component
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"
@@ -1604,4 +1604,12 @@ Class IC_IriBrivMaster_Component
 	{
 		return g_SF.Memory.Versions.Pointer_Version_Major . g_SF.Memory.Versions.Pointer_Version_Minor . " " . g_SF.Memory.Versions.Pointer_Revision . " " . this.GetPlatform(g_SF.Memory.Versions.Platform)
 	}
+	
+	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
+    {
+        if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()
+            textType:="DefaultTextColor"
+        textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
+		return "c" . textColour
+    }
 }

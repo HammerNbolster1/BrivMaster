@@ -3,6 +3,8 @@
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
 
@@ -16,7 +18,6 @@ global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to
 global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
-global g_Zlib:={} ;Instantiated only on demand, since it's only used for offset updates which are not common
 
 scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. TODO: This needs a more elegant solution
 g_GlobalFontSize:=8
@@ -588,7 +589,7 @@ Class IC_IriBrivMaster_Component
 		else
 			this.MemoryReadFailCount++ ;The zone read is used as the trigger to refresh memory if needed, as it's done every time and should be available outside of a few moments during reset TODO: That isn't so true during offlines (even BrivMaster's ones)
 		;Current stats - Steelbones stacks
-  		stacks:=g_SF.Memory.ReadSBStacks()
+  		stacks:=g_Heroes[58].ReadSBStacks()
         if (stacks=="") ;If the memory read isn't current
         {
             if (this.Stats.StacksSB=="")
@@ -602,7 +603,7 @@ Class IC_IriBrivMaster_Component
 			message_SB:=this.Stats.StacksSB
         }
 		;Current stats - Haste stacks
-        stacks:=g_SF.Memory.ReadHasteStacks()
+        stacks:=g_Heroes[58].ReadHasteStacks()
 		if (stacks=="") ;If the memory read isn't current
         {
             if (this.Stats.StacksHaste=="")
@@ -1416,12 +1417,12 @@ Class IC_IriBrivMaster_Component
 		}
 	}
 
-	GetPlayServerFriendly()
+	GetPlayServerFriendly() ;Finds the ps19.idlechampions.com portion, or returns a descriptive error
 	{
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
-			if(RegExMatch(webRoot,"ps\d+\.[^/]+",match))
+			if(RegExMatch(webRoot,"ps\d+[^/]+",match)) 
 				return match
 			else
 				return "Invalid URL"
@@ -1444,7 +1445,7 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 			colour:="cRed"
 		else
-			colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"])) ;TODO: Need to wrap this...maybe extend GUIFunctions. See 2 instances below as well
+			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1471,14 +1472,14 @@ Class IC_IriBrivMaster_Component
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="c" . ((GUIFunctions.CurrentTheme["DefaultTextColor"] * 1 == "") ? GUIFunctions.CurrentTheme["DefaultTextColor"] : Format("{:#x}", GUIFunctions.CurrentTheme["DefaultTextColor"]))
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
@@ -1501,7 +1502,7 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 			colour:="cRed"
 		else
-			colour:="cBlack"
+			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1528,14 +1529,14 @@ Class IC_IriBrivMaster_Component
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:="cRed"
 			else
-				colour:="cBlack"
+				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"
@@ -1548,9 +1549,9 @@ Class IC_IriBrivMaster_Component
 				offsetZlib:=this.BasicServerCaller.BasicServerCall(remoteURL)
 				if(offsetZlib)
 				{
-					if(g_Zlib.__Class!="IC_BrivMaster_Budget_Zlib_Class") ;Create a zlib instance if needed
-						g_Zlib:=new IC_BrivMaster_Budget_Zlib_Class
-					offsetJSON:=g_Zlib.Inflate(offsetZlib)
+					zlib:=new IC_BrivMaster_Budget_Zlib_Class ;Currently zlib is only used for offset updates, which should be rare, so create and free an instance just for this
+					offsetJSON:=zlib.Inflate(offsetZlib)
+					zlib:="" ;Free as above
 					offsetData:=AHK_JSON.Load(offsetJSON)
 					Splitpath A_LineFile,,scriptDir
 					offsetDirectory:=scriptDir . "\Offsets\"
@@ -1603,4 +1604,12 @@ Class IC_IriBrivMaster_Component
 	{
 		return g_SF.Memory.Versions.Pointer_Version_Major . g_SF.Memory.Versions.Pointer_Version_Minor . " " . g_SF.Memory.Versions.Pointer_Revision . " " . this.GetPlatform(g_SF.Memory.Versions.Platform)
 	}
+	
+	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
+    {
+        if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()
+            textType:="DefaultTextColor"
+        textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
+		return "c" . textColour
+    }
 }

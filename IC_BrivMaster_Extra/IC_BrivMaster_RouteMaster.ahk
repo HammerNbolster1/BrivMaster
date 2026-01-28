@@ -159,7 +159,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	NeedToStack() ;Is stacking this run required, i.e. do we have less Steelbones than needed for the *next* run
 	{
-		return g_SF.Memory.ReadSBStacks() < this.GetTargetStacks()
+		return g_Heroes[58].ReadSBStacks() < this.GetTargetStacks()
 	}
 
 	GetTargetStacks(ignoreHaste:=false, forceRecalc:=false) ;Number of Steelbones stacks needed for the next run. Ignore haste is used for the status string showing the expected per run stack usage, rather than in-run calculation
@@ -286,7 +286,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	;.haste=48, .partialRun=true, .jumpsToDepletion=80 and .zone=501 would mean would mean we can jump 80 times, then will be out of stacks, having done the calculation on z501
 	{
 		calcResult:={}
-		calcResult.haste:=g_SF.Memory.ReadHasteStacks()
+		calcResult.haste:=g_Heroes[58].ReadHasteStacks()
 		if (!g_SF.Memory.ReadTransitioning()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking) - TODO: Needs to go in a function, as it's used in EnoughHasteForCurrentRun() too. Also TODO: The transition override was removing from this as the memory read is no longer available as of v637 (Nov25) - can we use one of the other transition reads to keep this robust?
 			calcResult.zone:=g_SF.Memory.ReadCurrentZone()
 		else ;Use the highest zone, as we should have spent the stacks as we left the previous one
@@ -318,7 +318,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			zone:=g_SF.Memory.ReadCurrentZone()
 		else ;Use the highest zone, as we should have spent the stacks as we left the previous one
 			zone:=g_SF.Memory.ReadHighestZone()
-		return g_SF.Memory.ReadHasteStacks() >= this.zones[zone].stacksToFinish
+		return g_Heroes[58].ReadHasteStacks() >= this.zones[zone].stacksToFinish
 	}
 
 	GetStackZone() ;Dynamic to allow the Ellywick Flames card based option
@@ -386,7 +386,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	BlankRestart() ;Restart without stacking TODO: We need an option to stop progress here for potatoes
     {
-		startStacks:=g_SF.Memory.ReadSBStacks()
+		startStacks:=g_Heroes[58].ReadSBStacks()
 		offlineStartTime:=A_TickCount
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
@@ -414,7 +414,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		g_IBM.GameMaster.SafetyCheck() ;TODO: Does this do more harm than good during Blank offlines? It can potentially swap the process back to the wrong one if the window is still in existance? Need to roll our own for the blank codepath? Possibly needs to be changed for all runs
 		totalTime:=A_TickCount-offlineStartTime
-		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
+		generatedStacks:=g_Heroes[58].ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
 		if (returnZone < startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
 		{
@@ -428,7 +428,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		else
 			g_IBM.Logger.AddMessage("BlankRestart() Exit, End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
         g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
-		g_PreviousZoneStartTime := A_TickCount
+		g_IBM.PreviousZoneStartTime:= A_TickCount
     }
 
 	TestForSteelBonesStackFarming() ;Returns true if we have a failure, namely the out of stacks and need to force restart case
@@ -437,7 +437,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if (currentZone < 0 OR currentZone >= this.targetZone) ;Don't test while modron resetting
             return false
         stackZone:=this.GetStackZone()
-		stacks:=g_SF.Memory.ReadSBStacks()
+		stacks:=g_Heroes[58].ReadSBStacks()
 		targetStacks:=this.GetTargetStacks()
  		if (stacks < targetStacks)
 		{
@@ -461,7 +461,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early or resetting within 5 zones of a reset.
 		;Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
-        if (g_SF.Memory.ReadHasteStacks() < 50 AND stacks >= targetStacks AND g_SF.Memory.ReadHighestZone() > this.thelloraTarget AND (g_SF.Memory.ReadHighestZone() <= this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...)
+        if (g_Heroes[58].ReadHasteStacks() < 50 AND stacks >= targetStacks AND g_SF.Memory.ReadHighestZone() > this.thelloraTarget AND (g_SF.Memory.ReadHighestZone() <= this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...)
         {
             if (this.RelayBlankOffline AND this.RelayData.IsActive()) ;TODO: Something smart here
 			{
@@ -505,16 +505,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		if (this.PostponeStacking(highZone))
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks
-		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
-		TYPE_SB:=MEMORY_SB_STAT.ValueType
-		startStacks:=stacks:=_MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+		g_Heroes[58].InitFastSB()
+		startStacks:=stacks:=g_Heroes[58].FastReadSBStacks()
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
 		if (stacks>=targetStacks)
 			return
 		StartTime:=A_TickCount
 		this.UltraStackFarmSetup()
-		ElapsedTime := 0
+		ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Stack Ultra")
         this.FallBackFromBossZone() ;In recovery scenarios we can end up on a boss zone (e.g. out of stacks before normal stackzone)
 		if (this.useBrivBoost)
@@ -538,7 +536,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				g_IBM.IBM_Sleep(15)
 			}
 			ElapsedTime:=A_TickCount - StartTime
-			stacks:=_MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+			stacks:=g_Heroes[58].FastReadSBStacks()
         }
 		StartTime:=A_TickCount
 		ultRetryCount:=g_Heroes[58].UseUltimate()
@@ -567,10 +565,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         {
 			g_IBM.GameMaster.RestartAdventure( "Ultra took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
-            g_PreviousZoneStartTime:=A_TickCount
+            g_IBM.PreviousZoneStartTime:=A_TickCount
             return
         }
-        g_PreviousZoneStartTime:=A_TickCount
+        g_IBM.PreviousZoneStartTime:=A_TickCount
 		generatedStacks:=stacks - startStacks
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online Ultra at z" . highZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
 		g_IBM.Logger.AddMessage("Ultra{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . highZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
@@ -602,13 +600,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackNormal() 
     {
-		; Melf stacking
-        if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone()))
+        if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone())) ; Melf stacking
             return 0
-		MEMORY_SB_STAT:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks
-		ADDRESS_SB:=_MemoryManager.instance.getAddressFromOffsets(MEMORY_SB_STAT.BasePtr.BaseAddress,MEMORY_SB_STAT.FullOffsets*)
-		TYPE_SB:=MEMORY_SB_STAT.ValueType
-		startStacks:= stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+		g_Heroes[58].InitFastSB()
+		startStacks:=stacks:=g_Heroes[58].FastReadSBStacks()
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
         if (this.ShouldAvoidRestack(stacks, targetStacks))
         {
@@ -655,7 +650,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				g_IBM.IBM_Sleep(15)
 			}
 			ElapsedTime := A_TickCount - StartTime
-			stacks := _MemoryManager.instance.read(ADDRESS_SB,TYPE_SB)
+			stacks:=g_Heroes[58].FastReadSBStacks()
         }
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
 		if (ElapsedTime >= maxOnlineStackTime)
@@ -663,10 +658,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             Critical Off
 			g_IBM.GameMaster.RestartAdventure( "Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
-            g_PreviousZoneStartTime := A_TickCount
+            g_IBM.PreviousZoneStartTime:=A_TickCount
             return
         }
-        g_PreviousZoneStartTime := A_TickCount
+        g_IBM.PreviousZoneStartTime:=A_TickCount
         runComplete:=g_SF.Memory.ReadHighestZone()>=this.targetZone ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
 		if (!runComplete)
 		{
@@ -714,7 +709,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff
     {
-        if (g_SF.Memory.ReadHasteStacks() < 50) ;Stack immediately if Briv can't jump anymore.
+        if (g_Heroes[58].ReadHasteStacks() < 50) ;Stack immediately if Briv can't jump anymore.
             return false
 		if (currentZone > this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
 			return false
@@ -758,7 +753,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	
 	StackRestart() ;TODO: Put rollback detection back into this?
     {
-		startStacks:= lastStacks := stacks := g_SF.Memory.ReadSBStacks()
+		startStacks:=lastStacks:=stacks:=g_Heroes[58].ReadSBStacks()
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
         if (this.ShouldAvoidRestack(stacks, targetStacks))
         {
@@ -791,7 +786,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				ElapsedTime := A_TickCount - sleepStart
             }
 			g_IBM.GameMaster.SafetyCheck()
-            stacks:=g_SF.Memory.ReadSBStacks()
+            stacks:=g_Heroes[58].ReadSBStacks()
             ;check if save reverted back to below stacking conditions
             if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Irisiri - this might need to consider the offline fallback?
             {
@@ -803,8 +798,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
 			this.offlineSaveTime:=-1 ;Flags as not active
         }
-        g_PreviousZoneStartTime := A_TickCount
-		generatedStacks:=g_SF.Memory.ReadSBStacks() - startStacks
+        g_IBM.PreviousZoneStartTime:=A_TickCount
+		generatedStacks:=g_Heroes[58].ReadSBStacks() - startStacks
 		totalTime:=A_TickCount-offlineStartTime
 		if (retryAttempt > maxRetries+1) ;We're a bit screwed at this point, +1 as retryAttempt is really 'tryAttempt'
         {
@@ -1252,7 +1247,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
         g_IBM.levelManager.LevelClickDamage()
         this.StartAutoProgressSoft()
-        g_PreviousZoneStartTime:=A_TickCount
+        g_IBM.PreviousZoneStartTime:=A_TickCount
     }
 }
 

@@ -244,7 +244,7 @@ class IC_IriBrivMaster_GUI
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_NarrowHero_2 gIBM_Game_Settings_Option_Change
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_AllHero_1 gIBM_Game_Settings_Option_Change
-		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Show All Heroes
+		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Show All Bench Seats
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_AllHero_2 gIBM_Game_Settings_Option_Change
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_Swap25100_1 gIBM_Game_Settings_Option_Change
@@ -911,7 +911,9 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_RestoreWindow_Toggle, Enable
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_RestoreWindow_Toggle
-		GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_RestoreWindow_Status
+		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
+		if(activeTab=="Briv Master")
+			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_RestoreWindow_Status
 	}
 
 	UpdateRunControlDisable(disableOffline) ;Offline stacking Pause/Resume
@@ -927,7 +929,9 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_Offline_Toggle, Pause
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_Offline_Toggle
-		GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusPause
+		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
+		if(activeTab=="Briv Master")
+			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusPause ;Only MoveDraw if the tab is active, to avoid weird bleed-throughh
 	}
 
 	UpdateRunControlForce(queueOffline) ;Force Queue
@@ -943,7 +947,9 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_Offline_Queue_Toggle, Queue
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_Offline_Queue_Toggle
-		GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusQueue
+		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
+		if(activeTab=="Briv Master")
+			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusQueue
 	}
 
 	UpdateRunStatus(cycleString,statusString,stackString)
@@ -1709,17 +1715,6 @@ IBM_OffLine_Flames_Enable_Edit(enableControl)
 		loop, 5
 			GuiControl, ICScriptHub:Disable, IBM_OffLine_Flames_Zone_Edit_%A_Index%
 	}
-}
-
-IBM_Chests_TimePercent()
-{
-	Gui, ICScriptHub:Submit, NoHide
-	value := % %A_GuiControl%
-	if value < 10 ;Enforce minimum and maximum
-		value:=10
-	else if value >800
-		value:=800
-	g_IriBrivMaster.UpdateSetting("IBM_Chests_TimePercent",value)
 }
 
 IBM_OffLine_Flames_Zone_Any_Edit() ;Nothing to do here

@@ -201,7 +201,7 @@ class IC_BrivMaster_GameObjectStructure_Add
 		}
 		else ;The base item we called from
 		{
-			this.BasePtr:= new SH_BasePtr(_MemoryManager.instance.getAddressFromOffsets(this.BasePtr.BaseAddress,this.FullOffsets*))
+			this.BasePtr:=new SH_BasePtr(_MemoryManager.instance.getAddressFromOffsets(this.BasePtr.BaseAddress,this.FullOffsets*))
 			this.Is64Bit := _MemoryManager.is64Bit
 			this.FullOffsets := Array()          ; Full list of offsets required to get from base pointer to this object
 			this.FullOffsetsHexString := ""      ; Same as above but in readable hex string format. (Enable commented lines assigning this value to use for debugging)

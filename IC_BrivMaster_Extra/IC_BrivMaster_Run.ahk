@@ -24,6 +24,8 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
+#include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
@@ -31,7 +33,7 @@ CoordMode, Mouse, Client
 global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
-global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it TODO: Set up to be used without an instance?
+global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it
 global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
@@ -102,13 +104,15 @@ class IC_BrivMaster_GemFarm_Class
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
-        g_PreviousZoneStartTime := A_TickCount
 		this.offRamp:=false ;Limit the code that runs at the end of a run
 		this.EllywickCasino:=New IC_BrivMaster_EllywickDealer_Class()
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
 		g_SharedData.UpdateOutbound("IBM_BuyChests",false)
+		this.PreviousZoneStartTime:=A_TickCount ;TODO: These 3 variables are for CheckifStuck, could maybe using encapsulating somewhere else (simple object for it?)
+		this.CheckifStuck_lastCheck:=0 
+        this.CheckifStuck_fallBackTries:=0	
 		Loop
         {
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
@@ -140,7 +144,7 @@ class IC_BrivMaster_GemFarm_Class
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
 				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
 					g_SharedData.UpdateOutbound("IBM_BuyChests",true)
-                g_PreviousZoneStartTime:=A_TickCount
+                this.PreviousZoneStartTime:=A_TickCount
 				this.TriggerStart:=false
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime) ;Set for the first loop
 				g_SharedData.UpdateOutbound("LoopString","Main Loop")
@@ -177,7 +181,7 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.UpdateOutbound_Increment("BossesHitThisRun")
-						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.offRamp AND !this.failedConversionMode AND needToStack AND g_SF.Memory.ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.offRamp AND !this.failedConversionMode AND needToStack AND g_Heroes[58].ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
 						{
 							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
@@ -205,7 +209,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.Logger.ResetReached()
 				g_SharedData.UpdateOutbound("LoopString","Pending modron reset")
 			}
-            g_SF.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
+            this.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
 			;Loop frequency check
 			this.IBM_SleepOffset(lastLoopEndTime,30)
 			DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
@@ -427,7 +431,7 @@ class IC_BrivMaster_GemFarm_Class
             }
 			if (!frontColumnLevellingAllowed) ;If not released in the loop, reset levels but don't level as we need to get on with progression
 				this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps)
-			this.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.EllywickCasino.Redraws . " M=" . this.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_SF.Memory.ReadSBStacks() . (this.EllywickCasino.StatusString ? " " . this.EllywickCasino.StatusString : "") . "}")
+			this.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.EllywickCasino.Redraws . " M=" . this.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . (this.EllywickCasino.StatusString ? " " . this.EllywickCasino.StatusString : "") . "}")
 		}
 		else
 		{
@@ -454,6 +458,41 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.LevelFormation("M",formationToLevelPostUnlock) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
 		}
 	}
+	
+    CheckifStuck() ;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
+    {
+		dtCurrentZoneTime:=A_TickCount - this.PreviousZoneStartTime
+		if (dtCurrentZoneTime<=35000) ;Irisiri - added fast exit for the standard case
+			return false
+        else if (dtCurrentZoneTime>35000 AND dtCurrentZoneTime<=45000 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 5000) ; first check - ensuring autoprogress enabled
+        {
+            this.RouteMaster.ToggleAutoProgress(1, true)
+            if(dtCurrentZoneTime < 40000) ;TODO: What purpose does this serve? To avoid interfering with the next check block?
+                this.CheckifStuck_lastCheck:=dtCurrentZoneTime
+        }
+        if (dtCurrentZoneTime > 45000 AND this.CheckifStuck_fallBackTries < 3 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 15000) ; second check - Fall back to previous zone and try to continue
+        {
+            ; reset memory values in case they missed an update.
+            this.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open. At least align with .PID?
+            g_SF.Memory.OpenProcessReader()
+            g_SF.ResetServerCall()
+            this.RouteMaster.FallBackFromZone() ;Try a fall back
+            this.RouteMaster.SetFormation() ;In the base script this just goes to Q, which might not be ideal, especially for feat swap
+            this.RouteMaster.ToggleAutoProgress(1, true)
+            this.CheckifStuck_lastCheck:=dtCurrentZoneTime
+            this.CheckifStuck_fallBackTries++
+        }
+        if (dtCurrentZoneTime > 65000)
+        {
+            this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]" )
+            this.GameMaster.SafetyCheck()
+            this.PreviousZoneStartTime:=A_TickCount
+            this.CheckifStuck_lastCheck:=0
+            this.CheckifStuck_fallBackTries:=0
+            return true
+        }
+        return false
+    }
 
 	;START PRE-FLIGHT CHECK
 
@@ -648,8 +687,13 @@ class IC_BrivMaster_GemFarm_Class
         if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
             this.TriggerStart:=true ;Only set this if the reset works - at the time of writing RestartAdventure() sets it anyway in all fail cases, but that needs to change. Older comment follows | TODO: If the reset fails, we might still be in the original run - need to detect this. Only force if CheckifStuck() not triggered? This creates a difficulty with run 1, where forcing a restart creates another run 1. Possibly force ONLY for run 1, just to reduce the total impact, as a workaround. Maybe we need to process the return values from the RestartAdventure() server calls to determine if it actually went through?
 		else
-			g_SF.CheckifStuck(true) ;A dedicated handler might be better than this odd forced option in CheckifStuck()
-       g_PreviousZoneStartTime:=A_TickCount
+        {
+            this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]")
+            this.GameMaster.SafetyCheck()
+            this.CheckifStuck_lastCheck:=0 ;This used to be done by passing a 'force' option to CheckifStuck(), which seemed clunky - but we still need to reset these as we are no longer stuck. Or at least we hope not.
+            this.CheckifStuck_fallBackTries:=0
+		}
+       this.PreviousZoneStartTime:=A_TickCount
     }
 
 	;GEM FARM WINDOW

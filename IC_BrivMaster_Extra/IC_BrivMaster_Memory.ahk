@@ -6,46 +6,46 @@ class IC_BrivMaster_EngineSettings_Class extends SH_StaticMemoryPointer ;EngineS
 {
     Refresh()
     {
-        if (_MemoryManager.is64bit == "") ; Don't build offsets if no client is available to check variable types.
+        if (_MemoryManager.is64bit=="") ;Don't build offsets if no client is available to check variable types.
             return
-        baseAddress := _MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
-        if (this.BasePtr.BaseAddress != baseAddress)
+        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        if (this.BasePtr.BaseAddress!=baseAddress)
         {
-            this.BasePtr.BaseAddress := baseAddress
-            this.Is64Bit := _MemoryManager.is64bit
-            if (this.UnityGameEngine == "")
+            this.BasePtr.BaseAddress:=baseAddress
+            this.Is64Bit:=_MemoryManager.is64bit
+            if (this.UnityGameEngine=="")
             {
-                this.UnityGameEngine := {}
-                this.UnityGameEngine.Core := {}
-                this.UnityGameEngine.Core.EngineSettings := new GameObjectStructure(this.StructureOffsets)
-                this.UnityGameEngine.Core.EngineSettings.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
-                this.UnityGameEngine.Core.EngineSettings.Is64Bit := _MemoryManager.is64Bit
+                this.UnityGameEngine:={}
+                this.UnityGameEngine.Core:={}
+                this.UnityGameEngine.Core.EngineSettings:=new GameObjectStructure(this.StructureOffsets)
+                this.UnityGameEngine.Core.EngineSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
+                this.UnityGameEngine.Core.EngineSettings.Is64Bit:=_MemoryManager.is64Bit
                 #include *i %A_LineFile%\..\Offsets\IC_EngineSettings_Import.ahk
                 return
             }
-            this.UnityGameEngine.Core.EngineSettings.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "EngineSettings")
+            this.UnityGameEngine.Core.EngineSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "EngineSettings")
             this.ResetBasePtr(this.UnityGameEngine.Core.EngineSettings)
         }
     }
 }
 
-class IC_BrivMaster_GameSettings_Class extends SH_StaticMemoryPointer ; GameSettings class contains IC's GameSettings class structure. Useful for finding details for doing server calls
+class IC_BrivMaster_GameSettings_Class extends SH_StaticMemoryPointer ;GameSettings class contains IC's GameSettings class structure. Useful for finding details for doing server calls
 {
     Refresh()
     {
-        if (_MemoryManager.is64bit == "") ; Don't build offsets if no client is available to check variable types.
+        if (_MemoryManager.is64bit == "") ;Don't build offsets if no client is available to check variable types.
             return
-        baseAddress := _MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
-        if (this.BasePtr.BaseAddress != baseAddress)
+        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        if (this.BasePtr.BaseAddress!=baseAddress)
         {
-            this.BasePtr.BaseAddress := baseAddress
-            this.Is64Bit := _MemoryManager.is64bit
-            if (this.CrusadersGame == "")
+            this.BasePtr.BaseAddress:=baseAddress
+            this.Is64Bit:=_MemoryManager.is64bit
+            if (this.CrusadersGame=="")
             {
-                this.CrusadersGame := {}
-                this.CrusadersGame.GameSettings := new GameObjectStructure(this.StructureOffsets)
-                this.CrusadersGame.GameSettings.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
-                this.CrusadersGame.GameSettings.Is64Bit := _MemoryManager.is64Bit
+                this.CrusadersGame:={}
+                this.CrusadersGame.GameSettings:=new GameObjectStructure(this.StructureOffsets)
+                this.CrusadersGame.GameSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
+                this.CrusadersGame.GameSettings.Is64Bit:=_MemoryManager.is64Bit
                 #include *i %A_LineFile%\..\Offsets\IC_GameSettings_Import.ahk
                 return
             }
@@ -55,36 +55,32 @@ class IC_BrivMaster_GameSettings_Class extends SH_StaticMemoryPointer ; GameSett
     }
 }
 
-class IC_BrivMaster_IdleGameManager_Class extends SH_MemoryPointer ; GameManager class contains the in game data structure layout
+class IC_BrivMaster_IdleGameManager_Class extends SH_MemoryPointer ;GameManager class contains the in game data structure layout
 {
     Refresh()
     {
-        ;==================
-        ;structure pointers
-        ;==================
-        baseAddress := _MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
-        if (_MemoryManager.is64bit == "") ; Don't build offsets if no client is available to check variable types.
+        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        if (_MemoryManager.is64bit == "") ;Don't build offsets if no client is available to check variable types. TODO: This is really being used as a 'is attached to process' flag, which works because wer'e only using 64 bit, but should probably be it's own thing - see 64bit purge
             return
-        if (this.BasePtr.BaseAddress != baseAddress) ; OR this.Is64Bit != _MemoryManager.is64bit) (in case 32 bit returns)
+        if (this.BasePtr.BaseAddress!=baseAddress)
         {
-            this.BasePtr.BaseAddress := baseAddress
-            this.Is64Bit := _MemoryManager.is64bit
+            this.BasePtr.BaseAddress:=baseAddress
+            this.Is64Bit:=_MemoryManager.is64bit
             ; Note: Using example Offsets 0xCB0,0 from CE, 0 is a mod (+) and disappears leaving just 0xCB0
             ; this.StructureOffsets[1] += 0x10
-            if (this.IdleGameManager == "") ; OR resetThis)  ; first run - Build objects OR 32bit switch
+            if (this.IdleGameManager=="")
             {
-                this.IdleGameManager := New GameObjectStructure(this.StructureOffsets)
-                this.IdleGameManager.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "IdleGameManager")
-                this.IdleGameManager.Is64Bit := _MemoryManager.is64bit
-                ; Build offsets for class using imported AHK files.
-                #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk
+                this.IdleGameManager:=New GameObjectStructure(this.StructureOffsets)
+                this.IdleGameManager.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "IdleGameManager")
+                this.IdleGameManager.Is64Bit:=_MemoryManager.is64bit
+                #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk ;Build offsets for class using imported AHK files.
                 ; DEBUG: Enable this line to be able to view the variable name of the GameObject. (e.g. this.game would have a GSOName variable that says "game" )
                 ; this.game.SetNames()
                 return
             }
             ; Objects exist, update memory addresses only
             ; Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
-            this.IdleGameManager.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
+            this.IdleGameManager.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
             this.ResetBasePtr(this.IdleGameManager)
         }
     }
@@ -120,10 +116,24 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.LastFormationSavesVersion:={} ;Irisiri- used for formation caching by the looks of it
 		this.SlotFormations:={} ;Irisiri - used for formation caching by the looks of it
     }
+	
+	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
+    {
+        _MemoryManager.exeName:=g_IBM_Settings["IBM_Game_Exe"]
+        isExeRead:=_MemoryManager.Refresh(,pid)
+        if(isExeRead==-1)
+            return
+        if(_MemoryManager.handle=="")
+            MsgBox, , , Could not read from exe. Try running as Admin. , 7
+        this.Is64Bit:=_MemoryManager.is64Bit
+		this.GameManager.Refresh()
+        this.GameSettings.Refresh()
+        this.EngineSettings.Refresh()
+    }
 
  	GetImportsVersion()
 	{
-        return this.Versions.Import_Version_Major . this.Versions.Import_Version_Minor . " " . this.Versions.Import_Revision
+        return this.Versions.Import_Version_Major . this.Versions.Import_Version_Minor . " " . this.Versions.Import_Revision ;'639 A', '639.1 B'
     }
 
 	ReadBaseGameVersion()
@@ -206,16 +216,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 	ReadGems()
 	{
         return this.GameManager.game.gameInstances[0].Controller.userData.redRubies.Read()
-    }
-
-	ReadSBStacks()
-	{
-        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
-    }
-
-    ReadHasteStacks()
-	{
-        return this.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSprintStacks.Read()
     }
 
 	ReadCurrentObjID()
@@ -484,7 +484,7 @@ class IC_BrivMaster_MemoryFunctions_Class
         return patronID
     }
 
-	HeroHasFeatSavedInFormation(heroID :=58, featID := 2131, formationSlot := 1)
+	HeroHasFeatSavedInFormation(heroID:=58, featID:=2131, formationSlot:=1)
 	{
         size:=this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[formationSlot].Feats[heroID].List.size.Read()
         if(size=="")
@@ -545,20 +545,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 		}
 		return false
 	}
-
-	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
-    {
-        _MemoryManager.exeName := g_IBM_Settings["IBM_Game_Exe"]
-        isExeRead := _MemoryManager.Refresh(,pid)
-        if(isExeRead == -1)
-            return
-        if(_MemoryManager.handle == "")
-            MsgBox, , , Could not read from exe. Try running as Admin. , 7
-        this.Is64Bit := _MemoryManager.is64Bit
-		this.GameManager.Refresh()
-        this.GameSettings.Refresh()
-        this.EngineSettings.Refresh()
-    }
 
 	IBM_ReadBaseGameSpeed() ;Reads the game speed without the area transition multipier Diana applies, e.g. x10 will flick between x10 and x50 constantly - this will always return x10
 	{
@@ -655,14 +641,15 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
     }
 
-
-    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad
+	/*
+    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad. 2026-01-25 - not in use as we're only checking for gold=0 or not, for which the exponent is not necessary
     {
         newObject := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
         goldOffsetIndex := newObject.FullOffsets.Count()
         newObject.FullOffsets[goldOffsetIndex] := newObject.FullOffsets[goldOffsetIndex] + 0x8
         return newObject.Read("Int64")
     }
+	*/
 
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {

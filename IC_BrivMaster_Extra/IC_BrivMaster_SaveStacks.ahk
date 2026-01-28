@@ -4,7 +4,7 @@
 #NoEnv ; Avoids checking empty variables to see if they are environment variables.
 ListLines Off
 
-#include %A_LineFile%\..\..\..\SharedFunctions\json.ahk ;TODO: Move to AHK JSON, which means having that in a separate file somewhere
+#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 global g_webRoot:=A_Args[1] ? A_Args[1] : "http://ps22.idlechampions.com/~idledragons/" ;TODO: Just pass this to the function instead of making it a global?
 ServerCallSave(A_Args[2],A_Args[3])
 ExitApp
@@ -26,7 +26,7 @@ ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specif
 		data:=WR.ResponseText
 		Try
 		{
-			response:=JSON.parse(data)
+			response:=AHK_JSON.Load(data)
 			if(!(response.switch_play_server==""))
 			{
 				retryNum++

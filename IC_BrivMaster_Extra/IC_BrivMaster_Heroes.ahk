@@ -12,6 +12,7 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 		{
 			switch heroID ;Create extended objects for heroes that need extra functionality
 			{
+				case 58: this[heroID]:=new IC_BrivMaster_Briv_Class(heroID,this.IDToIndexMap[heroID]) ;Briv
 				case 83: this[heroID]:=new IC_BrivMaster_Elly_Class(heroID,this.IDToIndexMap[heroID]) ;Elly
 				case 139: this[heroID]:=new IC_BrivMaster_Thellora_Class(heroID,this.IDToIndexMap[heroID]) ;Thellora
 				default: this[heroID]:=new IC_BrivMaster_Hero_Class(heroID,this.IDToIndexMap[heroID])
@@ -19,7 +20,7 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 		}
 	}
 
-	Init() ;Initialises the heroIndexMap if needed, returns true on success or if already done. This is for use with the hub side where we don't abort if the __new function cannot do this, so hub functions need to check this
+	Init() ;Initialises the heroIndexMap if needed, returns true on success or if already done. This is for use with the hub side where we don't abort if the __new function cannot do this, so hub functions need to check
 	{
 		if (this.initialised)
 			return true
@@ -346,6 +347,50 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 			this.Current.Priority:=1
 			this.Current.PriorityLimit:=100
 		}
+	}
+}
+
+class IC_BrivMaster_Briv_Class extends IC_BrivMaster_Hero_Class
+{
+	__new(heroID,heroIndex)
+	{
+		base.__new(heroID,heroIndex)
+		this.MEMORY_SB_ADDRESS:=""
+		this.MEMORY_SB_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.ValueType ;Cannot change
+	}
+
+	Reset()
+	{
+		base.Reset()
+		this.MEMORY_SB_ADDRESS:="" ;Stops rubbish being read if InitFastSB() has not been called
+	}
+	
+	;--------------------------------------------------------------------------------------
+	;---Hero related memory reads
+	;--------------------------------------------------------------------------------------
+	
+	ReadSBStacks()
+	{
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
+    }
+	
+	FastReadSBStacks() ;InitFastSB() must have been called prior to using this call
+	{
+		return _MemoryManager.instance.read(this.MEMORY_SB_ADDRESS,this.MEMORY_SB_TYPE)
+	}
+
+    ReadHasteStacks()
+	{
+        return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSprintStacks.Read()
+    }
+	
+	;------------------------------------------------------------------------------------
+	;---General functions
+	;------------------------------------------------------------------------------------
+	
+	InitFastSB() ;Resolves the pointers to the current Steelbones stat for direct reads, this is intended for online stacking where we spam-read SB stacks. ;TODO: Since this is part of the statHandler is should really only change when the game restarts - can we make use of these reads all the time?
+	{
+		this.MEMORY_SB_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.FullOffsets*)
 	}
 }
 

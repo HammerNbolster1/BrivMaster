@@ -1717,17 +1717,6 @@ IBM_OffLine_Flames_Enable_Edit(enableControl)
 	}
 }
 
-IBM_Chests_TimePercent()
-{
-	Gui, ICScriptHub:Submit, NoHide
-	value := % %A_GuiControl%
-	if value < 10 ;Enforce minimum and maximum
-		value:=10
-	else if value >800
-		value:=800
-	g_IriBrivMaster.UpdateSetting("IBM_Chests_TimePercent",value)
-}
-
 IBM_OffLine_Flames_Zone_Any_Edit() ;Nothing to do here
 {
 }

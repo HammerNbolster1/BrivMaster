@@ -174,7 +174,6 @@ Class IC_IriBrivMaster_Component
     GetNewSettings()
     {
         settings:={}
-        settings.IBM_Chests_TimePercent := 90
         settings.IBM_Offline_Stack_Zone:=500
 		settings.IBM_Offline_Stack_Min:=300
 		settings.IBM_OffLine_Flames_Use := false

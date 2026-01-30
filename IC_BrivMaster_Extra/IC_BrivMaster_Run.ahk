@@ -97,7 +97,6 @@ class IC_BrivMaster_GemFarm_Class
         g_ServerCall.UpdatePlayServer() ;TODO: Does doing this before ResetServerCall() make any sense? It won't have an instance yet?
         g_SF.ResetServerCall()
         g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
-        g_SaveHelper.Init() ; slow call, loads briv dictionary (3+s) Irisiri: pretty sure that isn't 3s in 2025 numbers...
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
@@ -688,12 +687,12 @@ class IC_BrivMaster_GemFarm_Class
             this.TriggerStart:=true ;Only set this if the reset works - at the time of writing RestartAdventure() sets it anyway in all fail cases, but that needs to change. Older comment follows | TODO: If the reset fails, we might still be in the original run - need to detect this. Only force if CheckifStuck() not triggered? This creates a difficulty with run 1, where forcing a restart creates another run 1. Possibly force ONLY for run 1, just to reduce the total impact, as a workaround. Maybe we need to process the return values from the RestartAdventure() server calls to determine if it actually went through?
 		else
         {
-            this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]")
+            this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down
             this.GameMaster.SafetyCheck()
-            this.CheckifStuck_lastCheck:=0 ;This used to be done by passing a 'force' option to CheckifStuck(), which seemed clunky - but we still need to reset these as we are no longer stuck. Or at least we hope not.
+            this.CheckifStuck_lastCheck:=0 ;This used to be done by passing a 'force' option to CheckifStuck(), which seemed clunky - but we still need to reset these as we are no longer stuck. Or at least we hope not. TODO: Make a stuck-checker object to contain this stuff?
             this.CheckifStuck_fallBackTries:=0
 		}
-       this.PreviousZoneStartTime:=A_TickCount
+		this.PreviousZoneStartTime:=A_TickCount
     }
 
 	;GEM FARM WINDOW

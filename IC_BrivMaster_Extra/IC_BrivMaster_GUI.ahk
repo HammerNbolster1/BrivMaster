@@ -898,7 +898,7 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:Text, IBM_RunControl_Status, Unable to read data from main script
 	}
 
-	UpdateRestoreWindow(isEnabled)
+	UpdateRestoreWindow(isEnabled,allowMoveDraw:=true)
 	{
 		If (isEnabled)
 		{
@@ -911,12 +911,11 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_RestoreWindow_Toggle, Enable
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_RestoreWindow_Toggle
-		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
-		if(activeTab=="Briv Master")
+		if(allowMoveDraw)
 			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_RestoreWindow_Status
 	}
 
-	UpdateRunControlDisable(disableOffline) ;Offline stacking Pause/Resume
+	UpdateRunControlDisable(disableOffline,allowMoveDraw:=true) ;Offline stacking Pause/Resume
 	{
 		If (disableOffline)
 		{
@@ -929,12 +928,11 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_Offline_Toggle, Pause
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_Offline_Toggle
-		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
-		if(activeTab=="Briv Master")
-			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusPause ;Only MoveDraw if the tab is active, to avoid weird bleed-throughh
+		if(allowMoveDraw)
+			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusPause 
 	}
 
-	UpdateRunControlForce(queueOffline) ;Force Queue
+	UpdateRunControlForce(queueOffline,allowMoveDraw:=true) ;Force Queue
 	{
 		If (queueOffline)
 		{
@@ -947,8 +945,7 @@ class IC_IriBrivMaster_GUI
 			GuiControl, ICScriptHub:Text, IBM_RunControl_Offline_Queue_Toggle, Queue
 		}
 		GuiControl, ICScriptHub:Enable, IBM_RunControl_Offline_Queue_Toggle
-		GuiControlGet, activeTab, ICScriptHub:, ModronTabControl
-		if(activeTab=="Briv Master")
+		if(allowMoveDraw)
 			GuiControl, ICScriptHub:MoveDraw,IBM_RunControl_Offline_StatusQueue
 	}
 

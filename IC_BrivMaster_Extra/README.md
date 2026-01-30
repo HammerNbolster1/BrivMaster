@@ -12,7 +12,7 @@ This ReadMe has been written 06Dec25 for BrivMaster v0.2.7. Changes are actively
 
 # Environment
 
-BrivMaster requires the IC Core addon to be enabled. This is enforced by ScriptHub. The About addon is recommended.
+BrivMaster does not require any other addons to function.
 Do not load BrivGemFarm or addons that modify it, and in general it is advisable to only enable addons you are actively using.
 
 You require a modron core with automation to gem farm. Four formations are used, Q,W,E which are named after their formation hotkeys, and M, which is short for Modron and is the formation selected in the modron core.  

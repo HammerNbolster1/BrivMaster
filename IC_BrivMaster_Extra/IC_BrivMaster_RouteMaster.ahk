@@ -1184,7 +1184,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				nextZoneNumber:=currentZone.z+this.zonesPerJumpE
 			if (this.zones.hasKey(nextZoneNumber)) ;Already processed, just link
 			{
-				currentZone.nextZone:=zones[nextZoneNumber] ;Set the next zone
+				currentZone.nextZone:=this.zones[nextZoneNumber] ;Set the next zone
 				this.zones[nextZoneNumber].incomingZones[currentZone.z]:=currentZone ;Add to the incoming zones - TODO: Decide if this should be a simple or k,v Array
 				break ;We've joined an existing route, so no further calculation required
 			}

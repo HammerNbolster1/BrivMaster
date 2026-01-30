@@ -244,7 +244,7 @@ Class IC_IriBrivMaster_Component
 
 	SaveSettings()
     {
-        settings := this.Settings
+        settings:=this.Settings
         IC_BrivMaster_SharedFunctions_Class.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
         ; Apply settings to BrivGemFarm
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
@@ -1021,7 +1021,7 @@ Class IC_IriBrivMaster_Component
 		return "{" . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
 	}
 
-	ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible
+	ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible. As we have 50 values we'd be 22bits over
 	{
 		charIndex:=1
 		chars:=[]
@@ -1096,27 +1096,30 @@ Class IC_IriBrivMaster_Component
         {
 			try ;The script stopping can cause the COM object to become invalid instantaneously
 			{
-			dirty:=this.SharedRunData.IBM_OutboundDirty
-			this.SharedRunData.IBM_OutboundDirty:=false ;Needs to be reset right away, so updates during processing are not loss
-			;OutputDebug % A_TickCount . " Dirty=[" . dirty . "]`n"
-			if (dirty)
-			{
-				this.STATUS_RunControlOffline:=this.SharedRunData.IBM_RunControl_DisableOffline
-				g_IriBrivMaster_GUI.UpdateRunControlDisable(this.STATUS_RunControlOffline)
-				this.STATUS_RunControlForce:=this.SharedRunData.IBM_RunControl_ForceOffline
-				g_IriBrivMaster_GUI.UpdateRunControlForce(this.STATUS_RunControlForce)
-				this.STATUS_RestoreWindow:=this.SharedRunData.IBM_RestoreWindow_Enabled
-				g_IriBrivMaster_GUI.UpdateRestoreWindow(this.SharedRunData.IBM_RestoreWindow_Enabled)
-				this.CYCLE_Message_String:=this.SharedRunData.IBM_RunControl_CycleString
-				this.STATUS_Message_String:=this.SharedRunData.IBM_RunControl_StatusString
-				this.STATUS_Stack_String:=this.SharedRunData.IBM_RunControl_StackString
-				g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
-			}
-			this.UpdateStats(dirty)
-			this.ChestSnatcher() ;AFter stats as Stats reads the gem/chest counts on new run start
+				dirty:=this.SharedRunData.IBM_OutboundDirty
+				this.SharedRunData.IBM_OutboundDirty:=false ;Needs to be reset right away, so updates during processing are not loss
+				if (dirty)
+				{
+					GuiControlGet, activeTab, ICScriptHub:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each of the 3 functions checking it
+					brivMasterTabActive:=activeTab=="Briv Master"
+					this.STATUS_RunControlOffline:=this.SharedRunData.IBM_RunControl_DisableOffline
+					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.STATUS_RunControlOffline,brivMasterTabActive)
+					this.STATUS_RunControlForce:=this.SharedRunData.IBM_RunControl_ForceOffline
+					g_IriBrivMaster_GUI.UpdateRunControlForce(this.STATUS_RunControlForce,brivMasterTabActive)
+					this.STATUS_RestoreWindow:=this.SharedRunData.IBM_RestoreWindow_Enabled
+					g_IriBrivMaster_GUI.UpdateRestoreWindow(this.SharedRunData.IBM_RestoreWindow_Enabled,brivMasterTabActive)
+					this.CYCLE_Message_String:=this.SharedRunData.IBM_RunControl_CycleString
+					this.STATUS_Message_String:=this.SharedRunData.IBM_RunControl_StatusString
+					this.STATUS_Stack_String:=this.SharedRunData.IBM_RunControl_StackString
+					g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
+				}
+				this.UpdateStats(dirty)
+				this.ChestSnatcher() ;AFter stats as Stats reads the gem/chest counts on new run start
 			}
 			catch
+			{
 				g_IriBrivMaster_GUI.ResetStatusText()
+			}
         }
         else
             g_IriBrivMaster_GUI.ResetStatusText()
@@ -1246,7 +1249,7 @@ Class IC_IriBrivMaster_Component
 
     IBM_Elly_GetNonGemFarmCards(capType:="Min")
     {
-        cards := []
+        cards:=[]
         Loop 5
         {
             GuiControlGet, cap, ICScriptHub:, IBM_NonGemFarm_Elly_%capType%_%A_Index% ;Eg IBM_NonGemFarm_Elly_Min_1
@@ -1257,7 +1260,7 @@ Class IC_IriBrivMaster_Component
 
 	RunVersionCheck() ;Main version check wrapper
 	{
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up: TODO: SH_ServerCalls needs to be dropped to purge the JS based JSON, consider building a 2-tier object setup to keep a simple class available
 		this.VersionCheckSH()
 		this.VersionCheckAddons()
 		this.BasicServerCaller:=""
@@ -1421,7 +1424,7 @@ Class IC_IriBrivMaster_Component
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
-			if(RegExMatch(webRoot,"ps\d+[^/]+",match)) 
+			if(RegExMatch(webRoot,"ps\d+[^/]+",match))
 				return match
 			else
 				return "Invalid URL"
@@ -1603,7 +1606,7 @@ Class IC_IriBrivMaster_Component
 	{
 		return g_SF.Memory.Versions.Pointer_Version_Major . g_SF.Memory.Versions.Pointer_Version_Minor . " " . g_SF.Memory.Versions.Pointer_Revision . " " . this.GetPlatform(g_SF.Memory.Versions.Platform)
 	}
-	
+
 	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
     {
         if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()

@@ -1568,9 +1568,6 @@ IBM_OffLine_Flames_Enable_Edit(enableControl)
 	}
 }
 
-IBM_OffLine_Flames_Zone_Any_Edit() ;Nothing to do here
-{
-}
 
 IBM_MainButtons_Reset()
 {

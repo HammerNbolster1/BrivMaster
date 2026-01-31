@@ -1394,6 +1394,7 @@ IBM_ChestSnatcher_Options_OK_Button() ;Applies all the the ChestSnatcher options
 
 IBM_OffLine_Blank() ;Handle the cascade of enabled/disabled options for Blank->Relay
 {
+		return
 	GuiControlGet, blankOn,, IBM_OffLine_Blank
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank",blankOn+0)
 	GuiControlGet, relayOn,, IBM_OffLine_Blank_Relay

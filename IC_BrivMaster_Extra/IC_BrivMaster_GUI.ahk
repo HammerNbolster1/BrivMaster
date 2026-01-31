@@ -449,7 +449,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. Used for recovery")
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Flames_Use gIBM_OffLine_Flames_Use, Flames-based:
-		GUIFunctions.AddToolTip( "IBM_OffLine_Flames_Use", "Ellywick's Flames cards increase the damage enemies deal, reducing the stacks Briv gains during offline stacking. This option allows this to be accounted for. Spending the time calibrating your stack zone for the rare instances of 3 or more cards is unlikely to be worthwhile; set them to a lower zone so that Briv does not die. Remember that the Gem feat makes the 5-card value unnecessary")
+		GUIFunctions.AddToolTip("IBM_OffLine_Flames_Use", "Ellywick's Flames cards increase the damage enemies deal, reducing the stacks Briv gains during offline stacking. This option allows this to be accounted for. Spending the time calibrating your stack zone for the rare instances of 3 or more cards is unlikely to be worthwhile; set them to a lower zone so that Briv does not die. Remember that the Gem feat makes the 5-card value unnecessary")
 		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, 1
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_1 gIBM_OffLine_Flames_Zone_Any_Edit Disabled
 		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 2
@@ -461,7 +461,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 5
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_5 gIBM_OffLine_Flames_Zone_Any_Edit Disabled
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf:
-		GUIFunctions.AddToolTip( "IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
+		GUIFunctions.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Max
@@ -490,12 +490,12 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, CheckBox, x+15 h20 0x200 vIBM_Route_Offline_Restore_Window gIBM_Generic_Setting_Int, Restore window
 		GUIFunctions.AddToolTip("IBM_Route_Offline_Restore_Window", "Sets the default Restore Window option to be used when the script starts")
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Blank gIBM_OffLine_Blank, Blank restarts
-		GUIFunctions.AddToolTip( "IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
+		GUIFunctions.AddToolTip("IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
 		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
-		GUIFunctions.AddToolTip( "IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
+		GUIFunctions.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Relay start offset:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
-		GUIFunctions.AddToolTip( "IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone")
+		GUIFunctions.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone")
 		;Ellywick Casino
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+7 w%groupWidth% h50, % "Ellywick's Casino"
@@ -1246,9 +1246,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 		IBM_Game_Location_Settings()
 	}
 	else
-	{
-		MSGBOX Idle Champions not found. If you have changed the executable file name please enter it into the Executable field and try again
-	}
+		Msgbox 16, Briv Master, Idle Champions not found. If you have changed the executable file name please enter it into the Executable field and try again ;16 is Stop/Error, +0 for just OK
 }
 
 IBM_Game_Copy_From_Game_Location_Helper(processName) ;TODO: Should this be in the GUI file?
@@ -1376,11 +1374,11 @@ IBM_ChestSnatcher_Options_OK_Button() ;Applies all the the ChestSnatcher options
 		value:=g_IriBrivMaster.CONSTANT_serverRateBuy
 	g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy:=value
 	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Gold
-	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
+	if (value>g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
 		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
 	g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold:=value
 	GuiControlGet, value,, IBM_ChestSnatcher_Options_Open_Silver
-	if (value > g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
+	if (value>g_IriBrivMaster.CONSTANT_serverRateOpen) ;Can't open more than 1000 at a time
 		value:=g_IriBrivMaster.CONSTANT_serverRateOpen
 	g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver:=value
 	GuiControlGet, value,, IBM_ChestSnatcher_Options_Min_Gem

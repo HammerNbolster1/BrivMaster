@@ -151,10 +151,8 @@ Class IC_IriBrivMaster_Component
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
         g_IriBrivMaster_StopFunctions.Push(ObjBindMethod(this, "Stop"))
-		this.NextDailyClaimCheck:=A_TickCount + 300000 ;Wait 5min before making the first check, to avoid spamming calls whilst testing things
 		this.ServerCallFailCount:=0
 		this.MemoryReadFailCount:=0
-		this.ChestSnatcher_Messages:={}
 		this.GameSettingFileLocation:=""
 		this.NextGameSettingsCheck:=A_TickCount + 60000 ;Wait 1min, as we'll likely be starting the script right away which will check for us
 		this.CurrentGems:=0 ;Gem/Chest data used over multiple elements of this class
@@ -275,7 +273,7 @@ Class IC_IriBrivMaster_Component
         {
 			this.SharedRunData.IBM_BuyChests:=0 ;Cancel any orders open as the hub starts
         }
-		this.ChestSnatcher_AddMessage("General","Awaiting first order")
+		this.ChestSnatcher.StartMessage()
 		this.SoftResetStats() ;Soft reset so we don't discard totals etc but also don't pick up a part run
 		this.UpdateStatus()
 		this.GameSettingsCheck()
@@ -739,187 +737,7 @@ Class IC_IriBrivMaster_Component
 
 	IsGameClosed()
 	{
-		return !WinExist("ahk_exe " . this.settings.IBM_Game_Exe)
-	}
-
-	ChestSnatcher() ;Process chest purchase orders
-	{
-		if (this.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests
-		{
-			if (this.settings.IBM_DailyRewardClaim_Enable AND A_TickCount >= this.NextDailyClaimCheck)
-			{
-				this.ChestSnatcher_ClaimDailyRewards()
-				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
-			}
-			else if (this.settings.IBM_ChestSnatcher_Options_Open_Gold OR this.settings.IBM_ChestSnatcher_Options_Open_Silver)
-			{
-				this.ChestSnatcher_Process()
-			}
-			else
-				this.SharedRunData.IBM_BuyChests:=0 ;Cancel the order
-		}
-		else if (this.settings.IBM_ChestSnatcher_Options_Min_Buy)
-		{
-			gems:=this.CurrentGems - this.settings.IBM_ChestSnatcher_Options_Min_Gem
-			amountG:=Min(Floor(gems / this.CONSTANT_goldCost) , this.CONSTANT_serverRateBuy )
-			if (amountG >= this.settings.IBM_ChestSnatcher_Options_Min_Buy)
-			{
-				this.ChestSnatcher_AddMessage("Buy","No open order, buying " . amountG . " Gold...")
-				this.ChestSnatcher_BuyChests(2, amountG )
-				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
-			}
-		}
-
-	}
-
-	ChestSnatcher_AddMessage(action,comment)
-	{
-		message:={}
-		FormatTime, formattedTime,, HH:mm:ss
-		message["Time"]:=formattedTime
-		message["Action"]:=action
-		message["Comment"]:=comment
-		this.ChestSnatcher_Messages.Push(message)
-		if (this.ChestSnatcher_Messages.Count()>20)
-			this.ChestSnatcher_Messages.RemoveAt(1)
-	}
-
-	ChestSnatcher_ClaimDailyRewards()
-	{
-		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
-		If (lastSaveEpoch=="")
-			return
-		lastSave:=this.ChestSnatcher_CNETimeStampToDate(lastSaveEpoch)
-		secondsElapsed:=A_NOW
-		secondsElapsed-=lastSave,s
-		if (secondsElapsed>=2)
-			return
-		serverString:="&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
-		response := g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
-		if (IsObject(response) && response.success)
-		{
-			dayMask := 1 << (response.daily_login_details.today_index)
-			if (response.daily_login_details.premium_active && response.daily_login_details.premium_expire_seconds > 0)
-				boostExpiry:=response.daily_login_details.premium_expire_seconds / 86400 ;Convert to days
-			standardClaimed:=(response.daily_login_details.rewards_claimed & dayMask) > 0
-			premimumClaimed:=(response.daily_login_details.premium_rewards_claimed & dayMask) > 0
-			if(standardClaimed AND (premimumClaimed OR !response.daily_login_details.premium_active)) ;standard claimed, and premium either claimed or not active - no need to further claim
-			{
-				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
-				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-				this.ChestSnatcher_AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
-				if (response.daily_login_details.premium_active)
-					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
-				return
-			}
-			else ;Need to claim
-			{
-				if (response.daily_login_details.premium_active)
-				{
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
-					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
-				}
-				else
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
-				this.ChestSnatcher_AddMessage("Claim", messageString)
-			}
-		}
-		else ;Check failed
-		{
-			this.ChestSnatcher_AddMessage("Claim", "Failed to check current daily reward status")
-			return
-		}
-		extraParams := "&is_boost=0" . serverString
-		response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
-		if (IsObject(response) AND response.success)
-		{
-			nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
-			if (response.daily_login_details.premium_active) ;TODO: Use the initial check servercall to determine if this is needed? (So we can call ONLY the premium if it's the only one outstanding)
-			{
-				extraParams := "&is_boost=1" . serverString
-				response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
-				if (IsObject(response) AND response.success)
-				{
-					nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
-					this.ChestSnatcher_AddMessage("Claim", "Claimed standard and premium daily rewards")
-				}
-				else ;Standard worked, premium failed despite being available?
-					this.ChestSnatcher_AddMessage("Claim", "Claimed standard daily reward and failed to claim available premium reward")
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Claim", "Claimed standard daily reward")
-			}
-			if (!nextClaim_Seconds) ;If we somehow didn't get a value for the next time (despite success on the call), wait 5min before calling again
-				nextClaim_Seconds:=300
-			this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-		}
-		else
-		{
-			this.NextDailyClaimCheck:=A_TickCount + 60000 ;Wait 1min before trying again
-			this.ChestSnatcher_AddMessage("Claim","Failed to claim daily rewards")
-			this.ServerCallFailCount++
-		}
-	}
-
-	ChestSnatcher_GetBaseServerString()
-	{
-		return "&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
-	}
-
-	ChestSnatcher_BuyChests(chestID := 1, numChests := 100)
-    {
-		if (numChests > 0)
-		{
-			callTime:=A_TickCount
-			response := g_ServerCall.CallBuyChests( chestID, numChests )
-			serverCallTime:=A_TickCount-callTime
-			if (response.okay AND response.success)
-			{
-				If (chestID==1)
-				{
-					this.Chests.PurchasedSilver+=numChests
-					this.Chests.CurrentSilver:=response.chest_count
-					this.ChestSnatcher_AddMessage("Buy","Bought " . numChests " Silver in " . serverCallTime . "ms")
-				}
-				else If (ChestID==2)
-				{
-					this.Chests.PurchasedGold+=numChests
-					this.Chests.CurrentGold:=response.chest_count
-					this.ChestSnatcher_AddMessage("Buy","Bought " . numChests " Gold in " . serverCallTime . "ms")
-				}
-				this.CurrentGems:=response.currency_remaining
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Buy","Chest purchase failed")
-				this.ServerCallFailCount++
-			}
-		}
-    }
-
-	ChestSnatcher_Process()
-	{
-		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
-		If (lastSaveEpoch=="")
-			return
-		lastSave:=this.ChestSnatcher_CNETimeStampToDate(lastSaveEpoch)
-		secondsElapsed:=A_NOW
-		secondsElapsed-=lastSave,s
-		if (secondsElapsed>=2)
-			return
-		this.SharedRunData.IBM_BuyChests:=false ;Prevent repeats in the same run
-		if (this.settings.IBM_ChestSnatcher_Options_Open_Gold AND this.settings.IBM_ChestSnatcher_Options_Open_Gold + this.settings.IBM_ChestSnatcher_Options_Min_Gold <= this.Chests.CurrentGold)
-		{
-			this.ChestSnatcher_OpenChests(2,this.settings.IBM_ChestSnatcher_Options_Open_Gold)
-		}
-		else if (this.settings.IBM_ChestSnatcher_Options_Open_Silver AND this.settings.IBM_ChestSnatcher_Options_Open_Silver + this.settings.IBM_ChestSnatcher_Options_Min_Silver <= this.Chests.CurrentSilver)
-		{
-			this.ChestSnatcher_OpenChests(1,this.settings.IBM_ChestSnatcher_Options_Open_Silver)
-		}
-		else
-			this.ChestSnatcher_AddMessage("Open","Not enough chests to process open order")
-		g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+		return !WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)
 	}
 
 	RefreshUserData()
@@ -933,55 +751,6 @@ Class IC_IriBrivMaster_Component
 			if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 				this.SharedRunData.IBM_ProcessSwap:=false
         }
-    }
-
-	ChestSnatcher_CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use
-	{
-		unixTime:=timeStamp-62135596800 ;Difference between day 1 (01Jan0001) and unix time (AHK doesn't support dates before 1601 so we can't just set converted:=1)
-		converted:=1970
-		converted+=unixTime,s
-		return converted
-	}
-
-	ChestSnatcher_OpenChests(chestID:=1,numChests:=250)
-    {
-		chestName:=chestID==2 ? "Gold" : "Silver"
-        callTime:=A_TickCount
-		this.ChestSnatcher_AddMessage("Open","Opening " . numChests . " " . chestName . "...")
-		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
-		serverCallTime:=A_TickCount-callTime
-        if (!chestResults.success)
-		{
-			if (!chestResults.failure_reason)
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - no reason reported")
-				this.ServerCallFailCount++
-			}
-			else if (chestResults.failure_reason=="Outdated instance id")
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - Old ID - Refreshing")
-				this.RefreshUserData()
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - " . chestResults.failure_reason)
-				this.ServerCallFailCount++
-			}
-			return
-		}
- 		if (chestID==1)
-		{
-			this.Chests.OpenedSilver+=numChests
-			this.Chests.CurrentSilver:=chestResults.chests_remaining
-			this.ChestSnatcher_AddMessage("Open","Opened " . numChests " Silver in " . serverCallTime . "ms")
-
-		}
-		else if (chestID==2)
-		{
-			this.Chests.OpenedGold+=numChests
-		    this.Chests.CurrentGold:=chestResults.chests_remaining
-			this.ChestSnatcher_AddMessage("Open","Opened " . numChests " Gold in " . serverCallTime . "ms")
-		}
     }
 
 	SetControl_RestoreWindow() ;Toggles
@@ -1674,5 +1443,242 @@ Class IC_IriBrivMaster_Component
             textType:="DefaultTextColor"
         textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
 		return "c" . textColour
+    }
+}
+
+class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and opening chests and associcated servercalls TODO: This has very weak encapsulation due to using various g_IriBrivMaster variables (chests, fails, etc) directly
+{
+	__New()
+	{
+		this.Messages:={}
+		this.NextDailyClaimCheck:=A_TickCount+180000 ;Wait 3min before making the first check, to avoid spamming calls whilst testing things
+	}
+	
+	Snatch() ;Process chest purchase orders
+	{
+		if (g_IriBrivMaster.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests. Note it is assumed that SharedRunData has been checked as valid before calling this function 
+		{
+			if (g_IBM_Settings.IBM_DailyRewardClaim_Enable AND A_TickCount>=this.NextDailyClaimCheck)
+			{
+				this.ClaimDailyRewards()
+				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+			}
+			else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold OR g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver)
+			{
+				this.CheckOpenChests()
+			}
+			else
+				g_IriBrivMaster.SharedRunData.IBM_BuyChests:=0 ;Cancel the order
+		}
+		else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy)
+		{
+			gems:=g_IriBrivMaster.CurrentGems - g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gem
+			amountG:=Min(Floor(gems / g_IriBrivMaster.CONSTANT_goldCost), g_IriBrivMaster.CONSTANT_serverRateBuy)
+			if (amountG>=g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy)
+			{
+				this.AddMessage("Buy","No open order, buying " . amountG . " Gold...")
+				this.BuyChests(2, amountG)
+				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+			}
+		}
+	}
+
+	AddMessage(action,comment)
+	{
+		message:={}
+		FormatTime, formattedTime,, HH:mm:ss
+		message["Time"]:=formattedTime
+		message["Action"]:=action
+		message["Comment"]:=comment
+		this.Messages.Push(message)
+		if (this.Messages.Count()>20)
+			this.Messages.RemoveAt(1)
+	}
+	
+	StartMessage()
+	{
+		this.AddMessage("General","Awaiting first order")
+	}
+
+	ClaimDailyRewards()
+	{
+		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
+		If (lastSaveEpoch=="")
+			return
+		lastSave:=this.CNETimeStampToDate(lastSaveEpoch)
+		secondsElapsed:=A_NOW
+		secondsElapsed-=lastSave,s
+		if (secondsElapsed>=2)
+			return
+		serverString:="&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
+		response := g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
+		if (IsObject(response) && response.success)
+		{
+			dayMask := 1 << (response.daily_login_details.today_index)
+			if (response.daily_login_details.premium_active && response.daily_login_details.premium_expire_seconds > 0)
+				boostExpiry:=response.daily_login_details.premium_expire_seconds / 86400 ;Convert to days
+			standardClaimed:=(response.daily_login_details.rewards_claimed & dayMask) > 0
+			premimumClaimed:=(response.daily_login_details.premium_rewards_claimed & dayMask) > 0
+			if(standardClaimed AND (premimumClaimed OR !response.daily_login_details.premium_active)) ;standard claimed, and premium either claimed or not active - no need to further claim
+			{
+				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
+				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
+				this.AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
+				if (response.daily_login_details.premium_active)
+					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
+				return
+			}
+			else ;Need to claim
+			{
+				if (response.daily_login_details.premium_active)
+				{
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
+					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
+				}
+				else
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+				this.AddMessage("Claim", messageString)
+			}
+		}
+		else ;Check failed
+		{
+			this.AddMessage("Claim", "Failed to check current daily reward status")
+			return
+		}
+		extraParams := "&is_boost=0" . serverString
+		response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
+		if (IsObject(response) AND response.success)
+		{
+			nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
+			if (response.daily_login_details.premium_active) ;TODO: Use the initial check servercall to determine if this is needed? (So we can call ONLY the premium if it's the only one outstanding)
+			{
+				extraParams := "&is_boost=1" . serverString
+				response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
+				if (IsObject(response) AND response.success)
+				{
+					nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
+					this.AddMessage("Claim", "Claimed standard and premium daily rewards")
+				}
+				else ;Standard worked, premium failed despite being available?
+					this.AddMessage("Claim", "Claimed standard daily reward and failed to claim available premium reward")
+			}
+			else
+			{
+				this.AddMessage("Claim", "Claimed standard daily reward")
+			}
+			if (!nextClaim_Seconds) ;If we somehow didn't get a value for the next time (despite success on the call), wait 5min before calling again
+				nextClaim_Seconds:=300
+			this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
+		}
+		else
+		{
+			this.NextDailyClaimCheck:=A_TickCount + 60000 ;Wait 1min before trying again
+			this.AddMessage("Claim","Failed to claim daily rewards")
+			g_IriBrivMaster.ServerCallFailCount++
+		}
+	}
+
+	BuyChests(chestID:=1, numChests:=100)
+    {
+		if(numChests > 0)
+		{
+			callTime:=A_TickCount
+			response := g_ServerCall.CallBuyChests( chestID, numChests )
+			serverCallTime:=A_TickCount-callTime
+			if(response.okay AND response.success)
+			{
+				if(chestID==1)
+				{
+					g_IriBrivMaster.Chests.PurchasedSilver+=numChests
+					g_IriBrivMaster.Chests.CurrentSilver:=response.chest_count
+					this.AddMessage("Buy","Bought " . numChests " Silver in " . serverCallTime . "ms")
+				}
+				else if (chestID==2)
+				{
+					g_IriBrivMaster.Chests.PurchasedGold+=numChests
+					g_IriBrivMaster.Chests.CurrentGold:=response.chest_count
+					this.AddMessage("Buy","Bought " . numChests " Gold in " . serverCallTime . "ms")
+				}
+				g_IriBrivMaster.CurrentGems:=response.currency_remaining
+			}
+			else
+			{
+				this.AddMessage("Buy","Chest purchase failed")
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+		}
+    }
+
+	CheckOpenChests()
+	{
+		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
+		If (lastSaveEpoch=="")
+			return
+		lastSave:=this.CNETimeStampToDate(lastSaveEpoch)
+		secondsElapsed:=A_NOW
+		secondsElapsed-=lastSave,s
+		if (secondsElapsed>=2)
+			return
+		g_IriBrivMaster.SharedRunData.IBM_BuyChests:=false ;Prevent repeats in the same run
+		if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold AND g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold + g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gold <= g_IriBrivMaster.Chests.CurrentGold)
+		{
+			this.OpenChests(2,g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold)
+		}
+		else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver AND g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver + g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Silver <= g_IriBrivMaster.Chests.CurrentSilver)
+		{
+			this.OpenChests(1,g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver)
+		}
+		else
+			this.AddMessage("Open","Not enough chests to process open order")
+		g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+	}
+	
+	CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use TODO: There might be a case for making this a more general function
+	{
+		unixTime:=timeStamp-62135596800 ;Difference between day 1 (01Jan0001) and unix time (AHK doesn't support dates before 1601 so we can't just set converted:=1)
+		converted:=1970
+		converted+=unixTime,s
+		return converted
+	}
+
+	OpenChests(chestID:=1,numChests:=250)
+    {
+		chestName:=chestID==2 ? "Gold" : "Silver"
+        callTime:=A_TickCount
+		this.AddMessage("Open","Opening " . numChests . " " . chestName . "...")
+		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
+		serverCallTime:=A_TickCount-callTime
+        if (!chestResults.success)
+		{
+			if (!chestResults.failure_reason)
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - no reason reported")
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+			else if (chestResults.failure_reason=="Outdated instance id")
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - Old ID - Refreshing")
+				g_IriBrivMaster.RefreshUserData()
+			}
+			else
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - " . chestResults.failure_reason)
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+			return
+		}
+ 		if (chestID==1)
+		{
+			g_IriBrivMaster.Chests.OpenedSilver+=numChests
+			g_IriBrivMaster.Chests.CurrentSilver:=chestResults.chests_remaining
+			this.AddMessage("Open","Opened " . numChests " Silver in " . serverCallTime . "ms")
+
+		}
+		else if (chestID==2)
+		{
+			g_IriBrivMaster.Chests.OpenedGold+=numChests
+		    g_IriBrivMaster.Chests.CurrentGold:=chestResults.chests_remaining
+			this.AddMessage("Open","Opened " . numChests " Gold in " . serverCallTime . "ms")
+		}
     }
 }

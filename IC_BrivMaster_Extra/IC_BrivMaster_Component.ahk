@@ -889,7 +889,7 @@ Class IC_IriBrivMaster_Component
 					g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
 				}
 				this.UpdateStats(dirty)
-				this.ChestSnatcher() ;AFter stats as Stats reads the gem/chest counts on new run start
+				this.ChestSnatcher.Snatch() ;After stats as Stats reads the gem/chest counts on new run start
 			}
 			catch
 			{

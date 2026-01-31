@@ -143,7 +143,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status
 		LV_ModifyCol(1,50)
-		LV_ModifyCol(2,40)
+		LV_ModifyCol(2,50)
 		GuiControl, +Redraw, IBM_ChestsSnatcher_Status
 		;>Chest Log window
 		Gui, IBM_ChestSnatcher_Log:New , , Chest & Daily Platinum Log

@@ -1208,6 +1208,65 @@ IBM_OffLine_Timeout_Edit()
 {
 	GuiControlGet, value,, IBM_OffLine_Timeout_Edit
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Timeout",value+0)
+IBM_MainButtons_Save()
+{
+	Gui, ICScriptHub:Submit, NoHide
+	GuiControl, ICScriptHub: Disable, IBM_MainButtons_Save
+	flamesZones:=[]
+	loop, 5
+		{
+			GuiControlGet, curZone,, IBM_OffLine_Flames_Zone_Edit_%A_Index%
+			flamesZones[A_Index]:=curZone+0
+		}
+	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
+	g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards:=g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings()
+	;Level Manager
+	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things), and check if we've actually made changes
+	{
+		haveAdded:=false
+		addedString:=""
+		heroList:={} ;Used to check for removals later to avoid excessive loops around the seat->hero structure
+		for _, seatMembers in g_IriBrivMaster_GUI.levelDataSet
+		{
+			for heroID, heroData in seatMembers
+			{
+				heroList[heroID]:=heroData.Name
+				if(!g_IBM_Settings.IBM_LevelManager_Levels.hasKey(heroID))
+				{
+					haveAdded:=true
+					addedString.=heroData.Name . " (" . heroID . ")`n"
+				}
+			}
+		}
+		haveRemoved:=false
+		removedString:=""
+		for heroID,heroData in g_IBM_Settings.IBM_LevelManager_Levels
+		{
+			if(!heroList.hasKey(heroID))
+			{
+				haveRemoved:=true
+				heroName:=g_Heroes[heroID].ReadName() ;The name of the hero is not in current data, and might not be available at all
+				removedString.=(heroName ? heroName : "Unable to retrieve champion name") . " (" . heroID . ")`n"
+			}
+		}
+		if(haveAdded OR haveRemoved)
+		{
+			saveMsg:="The following champion changes have been made in the Level Manager:`n"
+			if(haveAdded)
+				saveMsg.="`nAdded:`n" . addedString . "`n"
+			if(haveRemoved)
+				saveMsg.="`nRemoved:`n" . removedString . "`n"
+			saveMsg.="`nSave Level Manager changes?"
+			Msgbox, 36, Briv Master Level Manager, %saveMsg% ;4 is Yes/No, + 32 for Question icon
+			ifMsgBox Yes
+				 g_IBM_Settings.IBM_LevelManager_Levels:=g_IriBrivMaster_GUI.GetLevelRowData()
+		}
+		else
+			g_IBM_Settings.IBM_LevelManager_Levels:=g_IriBrivMaster_GUI.GetLevelRowData()
+	}
+	;Done with levels
+	g_IriBrivMaster.SaveSettings()
+	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Save
 }
 
 IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The game launch routine should probably not be in the GUI file. Also duplication with farm script side
@@ -1599,65 +1658,4 @@ IBM_MainButtons_Reset()
 	g_IriBrivMaster.UpdateStatus() ;NOT UpdateStats(), as that assumes we've already checked the COM object is valid
 	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Reset
 }
-
-IBM_MainButtons_Save()
-{
-	Gui, ICScriptHub:Submit, NoHide
-	GuiControl, ICScriptHub: Disable, IBM_MainButtons_Save
-	flamesZones:=[]
-	loop, 5
-		{
-			GuiControlGet, curZone,, IBM_OffLine_Flames_Zone_Edit_%A_Index%
-			flamesZones[A_Index]:=curZone+0
-		}
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
-	g_IriBrivMaster.UpdateSetting("IBM_Ellywick_NonGemFarm_Cards",g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings())
-	;Level Manager
-	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things), and check if we've actually made changes
-	{
-		savedData:=g_IriBrivMaster.GetLevelSettings()
-		haveAdded:=false
-		addedString:=""
-		heroList:={} ;Used to check for removals later to avoid excessive loops around the seat->hero structure
-		for _, seatMembers in g_IriBrivMaster_GUI.levelDataSet
-		{
-			for heroID, heroData in seatMembers
-			{
-				heroList[heroID]:=heroData.Name
-				if(!savedData.hasKey(heroID))
-				{
-					haveAdded:=true
-					addedString.=heroData.Name . " (" . heroID . ")`n"
-				}
-			}
-		}
-		haveRemoved:=false
-		removedString:=""
-		for heroID,heroData in savedData
-		{
-			if(!heroList.hasKey(heroID))
-			{
-				haveRemoved:=true
-				heroName:=g_Heroes[heroID].ReadName() ;The name of the hero is not in current data, and might not be available at all
-				removedString.=(heroName ? heroName : "Unable to retrieve champion name") . " (" . heroID . ")`n"
-			}
-		}
-		if(haveAdded OR haveRemoved)
-		{
-			saveMsg:="The following champion changes have been made in the Level Manager:`n"
-			if(haveAdded)
-				saveMsg.="`nAdded:`n" . addedString . "`n"
-			if(haveRemoved)
-				saveMsg.="`nRemoved:`n" . removedString . "`n"
-			saveMsg.="`nSave Level Manager changes?"
-			Msgbox, 36, Briv Master Level Manager, %saveMsg% ;4 is Yes/No, + 32 for Question icon
-			ifMsgBox Yes
-				g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())
-		}
-		else
-			g_IriBrivMaster.UpdateLevelSettings(g_IriBrivMaster_GUI.GetLevelRowData())
-	}
-	;Done with levels
-	g_IriBrivMaster.SaveSettings()
-	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Save
 }

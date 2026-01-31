@@ -1649,13 +1649,3 @@ IBM_OffLine_Flames_Enable_Edit(enableControl)
 			GuiControl, ICScriptHub:Disable, IBM_OffLine_Flames_Zone_Edit_%A_Index%
 	}
 }
-
-
-IBM_MainButtons_Reset()
-{
-	GuiControl, ICScriptHub: Disable, IBM_MainButtons_Reset
-	g_IriBrivMaster.ResetStats()
-	g_IriBrivMaster.UpdateStatus() ;NOT UpdateStats(), as that assumes we've already checked the COM object is valid
-	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Reset
-}
-}

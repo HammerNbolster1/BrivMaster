@@ -1056,21 +1056,43 @@ class IC_IriBrivMaster_GUI
 	}
 }
 
-IBM_Server_Check()
+;Generic g-label handlers
+
+IBM_Generic_Setting_Int() ;Generic g-label for non-hub settings that should be forced to Int
 {
-	GuiControl, ICScriptHub:Text, IBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
+	if (g_IriBrivMaster_GUI.controlLock)
+		return
+	GuiControlGet, value, , %A_GuiControl%
+    g_IBM_Settings[A_GuiControl]:=value+0
 }
 
-IBM_Version_Check()
+IBM_Generic_Setting_String() ;Generic g-label for non-hub settings that should be forced to String
 {
-	GuiControlGet, value,, IBM_Version_Check
-	g_IriBrivMaster.UpdateSetting("IBM_Version_Check",value+0)
+	if (g_IriBrivMaster_GUI.controlLock)
+		return
+	GuiControlGet, value, , %A_GuiControl%
+    g_IBM_Settings[A_GuiControl]:=value . ""
 }
 
-IBM_Version_Check_Now()
+IBM_Generic_Hub_Setting_Int() ;Hub version
 {
-	g_IriBrivMaster.RunVersionCheck()
+	if (g_IriBrivMaster_GUI.controlLock)
+		return
+	GuiControlGet, value, , %A_GuiControl%
+    g_IBM_Settings.HUB[A_GuiControl]:=value+0
 }
+
+/*
+IBM_Generic_Hub_Setting_String() ;Hub version - not currently in use as all string entries have their own handlers
+{
+	if (g_IriBrivMaster_GUI.controlLock)
+		return
+	GuiControlGet, value, , %A_GuiControl%
+    g_IBM_Settings.HUB[A_GuiControl]:=value . ""
+}
+*/
+
+;Specific g-label handlers
 
 IBM_LevelRow_Feats_Set()
 {
@@ -1136,26 +1158,30 @@ IBM_LevelRow_Feats_Set()
 	}
 }
 
+IBM_Server_Check()
+{
+	GuiControl, ICScriptHub:Text, IBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
+}
+
+IBM_Version_Check_Now()
+{
+	GuiControl, ICScriptHub:Disable, IBM_Version_Check_Now
+	g_IriBrivMaster.RunVersionCheck()
+	GuiControl, ICScriptHub:Enable, IBM_Version_Check_Now
+}
+
 IBM_Offsets_Download()
 {
+	GuiControl, ICScriptHub:Disable, IBM_Offsets_Download
 	g_IriBrivMaster.DownloadOffsets()
+	GuiControl, ICScriptHub:Enable, IBM_Offsets_Download
 }
 
 IBM_Offsets_Check_Now()
 {
+	GuiControl, ICScriptHub:Disable, IBM_Offsets_Check_Now
 	g_IriBrivMaster.CheckOffsetVersions()
-}
-
-IBM_Offsets_Check()
-{
-	GuiControlGet, value,, IBM_Offsets_Check
-	g_IriBrivMaster.UpdateSetting("IBM_Offsets_Check",value+0)
-}
-
-IBM_Offsets_Lock_Pointers()
-{
-	GuiControlGet, value,, IBM_Offsets_Lock_Pointers
-	g_IriBrivMaster.UpdateSetting("IBM_Offsets_Lock_Pointers",value+0)
+	GuiControl, ICScriptHub:Enable, IBM_Offsets_Check_Now
 }
 
 IBM_LevelRow_Feats_Clear()
@@ -1177,22 +1203,8 @@ IBM_LevelRow_Feats_Clear()
 	g_IriBrivMaster_GUI.RefreshLevelRows()
 }
 
-
-IBM_Window_Settings()
+IBM_MainButtons_Start()
 {
-	if (g_IriBrivMaster_GUI.controlLock)
-		return
-	GuiControlGet, value,, IBM_Window_X
-	g_IriBrivMaster.UpdateSetting("IBM_Window_X",value+0)
-	GuiControlGet, value,, IBM_Window_Y
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Y",value+0)
-	GuiControlGet, value,, IBM_Window_Hide
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Hide",value+0)
-	GuiControlGet, value,, IBM_Window_Dark_Icon
-	g_IriBrivMaster.UpdateSetting("IBM_Window_Dark_Icon",value+0)
-}
-
-IBM_MainButtons_Start() {
     g_IriBrivMaster.Run_Clicked()
 }
 
@@ -1206,10 +1218,14 @@ IBM_MainButtons_Connect()
     g_IriBrivMaster.Connect_Clicked()
 }
 
-IBM_OffLine_Timeout_Edit()
+IBM_MainButtons_Reset()
 {
-	GuiControlGet, value,, IBM_OffLine_Timeout_Edit
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Timeout",value+0)
+	GuiControl, ICScriptHub: Disable, IBM_MainButtons_Reset
+	g_IriBrivMaster.ResetStats()
+	g_IriBrivMaster.UpdateStatus() ;NOT UpdateStats(), as that assumes we've already checked the COM object is valid
+	GuiControl, ICScriptHub: Enable, IBM_MainButtons_Reset
+}
+
 IBM_MainButtons_Save()
 {
 	Gui, ICScriptHub:Submit, NoHide

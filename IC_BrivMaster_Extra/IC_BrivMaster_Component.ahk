@@ -1042,7 +1042,7 @@ Class IC_IriBrivMaster_Component
 		return championData
 	}
 
-	IBM_GetGUIFormationData_ProcessFormation(championData,index,formation) ;TODO: This needs to deal with the seat/name reads failing. Probably via trying to restart memory reader initially, then giving up and not returning any champs with some kind of feedback message
+	IBM_GetGUIFormationData_ProcessFormation(championData,index,formation) ;TODO: This needs to deal with the seat/name reads failing. Probably via trying to restart the memory reader initially, then giving up and not returning any champs with some kind of feedback message
 	{
 		for _, heroID in formation
 		{
@@ -1355,9 +1355,7 @@ Class IC_IriBrivMaster_Component
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)
 			if(platformID!=11 AND platformID!=21)
-			{
 				return
-			}
 		}
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"

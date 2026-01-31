@@ -117,7 +117,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+3 w80 vIBM_Stats_TotalGems,
 		Gui, ICScriptHub:Add, Text, x+10, Gem Hunter:
 		Gui, ICScriptHub:Add, Text, x+3 vIBM_Stats_Gem_Hunter, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
-		GUIFunctions.AddToolTip( "IBM_Stats_Gem_Hunter", "Gem Hunter potion status for the recorded runs. Green means it was active for all runs, amber for some runs and red for none")
+		GUIFunctions.AddToolTip("IBM_Stats_Gem_Hunter", "Gem Hunter potion status for the recorded runs. Green means it was active for all runs, amber for some runs and red for none")
 		Gui, ICScriptHub:Add, Text, x+10, GPB:
 		Gui, ICScriptHub:Add, Text, x+3 w30 vIBM_Stats_GPB, -
 		Gui, ICScriptHub:Add, Text, x+10, Bonus:
@@ -162,7 +162,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Status_Resize gIBM_ChestsSnatcher_Status_Resize, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_DOWN
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Options gIBM_ChestsSnatcher_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Chest options
-		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an OK button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy chests whilst you were typing 123 into the box)
+		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an Accept button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy 12 chests whilst you were typing 123 into the box)
 		Gui, IBM_ChestSnatcher_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_ChestSnatcher_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
@@ -283,23 +283,23 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Tab, BM Game
 		;Game location
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+10 w%groupWidth% h126, Game Location
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+10 w%groupWidth% h128, Game Location
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w170 vIBM_Game_Exe gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
+		GUIFunctions.AddToolTip("IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
 		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
-		GUIFunctions.AddToolTip( "IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to the window it creates. Do not use when launching the game directly")
+		GUIFunctions.AddToolTip("IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to see the window it creates. Do not use when launching the game directly")
 		Gui, ICScriptHub:Add, Button, xs+400 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
 		Gui, ICScriptHub:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Path gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Path", "The game install location")
+		GUIFunctions.AddToolTip("IBM_Game_Path", "The game install location")
 		Gui, ICScriptHub:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip( "IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
+		GUIFunctions.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
 		;Offsets
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+6 w%groupWidth% h106, Offsets
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h106, Offsets
 		Gui, ICScriptHub:Font, w400
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
@@ -334,7 +334,7 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip( "IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
 		;Server
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+6 w%groupWidth% h43, Server
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+7 w%groupWidth% h43, Server
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, w400 xs+5 ys+15 h18 0x200 vIBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
 		Gui, ICScriptHub:Add, Button, xs+415 yp+0 w55 vIBM_Server_Check gIBM_Server_Check, Refresh
@@ -342,7 +342,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font, w700
 		sideBarWidth:=90
 		mainWidth:=groupWidth-sideBarWidth-5
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%mainWidth% h63, Core Versions
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%mainWidth% h63, Core Versions
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
 		Gui, ICScriptHub:Add, Text, x+5 w305 h18 0x200 vIBM_Version_Text_SH, % "Script Hub: " . GetScriptHubVersion() ;This is a script-level function. Will be replaced with check data if checking is enabled
@@ -363,12 +363,12 @@ class IC_IriBrivMaster_GUI
 		;Versions - addons, dynamic based on number of enabled addons. Addons cannot be enabled / disabled without restarting script hub, so this can be done at set up only, and having other items follow is therefore possible
 		Gui, ICScriptHub:Font, w700
 		AddonGroupHeight:=AddonManagement.EnabledAddons.Count() * 20 + 25
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+8 w%groupWidth% h%AddonGroupHeight% vIBM_Version_Groupbox, Addon Versions ;Height must be adjusted later
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%groupWidth% h%AddonGroupHeight% vIBM_Version_Groupbox, Addon Versions ;Height must be adjusted later
 		Gui, ICScriptHub:Font, w400
 		currentIndex:=1
 		GuiControlGet, AddonGroupPos, ICScriptHub:Pos, IBM_Version_Groupbox
 		yPos:=AddonGroupPosY + 16
-		for _,v in AddonManagement.Addons ;AddonManagement.EnabledAddons does not contain the directory for the ReadMe check
+		for _,v in AddonManagement.Addons ;AddonManagement.EnabledAddons does not contain the directory for the Readme check
         {
 			if(v.Enabled)
 			{
@@ -523,7 +523,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, DropDownList, x+1 w35 vIBM_Level_Options_Mod_Value gIBM_Level_Options_Mod, 10|25
 		GUIFunctions.AddToolTip( "IBM_Level_Options_Mod_Value", "The levelling amount associated with the key selected. This must match the in-game keybind")
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_BrivBoost_Use gIBM_Level_Options_BrivBoost_Use, Briv Level Boost
-		GUIFunctions.AddToolTip( "IBM_Level_Options_BrivBoost_Use", "When enabled will increase Briv's level during online stacking. Use when Briv's normal level is insufficent for later stack zones")
+		GUIFunctions.AddToolTip("IBM_Level_Options_BrivBoost_Use", "When enabled will increase Briv's level during online stacking. Use when Briv's normal level is insufficent for later stack zones")
 		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, Safety Factor
 		Gui, ICScriptHub:Add, Edit, +cBlack  w20 x+1 Number Limit2 vIBM_Level_Options_BrivBoost_Multi gIBM_Level_Options_BrivBoost_Multi
 		GUIFunctions.AddToolTip( "IBM_Level_Options_BrivBoost_Multi", "This is how many times greater Briv's HP should be than the incoming damage of 100 enemies. Useful range 8 (fast stacking) to 12 (slower stacking)")
@@ -544,9 +544,9 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h20 w15 Left 0x200, S
 		Gui, ICScriptHub:Add, Text, x+1 h20 w90 Left 0x200, Champion
 		Gui, ICScriptHub:Add, Text, w40 h20 x+1 0x200 vIBM_LevelRow_H_z1, Start
-		GUIFunctions.AddToolTip( "IBM_LevelRow_H_z1", "Levels used for the first zone")
+		GUIFunctions.AddToolTip("IBM_LevelRow_H_z1", "Levels used for the first zone")
 		Gui, ICScriptHub:Add, Text, w55 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
-		GUIFunctions.AddToolTip( "IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
+		GUIFunctions.AddToolTip("IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
 		Gui, ICScriptHub:Add, Text, w40 h20 x+1 0x200, Normal
 		Gui, ICScriptHub:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
 		Gui, ICScriptHub:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
@@ -1256,7 +1256,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 	}
 }
 
-IBM_Game_Copy_From_Game_Location_Helper(processName)
+IBM_Game_Copy_From_Game_Location_Helper(processName) ;TODO: Should this be in the GUI file?
 {
 	for gameProcess in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where Name='" . processName . "'")  ;Notepad++ UDF langauge file can't copy with the quoted single quote for some reason
 	{
@@ -1274,7 +1274,7 @@ IBM_Game_Copy_From_Game_Location_Helper(processName)
 	}
 }
 
-IBM_Game_Location_Settings()
+IBM_Game_Location_Settings() ;TODO: Should be able to use the generic Int for this, and the g-label will trigger when IBM_Game_Copy_From_Game() makes changes?
 {
 	if (g_IriBrivMaster_GUI.controlLock)
 		return
@@ -1399,7 +1399,7 @@ IBM_ChestSnatcher_Options_OK_Button() ;Applies all the the ChestSnatcher options
 	Gui, IBM_ChestSnatcher_Options:Hide
 }
 
-IBM_OffLine_Blank()
+IBM_OffLine_Blank() ;Handle the cascade of enabled/disabled options for Blank->Relay
 {
 	GuiControlGet, blankOn,, IBM_OffLine_Blank
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank",blankOn+0)
@@ -1408,7 +1408,6 @@ IBM_OffLine_Blank()
 	GuiControlGet, value,, IBM_OffLine_Blank_Relay_Zones
 	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Blank_Relay_Zones",value+0)
 	IBM_Offline_Blank_EnableControls(blankOn,relayOn)
-
 }
 
 IBM_Offline_Blank_EnableControls(relay, relayZones)

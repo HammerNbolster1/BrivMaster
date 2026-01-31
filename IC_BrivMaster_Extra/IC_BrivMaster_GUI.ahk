@@ -563,7 +563,7 @@ class IC_IriBrivMaster_GUI
 	{
 		loop, 50
 		{
-			textColour:=g_IriBrivMaster.Settings["IBM_Route_Zones_Jump",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
+			textColour:=g_IBM_Settings["IBM_Route_Zones_Jump",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
 			GuiControl, ICScriptHub: +%textColour%, IBM_Route_J_%A_Index%
 			GuiControl, , IBM_Route_J_%A_Index%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
 		}
@@ -573,7 +573,7 @@ class IC_IriBrivMaster_GUI
 	{
 		loop, 50
 		{
-			textColour:=g_IriBrivMaster.Settings["IBM_Route_Zones_Stack",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_STACK : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
+			textColour:=g_IBM_Settings["IBM_Route_Zones_Stack",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_STACK : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
 			GuiControl, ICScriptHub: +%textColour%, IBM_Route_S_%A_Index%
 			GuiControl, , IBM_Route_S_%A_Index%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 		}
@@ -653,8 +653,8 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Game_Settings_Profile_2, % !(profile==1)
 		this.GameSettings_Update(data)
 		;Offsets
-		GuiControl, ICScriptHub:, IBM_Offsets_Check, % data.IBM_Offsets_Check
-		GuiControl, ICScriptHub:, IBM_Offsets_Lock_Pointers, % data.IBM_Offsets_Lock_Pointers
+		GuiControl, ICScriptHub:, IBM_Offsets_Check, % g_IBM_Settings.HUB.IBM_Offsets_Check
+		GuiControl, ICScriptHub:, IBM_Offsets_Lock_Pointers, % g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers
 		;Versions
 		GuiControl, ICScriptHub:, IBM_Version_Check, % data.IBM_Version_Check
 		;Levelling
@@ -662,9 +662,9 @@ class IC_IriBrivMaster_GUI
 		this.RefreshRouteJumpBoxes()
 		this.RefreshRouteStackBoxes()
 		;Ellywick's Casino
-		GuiControl, ICScriptHub:, IBM_Casino_Target_Base, % data.IBM_Casino_Target_Base
-		GuiControl, ICScriptHub:, IBM_Casino_Redraws_Base, % data.IBM_Casino_Redraws_Base
-		GuiControl, ICScriptHub:, IBM_Casino_MinCards_Base, % data.IBM_Casino_MinCards_Base
+		GuiControl, ICScriptHub:, IBM_Casino_Target_Base, % g_IBM_Settings.IBM_Casino_Target_Base
+		GuiControl, ICScriptHub:, IBM_Casino_Redraws_Base, % g_IBM_Settings.IBM_Casino_Redraws_Base
+		GuiControl, ICScriptHub:, IBM_Casino_MinCards_Base, % g_IBM_Settings.IBM_Casino_MinCards_Base
 		;Window
 		GuiControl, ICScriptHub:, IBM_Window_X, % data.IBM_Window_X
 		GuiControl, ICScriptHub:, IBM_Window_Y, % data.IBM_Window_Y
@@ -690,15 +690,15 @@ class IC_IriBrivMaster_GUI
 		this.controlLock:=false
     }
 
-	UpdateChestSnatcherOptions(data) ;ChestSnatcher options in a separate function so that the window can be updated when opened to overwrite unaccepted changes
+	UpdateChestSnatcherOptions() ;ChestSnatcher options in a separate function so that the window can be updated when opened to overwrite unaccepted changes
 	{
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Claim, % data.IBM_DailyRewardClaim_Enable
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gem, % data.IBM_ChestSnatcher_Options_Min_Gem
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gold, % data.IBM_ChestSnatcher_Options_Min_Gold
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Silver, % data.IBM_ChestSnatcher_Options_Min_Silver
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Buy, % data.IBM_ChestSnatcher_Options_Min_Buy
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Gold, % data.IBM_ChestSnatcher_Options_Open_Gold
-		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Silver, % data.IBM_ChestSnatcher_Options_Open_Silver
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Claim, % g_IBM_Settings.HUB.IBM_DailyRewardClaim_Enable
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gem, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gem
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Gold, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gold
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Silver, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Silver
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Min_Buy, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Gold, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold
+		GuiControl, IBM_ChestSnatcher_Options:, IBM_ChestSnatcher_Options_Open_Silver, % g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver
 	}
 
 	CreateLevelRow(index)
@@ -989,13 +989,13 @@ class IC_IriBrivMaster_GUI
 		}
 	}
 
-	GameSettings_Update(data)
+	GameSettings_Update()
 	{
 		loop 2 ;Two profiles
 		{
 			profileIndex:=A_Index
-			GuiControl, ICScriptHub:Text, IBM_Game_Settings_Profile_%profileIndex%, % data.IBM_Game_Settings_Option_Set[profileIndex].Name
-			for setting,value in data.IBM_Game_Settings_Option_Set[profileIndex]
+			GuiControl, ICScriptHub:Text, IBM_Game_Settings_Profile_%profileIndex%, % g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profileIndex].Name
+			for setting,value in g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profileIndex]
 			{
 				GuiControl, IBM_Game_Settings_Options:, IBM_Game_Settings_Option_%setting%_%profileIndex%, %value%
 			}
@@ -1089,32 +1089,32 @@ IBM_LevelRow_Feats_Set()
 					Msgbox, 35, Feat Guard, %message% ;3 is Yes/No/Cancel, + 32 for Question icon
 					IfMsgBox Yes
 					{
-						savedLevels[ChampID,"Feat_Exclusive"]:=true
+						g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_Exclusive"]:=true
 					}
 					IfMsgBox No
 					{
-						savedLevels[ChampID,"Feat_Exclusive"]:=false
+						g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_Exclusive"]:=false
 					}
 					IfMsgBox Cancel
 					{
 						return
 					}
-					savedLevels[ChampID,"Feat_List"]:=currentFeats
+					g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_List"]:=currentFeats
 					g_IriBrivMaster_GUI.RefreshLevelRows()
 					return
 				}
 				else
 				{
 					message:="No feats are currently equipped on " . champData["Name"] . "`nMake this selection exclusive?"
-					savedLevels[ChampID,"Feat_List"]:=""
+					g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_List"]:=""
 					Msgbox, 33, Feat Guard, %message% ;1 is OK/Cancel, + 32 for Question icon
 					IfMsgBox OK
 					{
-						savedLevels[ChampID,"Feat_Exclusive"]:=true
+						g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_Exclusive"]:=true
 						g_IriBrivMaster_GUI.RefreshLevelRows()
 						return
 					}
-					savedLevels[ChampID,"Feat_Exclusive"]:=false
+					g_IBM_Settings.IBM_LevelManager_Levels[ChampID,"Feat_Exclusive"]:=false
 					g_IriBrivMaster_GUI.RefreshLevelRows()
 					return
 				}

@@ -1235,7 +1235,19 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 	{
 		location:=IBM_Game_Copy_From_Game_Location_Helper(useExe) . "\" ;Trailing \ is removed
 		if (g_SF.Memory.ReadPlatform()==21) ;21 is the EGS platform code
-			launch:="explorer.exe ""com.epicgames.launcher://apps/7e508f543b05465abe3a935960eb70ac%3A48353a502e72433298f25827e03dbff0%3A40cb42e38c0b4a14a1bb133eb3291572?action=launch&silent=true"""
+		{	
+			Msgbox 36, Briv Master, Use standard Epic Games Store Launcher?`nSelect No for Legendary or Rare ;32 is question, 4 is Yes/No
+			IfMsgBox Yes
+				launch:="explorer.exe ""com.epicgames.launcher://apps/7e508f543b05465abe3a935960eb70ac%3A48353a502e72433298f25827e03dbff0%3A40cb42e38c0b4a14a1bb133eb3291572?action=launch&silent=true"""
+			IfMsgBox No
+			{
+				Msgbox 36, Briv Master, Select Yes for Legendary, No for Rare.`nYou must add the appropriate path before to the launcher executable manually ;32 is question, 4 is Yes/No
+				IfMsgBox Yes
+					launch:="legendary.exe launch 40cb42e38c0b4a14a1bb133eb3291572 --skip-version-check"
+				IfMsgBox No
+					launch:="rare.exe launch 40cb42e38c0b4a14a1bb133eb3291572"
+			}
+		}
 		else
 		{
 			launch:=location . useExe

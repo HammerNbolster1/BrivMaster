@@ -963,7 +963,7 @@ class IC_IriBrivMaster_GUI
 
 	IBM_ChestsSnatcher_Status_Update(forceLog:=false)
 	{
-		curMessage:=g_IriBrivMaster.ChestSnatcher_Messages[g_IriBrivMaster.ChestSnatcher_Messages.maxIndex()]
+		curMessage:=g_IriBrivMaster.ChestSnatcher.Messages[g_IriBrivMaster.ChestSnatcher.Messages.maxIndex()]
 		;Single-item window
 		Gui, ICScriptHub:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status
@@ -977,11 +977,11 @@ class IC_IriBrivMaster_GUI
 			Gui, IBM_ChestSnatcher_Log:Default
 			Gui, ListView, IBM_ChestsSnatcher_Status_Expanded
 			GuiControl, -Redraw, IBM_ChestsSnatcher_Status_Expanded
-			count:=g_IriBrivMaster.ChestSnatcher_Messages.count()
+			count:=g_IriBrivMaster.ChestSnatcher.Messages.count()
 			LV_Delete()
 			loop %count%
 			{
-				curMessage:=g_IriBrivMaster.ChestSnatcher_Messages[count-A_Index+1]
+				curMessage:=g_IriBrivMaster.ChestSnatcher.Messages[count-A_Index+1]
 				LV_Add(,curMessage.time,curMessage.action,curMessage.comment)
 			}
 			GuiControl, +Redraw, IBM_ChestsSnatcher_Status_Expanded

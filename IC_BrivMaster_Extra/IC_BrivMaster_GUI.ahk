@@ -297,6 +297,16 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		GUIFunctions.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
+		;Script Window Options
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%groupWidth% h50, % "Window Options"
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Screen Position (x,y):
+		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_X gIBM_Generic_Setting_Int
+		Gui, ICScriptHub:Add, Text, x+2 h18 0x200, ,
+		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
+		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Generic_Setting_Int, Hide
+		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Generic_Setting_Int, Dark Icon
 		;Offsets
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h106, Offsets
@@ -495,17 +505,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Maximum redraws:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_Redraws_Base gIBM_Casino_Redraws_Base
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Minimum cards:
-		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Casino_MinCards_Base
-		;Script Window Options
-		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%groupWidth% h50, % "Window Options"
-		Gui, ICScriptHub:Font, w400
-		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Screen Position (x,y):
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_X gIBM_Window_Settings
-		Gui, ICScriptHub:Add, Text, x+2 h18 0x200, ,
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Window_Settings
-		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Window_Settings, Hide
-		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Window_Settings, Dark Icon
+		Gui, ICScriptHub:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Generic_Setting_Int
 
 		;LEVELS TAB
 		Gui, ICScriptHub:Tab, BM Levels

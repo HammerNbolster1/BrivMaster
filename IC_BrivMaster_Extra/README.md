@@ -166,6 +166,15 @@ Hide launcher: Selecting this option will hide the window created by invoking th
 	
 EGS & Copy from IC: Described in the introduction to this group.
 
+### Window Options  
+These options control the appearance of the farm script window.
+
+Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem farm window when the script starts, measured from the top left of the screen in pixels.
+
+Hide: If selected the farm window will not be displayed.
+
+Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
+
 ### Offsets
 
 Offsets are the distance from one memory location to another. We use this to allow us to find a small number of lower level objects in memory and then determine the locations of the many individual items we need from those.
@@ -306,15 +315,6 @@ Target Gem cards: The number of Gem cards to aim for; if this cannot be achived 
 Maximum redraws: The number of redraws allowed (via Ellywick's ultimate). This should be 1 without DM, or 2 with DM. DM should be used if available so this is normally 2.
 
 Minimum cards: This is the minimum total cards to hold before leaving the Casino. If your route does not hit bosses, this should always be 0. If your route hits bosses, it should be set to allow Ellywick to reach a full hand before hitting your first boss. 5 is the 'safe' option, but it might be possible to use 4 and get the same result.
-	
-### Window Options  
-These options control the appearance of the farm script window.
-
-Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem farm window when the script starts, measured from the top left of the screen in pixels.
-
-Hide: If selected the farm window will not be displayed.
-
-Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
 	
 ## BM Levels
 This tab focuses mostly on champion levelling. After a little side quest, anyway.

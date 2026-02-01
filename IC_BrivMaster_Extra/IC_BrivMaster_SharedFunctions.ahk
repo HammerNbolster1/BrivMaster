@@ -221,8 +221,12 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
         settings:=g_SF.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath)
         if (!IsObject(settings))
             return false
-		for k,v in settings ;Load all settings
-			g_IBM_Settings[k]:=v
+		for k,v in settings
+		{
+			if(k!="HUB") ;Do not load hub-only settings
+				g_IBM_Settings[k]:=v
+		}
+		settings:=""
 		g_IBM.RefreshGemFarmWindow()
     }
 

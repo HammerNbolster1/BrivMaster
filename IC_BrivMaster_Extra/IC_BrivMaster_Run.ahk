@@ -99,7 +99,7 @@ class IC_BrivMaster_GemFarm_Class
         g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
-		this.LevelManager:=New IC_BrivMaster_LevelManager_Class(g_IBM_Settings["IBM_Route_Combine"]) ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
+		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false

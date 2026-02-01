@@ -7,6 +7,7 @@
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
 SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
+SH_UpdateClass.AddClassFunctions(_MemoryManager, IBM_Memory_Manager)
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
@@ -143,17 +144,15 @@ Class IC_IriBrivMaster_Component
 		this.GemFarmGUID:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		this.LoadSettings()
-		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the settings global available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
 		g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Overwrite with IBM class entirely
 		g_IriBrivMaster_GUI.Init() ;Must follow IBM memory manager being set up in g_SF
-		g_IriBrivMaster_GUI.UpdateGUISettings(this.settings) ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
+		g_IriBrivMaster_GUI.UpdateGUISettings(g_IBM_Settings) ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
+		this.ChestSnatcher:=New IC_IriBrivMaster_ChestSnatcher_Class()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
         g_IriBrivMaster_StopFunctions.Push(ObjBindMethod(this, "Stop"))
-		this.NextDailyClaimCheck:=A_TickCount + 300000 ;Wait 5min before making the first check, to avoid spamming calls whilst testing things
 		this.ServerCallFailCount:=0
 		this.MemoryReadFailCount:=0
-		this.ChestSnatcher_Messages:={}
 		this.GameSettingFileLocation:=""
 		this.NextGameSettingsCheck:=A_TickCount + 60000 ;Wait 1min, as we'll likely be starting the script right away which will check for us
 		this.CurrentGems:=0 ;Gem/Chest data used over multiple elements of this class
@@ -164,94 +163,99 @@ Class IC_IriBrivMaster_Component
 		this.Chests.OpenedGold:=0
 		this.Chests.OpenedSilver:=0
 		this.Chests.OpenedGold:=0
-		if(this.settings.IBM_Version_Check)
+		if(g_IBM_Settings.HUB.IBM_Version_Check)
 			this.RunVersionCheck() ;TODO: It might make sense to delay this via a timer?
-		if(this.settings.IBM_Offsets_Check)
+		if(g_IBM_Settings.HUB.IBM_Offsets_Check)
 			this.CheckOffsetVersions() ;TODO: Again a timer perhaps?
     }
 
-	; Returns an object with default values for all settings.
-    GetNewSettings()
+	GetSettingsTemplate() ;_DEFAULT property allows us to seperate the object structure from the default values, as some defaults are themselves objects
     {
         settings:={}
-        settings.IBM_Offline_Stack_Zone:=500
-		settings.IBM_Offline_Stack_Min:=300
-		settings.IBM_OffLine_Flames_Use := false
-        settings.IBM_OffLine_Flames_Zones := [500,500,500,500,500]
-		settings.IBM_Route_Combine := 0
-		settings.IBM_Route_Combine_Boss_Avoidance := 1
-		settings.IBM_DailyRewardClaim_Enable := false
-        settings.IBM_LevelManager_Levels[0,58,"z1"]:=200
-        settings.IBM_LevelManager_Levels[0,58,"min"]:=200
-        settings.IBM_LevelManager_Levels[1,58,"z1"]:=200
-        settings.IBM_LevelManager_Levels[1,58,"min"]:=200
-		settings.IBM_Route_Zones_Jump:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-		settings.IBM_Route_Zones_Stack:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-		settings.IBM_Online_Use_Melf:=false
-		settings.IBM_Online_Melf_Min:=349
-		settings.IBM_Online_Melf_Max:=800
-		settings.IBM_Online_Ultra_Enabled:=false
-		settings.IBM_LevelManager_Input_Max:=5
-		settings.IBM_LevelManager_Boost_Use:=false
-		settings.IBM_LevelManager_Boost_Multi:=8
-		settings.IBM_Route_BrivJump_Q:=4
-		settings.IBM_Route_BrivJump_E:=0
-		settings.IBM_Route_BrivJump_M:=4
-		settings.IBM_Casino_Target_Base:=3
-		settings.IBM_Casino_Redraws_Base:=1
-		settings.IBM_Casino_MinCards_Base:=0
-		settings.IBM_OffLine_Delay_Time:=15000
-		settings.IBM_OffLine_Sleep_Time:=0
-		settings.IBM_Level_Options_Mod_Key:="Shift"
-		settings.IBM_Level_Options_Mod_Value:=10
-		settings.IBM_Route_Offline_Restore_Window:=true
-		settings.IBM_OffLine_Freq:=1
-		settings.IBM_OffLine_Blank:=0
-		settings.IBM_OffLine_Blank_Relay:=0
-		settings.IBM_OffLine_Blank_Relay_Zones:=400
-		settings.IBM_Level_Options_Limit_Tatyana:=false
-		settings.IBM_Level_Options_Suppress_Front:=true
-		settings.IBM_Level_Options_Ghost:=true
-		settings.IBM_ChestSnatcher_Options_Min_Gem:=500000
-		settings.IBM_ChestSnatcher_Options_Min_Gold:=500
-		settings.IBM_ChestSnatcher_Options_Min_Silver:=500
-		settings.IBM_ChestSnatcher_Options_Min_Buy:=250
-		settings.IBM_ChestSnatcher_Options_Open_Gold:=0 ;TODO: These were set to 0 to prevent accidents when changing from using the main script settings, in the future update to more practical defauls
-		settings.IBM_ChestSnatcher_Options_Open_Silver:=0
-		settings.IBM_Game_Settings_Option_Profile:=1
-		settings.IBM_Game_Settings_Option_Set:={1:{Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false},2:{Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}}
-		settings.IBM_Game_Exe:="IdleDragons.exe"
-		settings.IBM_Game_Path:="" ;Path and Launch command are user dependant so can't have a default
-		settings.IBM_Game_Launch:=""
-		settings.IBM_Game_Hide_Launcher:=false
-		settings.IBM_OffLine_Timeout:=5
-		settings.IBM_Window_X:=0
-		settings.IBM_Window_Y:=900 ;To keep the window on-screen at 1080
-		settings.IBM_Window_Hide:=false
-		settings.IBM_Level_Diana_Cheese:=false
-		settings.IBM_Window_Dark_Icon:=false
-		settings.IBM_Allow_Modron_Buff_Off:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
-		settings.IBM_Ellywick_NonGemFarm_Cards:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
-		settings.IBM_Level_Recovery_Softcap:=0
-		settings.IBM_Format_Date_Display:="yyyy-MM-ddTHH:mm:ss" ;Hidden setting for date / time display
-		settings.IBM_Format_Date_File:="yyyyMMddTHHmmss" ;Hidden setting for date / time output in filenames, as : is not a valid character there
-		settings.IBM_Version_Check:=false
-		settings.IBM_Offsets_Check:=false
-		settings.IBM_Offsets_Lock_Pointers:=false
-		settings.IBM_Offsets_URL:="https://raw.githubusercontent.com/RLee-EN/BrivMaster-Imports/refs/heads/main/" ;Hidden setting to allow a different offset source to be used if wanted
+		settings.IBM_Offline_Stack_Zone["_DEFAULT"]:=500
+		settings.IBM_Offline_Stack_Min["_DEFAULT"]:=300
+		settings.IBM_OffLine_Flames_Use["_DEFAULT"]:=false
+        settings.IBM_OffLine_Flames_Zones["_DEFAULT"]:=[500,500,500,500,500]
+		settings.IBM_Route_Combine["_DEFAULT"]:=0
+		settings.IBM_Route_Combine_Boss_Avoidance["_DEFAULT"]:=1
+		settings.IBM_DailyRewardClaim_Enable["_DEFAULT"]:=false
+		settings.IBM_LevelManager_Levels["_DEFAULT",7]:={"min": 100,"prio": 0,"priolimit": "","z1": 100}
+		settings.IBM_LevelManager_Levels["_DEFAULT",58]:={"min": 200,"prio": 3,"priolimit": "","z1": 200}
+		settings.IBM_LevelManager_Levels["_DEFAULT",59]:={"min": 70,"prio": 2,"priolimit": "","z1": 70}
+		settings.IBM_LevelManager_Levels["_DEFAULT",75]:={"min": 220,"prio": 0,"priolimit": "","z1": 220}
+		settings.IBM_LevelManager_Levels["_DEFAULT",83]:={"min": 200,"prio": 4,"priolimit": 100,"z1": 200}
+		settings.IBM_LevelManager_Levels["_DEFAULT",91]:={"min": 300,"prio": 0,"priolimit": "","z1": 300}
+		settings.IBM_LevelManager_Levels["_DEFAULT",97]:={"min": 100,"prio": 4,"priolimit": 100,"z1": 100}
+		settings.IBM_LevelManager_Levels["_DEFAULT",99]:={"min": 200,"prio": 2,"priolimit": "","z1": 200}
+		settings.IBM_LevelManager_Levels["_DEFAULT",117]:={"min": 50,"prio": 0,"priolimit": "","z1": 50}
+		settings.IBM_LevelManager_Levels["_DEFAULT",139]:={"min": 1,"prio": 0,"priolimit": "","z1": 1}
+		settings.IBM_LevelManager_Levels["_DEFAULT",145]:={"min": 100,"prio": 0,"priolimit": "","z1": 100}
+		settings.IBM_LevelManager_Levels["_DEFAULT",148]:={"min": 100,"prio": 2,"priolimit": "","z1": 100}
+		settings.IBM_LevelManager_Levels["_DEFAULT",165]:={"min": 200,"prio": 2,"priolimit": "","z1": 200}
+		settings.IBM_Route_Zones_Jump["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+		settings.IBM_Route_Zones_Stack["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+		settings.IBM_Online_Use_Melf["_DEFAULT"]:=false
+		settings.IBM_Online_Melf_Min["_DEFAULT"]:=349
+		settings.IBM_Online_Melf_Max["_DEFAULT"]:=800
+		settings.IBM_Online_Ultra_Enabled["_DEFAULT"]:=false
+		settings.IBM_LevelManager_Input_Max["_DEFAULT"]:=5
+		settings.IBM_LevelManager_Boost_Use["_DEFAULT"]:=false
+		settings.IBM_LevelManager_Boost_Multi["_DEFAULT"]:=8
+		settings.IBM_Route_BrivJump_Q["_DEFAULT"]:=4
+		settings.IBM_Route_BrivJump_E["_DEFAULT"]:=0
+		settings.IBM_Route_BrivJump_M["_DEFAULT"]:=4
+		settings.IBM_Casino_Target_Base["_DEFAULT"]:=3
+		settings.IBM_Casino_Redraws_Base["_DEFAULT"]:=1
+		settings.IBM_Casino_MinCards_Base["_DEFAULT"]:=0
+		settings.IBM_OffLine_Delay_Time["_DEFAULT"]:=15000
+		settings.IBM_OffLine_Sleep_Time["_DEFAULT"]:=0
+		settings.IBM_Level_Options_Mod_Key["_DEFAULT"]:="Shift"
+		settings.IBM_Level_Options_Mod_Value["_DEFAULT"]:=10
+		settings.IBM_Route_Offline_Restore_Window["_DEFAULT"]:=true
+		settings.IBM_OffLine_Freq["_DEFAULT"]:=1
+		settings.IBM_OffLine_Blank["_DEFAULT"]:=0
+		settings.IBM_OffLine_Blank_Relay["_DEFAULT"]:=0
+		settings.IBM_OffLine_Blank_Relay_Zones["_DEFAULT"]:=400
+		settings.IBM_Level_Options_Limit_Tatyana["_DEFAULT"]:=false
+		settings.IBM_Level_Options_Suppress_Front["_DEFAULT"]:=true
+		settings.IBM_Level_Options_Ghost["_DEFAULT"]:=true
+		settings.IBM_Level_Recovery_Softcap["_DEFAULT"]:=0
+		settings.IBM_Format_Date_Display["_DEFAULT"]:="yyyy-MM-ddTHH:mm:ss" ;Hidden setting for date / time display
+		settings.IBM_Format_Date_File["_DEFAULT"]:="yyyyMMddTHHmmss" ;Hidden setting for date / time output in filenames, as : is not a valid character there
+		settings.IBM_Game_Exe["_DEFAULT"]:="IdleDragons.exe"
+		settings.IBM_Game_Path["_DEFAULT"]:="" ;Path and Launch command are user dependant so can't have a default
+		settings.IBM_Game_Launch["_DEFAULT"]:=""
+		settings.IBM_Game_Hide_Launcher["_DEFAULT"]:=false
+		settings.IBM_OffLine_Timeout["_DEFAULT"]:=5
+		settings.IBM_Window_X["_DEFAULT"]:=0
+		settings.IBM_Window_Y["_DEFAULT"]:=900 ;To keep the window on-screen at 1080
+		settings.IBM_Window_Hide["_DEFAULT"]:=false
+		settings.IBM_Level_Diana_Cheese["_DEFAULT"]:=false
+		settings.IBM_Window_Dark_Icon["_DEFAULT"]:=false
+		settings.IBM_Allow_Modron_Buff_Off["_DEFAULT"]:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
+		settings.HUB:={} ;Separate hub-only settings
+		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
+		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
+		settings.HUB.IBM_ChestSnatcher_Options_Min_Silver["_DEFAULT"]:=500
+		settings.HUB.IBM_ChestSnatcher_Options_Min_Buy["_DEFAULT"]:=250
+		settings.HUB.IBM_ChestSnatcher_Options_Open_Gold["_DEFAULT"]:=0
+		settings.HUB.IBM_ChestSnatcher_Options_Open_Silver["_DEFAULT"]:=0
+		settings.HUB.IBM_Game_Settings_Option_Profile["_DEFAULT"]:=1
+		settings.HUB.IBM_Game_Settings_Option_Set[1,"_DEFAULT"]:={Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}
+		settings.HUB.IBM_Game_Settings_Option_Set[2,"_DEFAULT"]:={Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}
+		settings.HUB.IBM_Ellywick_NonGemFarm_Cards["_DEFAULT"]:=[0,0,4,5,0,0,0,1,0,0] ;Min/Max for each card in cardID order
+		settings.HUB.IBM_Version_Check["_DEFAULT"]:=false
+		settings.HUB.IBM_Offsets_Check["_DEFAULT"]:=false
+		settings.HUB.IBM_Offsets_Lock_Pointers["_DEFAULT"]:=false
+		settings.HUB.IBM_Offsets_URL["_DEFAULT"]:="https://raw.githubusercontent.com/RLee-EN/BrivMaster-Imports/refs/heads/main/" ;Hidden setting to allow a different offset source to be used if wanted
         return settings
     }
 
 	SaveSettings()
     {
-        settings:=this.Settings
-        IC_BrivMaster_SharedFunctions_Class.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, settings)
-        ; Apply settings to BrivGemFarm
+        IC_BrivMaster_SharedFunctions_Class.WriteObjectToAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath, g_IBM_Settings)
 		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
-		{
-			this.SharedRunData.UpdateSettingsFromFile()
-		}
-		g_IBM_Settings:=this.settings ;TODO: This is a hack to make the g_BrivUserSettingsFromAddons values available via the hub, needed due to the override of g_SF.Memory.OpenProcessReader()
+			this.SharedRunData.UpdateSettingsFromFile() ;Apply settings to the farm script
 		this.LEGACY_UpdateStatus("Settings saved")
     }
 
@@ -279,7 +283,7 @@ Class IC_IriBrivMaster_Component
         {
 			this.SharedRunData.IBM_BuyChests:=0 ;Cancel any orders open as the hub starts
         }
-		this.ChestSnatcher_AddMessage("General","Awaiting first order")
+		this.ChestSnatcher.StartMessage()
 		this.SoftResetStats() ;Soft reset so we don't discard totals etc but also don't pick up a part run
 		this.UpdateStatus()
 		this.GameSettingsCheck()
@@ -644,7 +648,7 @@ Class IC_IriBrivMaster_Component
 			if (!this.GameSettingFileLocation) ;We tried and we failed
 				return
 		}
-		profile:=this.settings.IBM_Game_Settings_Option_Profile
+		profile:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile
 		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
 		changeCount:=0
 		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
@@ -666,23 +670,23 @@ Class IC_IriBrivMaster_Component
 				if (this.IsGameClosed())
 				{
 					g_SF.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
 				}
 				else
 				{
 					MsgBox,48,Briv Master,Game settings cannot be changed whilst Idle Champions is running
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
 				}
 
 			}
 			else
 			{
-				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
 			}
 		}
 		else
 		{
-			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . this.settings.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","cGreen")
+			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","cGreen")
 		}
 	}
 
@@ -690,7 +694,7 @@ Class IC_IriBrivMaster_Component
 	{
 		if (IBMName=="Swap25100") ;Special case for the hotkey swap
 		{
-			if (this.settings.IBM_Game_Settings_Option_Set[this.settings.IBM_Game_Settings_Option_Profile,IBMName]) ;If not using this option we don't care what the user has set them to, so only check in this case
+			if (g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile,IBMName]) ;If not using this option we don't care what the user has set them to, so only check in this case
 			{
 				level25:=gameSettings[CNEName,"hero_level_25"] ;This should be a single-element array ["LeftControl"]
 				if !(level25.Count()==1 AND level25[1]=="LeftControl")
@@ -710,9 +714,9 @@ Class IC_IriBrivMaster_Component
 			return
 		}
 		if (isBoolean)
-			targetValue:=this.settings.IBM_Game_Settings_Option_Set[this.settings.IBM_Game_Settings_Option_Profile,IBMName]==1 ? "true" : "false"
+			targetValue:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile,IBMName]==1 ? "true" : "false"
 		else
-			targetValue:=this.settings.IBM_Game_Settings_Option_Set[this.settings.IBM_Game_Settings_Option_Profile,IBMName]
+			targetValue:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile,IBMName]
 		if gameSettings[CNEName]!=targetValue
 		{
 			changeCount++
@@ -733,7 +737,7 @@ Class IC_IriBrivMaster_Component
 
 	GetSettingsFileLocation(checkTime)
 	{
-		settingsFileLoc:=this.settings.IBM_Game_Path . "IdleDragons_Data\StreamingAssets\localSettings.json"
+		settingsFileLoc:=g_IBM_Settings.IBM_Game_Path . "IdleDragons_Data\StreamingAssets\localSettings.json"
 		if (FileExist(settingsFileLoc))
 		{
 			this.GameSettingFileLocation:=settingsFileLoc
@@ -743,192 +747,12 @@ Class IC_IriBrivMaster_Component
 
 	IsGameClosed()
 	{
-		return !WinExist("ahk_exe " . this.settings.IBM_Game_Exe)
-	}
-
-	ChestSnatcher() ;Process chest purchase orders
-	{
-		if (this.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests
-		{
-			if (this.settings.IBM_DailyRewardClaim_Enable AND A_TickCount >= this.NextDailyClaimCheck)
-			{
-				this.ChestSnatcher_ClaimDailyRewards()
-				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
-			}
-			else if (this.settings.IBM_ChestSnatcher_Options_Open_Gold OR this.settings.IBM_ChestSnatcher_Options_Open_Silver)
-			{
-				this.ChestSnatcher_Process()
-			}
-			else
-				this.SharedRunData.IBM_BuyChests:=0 ;Cancel the order
-		}
-		else if (this.settings.IBM_ChestSnatcher_Options_Min_Buy)
-		{
-			gems:=this.CurrentGems - this.settings.IBM_ChestSnatcher_Options_Min_Gem
-			amountG:=Min(Floor(gems / this.CONSTANT_goldCost) , this.CONSTANT_serverRateBuy )
-			if (amountG >= this.settings.IBM_ChestSnatcher_Options_Min_Buy)
-			{
-				this.ChestSnatcher_AddMessage("Buy","No open order, buying " . amountG . " Gold...")
-				this.ChestSnatcher_BuyChests(2, amountG )
-				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
-			}
-		}
-
-	}
-
-	ChestSnatcher_AddMessage(action,comment)
-	{
-		message:={}
-		FormatTime, formattedTime,, HH:mm:ss
-		message["Time"]:=formattedTime
-		message["Action"]:=action
-		message["Comment"]:=comment
-		this.ChestSnatcher_Messages.Push(message)
-		if (this.ChestSnatcher_Messages.Count()>20)
-			this.ChestSnatcher_Messages.RemoveAt(1)
-	}
-
-	ChestSnatcher_ClaimDailyRewards()
-	{
-		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
-		If (lastSaveEpoch=="")
-			return
-		lastSave:=this.ChestSnatcher_CNETimeStampToDate(lastSaveEpoch)
-		secondsElapsed:=A_NOW
-		secondsElapsed-=lastSave,s
-		if (secondsElapsed>=2)
-			return
-		serverString:="&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
-		response := g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
-		if (IsObject(response) && response.success)
-		{
-			dayMask := 1 << (response.daily_login_details.today_index)
-			if (response.daily_login_details.premium_active && response.daily_login_details.premium_expire_seconds > 0)
-				boostExpiry:=response.daily_login_details.premium_expire_seconds / 86400 ;Convert to days
-			standardClaimed:=(response.daily_login_details.rewards_claimed & dayMask) > 0
-			premimumClaimed:=(response.daily_login_details.premium_rewards_claimed & dayMask) > 0
-			if(standardClaimed AND (premimumClaimed OR !response.daily_login_details.premium_active)) ;standard claimed, and premium either claimed or not active - no need to further claim
-			{
-				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
-				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-				this.ChestSnatcher_AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
-				if (response.daily_login_details.premium_active)
-					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
-				return
-			}
-			else ;Need to claim
-			{
-				if (response.daily_login_details.premium_active)
-				{
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
-					this.ChestSnatcher_AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
-				}
-				else
-					this.ChestSnatcher_AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
-				this.ChestSnatcher_AddMessage("Claim", messageString)
-			}
-		}
-		else ;Check failed
-		{
-			this.ChestSnatcher_AddMessage("Claim", "Failed to check current daily reward status")
-			return
-		}
-		extraParams := "&is_boost=0" . serverString
-		response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
-		if (IsObject(response) AND response.success)
-		{
-			nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
-			if (response.daily_login_details.premium_active) ;TODO: Use the initial check servercall to determine if this is needed? (So we can call ONLY the premium if it's the only one outstanding)
-			{
-				extraParams := "&is_boost=1" . serverString
-				response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
-				if (IsObject(response) AND response.success)
-				{
-					nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
-					this.ChestSnatcher_AddMessage("Claim", "Claimed standard and premium daily rewards")
-				}
-				else ;Standard worked, premium failed despite being available?
-					this.ChestSnatcher_AddMessage("Claim", "Claimed standard daily reward and failed to claim available premium reward")
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Claim", "Claimed standard daily reward")
-			}
-			if (!nextClaim_Seconds) ;If we somehow didn't get a value for the next time (despite success on the call), wait 5min before calling again
-				nextClaim_Seconds:=300
-			this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
-		}
-		else
-		{
-			this.NextDailyClaimCheck:=A_TickCount + 60000 ;Wait 1min before trying again
-			this.ChestSnatcher_AddMessage("Claim","Failed to claim daily rewards")
-			this.ServerCallFailCount++
-		}
-	}
-
-	ChestSnatcher_GetBaseServerString()
-	{
-		return "&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
-	}
-
-	ChestSnatcher_BuyChests(chestID := 1, numChests := 100)
-    {
-		if (numChests > 0)
-		{
-			callTime:=A_TickCount
-			response := g_ServerCall.CallBuyChests( chestID, numChests )
-			serverCallTime:=A_TickCount-callTime
-			if (response.okay AND response.success)
-			{
-				If (chestID==1)
-				{
-					this.Chests.PurchasedSilver+=numChests
-					this.Chests.CurrentSilver:=response.chest_count
-					this.ChestSnatcher_AddMessage("Buy","Bought " . numChests " Silver in " . serverCallTime . "ms")
-				}
-				else If (ChestID==2)
-				{
-					this.Chests.PurchasedGold+=numChests
-					this.Chests.CurrentGold:=response.chest_count
-					this.ChestSnatcher_AddMessage("Buy","Bought " . numChests " Gold in " . serverCallTime . "ms")
-				}
-				this.CurrentGems:=response.currency_remaining
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Buy","Chest purchase failed")
-				this.ServerCallFailCount++
-			}
-		}
-    }
-
-	ChestSnatcher_Process()
-	{
-		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
-		If (lastSaveEpoch=="")
-			return
-		lastSave:=this.ChestSnatcher_CNETimeStampToDate(lastSaveEpoch)
-		secondsElapsed:=A_NOW
-		secondsElapsed-=lastSave,s
-		if (secondsElapsed>=2)
-			return
-		this.SharedRunData.IBM_BuyChests:=false ;Prevent repeats in the same run
-		if (this.settings.IBM_ChestSnatcher_Options_Open_Gold AND this.settings.IBM_ChestSnatcher_Options_Open_Gold + this.settings.IBM_ChestSnatcher_Options_Min_Gold <= this.Chests.CurrentGold)
-		{
-			this.ChestSnatcher_OpenChests(2,this.settings.IBM_ChestSnatcher_Options_Open_Gold)
-		}
-		else if (this.settings.IBM_ChestSnatcher_Options_Open_Silver AND this.settings.IBM_ChestSnatcher_Options_Open_Silver + this.settings.IBM_ChestSnatcher_Options_Min_Silver <= this.Chests.CurrentSilver)
-		{
-			this.ChestSnatcher_OpenChests(1,this.settings.IBM_ChestSnatcher_Options_Open_Silver)
-		}
-		else
-			this.ChestSnatcher_AddMessage("Open","Not enough chests to process open order")
-		g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+		return !WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)
 	}
 
 	RefreshUserData()
     {
-        if(WinExist("ahk_exe " . this.settings.IBM_Game_Exe)) ; only update server when the game is open
+        if(WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)) ; only update server when the game is open
         {
             g_SF.Memory.OpenProcessReader()
             g_SF.ResetServerCall()
@@ -937,55 +761,6 @@ Class IC_IriBrivMaster_Component
 			if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
 				this.SharedRunData.IBM_ProcessSwap:=false
         }
-    }
-
-	ChestSnatcher_CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use
-	{
-		unixTime:=timeStamp-62135596800 ;Difference between day 1 (01Jan0001) and unix time (AHK doesn't support dates before 1601 so we can't just set converted:=1)
-		converted:=1970
-		converted+=unixTime,s
-		return converted
-	}
-
-	ChestSnatcher_OpenChests(chestID:=1,numChests:=250)
-    {
-		chestName:=chestID==2 ? "Gold" : "Silver"
-        callTime:=A_TickCount
-		this.ChestSnatcher_AddMessage("Open","Opening " . numChests . " " . chestName . "...")
-		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
-		serverCallTime:=A_TickCount-callTime
-        if (!chestResults.success)
-		{
-			if (!chestResults.failure_reason)
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - no reason reported")
-				this.ServerCallFailCount++
-			}
-			else if (chestResults.failure_reason=="Outdated instance id")
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - Old ID - Refreshing")
-				this.RefreshUserData()
-			}
-			else
-			{
-				this.ChestSnatcher_AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - " . chestResults.failure_reason)
-				this.ServerCallFailCount++
-			}
-			return
-		}
- 		if (chestID==1)
-		{
-			this.Chests.OpenedSilver+=numChests
-			this.Chests.CurrentSilver:=chestResults.chests_remaining
-			this.ChestSnatcher_AddMessage("Open","Opened " . numChests " Silver in " . serverCallTime . "ms")
-
-		}
-		else if (chestID==2)
-		{
-			this.Chests.OpenedGold+=numChests
-		    this.Chests.CurrentGold:=chestResults.chests_remaining
-			this.ChestSnatcher_AddMessage("Open","Opened " . numChests " Gold in " . serverCallTime . "ms")
-		}
     }
 
 	SetControl_RestoreWindow() ;Toggles
@@ -1001,24 +776,24 @@ Class IC_IriBrivMaster_Component
 		RegExMatch(routeString,"{([A-Za-z0-9-_]+),.*}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Jump:=this.ConvertBase64ToBinaryArray(routeMatches1)
-			while (this.settings.IBM_Route_Zones_Jump.Length() > 50) ;The input will represent a multiple of 6 bits
-				this.settings.IBM_Route_Zones_Jump.Pop()
+			g_IBM_Settings.IBM_Route_Zones_Jump:=this.ConvertBase64ToBinaryArray(routeMatches1)
+			while (g_IBM_Settings.IBM_Route_Zones_Jump.Length() > 50) ;The input will represent a multiple of 6 bits
+				g_IBM_Settings.IBM_Route_Zones_Jump.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteJumpBoxes()
 		}
 		RegExMatch(routeString,"{.*,([A-Za-z0-9-_]+)}",routeMatches)
 		if (strlen(routeMatches1)>0)
 		{
-			this.settings.IBM_Route_Zones_Stack:=this.ConvertBase64ToBinaryArray(routeMatches1)
-			while (this.settings.IBM_Route_Zones_Stack.Length() > 50) ;The input will represent a multiple of 6 bits
-				this.settings.IBM_Route_Zones_Stack.Pop()
+			g_IBM_Settings.IBM_Route_Zones_Stack:=this.ConvertBase64ToBinaryArray(routeMatches1)
+			while (g_IBM_Settings.IBM_Route_Zones_Stack.Length() > 50) ;The input will represent a multiple of 6 bits
+				g_IBM_Settings.IBM_Route_Zones_Stack.Pop()
 			g_IriBrivMaster_GUI.RefreshRouteStackBoxes()
 		}
 	}
 
 	GetRouteExportString()
 	{
-		return "{" . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Jump) . "," . this.ConvertBinaryArrayToBase64(this.settings.IBM_Route_Zones_Stack) . "}"
+		return "{" . this.ConvertBinaryArrayToBase64(g_IBM_Settings.IBM_Route_Zones_Jump) . "," . this.ConvertBinaryArrayToBase64(g_IBM_Settings.IBM_Route_Zones_Stack) . "}"
 	}
 
 	ConvertBinaryArrayToBase64(value) ;Converts an array of 0/1 values to base 64. Note this is NOT proper base64url as we've no interest in making it byte compatible. As we have 50 values we'd be 22bits over
@@ -1114,7 +889,7 @@ Class IC_IriBrivMaster_Component
 					g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
 				}
 				this.UpdateStats(dirty)
-				this.ChestSnatcher() ;AFter stats as Stats reads the gem/chest counts on new run start
+				this.ChestSnatcher.Snatch() ;After stats as Stats reads the gem/chest counts on new run start
 			}
 			catch
 			{
@@ -1129,57 +904,122 @@ Class IC_IriBrivMaster_Component
 
 	LoadSettings()
     {
-        needSave := false
-        default := this.GetNewSettings()
-        this.Settings := settings := IC_BrivMaster_SharedFunctions_Class.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath) ;Cannot use the instance as it might not be set up yet - it needs the exe location from these settings to set up .Memory
-        if (!IsObject(settings))
+        needSave:=false
+        template:=this.GetSettingsTemplate() ;Needs in all cases, either to create in full, or for key checks
+		g_IBM_Settings:=IC_BrivMaster_SharedFunctions_Class.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath) ;Cannot use the instance as it might not be set up yet - it needs the exe name from these settings to set up .Memory
+        if (!IsObject(g_IBM_Settings)) ;If no settings are read in create a new default set
         {
-            this.Settings := settings := default
-            needSave := true
+			g_IBM_Settings:=this.CreateDefaultSettingsFromTemplate(template)
+            needSave:=true
         }
         else
         {
-            ; Delete extra settings
-            for k, v in settings
-            {
-                if (!default.HasKey(k))
-                {
-                    settings.Delete(k)
-                    needSave := true
-                }
-            }
-            ; Add missing settings
-            for k, v in default
-            {
-                if (!settings.HasKey(k) || settings[k] == "")
-                {
-                    settings[k] := default[k]
-                    needSave := true
-                }
-            }
+        	;MIGRATION STUFF, added for 0.3.3 for Feb26 release - consider removing after a while
+			if(!g_IBM_Settings.HasKey("HUB"))
+			{
+				g_IBM_Settings.HUB:={} ;Create HUB sub-object and copy over existing settings - they will be removed by the usual extra setting checking
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gem:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Gem
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gold:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Gold
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Silver:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Silver
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Buy
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold:=g_IBM_Settings.IBM_ChestSnatcher_Options_Open_Gold
+				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver:=g_IBM_Settings.IBM_ChestSnatcher_Options_Open_Silver
+				g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile:=g_IBM_Settings.IBM_Game_Settings_Option_Profile
+				g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set:=g_IBM_Settings.IBM_Game_Settings_Option_Set
+				g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards:=g_IBM_Settings.IBM_Ellywick_NonGemFarm_Cards
+				g_IBM_Settings.HUB.IBM_Version_Check:=g_IBM_Settings.IBM_Version_Check
+				g_IBM_Settings.HUB.IBM_Offsets_Check:=g_IBM_Settings.IBM_Offsets_Check
+				g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers:=g_IBM_Settings.IBM_Offsets_Lock_Pointers
+				g_IBM_Settings.HUB.IBM_Offsets_URL:=g_IBM_Settings.IBM_Offsets_URL
+				MSGBOX 36, Briv Master Settings Migration, % "Hello, I'm Irisiri and I've been screwing around with Briv Master's settings structure. To avoid you having to get set up again BM will attempt to migrate your existing settings.`n`nBM no longer saves champion level settings seperately for the Combine and Non-combine strategy options.`n`nSelect Yes to migrate your Combine level settings`nSelect No to migrate your Non-combine level settings.`n`nYour current setting is: " . (g_IBM_Settings.IBM_Route_Combine ? "Combine (Yes)" : "Non-Combine (No)") ;32 is question, 4 is Yes/No
+				ifMsgBox Yes
+					g_IBM_Settings.IBM_LevelManager_Levels:=g_IBM_Settings.IBM_LevelManager_Levels[1]
+				ifMsgBox No
+					g_IBM_Settings.IBM_LevelManager_Levels:=g_IBM_Settings.IBM_LevelManager_Levels[0]
+			}
+			;END MIGRATION STUFF
+			needSave:=this.CheckForExtraSettings(g_IBM_Settings, template) ;Delete extra settings, without removing object-based values for them
+            needSave:=this.CheckForMissingSettings(g_IBM_Settings,template) OR needSave ;Add extra settings, along with their default values. Order matters here due to lazy OR
         }
         if (needSave)
             this.SaveSettings()
     }
 
-    UpdateSetting(setting, value)
-    {
-        this.Settings[setting] := value
-    }
-
-    UpdateLevelSettings(levelData)
-    {
-        this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]] := levelData
-    }
-
-	GetLevelSettings() ;Returns the current level settings from the data (not UI) for the selected combine mode
+	CheckForMissingSettings(settings, template) ;Check all elements of settings and remove any that do not exist in template, up to those with _DEFAULT properties
 	{
-		return this.Settings["IBM_LevelManager_Levels",this.Settings["IBM_Route_Combine"]]
+		needSave:=false
+		for k,v in template.Clone()
+		{
+			if(k!="_DEFAULT") ;Do not treat the default values as settings
+			{
+				if(!settings.HasKey(k))
+				{
+					if(template[k].HasKey("_DEFAULT")) ;If this setting is a leaf node
+						settings[k]:=template[k,"_DEFAULT"]
+					else ;An object that will be further added to later
+						settings[k]:={}
+					needSave:=true
+				}
+				if(isObject(v))
+					 needSave:=this.CheckForMissingSettings(settings[k],v) OR needSave
+			}
+		}
+		return needSave
 	}
+
+	CheckForExtraSettings(settings, template) ;Check all elements of settings and remove any that do not exist in template, up to those with _DEFAULT properties
+	{
+		needSave:=false
+		for k,v in settings.Clone()
+		{
+			if(template.HasKey(k))
+			{
+				if(!template[k].HasKey("_DEFAULT")) ;Marks a 'leaf' note in the template, following items may be object-based values so we can't delete them
+					needSave:=this.CheckForExtraSettings(v,template[k]) OR needSave ;Order matters due to lazy execution
+			}
+			else
+			{
+				settings.Delete(k)
+				needSave:=true
+			}
+		}
+		return needSave
+	}
+	
+	CreateDefaultSettingsFromTemplate(template) ;Extracts all values from the _DEFAULT keys, e.g. template.IBM_Setting._DEFAULT:=true becomes template.IBM_Setting:=true. This is done in place
+	{
+		for k,v in template
+		{
+			if(IsObject(v))
+				this.CreateDefaultSettingsFromTemplate_Recurse(template,k,v)
+		}
+		return template
+	}
+	
+	CreateDefaultSettingsFromTemplate_Recurse(parentObj,key,value)
+	{
+		for k,v in value.Clone()
+		{
+			if(k=="_DEFAULT") ;Assign the value of the default property to the parent it is attached to
+			{
+				parentObj[key]:=v ;This overwrites value, so we just return here
+				return
+			}
+			else if(IsObject(v))
+			{
+				this.CreateDefaultSettingsFromTemplate_Recurse(value,k,v)
+			}
+		}
+	}
+
+    UpdateSetting(setting, value) ;TODO: With no logic around the assignment this seems like a bit of a pointless function
+    {
+        g_IBM_Settings[setting]:=value
+    }
 
 	UpdateRouteSetting(setting,toggleZone)
 	{
-		this.Settings[setting][toggleZone]:=!this.Settings[setting][toggleZone]
+		g_IBM_Settings[setting][toggleZone]:=!g_IBM_Settings[setting][toggleZone]
 	}
 
 	IBM_GetGUIFormationData() ;Generates formation data for the level manager GUI
@@ -1202,7 +1042,7 @@ Class IC_IriBrivMaster_Component
 		return championData
 	}
 
-	IBM_GetGUIFormationData_ProcessFormation(championData,index,formation) ;TODO: This needs to deal with the seat/name reads failing. Probably via trying to restart memory reader initially, then giving up and not returning any champs with some kind of feedback message
+	IBM_GetGUIFormationData_ProcessFormation(championData,index,formation) ;TODO: This needs to deal with the seat/name reads failing. Probably via trying to restart the memory reader initially, then giving up and not returning any champs with some kind of feedback message
 	{
 		for _, heroID in formation
 		{
@@ -1427,11 +1267,10 @@ Class IC_IriBrivMaster_Component
 			if(RegExMatch(webRoot,"ps\d+[^/]+",match))
 				return match
 			else
-				return "Invalid URL"
+				return "Invalid URL. Servercall fallback: " . g_ServerCall.webRoot
 		}
 		else
-			webRoot:="Invalid memory read"
-		return webRoot
+			return "Invalid memory read. Servercall fallback: " . g_ServerCall.webRoot
 	}
 
 	CheckOffsetVersions()
@@ -1445,7 +1284,7 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:="cRed"
+			colour:=this.GetThemeTextColour("WarningTextColor")
 		else
 			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
@@ -1464,7 +1303,7 @@ Class IC_IriBrivMaster_Component
 			}
 		}
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
-		remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
+		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
@@ -1472,14 +1311,14 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:="cRed"
+				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:="cRed"
+				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
@@ -1502,7 +1341,7 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:="cRed"
+			colour:=this.GetThemeTextColour("WarningTextColor")
 		else
 			colour:=this.GetThemeTextColour()
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
@@ -1516,12 +1355,10 @@ Class IC_IriBrivMaster_Component
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)
 			if(platformID!=11 AND platformID!=21)
-			{
 				return
-			}
 		}
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
-		remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
+		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
@@ -1529,25 +1366,25 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:="cRed"
+				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:="cRed"
+				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
 			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"
-			prompt.=this.settings.IBM_Offsets_Lock_Pointers ? "`nPointers preserved" : "`nPointers: " . splitCSV[3] . " " . splitCSV[4]
+			prompt.=g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers ? "`nPointers preserved" : "`nPointers: " . splitCSV[3] . " " . splitCSV[4]
 			prompt.="`nImports: " . splitCSV[1] . " " . splitCSV[2]
 			Msgbox 36, Briv Master, %prompt% ;32 is question, 4 is Yes/No
 			ifMsgBox Yes
 			{
-				remoteURL:=this.settings.IBM_Offsets_URL . "IC_Offsets_Data_P" . platformID . ".zlib"
+				remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Data_P" . platformID . ".zlib"
 				offsetZlib:=this.BasicServerCaller.BasicServerCall(remoteURL)
 				if(offsetZlib)
 				{
@@ -1567,7 +1404,7 @@ Class IC_IriBrivMaster_Component
 						FileAppend, %importString%, %dataPath%
 					}
 					dataPath:=scriptDir . "\Offsets\IC_Offsets.json"
-					if(this.settings.IBM_Offsets_Lock_Pointers) ;In this case we have to load the existing pointer file, update the import versions, and re-output
+					if(g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers) ;In this case we have to load the existing pointer file, update the import versions, and re-output
 					{
 						FileRead, existingJSON, %dataPath%
 						existingData:=AHK_JSON.Load(existingJSON)
@@ -1613,5 +1450,242 @@ Class IC_IriBrivMaster_Component
             textType:="DefaultTextColor"
         textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
 		return "c" . textColour
+    }
+}
+
+class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and opening chests and associcated servercalls TODO: This has very weak encapsulation due to using various g_IriBrivMaster variables (chests, fails, etc) directly
+{
+	__New()
+	{
+		this.Messages:={}
+		this.NextDailyClaimCheck:=A_TickCount+180000 ;Wait 3min before making the first check, to avoid spamming calls whilst testing things
+	}
+	
+	Snatch() ;Process chest purchase orders
+	{
+		if (g_IriBrivMaster.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests. Note it is assumed that SharedRunData has been checked as valid before calling this function 
+		{
+			if (g_IBM_Settings.IBM_DailyRewardClaim_Enable AND A_TickCount>=this.NextDailyClaimCheck)
+			{
+				this.ClaimDailyRewards()
+				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+			}
+			else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold OR g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver)
+			{
+				this.CheckOpenChests()
+			}
+			else
+				g_IriBrivMaster.SharedRunData.IBM_BuyChests:=0 ;Cancel the order
+		}
+		else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy)
+		{
+			gems:=g_IriBrivMaster.CurrentGems - g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gem
+			amountG:=Min(Floor(gems / g_IriBrivMaster.CONSTANT_goldCost), g_IriBrivMaster.CONSTANT_serverRateBuy)
+			if (amountG>=g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy)
+			{
+				this.AddMessage("Buy","No open order, buying " . amountG . " Gold...")
+				this.BuyChests(2, amountG)
+				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+			}
+		}
+	}
+
+	AddMessage(action,comment)
+	{
+		message:={}
+		FormatTime, formattedTime,, HH:mm:ss
+		message["Time"]:=formattedTime
+		message["Action"]:=action
+		message["Comment"]:=comment
+		this.Messages.Push(message)
+		if (this.Messages.Count()>20)
+			this.Messages.RemoveAt(1)
+	}
+	
+	StartMessage()
+	{
+		this.AddMessage("General","Awaiting first order")
+	}
+
+	ClaimDailyRewards()
+	{
+		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
+		If (lastSaveEpoch=="")
+			return
+		lastSave:=this.CNETimeStampToDate(lastSaveEpoch)
+		secondsElapsed:=A_NOW
+		secondsElapsed-=lastSave,s
+		if (secondsElapsed>=2)
+			return
+		serverString:="&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
+		response := g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
+		if (IsObject(response) && response.success)
+		{
+			dayMask := 1 << (response.daily_login_details.today_index)
+			if (response.daily_login_details.premium_active && response.daily_login_details.premium_expire_seconds > 0)
+				boostExpiry:=response.daily_login_details.premium_expire_seconds / 86400 ;Convert to days
+			standardClaimed:=(response.daily_login_details.rewards_claimed & dayMask) > 0
+			premimumClaimed:=(response.daily_login_details.premium_rewards_claimed & dayMask) > 0
+			if(standardClaimed AND (premimumClaimed OR !response.daily_login_details.premium_active)) ;standard claimed, and premium either claimed or not active - no need to further claim
+			{
+				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
+				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
+				this.AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
+				if (response.daily_login_details.premium_active)
+					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days") ;Seperate entry simply due to length
+				return
+			}
+			else ;Need to claim
+			{
+				if (response.daily_login_details.premium_active)
+				{
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
+					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
+				}
+				else
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+				this.AddMessage("Claim", messageString)
+			}
+		}
+		else ;Check failed
+		{
+			this.AddMessage("Claim", "Failed to check current daily reward status")
+			return
+		}
+		extraParams := "&is_boost=0" . serverString
+		response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
+		if (IsObject(response) AND response.success)
+		{
+			nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
+			if (response.daily_login_details.premium_active) ;TODO: Use the initial check servercall to determine if this is needed? (So we can call ONLY the premium if it's the only one outstanding)
+			{
+				extraParams := "&is_boost=1" . serverString
+				response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
+				if (IsObject(response) AND response.success)
+				{
+					nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
+					this.AddMessage("Claim", "Claimed standard and premium daily rewards")
+				}
+				else ;Standard worked, premium failed despite being available?
+					this.AddMessage("Claim", "Claimed standard daily reward and failed to claim available premium reward")
+			}
+			else
+			{
+				this.AddMessage("Claim", "Claimed standard daily reward")
+			}
+			if (!nextClaim_Seconds) ;If we somehow didn't get a value for the next time (despite success on the call), wait 5min before calling again
+				nextClaim_Seconds:=300
+			this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
+		}
+		else
+		{
+			this.NextDailyClaimCheck:=A_TickCount + 60000 ;Wait 1min before trying again
+			this.AddMessage("Claim","Failed to claim daily rewards")
+			g_IriBrivMaster.ServerCallFailCount++
+		}
+	}
+
+	BuyChests(chestID:=1, numChests:=100)
+    {
+		if(numChests > 0)
+		{
+			callTime:=A_TickCount
+			response := g_ServerCall.CallBuyChests( chestID, numChests )
+			serverCallTime:=A_TickCount-callTime
+			if(response.okay AND response.success)
+			{
+				if(chestID==1)
+				{
+					g_IriBrivMaster.Chests.PurchasedSilver+=numChests
+					g_IriBrivMaster.Chests.CurrentSilver:=response.chest_count
+					this.AddMessage("Buy","Bought " . numChests " Silver in " . serverCallTime . "ms")
+				}
+				else if (chestID==2)
+				{
+					g_IriBrivMaster.Chests.PurchasedGold+=numChests
+					g_IriBrivMaster.Chests.CurrentGold:=response.chest_count
+					this.AddMessage("Buy","Bought " . numChests " Gold in " . serverCallTime . "ms")
+				}
+				g_IriBrivMaster.CurrentGems:=response.currency_remaining
+			}
+			else
+			{
+				this.AddMessage("Buy","Chest purchase failed")
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+		}
+    }
+
+	CheckOpenChests()
+	{
+		lastSaveEpoch:=g_SF.Memory.IBM_ReadLastSave() ;Reads in seconds since 01Jan0001
+		If (lastSaveEpoch=="")
+			return
+		lastSave:=this.CNETimeStampToDate(lastSaveEpoch)
+		secondsElapsed:=A_NOW
+		secondsElapsed-=lastSave,s
+		if (secondsElapsed>=2)
+			return
+		g_IriBrivMaster.SharedRunData.IBM_BuyChests:=false ;Prevent repeats in the same run
+		if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold AND g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold + g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gold <= g_IriBrivMaster.Chests.CurrentGold)
+		{
+			this.OpenChests(2,g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold)
+		}
+		else if (g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver AND g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver + g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Silver <= g_IriBrivMaster.Chests.CurrentSilver)
+		{
+			this.OpenChests(1,g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver)
+		}
+		else
+			this.AddMessage("Open","Not enough chests to process open order")
+		g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
+	}
+	
+	CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use TODO: There might be a case for making this a more general function
+	{
+		unixTime:=timeStamp-62135596800 ;Difference between day 1 (01Jan0001) and unix time (AHK doesn't support dates before 1601 so we can't just set converted:=1)
+		converted:=1970
+		converted+=unixTime,s
+		return converted
+	}
+
+	OpenChests(chestID:=1,numChests:=250)
+    {
+		chestName:=chestID==2 ? "Gold" : "Silver"
+        callTime:=A_TickCount
+		this.AddMessage("Open","Opening " . numChests . " " . chestName . "...")
+		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
+		serverCallTime:=A_TickCount-callTime
+        if (!chestResults.success)
+		{
+			if (!chestResults.failure_reason)
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - no reason reported")
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+			else if (chestResults.failure_reason=="Outdated instance id")
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - Old ID - Refreshing")
+				g_IriBrivMaster.RefreshUserData()
+			}
+			else
+			{
+				this.AddMessage("Open","Failed attempting to open " . numChests . " " . chestName " - " . chestResults.failure_reason)
+				g_IriBrivMaster.ServerCallFailCount++
+			}
+			return
+		}
+ 		if (chestID==1)
+		{
+			g_IriBrivMaster.Chests.OpenedSilver+=numChests
+			g_IriBrivMaster.Chests.CurrentSilver:=chestResults.chests_remaining
+			this.AddMessage("Open","Opened " . numChests " Silver in " . serverCallTime . "ms")
+
+		}
+		else if (chestID==2)
+		{
+			g_IriBrivMaster.Chests.OpenedGold+=numChests
+		    g_IriBrivMaster.Chests.CurrentGold:=chestResults.chests_remaining
+			this.AddMessage("Open","Opened " . numChests " Gold in " . serverCallTime . "ms")
+		}
     }
 }

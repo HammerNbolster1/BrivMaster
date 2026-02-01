@@ -152,7 +152,7 @@ Stop: Stop the tool early.
 This tab contains on the game and memory read setup along with addon information
 
 ### Game Location  
-This section specifies where the game is and how it is launched. It can be populated automatically whilst pressing the 'Copy from IC' button. If using the EGS launcher, select the EGS tickbox first.
+This section specifies where the game is and how it is launched. It can be populated automatically whilst pressing the 'Copy from IC' button.
 	
 Executable: The name of the game executable, normally IdleDragons.exe. This shoulld not need to be changed.
 	
@@ -165,6 +165,15 @@ Launch Command: The command used to launch the game. For non-EGS setups this wil
 Hide launcher: Selecting this option will hide the window created by invoking the Launch Command. Use this only for 3rd party EGS launchers that might otherwise pop up a command window. Using it with the game directly will cause it to fail to start.
 	
 EGS & Copy from IC: Described in the introduction to this group.
+
+### Window Options  
+These options control the appearance of the farm script window.
+
+Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem farm window when the script starts, measured from the top left of the screen in pixels.
+
+Hide: If selected the farm window will not be displayed.
+
+Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
 
 ### Offsets
 
@@ -221,7 +230,7 @@ Combine Thellora and Briv: There are two primary ways for a run to start.
 2. Combining. Thellora and Briv jump together, landing on Favour+Briv Jump+1, e.g. at 300 favour and 9J Briv they land on 310. Note this is not the same as if they jumped seperately, where it would be Thellora to 301 (favour+1) then Briv to 311 (9+1) as the 'normal' next zone is only factored in once. In this scenario Thellora is saved into the Modron formation and the Casino (Ellywick card draw) is performed after Thellora's jump
 Generally combining is better, as it removes a transition, but some routes and favours may not work well with it, e.g. if they land on a boss as a result.
 	
-> Author's Note: The level settings (below) are saved independently for combining / non-combining.
+> Author's Note: The level settings (below) used to be saved independently for combining / non-combining **but this is no longer case as of v0.3.3**.
 
 Avoid Bosses: When configuring a route landing on a boss is to be avoided, during recovery however Thellora may not have enough charges to make the usual jump, and will land elsewhere. If she would land on a boss zone this option when enabled will break the combine if doing so would cause her to no longer land on a boss zone. This should be enabled on any adventure with armoured / hit based bosses, and is likely a good idea for any adventure.
 	
@@ -306,15 +315,6 @@ Target Gem cards: The number of Gem cards to aim for; if this cannot be achived 
 Maximum redraws: The number of redraws allowed (via Ellywick's ultimate). This should be 1 without DM, or 2 with DM. DM should be used if available so this is normally 2.
 
 Minimum cards: This is the minimum total cards to hold before leaving the Casino. If your route does not hit bosses, this should always be 0. If your route hits bosses, it should be set to allow Ellywick to reach a full hand before hitting your first boss. 5 is the 'safe' option, but it might be possible to use 4 and get the same result.
-	
-### Window Options  
-These options control the appearance of the farm script window.
-
-Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem farm window when the script starts, measured from the top left of the screen in pixels.
-
-Hide: If selected the farm window will not be displayed.
-
-Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
 	
 ## BM Levels
 This tab focuses mostly on champion levelling. After a little side quest, anyway.

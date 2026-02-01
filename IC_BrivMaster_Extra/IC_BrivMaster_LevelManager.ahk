@@ -1,6 +1,6 @@
 class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 {
-	__New(combine) ;This processes all the formations so it is only done once. As a result to change a target level the script would have to be restarted
+	__New() ;This processes all the formations so it is only done once. As a result to change a target level the script would have to be restarted
 	{
 		levelingDone:={} ;Records if levelling type is completely done, so we don't go through all the checks when we're already done for the run, key by formation, then for z1,min,max, eg levelingDone["Q","min"]==true
 		savedFormations:={} ;Formations as per standard memory reads
@@ -10,7 +10,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(3),"E")
 		this.ExtractFormation(g_SF.Memory.GetActiveModronFormationSaveSlot(),"M")
-		this.ProcessFormation(g_IBM_Settings["IBM_LevelManager_Levels",combine])
+		this.ProcessFormation(g_IBM_Settings.IBM_LevelManager_Levels)
 		this.ResetLevellingDone()
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
 		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")

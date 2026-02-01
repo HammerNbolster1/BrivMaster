@@ -22,6 +22,7 @@ class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class ;TODO: IC_Serv
             catch
                 g_IBM.Logger.AddMessage("Failed to save Briv stacks")
         }
+		return response ;Note this will only be meaningful for the synchronous version of the call
     }
 	
     ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specifically for use with saves. saveBody must be encoded before using this call.

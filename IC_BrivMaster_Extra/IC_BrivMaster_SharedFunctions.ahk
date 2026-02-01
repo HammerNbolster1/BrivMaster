@@ -161,6 +161,47 @@ class IC_BrivMaster_SharedFunctions_Class
 			return false
         return true
     }
+	
+/* 
+ WaitForModronReset(timeout:=60000)
+    {
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
+        g_IBM.Logger.AddMessage("WaitForModronReset() Modron Resetting...")
+        this.SetUserCredentials()
+        if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="") ;Only try and manually save if it hasn't already happened - (steelbones > 0)
+            g_serverCall.CallPreventStackFail(this.sprint,this.steelbones,"WaitForModronReset()",true)
+        while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
+        {
+            g_IBM.IBM_Sleep(20)
+            ElapsedTime:=A_TickCount - StartTime
+        }
+        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
+        g_IBM.Logger.AddMessage("WaitForModronReset() Loading z1...")
+        g_IBM.IBM_Sleep(20)
+        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
+        {
+            g_IBM.IBM_Sleep(20)
+            ElapsedTime:=A_TickCount - StartTime
+        }
+        if (ElapsedTime>=timeout)
+        {
+            g_IBM.Logger.AddMessage("WaitForModronReset() Timeout Exit")
+            return false
+        }
+        g_IBM.Logger.AddMessage("WaitForModronReset() Standard Exit")
+        return true
+    }
+	GetWebRoot()
+    {
+        tempWebRoot := this.Memory.ReadWebRoot()
+        httpString := StrSplit(tempWebRoot,":")[1]
+        isWebRootValid := httpString == "http" or httpString == "https"
+        g_ServerCall.webroot := isWebRootValid ? tempWebRoot : g_ServerCall.webroot
+    }
+}
+*/
 
 	GetWebRoot()
     {

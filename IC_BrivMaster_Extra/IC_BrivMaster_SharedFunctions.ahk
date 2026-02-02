@@ -193,14 +193,6 @@ class IC_BrivMaster_SharedFunctions_Class
         g_IBM.Logger.AddMessage("WaitForModronReset() Standard Exit")
         return true
     }
-	GetWebRoot()
-    {
-        tempWebRoot := this.Memory.ReadWebRoot()
-        httpString := StrSplit(tempWebRoot,":")[1]
-        isWebRootValid := httpString == "http" or httpString == "https"
-        g_ServerCall.webroot := isWebRootValid ? tempWebRoot : g_ServerCall.webroot
-    }
-}
 */
 
 	GetWebRoot()

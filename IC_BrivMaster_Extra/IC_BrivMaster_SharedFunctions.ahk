@@ -151,7 +151,7 @@ class IC_BrivMaster_SharedFunctions_Class
             ElapsedTime:=A_TickCount - StartTime
         }
         g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-		g_IBM.IBM_Sleep(20)
+		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
         while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
         {
             g_IBM.IBM_Sleep(20)
@@ -204,7 +204,7 @@ class IC_BrivMaster_SharedFunctions_Class
     }
 }
 
-class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location
+class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location TODO: This seems like a lousy reason to load this into the hub, move settings path to SharedFunctions?
 {
 	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
 

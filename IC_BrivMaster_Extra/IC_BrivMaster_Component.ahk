@@ -872,7 +872,7 @@ Class IC_IriBrivMaster_Component
 			try ;The script stopping can cause the COM object to become invalid instantaneously
 			{
 				dirty:=this.SharedRunData.IBM_OutboundDirty
-				this.SharedRunData.IBM_OutboundDirty:=false ;Needs to be reset right away, so updates during processing are not loss
+				this.SharedRunData.IBM_OutboundDirty:=false ;Needs to be reset right away, so updates during processing are not lost
 				if (dirty)
 				{
 					GuiControlGet, activeTab, ICScriptHub:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each of the 3 functions checking it
@@ -1293,7 +1293,7 @@ Class IC_IriBrivMaster_Component
 		if(!platformID)
 		{
 			prompt:="Briv Master was unable to read your platform ID from the game. Please enter one of the following:"
-			prompt.="`nSteam: 11"
+			prompt.="`nSteam or CNE Standalone: 11"
 			prompt.="`nEpic Games Store: 21"
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)

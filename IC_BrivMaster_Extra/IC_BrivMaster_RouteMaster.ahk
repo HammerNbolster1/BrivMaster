@@ -656,7 +656,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_IBM.GameMaster.RestartAdventure( "Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_IBM.GameMaster.RestartAdventure("Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
             g_IBM.PreviousZoneStartTime:=A_TickCount
             return
@@ -1419,7 +1419,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 				}
 				g_IBM.IBM_Sleep(15)
 			}
-			g_IBM.Logger.AddMessage("Relay Release() state [" . this.State . "] failed to detect state change")
+			g_IBM.Logger.AddMessage("Relay Release() state [" . this.State . "] recursion exit or failed to detect state change")
 			this.CleanUpOnFail()
 		}
 		else if (this.State==1) ;Relay never connected

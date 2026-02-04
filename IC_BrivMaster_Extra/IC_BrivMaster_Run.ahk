@@ -1,6 +1,6 @@
 #Requires AutoHotkey 1.1.37+ <1.2
 #SingleInstance Force
-;Based on BrivGemFarm Performance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the ReadMe.
+;Based on BrivGemFarm Performance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the Readme.
 
 ;=======================
 ;Script Optimization
@@ -117,12 +117,12 @@ class IC_BrivMaster_GemFarm_Class
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
 				g_IBM.GameMaster.SafetyCheck()
-			if (!this.TriggerStart AND this.offRamp AND this.currentZone <= this.routeMaster.thelloraTarget) ;Additional reset detection
+			if (!this.TriggerStart AND lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party
 			{
 				this.TriggerStart:=true
-				this.Logger.AddMessage("Missed Reset: Offramp set and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+				this.Logger.AddMessage("Missed Reset: Core reset count 0, offramp set and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
 			}
-			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount() > lastResetCount) ; first loop or Modron has reset
+			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount()>lastResetCount) ;First loop or Modron has reset
             {
 				g_SharedData.UpdateOutbound("IBM_BuyChests",false)
 				if (g_SharedData.BossesHitThisRun)
@@ -683,9 +683,7 @@ class IC_BrivMaster_GemFarm_Class
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
-        if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
-            this.TriggerStart:=true ;Only set this if the reset works - at the time of writing RestartAdventure() sets it anyway in all fail cases, but that needs to change. Older comment follows | TODO: If the reset fails, we might still be in the original run - need to detect this. Only force if CheckifStuck() not triggered? This creates a difficulty with run 1, where forcing a restart creates another run 1. Possibly force ONLY for run 1, just to reduce the total impact, as a workaround. Maybe we need to process the return values from the RestartAdventure() server calls to determine if it actually went through?
-		else
+        if (!g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
         {
             this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down
             this.GameMaster.SafetyCheck()

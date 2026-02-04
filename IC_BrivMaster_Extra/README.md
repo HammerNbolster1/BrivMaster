@@ -185,7 +185,7 @@ This group provides an overview of the game version and the offsets currently in
 Check now: Check the current offsets against those available on the Offsets GitHub for your platform. This updates the two 'GitHub' entries.
 Download: Download the latest Offsets (or only imports, per Update imports only below) from the Offsets Github. This will request your platform ID if it cannot read it from the game (e.g. because you currently have very outdated offsets, or those for another platform)
 
-> Author's Note: The Briv Master respository does not include Offsets, for ease of updating, as one platform would constantly have to switch back. As a result new installs will need to manually pick their platform. Those one the CNE client can use the Steam option.
+> Author's Note: The Briv Master respository does not include Offsets, for ease of updating, as one platform would constantly have to switch back. As a result new installs will need to manually pick their platform. Those on the CNE client can use the Steam option.
 
 Check Automatically: When this option is selected the Offset versions will be checked when Script Hub starts, equivallent to pressing Check Now above
 
@@ -247,6 +247,7 @@ Import/Export: As these settings are time consuming to enter (90 selections!) th
 | Set Up | Import Code |
 | ----------- | ----------- |
 | 4J Offline | {973oe9D3g,________w} |
+| 5/4J Ranged stacking | {K8pylryjg,AAAIYIAAA} |
 | 6/4J Offline | {2xZxxK3rQ,________w} |
 | 9J Melee stacking | {3zXoa17wA,x4DjGAbxA} |
 | 11 | {-p-hvk_gw,MB0MY8gGg} |

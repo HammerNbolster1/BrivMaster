@@ -1293,7 +1293,7 @@ Class IC_IriBrivMaster_Component
 		if(!platformID)
 		{
 			prompt:="Briv Master was unable to read your platform ID from the game. Please enter one of the following:"
-			prompt.="`nSteam: 11"
+			prompt.="`nSteam or CNE Standalone: 11"
 			prompt.="`nEpic Games Store: 21"
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)

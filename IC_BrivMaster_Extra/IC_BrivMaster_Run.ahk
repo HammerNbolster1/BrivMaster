@@ -607,7 +607,7 @@ class IC_BrivMaster_GemFarm_Class
 			return false
 		}
 		;Check Feat Guard
-		levelSettings:=g_IBM_Settings["IBM_LevelManager_Levels",this.RouteMaster.combining] ;Currently the feat data is not being loaded into the hero objects, as it's only relevant to the pre-flight check
+		levelSettings:=g_IBM_Settings["IBM_LevelManager_Levels"] ;Currently the feat data is not being loaded into the hero objects, as it's only relevant to the pre-flight check
 		for heroID, _ in this.LevelManager.savedFormationChamps["A"] ;A is a meta-formation that is the union of the other 4 TODO: Should have levelManager return this via a function?
 		{
 			if(levelSettings.hasKey(heroID) AND levelSettings[heroID].hasKey("Feat_List") AND levelSettings[heroID].hasKey("Feat_Exclusive")) ;Data available

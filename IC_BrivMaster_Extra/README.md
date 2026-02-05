@@ -96,7 +96,7 @@ Reserve Gold / Silver: Stay above this number of each chest when opening. Reserv
 	
 > Author's Note: Reserving Silver is not useful. I am unsure why it's an option...
 	
-Claim Daily Rewards: Enables claiming of daily rewards. The log will report the standard and premimum reward claim status, along with the premimum duration remaining if applicable
+Claim Daily Rewards: Enables claiming of daily rewards. The log will report the standard and premium reward claim status, along with the premimum duration remaining if applicable
 	
 > Author's Note: The first check of daily rewards will not be made for a minute after starting, to avoid spamming the server when testing and restarting the hub a lot. After that the check will be made every 8h, or at the reported reset time. This feature is based on Emmote's ClaimDailyPlatinum addon available at https://github.com/Emmotes/IC_Addons.
 	

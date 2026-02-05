@@ -178,7 +178,6 @@ Class IC_IriBrivMaster_Component
         settings.IBM_OffLine_Flames_Zones["_DEFAULT"]:=[500,500,500,500,500]
 		settings.IBM_Route_Combine["_DEFAULT"]:=0
 		settings.IBM_Route_Combine_Boss_Avoidance["_DEFAULT"]:=1
-		settings.IBM_DailyRewardClaim_Enable["_DEFAULT"]:=false
 		settings.IBM_LevelManager_Levels["_DEFAULT",7]:={"min": 100,"prio": 0,"priolimit": "","z1": 100}
 		settings.IBM_LevelManager_Levels["_DEFAULT",58]:={"min": 200,"prio": 3,"priolimit": "","z1": 200}
 		settings.IBM_LevelManager_Levels["_DEFAULT",59]:={"min": 70,"prio": 2,"priolimit": "","z1": 70}
@@ -240,6 +239,7 @@ Class IC_IriBrivMaster_Component
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Buy["_DEFAULT"]:=250
 		settings.HUB.IBM_ChestSnatcher_Options_Open_Gold["_DEFAULT"]:=0
 		settings.HUB.IBM_ChestSnatcher_Options_Open_Silver["_DEFAULT"]:=0
+		settings.HUB.IBM_DailyRewardClaim_Enable["_DEFAULT"]:=true
 		settings.HUB.IBM_Game_Settings_Option_Profile["_DEFAULT"]:=1
 		settings.HUB.IBM_Game_Settings_Option_Set[1,"_DEFAULT"]:={Name:"Profile 1",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}
 		settings.HUB.IBM_Game_Settings_Option_Set[2,"_DEFAULT"]:={Name:"Profile 2",Framerate:600,Particles:0,HRes:1920,VRes:1080,Fullscreen:false,CapFPSinBG:false,SaveFeats:false,ConsolePortraits:false,NarrowHero:true,AllHero:true,Swap25100:false}
@@ -1465,7 +1465,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 	{
 		if (g_IriBrivMaster.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests. Note it is assumed that SharedRunData has been checked as valid before calling this function 
 		{
-			if (g_IBM_Settings.IBM_DailyRewardClaim_Enable AND A_TickCount>=this.NextDailyClaimCheck)
+			if (g_IBM_Settings.HUB.IBM_DailyRewardClaim_Enable AND A_TickCount>=this.NextDailyClaimCheck)
 			{
 				this.ClaimDailyRewards()
 				g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()

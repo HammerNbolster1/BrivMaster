@@ -117,10 +117,10 @@ class IC_BrivMaster_GemFarm_Class
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
 				g_IBM.GameMaster.SafetyCheck()
-			if (!this.TriggerStart AND lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party
+			if (!this.TriggerStart AND lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party. More thoughts: We should check the memory read is not >0 here, as this has the potential to intercept normal reset 0 to reset 1 progression? Possibly the modron reset code should reset the offramp (or possibly the offramp should just go...)
 			{
 				this.TriggerStart:=true
-				this.Logger.AddMessage("Missed Reset: Core reset count 0, offramp set and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+				this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
 			}
 			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount()>lastResetCount) ;First loop or Modron has reset
             {
@@ -411,7 +411,7 @@ class IC_BrivMaster_GemFarm_Class
 			timeout := 60000 ;Casino takes ~5s max at x10, so this is reasonable but might be worth scaling with game speed
             ElapsedTime := 0
             StartTime := A_TickCount
-			while (!this.EllywickCasino.Complete AND ElapsedTime < timeout )
+			while (!this.EllywickCasino.Complete AND ElapsedTime < timeout)
             {
 				this.levelManager.LevelWorklist()
 				this.levelManager.LevelClickDamage()
@@ -429,7 +429,7 @@ class IC_BrivMaster_GemFarm_Class
 					ghostLevellingAllowed:=true
 				}
 				this.IBM_Sleep(15)
-				ElapsedTime := A_TickCount - StartTime
+				ElapsedTime:=A_TickCount - StartTime
             }
 			if (!frontColumnLevellingAllowed) ;If not released in the loop, reset levels but don't level as we need to get on with progression
 				this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps)
@@ -460,7 +460,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.LevelFormation("M",formationToLevelPostUnlock) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
 		}
 	}
-	
+
     CheckifStuck() ;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
     {
 		dtCurrentZoneTime:=A_TickCount - this.PreviousZoneStartTime

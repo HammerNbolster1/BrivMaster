@@ -8,6 +8,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		if (!FileExist(logDir)) ;Create the log subdirectory if not present
 			FileCreateDir, %logDir%
 		this.logBase:=LogDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time, e.g. RunLog_20250101T000000.csv from this class and RunLog_20250101T000000_Relay.csv
+		this.miniLogPath:=logDir . "\MiniLog.json" ;Needs to be set in all cases as the minilog can be turned on whilst running TODO: Should we allow this?
 		this.logPath:=this.logBase . ".csv" ;The path and name for the main log specifically
 		reset:=g_SF.Memory.ReadResetsTotal()
 		if (reset!="") ;If we can read the current reset use that, otherwise set to -1 for invalid
@@ -39,11 +40,22 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			runString:=this.LogEntries.Run.ResetNumber . "," . this.LogEntries.Run.StartRealTime . "," . this.LogEntries.Run.Start . "," ;Reset #,Start Time,Start Tick
 			runString.=this.LogEntries.Run.End - this.LogEntries.Run.Start . "," . this.LogEntries.Run.ResetReached - this.LogEntries.Run.ActiveStart . "," . loadTime + resetTime . "," ;Total,Active,Wait
 			runString.=loadTime . "," . resetTime . "," . this.LogEntries.Run.Cycle . "," ;Load,Reset,Cycle
-			runString.=this.LogEntries.Run.Fail . "," . this.LogEntries.Run.LastZone . "," . g_SF.Memory.ReadChestCountByID(282)  ;Fail,LastZone,Electrum
+			runString.=this.LogEntries.Run.Fail . "," . this.LogEntries.Run.LastZone . "," . g_SF.Memory.ReadChestCountByID(282) ;Fail,LastZone,Electrum. Note the electrum is for interest due to Diana's bug (or more generally the scavenger bug), not really related to farming
+			if(g_IBM_Settings["IBM_Logger_MiniLog"])
+			{
+				try
+				{
+					FileDelete % this.miniLogPath
+					FileAppend, %logEntryJSON%, % this.miniLogPath
+				}
+				catch err
+					this.AddMessage("Minilog output failed: " . err.Message)
+			}
 			messageString:=""
 			for _,v in this.LogEntries.Messages
 				messageString.=v . ","
 			FileAppend, % runString . "," . messageString . "`n", % this.logPath
+
 		}
 		;Reset for new
 		this.LogEntries.Messages:={}
@@ -118,7 +130,8 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			if (zone > this.LogEntries.Run.LastZone)
 				this.LogEntries.Run.LastZone:=zone
 		}
-		;this.AddMessage("z" . zone . " intent: " . (g_IBM.routeMaster.ShouldWalk(zone) ? "E" : "Q") . " to z" . g_IBM.routeMaster.zones[zone].nextZone.z) ;Uncomment for debugging
+		if(g_IBM_Settings["IBM_Logger_ZoneLog"])
+			this.AddMessage("z" . zone . " intent: " . (g_IBM.routeMaster.ShouldWalk(zone) ? "E" : "Q") . " to z" . g_IBM.routeMaster.zones[zone].nextZone.z)
 	}
 }
 

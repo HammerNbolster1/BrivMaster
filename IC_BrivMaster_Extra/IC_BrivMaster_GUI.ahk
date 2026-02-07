@@ -307,6 +307,14 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Generic_Setting_Int, Hide
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Generic_Setting_Int, Dark Icon
+		;Log
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h49, % "Log Options"
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, CheckBox, xs+10 ys+20 h18 0x200 vIBM_Logger_MiniLog gIBM_Generic_Setting_Int, Output mini log
+		GUIFunctions.AddToolTip("IBM_Logger_MiniLog", "Select this option to output a small log (MiniLog.json) containing just details of the previous run, for use with monitoring tools etc")
+		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int, Log zone progression
+		GUIFunctions.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
 		;Offsets
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h106, Offsets

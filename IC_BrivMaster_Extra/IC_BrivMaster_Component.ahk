@@ -232,6 +232,8 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Level_Diana_Cheese["_DEFAULT"]:=false
 		settings.IBM_Window_Dark_Icon["_DEFAULT"]:=false
 		settings.IBM_Allow_Modron_Buff_Off["_DEFAULT"]:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
+		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
+		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500

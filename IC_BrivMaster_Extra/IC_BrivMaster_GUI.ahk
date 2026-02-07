@@ -616,7 +616,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font
 	}
 
-	UpdateGUISettings(data)
+	UpdateGUISettings()
     {
         this.controlLock:=true ;Prevent control g-labels messing things up whilst populating. This is particularly important when one label processes multiple controls, as it can read values out of yet-to-be-populated controls and thus blank that setting
 		

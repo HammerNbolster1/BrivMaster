@@ -175,6 +175,17 @@ Hide: If selected the farm window will not be displayed.
 
 Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
 
+### Log Options
+These options relate to the logs that Briv Master produces.
+
+Output mini log: When selected details of the last run will be output to the log directory as MiniLog.JSON.
+
+> Author's Note: This is intended for further automated processing, and should be off otherwise as the main CSV log contains the same information.
+
+Log zone progression: When selected a log entry will be made for each new zone reached, containing the zone and the expected progression for that zone.
+
+> Author's Note: This produces a vast amount of log output, and makes it difficult to follow the log manually, so it should be off when not debugging issues. It can be useful for identifiying drift.
+
 ### Offsets
 
 Offsets are the distance from one memory location to another. We use this to allow us to find a small number of lower level objects in memory and then determine the locations of the many individual items we need from those.

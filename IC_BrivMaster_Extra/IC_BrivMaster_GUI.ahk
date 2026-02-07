@@ -642,6 +642,9 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Window_Y, % g_IBM_Settings.IBM_Window_Y
 		GuiControl, ICScriptHub:, IBM_Window_Hide, % g_IBM_Settings.IBM_Window_Hide
 		GuiControl, ICScriptHub:, IBM_Window_Dark_Icon, % g_IBM_Settings.IBM_Window_Dark_Icon
+		;Logs
+		GuiControl, ICScriptHub:, IBM_Logger_Minilog, % g_IBM_Settings.IBM_Logger_Minilog
+		GuiControl, ICScriptHub:, IBM_Logger_ZoneLog, % g_IBM_Settings.IBM_Logger_ZoneLog
 		;Offsets
 		GuiControl, ICScriptHub:, IBM_Offsets_Check, % g_IBM_Settings.HUB.IBM_Offsets_Check
 		GuiControl, ICScriptHub:, IBM_Offsets_Lock_Pointers, % g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers

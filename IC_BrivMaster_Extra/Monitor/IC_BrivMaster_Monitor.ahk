@@ -20,6 +20,7 @@ else
     g_Settings.Freq:=2000
     g_Settings.Amber:=40
     g_Settings.Red:=60
+    g_Settings.Dark:=false
     newSettings:=AHK_JSON.Dump(g_Settings)
     FileAppend, %newSettings%, %g_settingFile%
 }
@@ -39,12 +40,29 @@ if(!FileExist(logFile))
 Gui, IBM_Monitor:New, ,Briv Master Monitor
 Gui, IBM_Monitor:+HwndwindowHandle
 global g_hWnd:=windowHandle
-Gui, Font, s9
+if(g_Settings.Dark)
+{
+    Gui, Font, s9 cWhite
+    Gui, IBM_Monitor:Color, 181818
+    if (A_OSVersion >= "10.0.17763" && SubStr(A_OSVersion, 1, 3) = "10.") ;Window title logic taken from ScriptHub
+    {
+        attr := 19
+        if (A_OSVersion >= "10.0.18985")
+        {
+            attr := 20
+        }
+        DllCall("dwmapi\DwmSetWindowAttribute", "ptr", g_hWnd, "int", attr, "int*", true, "int", 4)
+    }
+}
+else
+{
+    Gui, Font, s9
+}
 Gui, IBM_Monitor:Add, Text, xm+0 h20 0x200, Time since last update (s):
 Gui, IBM_Monitor:Add, Text, x+5 w30 h20 0x200 vIBM_Monitor_Last_Update,-
 Gui, IBM_Monitor:Add, Button, xm+259 yp+0 vIBM_Monitor_Settings gIBM_Monitor_Settings, ⚙ ;Symbol requires this file to saved as UTF-8 with BOM
 rowCount:=g_Settings.Rows
-Gui, IBM_Monitor:Add, ListView , +cBlack xm+0 y+3 w280 0x2000 LV0x10000 vIBM_Monitor_LV Count%rowCount% R%rowCount% LV0x10 NoSort NoSortHdr, BPH|Total|Active|Wait|Cycle|Fail ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+Gui, IBM_Monitor:Add, ListView,xm+0 y+3 w282 0x2000 LV0x10000 vIBM_Monitor_LV Count%rowCount% R%rowCount% LV0x10 NoSort NoSortHdr, BPH|Total|Active|Wait|Cycle|Fail ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 GuiControl, -Redraw, IBM_Monitor_LV
 Gui, ListView, IBM_Monitor_LV
 LV_ModifyCol(1,60)
@@ -53,27 +71,50 @@ LV_ModifyCol(3,50)
 LV_ModifyCol(4,50)
 LV_ModifyCol(5,40)
 LV_ModifyCol(6,30)
+if(g_Settings.Dark)
+{
+    GuiControl, IBM_Monitor: +Background181818, IBM_Monitor_LV
+    GuiControl, IBM_Monitor: +cWhite, IBM_Monitor_LV
+}
 GuiControl, +Redraw, IBM_Monitor_LV
 GuiControlGet, statsLVEndPos, ICScriptHub:Pos, IBM_Monitor_LV
 
 GUI, IBM_Monitor_Settings:New, ,Settings
 Gui, IBM_Monitor_Settings:-Resize -MaximizeBox +HwndwindowHandle
 global g_hWnd_Settings:=windowHandle
-Gui, IBM_Monitor_Settings:Add, Edit, xm+0 h20 w45 Number Limit2 0x200 vIBM_Monitor_Settings_Rows
-Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 w160 0x200, Runs to display (requires restart)
-Gui, IBM_Monitor_Settings:Add, Edit, xm+0 h20 w45 Number Limit6 0x200 vIBM_Monitor_Settings_Freq
+if(g_Settings.Dark)
+{
+    Gui, Font, s9 cWhite
+    Gui, IBM_Monitor_Settings:Color, 181818
+    if (A_OSVersion >= "10.0.17763" && SubStr(A_OSVersion, 1, 3) = "10.") ;Window title logic taken from ScriptHub
+    {
+        attr:=19
+        if (A_OSVersion >= "10.0.18985")
+        {
+            attr:=20
+        }
+        DllCall("dwmapi\DwmSetWindowAttribute", "ptr", g_hWnd_Settings, "int", attr, "int*", true, "int", 4)
+    }
+}
+else
+{
+    Gui, Font, s9
+}
+Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit2 0x200 vIBM_Monitor_Settings_Rows
+Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 w180 0x200, Runs to display (requires restart)
+Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit6 0x200 vIBM_Monitor_Settings_Freq
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 0x200, Update frequency (ms)
-Gui, IBM_Monitor_Settings:Add, Edit, xm+0 h20 w45 Number Limit3 0x200 vIBM_Monitor_Settings_Amber
+Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit3 0x200 vIBM_Monitor_Settings_Amber
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 0x200, Amber alert level threshold (s)
-Gui, IBM_Monitor_Settings:Add, Edit, xm+0 h20 w45 Number Limit3 0x200 vIBM_Monitor_Settings_Red
+Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit3 0x200 vIBM_Monitor_Settings_Red
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 0x200, Red alert level threshold (s)
-Gui, IBM_Monitor_Settings:Add, Button, xm+80 w50 vIBM_Monitor_Settings_OK gIBM_Monitor_Settings_OK, OK
-
+Gui, IBM_Monitor_Settings:Add, Checkbox, xm+0 h20 0x200 vIBM_Monitor_Settings_Dark, Dark mode (requires restart)
+Gui, IBM_Monitor_Settings:Add, Button, xm+90 w50 vIBM_Monitor_Settings_OK gIBM_Monitor_Settings_OK, OK
 Gui, IBM_Monitor:Show
 
 A64 := (A_PtrSize = 8 ? 4 : 0) ;Alignment for pointers in 64-bit environment
 cbSize := 4 + A64 + A_PtrSize + 4 + 4 + 4 + A64
-VarSetCapacity(FLASHWINFO_ON, cbSize, 0) ;FLASHWINFO structure for turning taskbar flashes on
+VarSetCapacity(FLASHWINFO_ON, cbSize, 0) ;FLASHWINFO structure for turning taskbar flashes on. As we fill with zeros there is no need to add the later parts of the structure that will all be 0 in our case
 Addr:=&FLASHWINFO_ON
 Addr:=NumPut(cbSize,    Addr + 0, 0,   "UInt")
 Addr:=NumPut(g_hWnd,    Addr + 0, A64, "Ptr")
@@ -144,6 +185,7 @@ IBM_Monitor_Settings()
     GuiControl, IBM_Monitor_Settings:, IBM_Monitor_Settings_Freq, % g_Settings.Freq
     GuiControl, IBM_Monitor_Settings:, IBM_Monitor_Settings_Amber, % g_Settings.Amber
     GuiControl, IBM_Monitor_Settings:, IBM_Monitor_Settings_Red, % g_Settings.Red
+    GuiControl, IBM_Monitor_Settings:, IBM_Monitor_Settings_Dark, % g_Settings.Dark
     Gui, IBM_Monitor_Settings:Show
 }
 
@@ -162,11 +204,13 @@ IBM_Monitor_Settings_OK()
     GuiControlGet, tempRed, , IBM_Monitor_Settings_Red
     if(tempRed<=tempAmber) ;The red threshold must be above the amber one
         tempRed:=tempAmber+1
-    reloadNeeded:=tempRows!=g_Settings.Rows
+     GuiControlGet, tempDark, , IBM_Monitor_Settings_Dark
+    reloadNeeded:=tempRows!=g_Settings.Rows OR tempDark!=g_Settings.Dark
     g_Settings.Rows:=tempRows
     g_Settings.Freq:=tempFreq
     g_Settings.Amber:=tempAmber
     g_Settings.Red:=tempRed
+    g_Settings.Dark:=tempDark
     settingsJSON:=AHK_JSON.Dump(g_Settings)
     FileDelete, %g_settingFile%
     FileAppend, %settingsJSON%, %g_settingFile%
@@ -197,7 +241,10 @@ AlertColour(timeSinceLastModify,FLASHWINFO_ON,FLASHWINFO_OFF)
         }
         else
         {
-            GuiControl, IBM_Monitor:+cBlack, IBM_Monitor_Last_Update
+            if(g_Settings.Dark)
+                GuiControl, IBM_Monitor:+cWhite, IBM_Monitor_Last_Update
+            else
+                GuiControl, IBM_Monitor:+cBlack, IBM_Monitor_Last_Update
             DllCall("User32.dll\FlashWindowEx", "Ptr", FLASHWINFO_OFF, "UInt")
         }
         lastState:=state

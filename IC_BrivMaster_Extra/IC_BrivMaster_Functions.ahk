@@ -73,7 +73,15 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 
 	OutputHeader()
 	{
-		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum`n", % this.logPath
+		for _,v in AddonManagement.EnabledAddons
+		{
+			if(v.Name=="Briv Master")
+			{
+				version:=v.Version
+				break
+			}
+		}
+		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum,Message Log for " . version . "`n", % this.logPath
 	}
 
 	ForceFail() ;The zone-based check does not capture runs that reach the target, but fail to reset, causing us to have Weird Stuff going on with no reported fails

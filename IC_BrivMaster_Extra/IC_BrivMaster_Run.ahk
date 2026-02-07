@@ -364,7 +364,7 @@ class IC_BrivMaster_GemFarm_Class
 				frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
 				for _, v in frontColumn
 				{
-					if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise
+					if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise TODO: How much sense does this make for non-combine? Make sure Briv is actually being added at zone completion and I guess it can help a bit
 					{
 						this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
 						this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
@@ -380,7 +380,7 @@ class IC_BrivMaster_GemFarm_Class
 				if(this.IBM_EllywickCasino(frontColumn,"z1")) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
 					this.IBM_EllywickCasino_UnlockChamps(frontColumn)
 				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
-				while (quest > 0)
+				while(quest > 0)
 				{
 					this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
 					this.IBM_Sleep(15)

@@ -667,7 +667,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_IsCurrentFormationFull()
     {
-        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
+        size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
 		loop %size%
         {
             if (this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()=="")

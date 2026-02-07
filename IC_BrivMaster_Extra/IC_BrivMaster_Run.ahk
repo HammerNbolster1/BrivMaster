@@ -320,11 +320,13 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-				this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
+				unlockRequired:=this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
 				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 					this.routeMaster.SetFormationHighZone() ;Special version for use here on the immediate exit
+					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+						this.IBM_EllywickCasino_UnlockChamps(frontColumn)
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -336,6 +338,8 @@ class IC_BrivMaster_GemFarm_Class
 						swapAttempts++
 					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 					this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
+					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+						this.IBM_EllywickCasino_UnlockChamps(frontColumn)
 				}
 				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
 			}
@@ -373,7 +377,8 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
 				this.EllywickCasino.Start() ;Start the Elly handler
-				this.IBM_EllywickCasino(frontColumn,"z1") ;TODO: Think about ghost levelling in this case
+				if(this.IBM_EllywickCasino(frontColumn,"z1")) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
+					this.IBM_EllywickCasino_UnlockChamps(frontColumn)
 				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 				while (quest > 0)
 				{
@@ -431,9 +436,8 @@ class IC_BrivMaster_GemFarm_Class
 				this.IBM_Sleep(15)
 				ElapsedTime:=A_TickCount - StartTime
             }
-			if (!frontColumnLevellingAllowed) ;If not released in the loop, reset levels but don't level as we need to get on with progression
-				this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps)
 			this.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.EllywickCasino.Redraws . " M=" . this.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . (this.EllywickCasino.StatusString ? " " . this.EllywickCasino.StatusString : "") . "}")
+			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else
 		{

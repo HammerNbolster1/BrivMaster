@@ -379,7 +379,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	Start()
 	{
 		timerFunction:=this.CasinoTimer
-		SetTimer, %timerFunction%, 20, 0
+		SetTimer, %timerFunction%, 15, 0
 		this.Casino() ;Is this useful here?
 	}
 

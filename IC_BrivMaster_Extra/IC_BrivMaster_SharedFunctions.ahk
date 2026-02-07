@@ -206,7 +206,7 @@ class IC_BrivMaster_SharedFunctions_Class
 
 class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location TODO: This seems like a lousy reason to load this into the hub, move settings path to SharedFunctions?
 {
-	static SettingsPath := A_LineFile . "\..\IC_BrivMaster_Settings.json"
+	static SettingsPath:=A_LineFile . "\..\IC_BrivMaster_Settings.json"
 
 	__New()
 	{
@@ -412,7 +412,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for managing Ellywick's card d
 	Start()
 	{
 		timerFunction:=this.CasinoTimer
-		SetTimer, %timerFunction%, 20, 0
+		SetTimer, %timerFunction%, 15, 0
 		this.Casino() ;Is this useful here?
 	}
 

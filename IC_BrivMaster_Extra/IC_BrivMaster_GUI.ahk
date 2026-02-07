@@ -297,7 +297,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+10 w402 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		GUIFunctions.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
-		;Script Window Options
+		;Script Window
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+9 w%groupWidth% h50, % "Window Options"
 		Gui, ICScriptHub:Font, w400
@@ -307,6 +307,14 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Generic_Setting_Int, Hide
 		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Generic_Setting_Int, Dark Icon
+		;Log
+		Gui, ICScriptHub:Font, w700
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h49, % "Log Options"
+		Gui, ICScriptHub:Font, w400
+		Gui, ICScriptHub:Add, CheckBox, xs+10 ys+20 h18 0x200 vIBM_Logger_MiniLog gIBM_Generic_Setting_Int, Output mini log
+		GUIFunctions.AddToolTip("IBM_Logger_MiniLog", "Select this option to output a small log (MiniLog.json) containing just details of the previous run, for use with monitoring tools etc")
+		Gui, ICScriptHub:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int, Log zone progression
+		GUIFunctions.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
 		;Offsets
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+13 w%groupWidth% h106, Offsets
@@ -338,7 +346,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"		
 		Gui, ICScriptHub:Add, Button, xs+400 yp+0 w70 vIBM_Offsets_Download gIBM_Offsets_Download, Download
 		
-		Gui, ICScriptHub:Add, CheckBox, xs+5 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int, Check automatically
+		Gui, ICScriptHub:Add, CheckBox, xs+10 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int, Check automatically
 		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 		Gui, ICScriptHub:Add, CheckBox, x+10 w120 h18 0x200 Center vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int, Update imports only
 		GUIFunctions.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
@@ -608,7 +616,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font
 	}
 
-	UpdateGUISettings(data)
+	UpdateGUISettings()
     {
         this.controlLock:=true ;Prevent control g-labels messing things up whilst populating. This is particularly important when one label processes multiple controls, as it can read values out of yet-to-be-populated controls and thus blank that setting
 		
@@ -629,6 +637,14 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Game_Path, % g_IBM_Settings.IBM_Game_Path
 		GuiControl, ICScriptHub:, IBM_Game_Launch, % g_IBM_Settings.IBM_Game_Launch
 		GuiControl, ICScriptHub:, IBM_Game_Hide_Launcher, % g_IBM_Settings.IBM_Game_Hide_Launcher
+		;Window
+		GuiControl, ICScriptHub:, IBM_Window_X, % g_IBM_Settings.IBM_Window_X
+		GuiControl, ICScriptHub:, IBM_Window_Y, % g_IBM_Settings.IBM_Window_Y
+		GuiControl, ICScriptHub:, IBM_Window_Hide, % g_IBM_Settings.IBM_Window_Hide
+		GuiControl, ICScriptHub:, IBM_Window_Dark_Icon, % g_IBM_Settings.IBM_Window_Dark_Icon
+		;Logs
+		GuiControl, ICScriptHub:, IBM_Logger_Minilog, % g_IBM_Settings.IBM_Logger_Minilog
+		GuiControl, ICScriptHub:, IBM_Logger_ZoneLog, % g_IBM_Settings.IBM_Logger_ZoneLog
 		;Offsets
 		GuiControl, ICScriptHub:, IBM_Offsets_Check, % g_IBM_Settings.HUB.IBM_Offsets_Check
 		GuiControl, ICScriptHub:, IBM_Offsets_Lock_Pointers, % g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers
@@ -676,13 +692,7 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Casino_Target_Base, % g_IBM_Settings.IBM_Casino_Target_Base
 		GuiControl, ICScriptHub:, IBM_Casino_Redraws_Base, % g_IBM_Settings.IBM_Casino_Redraws_Base
 		GuiControl, ICScriptHub:, IBM_Casino_MinCards_Base, % g_IBM_Settings.IBM_Casino_MinCards_Base
-		;Window
-		GuiControl, ICScriptHub:, IBM_Window_X, % g_IBM_Settings.IBM_Window_X
-		GuiControl, ICScriptHub:, IBM_Window_Y, % g_IBM_Settings.IBM_Window_Y
-		GuiControl, ICScriptHub:, IBM_Window_Hide, % g_IBM_Settings.IBM_Window_Hide
-		GuiControl, ICScriptHub:, IBM_Window_Dark_Icon, % g_IBM_Settings.IBM_Window_Dark_Icon
-		
-		
+				
 		;BM LEVELS TAB
 
 		;Levelling options

@@ -146,7 +146,7 @@ Class IC_IriBrivMaster_Component
 		this.LoadSettings()
 		g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Overwrite with IBM class entirely
 		g_IriBrivMaster_GUI.Init() ;Must follow IBM memory manager being set up in g_SF
-		g_IriBrivMaster_GUI.UpdateGUISettings(g_IBM_Settings) ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
+		g_IriBrivMaster_GUI.UpdateGUISettings() ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
 		this.ChestSnatcher:=New IC_IriBrivMaster_ChestSnatcher_Class()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
@@ -232,6 +232,8 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Level_Diana_Cheese["_DEFAULT"]:=false
 		settings.IBM_Window_Dark_Icon["_DEFAULT"]:=false
 		settings.IBM_Allow_Modron_Buff_Off["_DEFAULT"]:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
+		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
+		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
@@ -387,7 +389,7 @@ Class IC_IriBrivMaster_Component
 
 	UpdateStats(dirty)
 	{
-		static CONSTANT_baseGPB:=9.02 ;TODO: Read blessings so this correctly reflects those? Seems a bit of a waste of CPU cycles admittedly...just do it at startup? Would then have to deal with the memory read not being available at that point
+		static CONSTANT_baseGPB:=9.02 ;TODO: Read blessings so this correctly reflects those? Seems a bit of a waste of CPU cycles admittedly...just do it at startup?
 		static CONSTANT_silversPerBoss:=0.05361
 		static CONSTANT_goldPerBoss:=0.00423
 		static CONSTANT_BSCPerSilver:=0.10356
@@ -407,7 +409,7 @@ Class IC_IriBrivMaster_Component
 					this.Stats.StartUpStage:=1
 					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to start)"
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
-					this.Stats.PreviousRunEndTime:=LogData.Run.End ;Include this so it is available for run timing
+					this.Stats.PreviousRunEndTime:=LogData.End ;Include this so it is available for run timing
 				}
 				else if (this.Stats.StartUpStage==1) ;The run number has changed to a 2nd real number - this is the start of 1st run we are timing
 				{
@@ -437,26 +439,26 @@ Class IC_IriBrivMaster_Component
 						this.Stats.StartGems:=gems
 					}
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
-					this.Stats.PreviousRunEndTime:=LogData.Run.End ;Include this so it is available for run timing
+					this.Stats.PreviousRunEndTime:=LogData.End ;Include this so it is available for run timing
 				}
 				else
 				{
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
-					this.Stats.LastRun:=LogData.Run.ResetNumber
+					this.Stats.LastRun:=LogData.ResetNumber
 
-					totalDuration:=LogData.Run.End - LogData.Run.Start
-					activeTime:=LogData.Run.ResetReached - LogData.Run.ActiveStart
-					loadTime:=LogData.Run.ActiveStart - LogData.Run.Start
-					resetTime:=LogData.Run.End - LogData.Run.ResetReached
+					totalDuration:=LogData.End - LogData.Start
+					activeTime:=LogData.ResetReached - LogData.ActiveStart
+					loadTime:=LogData.ActiveStart - LogData.Start
+					resetTime:=LogData.End - LogData.ResetReached
 					waitTime:=loadTime+resetTime
 					this.StatsUpdateFastSlow(this.Stats.Total,totalDuration)
-					if LogData.Run.HasKey("ResetReached") ;Failed runs may not have a reset value
+					if LogData.HasKey("ResetReached") ;Failed runs may not have a reset value
 					{
 						this.StatsUpdateFastSlow(this.Stats.Active,activeTime)
 						this.StatsUpdateFastSlow(this.Stats.Reset,waitTime)
 					}
 					this.Stats.TotalRuns++
-					this.Stats.PreviousRunEndTime:=LogData.Run.End
+					this.Stats.PreviousRunEndTime:=LogData.End
 					Gui, ICScriptHub:Default
 					Gui, ListView, IBM_Stats_Run_LV
 					GuiControl, -Redraw, IBM_Stats_Run_LV
@@ -468,16 +470,16 @@ Class IC_IriBrivMaster_Component
 					LV_ModifyCol(4,"AutoHdr")
 					LV_ModifyCol(5,"AutoHdr")
 					GuiControl, +Redraw, IBM_Stats_Run_LV
-					if (LogData.Run.Fail) ;Failed runs (i.e. ones that did not reach the reset zone)
+					if (LogData.Fail) ;Failed runs (i.e. ones that did not reach the reset zone)
 					{
 						this.Stats.FailRuns++
 						this.Stats.FailTotalTime+=totalDuration
 					}
 					if (this.Stats.StartTime=="") ;First run
 					{
-						this.Stats.StartTime:=LogData.Run.Start
+						this.Stats.StartTime:=LogData.Start
 					}
-					totalTime:=LogData.Run.End - this.Stats.StartTime
+					totalTime:=LogData.End - this.Stats.StartTime
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
 					GuiControl, ICScriptHub:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
 					GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
@@ -495,7 +497,7 @@ Class IC_IriBrivMaster_Component
 					silverString:=this.Chests.CurrentSilver - this.Stats.Chests.SilverStart + this.Chests.OpenedSilver - this.Chests.PurchasedSilver . " / " . this.Chests.PurchasedSilver . " / " . this.Chests.OpenedSilver ; Start + Purchased + Dropped - Opened
 					goldString:=this.Chests.CurrentGold - this.Stats.Chests.GoldStart + this.Chests.OpenedGold - this.Chests.PurchasedGold . " / " . this.Chests.PurchasedGold . " / " . this.Chests.OpenedGold
 					GuiControl, ICScriptHub:, IBM_Stats_Chests, % "Silver: " . silverString . " Gold: " . goldString
-					this.Stats.BossKills+=FLOOR(LogData.Run.LastZone / 5)
+					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
 					GuiControl, ICScriptHub:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
@@ -510,7 +512,7 @@ Class IC_IriBrivMaster_Component
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states
 					{
-						if (LogData.Run.GHActive)
+						if (LogData.GHActive)
 						{
 							if (this.Stats.GHActive==-1) ;Not set yet - set to active
 								this.Stats.GHActive:=1

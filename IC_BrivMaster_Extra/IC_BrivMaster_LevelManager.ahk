@@ -273,7 +273,7 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 		Critical Off
 		this.UpdateLevels()
 	}
-	
+
 	WaitForAreaActive()
 	{
 		StartTime:=A_TickCount
@@ -313,7 +313,7 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 						Champion.Current.PendingLevels+=100 ;TODO: Should this be encapsulated?
 						if (Champion.GetPriority(this.mode,true)!=curPriority) ;The pending levels may take us over the priorityLimit and change the champion's priority
 						{
-							champList.Remove(champID)
+							champList.Delete(champID)
 						}
 						if (keyList100.Count() >= maxKeyPresses AND (!forcePriority OR curPriority<=0))
 							Break ;Breaks out of the For loop. The while loop will handle itself
@@ -322,13 +322,13 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 					{
 						keyList100.push(Champion.Key)
 						Champion.Current.PendingLevels+=100 ;TODO: Should this be encapsulated?
-						champList.Remove(champID)
+						champList.Delete(champID)
 						if (keyList100.Count() >= maxKeyPresses AND (!forcePriority OR curPriority<=0))
 							Break ;Breaks out of the For loop. The while loop will handle itself
 					}
 					else
 					{
-						champList.Remove(champID)
+						champList.Delete(champID)
 					}
 				}
 			}
@@ -353,7 +353,7 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 							Champion.Current.PendingLevels+=this.parent.modifierLevelUpAmount
 							if (Champion.GetPriority(this.mode,true)!=curPriority) ;The pending levels may take us over the priorityLimit and change the champion's priority
 							{
-								champList.Remove(champID)
+								champList.Delete(champID)
 							}
 							if (keyList10.Count()+k100Count >= maxKeyPresses AND (!forcePriority OR curPriority<=0))
 								Break ;Breaks out of the For loop. The while loop will handle itself
@@ -367,10 +367,10 @@ class IC_BrivMaster_LevelManager_WorkList_Class ;A class to manage the processin
 								Break ;Breaks out of the For loop. The while loop will handle itself
 						}
 						else
-							champList.Remove(champID)
+							champList.Delete(champID)
 					}
 					else
-						champList.Remove(champID)
+						champList.Delete(champID)
 				}
 			}
 			curPriority--

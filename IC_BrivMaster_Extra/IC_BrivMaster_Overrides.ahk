@@ -20,7 +20,7 @@ class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class ;TODO: IC_Serv
             try
                 response:=this.ServerCallSave(save,boundaryHeader)
             catch
-                g_IBM.Logger.AddMessage("Failed to save Briv stacks")
+                g_IBM.Logger.AddMessage("Failed to save Briv stacks")			
         }
 		return response ;Note this will only be meaningful for the synchronous version of the call
     }

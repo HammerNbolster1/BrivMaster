@@ -7,7 +7,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		FormatTime, formattedDateTime,, % g_IBM_Settings["IBM_Format_Date_File"] ;Can't include : in a filename so using the less human friendly version here
 		if (!FileExist(logDir)) ;Create the log subdirectory if not present
 			FileCreateDir, %logDir%
-		this.logBase:=LogDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time, e.g. RunLog_20250101T000000.csv from this class and RunLog_20250101T000000_Relay.csv
+		this.logBase:=logDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time, e.g. RunLog_20250101T000000.csv from this class and RunLog_20250101T000000_Relay.csv
 		this.miniLogPath:=logDir . "\MiniLog.json" ;Needs to be set in all cases as the minilog can be turned on whilst running TODO: Should we allow this?
 		this.logPath:=this.logBase . ".csv" ;The path and name for the main log specifically
 		reset:=g_SF.Memory.ReadResetsTotal()
@@ -45,7 +45,8 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			{
 				try
 				{
-					FileDelete % this.miniLogPath
+					if(FileExist(this.miniLogPath))
+						FileDelete % this.miniLogPath
 					FileAppend, %logEntryJSON%, % this.miniLogPath
 				}
 				catch err
@@ -55,7 +56,6 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			for _,v in this.LogEntries.Messages
 				messageString.=v . ","
 			FileAppend, % runString . "," . messageString . "`n", % this.logPath
-
 		}
 		;Reset for new
 		this.LogEntries.Messages:={}

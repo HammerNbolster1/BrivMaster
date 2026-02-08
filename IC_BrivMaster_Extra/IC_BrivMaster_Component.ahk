@@ -1254,7 +1254,7 @@ Class IC_IriBrivMaster_Component
 			case 14: return "Servers (" . platformID . ")"
 			case 16: return "Sony (" . platformID . ")"
 			case 17: return "Xbox (" . platformID . ")"
-			case 18: return "CNE Games (" . platformID . ")"
+			case 18: return "CNE Games (" . platformID . ") - treated as Steam (11)"
 			case 20: return "Kartridge (" . platformID . ")"
 			case 21: return "EGS (" . platformID . ")" ;Note this is the full 'Epic Games Store' in the client
 			Default: return "UNKNOWN (" . platformID . ")"
@@ -1305,6 +1305,8 @@ Class IC_IriBrivMaster_Component
 			}
 		}
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		if(platformID==18) ;CNE client should be treated as Steam
+			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
@@ -1360,6 +1362,8 @@ Class IC_IriBrivMaster_Component
 				return
 		}
 		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		if (platformID==18) ;CNE client should be treated as Steam
+			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision

@@ -43,7 +43,7 @@ global g_hWnd:=windowHandle
 if(g_Settings.Dark)
 {
     Gui, Font, s9 cWhite
-    Gui, IBM_Monitor:Color, 181818
+    Gui, IBM_Monitor:Color, 303030
     if (A_OSVersion >= "10.0.17763" && SubStr(A_OSVersion, 1, 3) = "10.") ;Window title logic taken from ScriptHub
     {
         attr := 19
@@ -73,7 +73,7 @@ LV_ModifyCol(5,40)
 LV_ModifyCol(6,30)
 if(g_Settings.Dark)
 {
-    GuiControl, IBM_Monitor: +Background181818, IBM_Monitor_LV
+    GuiControl, IBM_Monitor: +Background303030, IBM_Monitor_LV
     GuiControl, IBM_Monitor: +cWhite, IBM_Monitor_LV
 }
 GuiControl, +Redraw, IBM_Monitor_LV
@@ -85,7 +85,7 @@ global g_hWnd_Settings:=windowHandle
 if(g_Settings.Dark)
 {
     Gui, Font, s9 cWhite
-    Gui, IBM_Monitor_Settings:Color, 181818
+    Gui, IBM_Monitor_Settings:Color, 303030
     if (A_OSVersion >= "10.0.17763" && SubStr(A_OSVersion, 1, 3) = "10.") ;Window title logic taken from ScriptHub
     {
         attr:=19

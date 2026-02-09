@@ -486,22 +486,77 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			g_SharedData.UpdateOutbound_Increment("BadAutoProgress")
     }
 	
-	RestartAdventure(reason:="")
+	RestartAdventure(reason:="",modronFail:=false) ;modronFail is used to indicate if we're restarting due to apparently being stuck at a modron reset. In this case, if the server doesn't respond it's best not to restart, as once the server is back we'll likely load into the run we were on before. This is a parameter to avoid being stuck permanently TODO: Depending on how this ends up working, probably needs breaking into functions for each stage
     {
 		g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure")
 		g_IBM.Logger.ForceFail() ;As this can be after we've reached the zone target if the reset got stuck
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . g_SF.Memory.ReadCurrentZone() . " with haste:" . g_Heroes[58].ReadHasteStacks() . ")")
-		this.CloseIC(reason)
+		this.CloseIC(reason) ;DEBUG - return value stored for debugging
 		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion") ;This message would ideally be shown only momentarily, but if the server is having issues the servercall will run to timeout and this allows us to see that it is that holding the script up
 		if (g_SF.sprint!="" AND g_SF.steelbones!="")
-			g_serverCall.CallPreventStackFail(g_SF.sprint,g_SF.steelbones,"RestartAdventure()")
+		{
+			response:=g_serverCall.CallPreventStackFail(g_SF.sprint,g_SF.steelbones,"RestartAdventure()")
+			if(response) ;response is an object parsed from the response JSON, which means for debug output we have to turn it back into a string...
+				g_IBM.Logger.AddMessage("Stack save response: success=[" . response.success . "] okay=[" . response.okay . "]" . (response.failure_reason ? " failure Reason=[" . response.failure_reason . "]" : ""))
+			else if(modronFail) ;If the call return was empty the modron reset probably failed due to server or connection issues. In this case it's quite likely that earlier saves also failed, and if we reconnect without restarting the adventure we'll be able to continue
+			{
+				g_IBM.Logger.AddMessage("Stack save response: empty and in modron mode - resuming")
+				response:=""
+				return ;Without setting g_IBM.TriggerStart:=true, as we might not have reset
+			}
+			else
+				g_IBM.Logger.AddMessage("Stack save response: empty and not in modron mode - proceeding to restart adventure")
+			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (post stack conversion)")
+		}
 		else
 		{
 			g_IBM.Logger.AddMessage("Servercall Save Not Required (Haste:" . g_SF.sprint . " raw Steelbones:" . g_SF.steelbones . ")")
-			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conv.)")
+			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conversion)")
 		}
-		response:=g_ServerCall.CallEndAdventure()
-		response:=g_ServerCall.CallLoadAdventure(this.CurrentAdventure)
-		g_IBM.TriggerStart:=true
+		response:=g_ServerCall.CallEndAdventure() ;Note the response to this call does not have an 'okay' property
+		if(response)
+		{
+			if(response.success) ;The EndAdventure call response doesnot have an 'Okay' property
+				g_IBM.Logger.AddMessage("End adventure response: success - loading new adventure"))
+			else
+			{
+				g_IBM.Logger.AddMessage("End adventure response: failure reason=[" . response.failure_reason . "] - resuming")
+				response:=""
+				return ;Without setting g_IBM.TriggerStart:=true, as we might not have reset
+			}
+		}
+		else ;If the server didn't return anything from the CallEndAdventure(), it's most likely down or we've lost connectivity, so trying to send the CallLoadAdventure() call is not useful
+		{
+			g_IBM.Logger.AddMessage("End adventure response: empty - resuming")
+			response:=""
+			return ;Without setting g_IBM.TriggerStart:=true, as we might not have reset
+		}
+		attempt:=1
+		while(attempt<=3) ;If we're reached this far, we want to try and make sure we get back into an adventure - as we'd restart onto the world map as-is
+		{
+			callTime:=A_TickCount
+			response:=g_ServerCall.CallLoadAdventure(this.CurrentAdventure)
+			if(response)
+			{
+				if(response.success and response.okay)
+				{
+					g_IBM.Logger.AddMessage("Load adventure response: attempt [" . attempt . "] success and okay - resuming")
+					response:=""
+					g_IBM.TriggerStart:=true ;As we should now be in a new adventure
+					return
+				}
+				else
+					g_IBM.Logger.AddMessage("Load adventure response: attempt [" . attempt . "] success=[" . response.success . "] okay=[" . response.okay . "] failure reason=[" . response.failure_reason . "]")
+			}
+			else
+				g_IBM.Logger.AddMessage("Load adventure response: attempt [" . attempt . "] empty")
+			while(A_TickCount < callTime + 20000) ;Normally we'd expect a timeout on the call rather than a bad response, but in case that happens ensure at least 20s have passed TODO: Increasing this a bit might make sense?
+			{
+				g_IBM.IBM_Sleep(50)
+			}
+			attempt++
+		}
+		response:=""
+		g_IBM.Logger.AddMessage("Load adventure: out of attempts - probably on world map")
 	}
 }

@@ -1467,7 +1467,6 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		}
 		else ;Otherwise open as normal
 		{
-			g_IBM.Logger.AddMessage("CleanUpOnFail() no recovery PID found - calling OpenIC()")
 			g_IBM.GameMaster.OpenIC("CleanUpOnFail()")
 		}
 	}

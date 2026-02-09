@@ -40,17 +40,23 @@ class IC_BrivMaster_ServerCall_Class extends IC_ServerCalls_Class ;TODO: IC_Serv
             WR.Send(saveBody)
             WR.WaitForResponse(-1)
             data:=WR.ResponseText
-            Try
-            {
-                response:=AHK_JSON.Load(data)
-                if(!(response.switch_play_server==""))
-                {
-                    retryNum++
-                    this.WebRoot:=response.switch_play_server
-                    if(retryNum<=3) 
-                        return this.ServerCallSave(saveBody,boundaryHeader,retryNum) 
-                }
-            }
+            if(data) ;Don't try to JSON.Load the string if empty TODO: Review this codepath, does it retry in the no response case? I don't think so...
+			{
+				try
+				{
+					response:=AHK_JSON.Load(data)
+					if(!(response.switch_play_server=="")) ;NOT(response.switch_play_server=="") => switch_play_server exists. TODO: Should this retry when the server was valid? Probably not given the nature of this call - if the server is down we probably want to return to the run
+					{
+						retryNum++
+						this.WebRoot:=response.switch_play_server
+						if(retryNum<=3)
+						{						
+							WR:=""
+							return this.ServerCallSave(saveBody,boundaryHeader,retryNum) 
+						}
+					}
+				}
+			}
         }
 		WR:=""
         return response

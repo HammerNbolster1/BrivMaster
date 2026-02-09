@@ -117,12 +117,20 @@ class IC_BrivMaster_GemFarm_Class
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
 				g_IBM.GameMaster.SafetyCheck()
-			if (!this.TriggerStart AND lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party. More thoughts: We should check the memory read is not >0 here, as this has the potential to intercept normal reset 0 to reset 1 progression? Possibly the modron reset code should reset the offramp (or possibly the offramp should just go...)
+			if(!this.TriggerStart) ;Check for resets outside of the expected
 			{
-				this.TriggerStart:=true
-				this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+				if(g_SF.Memory.ReadResetsCount()>lastResetCount) ;Modron core reset
+				{
+					this.TriggerStart:=true
+					this.Logger.AddMessage("Missed Reset: Core reset count=[" . g_SF.Memory.ReadResetsCount() . "] lastResetCount=[" . lastResetCount . "]")
+				}		
+				else if (lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party. More thoughts: We should check the memory read is not >0 here, as this has the potential to intercept normal reset 0 to reset 1 progression? Possibly the modron reset code should reset the offramp (or possibly the offramp should just go...)
+				{
+					this.TriggerStart:=true
+					this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+				}
 			}
-			if (this.TriggerStart OR g_SF.Memory.ReadResetsCount()>lastResetCount) ;First loop or Modron has reset
+			if (this.TriggerStart) ;First loop
             {
 				g_SharedData.UpdateOutbound("IBM_BuyChests",false)
 				if (g_SharedData.BossesHitThisRun)
@@ -154,9 +162,8 @@ class IC_BrivMaster_GemFarm_Class
 			if (g_SF.Memory.ReadResetting())
 			{
 				this.Logger.ResetReached()
-				this.Logger.AddMessage("GemFarm() ModronResetCheck() pre-call lastResetCount=[" . lastResetCount . "] current read=[" . g_SF.Memory.ReadResetsCount() . "]")
 				this.ModronResetCheck()
-				this.Logger.AddMessage("GemFarm() ModronResetCheck() post-call lastResetCount=[" . lastResetCount . "] current read=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]") 
+				Continue ;ModronResetCheck() updates PreviousZoneStartTime in all cases, so the CheckifStuck() call we'd proceed to will never do anything, and the delay is unwanted in this case - we've been waiting on the reset
 			}
 			else if (this.currentZone <= this.routeMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
 			{
@@ -208,7 +215,6 @@ class IC_BrivMaster_GemFarm_Class
 			else
 			{
 				this.Logger.ResetReached()
-				this.Logger.AddMessage("GemFarm() beyond reset pending modron reset")
 				g_SharedData.UpdateOutbound("LoopString","Pending modron reset")
 			}
             this.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
@@ -481,7 +487,6 @@ class IC_BrivMaster_GemFarm_Class
         }
         if (dtCurrentZoneTime > 45000 AND this.CheckifStuck_fallBackTries < 3 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 15000) ; second check - Fall back to previous zone and try to continue
         {
-            this.Logger.AddMessage("CheckifStuck() Memory ReadResetsCount()=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]")
 			; reset memory values in case they missed an update.
             this.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open. At least align with .PID?
             g_SF.Memory.OpenProcessReader()
@@ -494,7 +499,6 @@ class IC_BrivMaster_GemFarm_Class
         }
         if (dtCurrentZoneTime > 65000)
         {
-            this.Logger.AddMessage("CheckifStuck() Reset ReadResetsCount()=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]")
 			this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]" )
             this.GameMaster.SafetyCheck()
             this.PreviousZoneStartTime:=A_TickCount
@@ -695,7 +699,9 @@ class IC_BrivMaster_GemFarm_Class
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
-        if (!g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
+        if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
+			this.TriggerStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
+		else
         {
             this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down
             this.GameMaster.SafetyCheck()

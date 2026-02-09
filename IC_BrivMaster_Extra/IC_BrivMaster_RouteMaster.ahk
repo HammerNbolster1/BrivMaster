@@ -470,7 +470,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			else
 			{
 				g_IBM.Logger.AddMessage("Out of stacks:z" . currentZone)
-				g_IBM.GameMaster.RestartAdventure("Out of haste and have SB for next")
+				g_IBM.GameMaster.RestartAdventure("Out of Haste and have Steelbones for next")
 				return true
 			}
         }

@@ -154,7 +154,9 @@ class IC_BrivMaster_GemFarm_Class
 			if (g_SF.Memory.ReadResetting())
 			{
 				this.Logger.ResetReached()
+				this.Logger.AddMessage("GemFarm() ModronResetCheck() pre-call lastResetCount=[" . lastResetCount . "] current read=[" . g_SF.Memory.ReadResetsCount() . "]")
 				this.ModronResetCheck()
+				this.Logger.AddMessage("GemFarm() ModronResetCheck() post-call lastResetCount=[" . lastResetCount . "] current read=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]") 
 			}
 			else if (this.currentZone <= this.routeMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
 			{
@@ -206,6 +208,7 @@ class IC_BrivMaster_GemFarm_Class
 			else
 			{
 				this.Logger.ResetReached()
+				this.Logger.AddMessage("GemFarm() beyond reset pending modron reset")
 				g_SharedData.UpdateOutbound("LoopString","Pending modron reset")
 			}
             this.CheckifStuck() ;Does not need to set TriggerStart as any exit that would require it will also call RestartAdventure() which sets it to true
@@ -478,7 +481,8 @@ class IC_BrivMaster_GemFarm_Class
         }
         if (dtCurrentZoneTime > 45000 AND this.CheckifStuck_fallBackTries < 3 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 15000) ; second check - Fall back to previous zone and try to continue
         {
-            ; reset memory values in case they missed an update.
+            this.Logger.AddMessage("CheckifStuck() Memory ReadResetsCount()=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]")
+			; reset memory values in case they missed an update.
             this.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open. At least align with .PID?
             g_SF.Memory.OpenProcessReader()
             g_SF.ResetServerCall()
@@ -490,7 +494,8 @@ class IC_BrivMaster_GemFarm_Class
         }
         if (dtCurrentZoneTime > 65000)
         {
-            this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]" )
+            this.Logger.AddMessage("CheckifStuck() Reset ReadResetsCount()=[" . g_SF.Memory.ReadResetsCount() . "] UserIsInited=[" . g_SF.Memory.ReadUserIsInited() . "]")
+			this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]" )
             this.GameMaster.SafetyCheck()
             this.PreviousZoneStartTime:=A_TickCount
             this.CheckifStuck_lastCheck:=0

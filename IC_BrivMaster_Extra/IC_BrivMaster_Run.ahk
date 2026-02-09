@@ -700,7 +700,7 @@ class IC_BrivMaster_GemFarm_Class
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
         if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
-			this.ForceStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
+			this.TriggerStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
 		else
         {
             this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down

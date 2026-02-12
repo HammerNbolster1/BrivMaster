@@ -413,13 +413,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_Heroes[58].ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
-		if (returnZone < startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
+		if (returnZone<startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
 		{
-			if (g_IBM.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
-				g_IBM.offramp:=false ;Reset offramp
-			g_IBM.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
-			g_IBM.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
-			g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
+			g_IBM.RollBackAction(returnZone)
 			g_IBM.Logger.AddMessage("BlankRestart() Exit Rollback Detected,Start@z" . startZone . ",End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
 		}
 		else

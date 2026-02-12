@@ -508,6 +508,16 @@ class IC_BrivMaster_GemFarm_Class
         }
         return false
     }
+	
+	RollBackAction(returnZone) ;Actions to take once a rollback is detected, separate function as needed for normal re-opens and for restarts
+	{
+		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
+				this.offramp:=false ;Reset offramp
+		this.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
+		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
+		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
+	}
 
 	;START PRE-FLIGHT CHECK
 

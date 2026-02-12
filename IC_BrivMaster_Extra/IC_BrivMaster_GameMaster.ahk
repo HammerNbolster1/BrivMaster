@@ -429,10 +429,19 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				this.RestartAdventure("At world map?")
 			}
             this.RecoverFromGameClose()
-            if(g_IBM.currentZone != "" and g_IBM.currentZone - 1 > g_SF.Memory.ReadCurrentZone())
-				g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
-			else if (g_IBM.currentZone != "" and g_IBM.currentZone < g_SF.Memory.ReadCurrentZone())
-				g_SharedData.UpdateOutbound_Increment("BadAutoProgress")
+            if(g_IBM.currentZone!="")
+			{
+				returnZone:=g_SF.Memory.ReadCurrentZone()
+				if(g_IBM.currentZone>returnZone) ;This allowed 1 zone fallback previously, trying without to minimise the ways we can get stuck
+				{
+					g_IBM.RollBackAction(returnZone)
+				}
+				else if (g_IBM.currentZone<returnZone)
+				{
+					g_SharedData.UpdateOutbound_Increment("BadAutoProgress")
+					g_IBM.Logger.AddMessage("Bad autoprogress detected - expected z[" . g_IBM.currentZone . "] return z[" . returnZone . "]")
+				}
+			}
             return false
         }
         else if (g_SF.Memory.ReadCurrentZone()=="")  ; game loaded but can't read zone? failed to load properly on last load? (Tests if game started without script starting it)

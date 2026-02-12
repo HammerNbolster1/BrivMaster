@@ -502,9 +502,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.SetFormation() ;Ensure the correct formation is set for the zone before we stop progress and try to stack
 		StartTime := A_TickCount ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
 		this.ToggleAutoProgress(0, false, true)
-        if (g_IBM.LevelManager.Champions.HasKey(59) AND g_IBM.LevelManager.Champions[59].NeedsLevelling()) ;If we're levelling Melf in the stack zone (e.g. due to using Baldric), we need to do his initial levelup as fast as possible after the formation swap to try and stop it failing TODO: Having Melf hard-coded like this is cludgy but I don't see a way around it...
 		{
-			if (g_IBM.LevelManager.Champions[59].GetLevelsRequired() < 100)
+			if (g_Heroes[59].GetLevelsRequired() < 100)
 				fastMelf:=2 ;Modifier press
 			else
 				fastMelf:=1 ;Normal press
@@ -513,7 +512,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			fastMelf:=0
 		activateFariUlt:=this.useFaridehUlt ;TODO: Check for being under the min online zone due to recovery
 		this.WaitForZoneCompleted() ;Complete the current zone
-		this.OnlineStackFarmSetup(fastMelf, g_IBM.LevelManager.Champions[59].Key)
+		this.OnlineStackFarmSetup(fastMelf, g_Heroes[59].Key)
         ElapsedTime := 0
         g_SharedData.UpdateOutbound("LoopString","Stack Normal")
         this.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...

@@ -323,7 +323,7 @@ class IC_IriBrivMaster_GUI
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
 		Gui, ICScriptHub:Add, Text, w200 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
-		Gui, ICScriptHub:Add, Text, w200 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+		Gui, ICScriptHub:Add, Text, w230 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 				
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers" 

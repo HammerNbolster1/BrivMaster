@@ -324,7 +324,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetStackZone() ;Dynamic to allow the Ellywick Flames card based option
     {
-        If (g_IBM_Settings["IBM_Online_Use_Melf"] AND !this.ShouldOfflineStack()) ;Melf online is enabled and we shouldn't offline stack
+        If (!this.ShouldOfflineStack()) ;Melf online is enabled and we shouldn't offline stack TODO: Removed Melf-only restriction, so the range can be used without Melf
 			stackZone:=g_IBM_Settings["IBM_Online_Melf_Min"] ;Melf online zone
 		else ;Offline
 		{

@@ -85,6 +85,18 @@ class IC_BrivMaster_SharedFunctions_Class
         return true
     }
 	
+	IsCurrentFormationWithIgnore(testformation:="",ignoredHeroes:="") ;Returns true if the formation array passed is the same as the formation currently on the game field. Always false on empty formation reads. Requires full formation. TODO: This is a bit...temporary. Maybe make it more flexible
+    {
+        if(!IsObject(testFormation))
+            return false
+        currentFormation := this.Memory.GetCurrentFormation()
+        if(!IsObject(currentFormation))
+            return false
+        loop, % currentFormation.Count()
+            if(testformation[A_Index]!=currentFormation[A_Index] AND !ignoredHeroes[testformation[A_Index]])
+                return false
+        return true
+    }
 
     DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {

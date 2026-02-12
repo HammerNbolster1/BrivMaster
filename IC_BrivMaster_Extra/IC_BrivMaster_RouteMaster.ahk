@@ -720,7 +720,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         ElapsedTime := 0
 		TimeOut:=5000
         g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
-        while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut)
+        while (!g_SF.IsCurrentFormationWithIgnore(g_IBM.levelManager.GetFormation("W"),{33:true}) AND ElapsedTime < TimeOut)
         {
 			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min") ;Should this be here?
@@ -772,7 +772,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         ElapsedTime := 0
 		TimeOut:=3000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
         g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
-        while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
+		while (!g_SF.IsCurrentFormationWithIgnore(g_IBM.levelManager.GetFormation("W"),{33:true}) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack. Also TODO: Farideh should probably not be ignored unless we're resetting early for recovery
         {
 			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms

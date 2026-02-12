@@ -49,10 +49,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			revokeFunc := ObjBindMethod(this, "RelayComObjectRevoke")
 			OnExit(revokeFunc)
 		}
-		this.UltraStacking:=g_IBM_Settings["IBM_Online_Ultra_Enabled"]
-		if (this.UltraStacking)
 		{
-			this.BUDTracker:=new IC_BrivMaster_BUD_Tracker_Class()
 		}
 		this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
 		if (this.useBrivBoost)
@@ -441,22 +438,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		targetStacks:=this.GetTargetStacks()
  		if (stacks < targetStacks)
 		{
-			;HybridUltra
-			if (this.UltraStacking)
-			{
-				highZone:=g_SF.Memory.ReadHighestZone()
-				if (highZone >= stackZone AND this.BUDTracker.ReadBUD(5)>g_SF.Memory.IBM_ReadCurrentZoneMonsterHealthExponent()) ;TODO: Currently checks HP in THIS zone, which is kinda dumb
-				{
-					this.StackUltra(highZone)
-					return false
-				}
-			}
-			;End HybridUltra
-			if (currentZone >= stackZone) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
-			{
-				this.StackFarm()
-				return false
-			}
+			if (this.ShouldOfflineStack())
+				this.StackRestart()
+			else
+				this.StackNormal()
+			this.StartAutoProgressSoft()
+			return false
 		}
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early or resetting within 5 zones of a reset.
 		;Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
@@ -501,104 +488,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.StartAutoProgressSoft()
     }
 
-	StackUltra(highZone)
-    {
-		if (this.PostponeStacking(highZone))
-            return 0
-		g_Heroes[58].InitFastSB()
-		startStacks:=stacks:=g_Heroes[58].FastReadSBStacks()
-		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
-		if (stacks>=targetStacks)
-			return
-		StartTime:=A_TickCount
-		this.UltraStackFarmSetup()
-		ElapsedTime:=0
-        g_SharedData.UpdateOutbound("LoopString","Stack Ultra")
-        this.FallBackFromBossZone() ;In recovery scenarios we can end up on a boss zone (e.g. out of stacks before normal stackzone)
-		if (this.useBrivBoost)
-			this.BrivBoost.Apply()
-		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
-		maxOnlineStackTime:=this.GetOnlineStackTimeout()
-		precisionMode:=false
-		precisionTrigger:=Floor(targetStacks * 0.90)
-		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
-        {
-			if (precisionMode)
-				Sleep, 0 ;Fast sleep
-			else
-			{
-				if (stacks > precisionTrigger) ;Once we have hit precisionTrigger stacks go critical and check faster to get maximum precision
-				{
-					Critical On
-					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
-					precisionMode:=true
-				}
-				g_IBM.IBM_Sleep(15)
-			}
-			ElapsedTime:=A_TickCount - StartTime
-			stacks:=g_Heroes[58].FastReadSBStacks()
-        }
-		StartTime:=A_TickCount
-		ultRetryCount:=g_Heroes[58].UseUltimate()
-		if (ultRetryCount=="") ;No key found - ult not available (not fielded, not levelled enough)
-		{
-			g_IBM.Logger.AddMessage("Unable to exit Ultra stack as Briv ult key not available - falling back")
-			this.FallBackFromZone()
-		}
-		else
-		{
-			ReleaseTime:=0
-			maxTime:=200 + (5000 / g_SF.Memory.IBM_ReadBaseGameSpeed()) ;200ms real time for the ult to activate, then 5 in-game seconds to resolve and give kill credit
-			while (g_SF.Memory.ReadHighestZone()==highZone AND ReleaseTime <= maxTime) ;Whilst still on this zone
-			{
-				g_IBM.IBM_Sleep(15)
-				ReleaseTime:=A_TickCount - StartTime
-			}
-			if (g_SF.Memory.ReadHighestZone()==highZone) ;If we still didn't proceed
-			{
-				g_IBM.Logger.AddMessage("Failed to exit Ultra stack after firing Briv's ultimate - falling back")
-				this.FallBackFromZone()
-			}
-		}
-        Critical Off
-		if (ElapsedTime >= maxOnlineStackTime)
-        {
-			g_IBM.GameMaster.RestartAdventure( "Ultra took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
-            g_IBM.GameMaster.SafetyCheck()
-            g_IBM.PreviousZoneStartTime:=A_TickCount
-            return
-        }
-        g_IBM.PreviousZoneStartTime:=A_TickCount
-		generatedStacks:=stacks - startStacks
-		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online Ultra at z" . highZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
-		g_IBM.Logger.AddMessage("Ultra{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . highZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
-		if(g_SF.Memory.ReadHighestZone()<this.targetZone) ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
-			this.SetFormation() ;Standard call to reset trustRecent
-    }
-
-	UltraStackFarmSetup()
-    {
-		this.KEY_W.KeyPress_Bulk() ;Trying _Bulk() here, this is vulnerable but we are trying to get Melf deployed as fast as elvenly possible
-		g_IBM.levelManager.LevelFormation("W", "min")
-        g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation") ;This is intentionally after the W/Levelup calls to avoid delaying them
-		StartTime:=A_TickCount
-        ElapsedTime:=0
-		TimeOut:=2000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
-        while (!g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("W")) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
-        {
-			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode; will catch cases where the initial _Bulk failed due to lack of control focus
-			g_IBM.levelManager.LevelFormation("W", "min",0)
-			g_IBM.IBM_Sleep(15)
-            ElapsedTime := A_TickCount - StartTime
-        }
-		if (ElapsedTime >= TimeOut)
-		{
-			g_IBM.Logger.AddMessage("FAIL: UltraStackFarmSetup() did not set W formation within " . TimeOut . "ms")
-			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
-		}
-    }
-
-	StackNormal() 
+	StackNormal()
     {
         if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone())) ; Melf stacking
             return 0
@@ -1261,39 +1151,6 @@ class IC_BrivMaster_RouteMaster_Zone_Class ;A class representing a single zone
 	incomingZones:={} ;Zones which connect to this one (via walk or via jump), used to back-calculate costs
 	jumpsToFinish:=-1
 	stacksToFinish:=-1
-}
-
-class IC_BrivMaster_BUD_Tracker_Class ;Manages BUD calculations
-{
-	__New()
-	{
-		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData
-		this.minUltDPS:=LOG(MEMORY_ACD.minUltDPS.Read()) ;LOG10 as we are working in exponents
-		this.ultBasedOnDPS:=MEMORY_ACD.ultBasedOnDPS.Read()
-		this.ultFalloffExponent2:=MEMORY_ACD.ultFalloffExponent2.Read() ;The '2' is per the game source
-		this.ultFalloffDelay:=MEMORY_ACD.ultFalloffDelay.Read()
-		ultFalloffPeriod:=MEMORY_ACD.ultFalloffPeriod.Read()
-		ultFalloffPeriodMod:=MEMORY_ACD.ultFalloffPeriodMod.Read()
-		this.ultFalloff:=ultFalloffPeriod*ultFalloffPeriodMod ;These are only used multiplied like this, so no point storing the separate values
-	}
-
-	ReadBUD(realTimeOffset:=0)
-	{
-		MEMORY_ACD:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData
-		first8:=MEMORY_ACD.highestHitDamage.Read("Int64") ;Quad
-        newObject := MEMORY_ACD.highestHitDamage.QuickClone()
-        offsetIndex := newObject.FullOffsets.Count()
-        newObject.FullOffsets[offsetIndex] := newObject.FullOffsets[offsetIndex] + 0x8
-		last8:= newObject.Read("Int64")
-		highestHitDamage:=g_SF.Memory.IBM_ConvQuadToExponent(first8,last8)
-		highestHitCooldown:=MEMORY_ACD.highestHitCooldown.Read()
-		timeSinceHighestHit:=MEMORY_ACD.timeSinceHighestHit.Read()
-		gameTimeOffset:=realTimeOffset*g_SF.Memory.IBM_ReadBaseGameSpeed()
-		HighestHitDecay:=1 / this.ultFalloffExponent2 ** Max(0, (Ceil(timeSinceHighestHit+gameTimeOffset) - this.ultFalloffDelay) / this.ultFalloff)
-		HighestHitScaledDamage:=MAX(0,highestHitDamage + LOG(HighestHitDecay))
-		BUD:=MAX(!this.ultBasedOnDPS ? HighestHitScaledDamage : HighestHitScaledDamage - LOG(highestHitCooldown),this.minUltDPS)
-		return BUD
-	}
 }
 
 class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between this main script and the Relay script

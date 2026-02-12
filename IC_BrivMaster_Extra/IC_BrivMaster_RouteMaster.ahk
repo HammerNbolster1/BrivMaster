@@ -217,7 +217,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			thelloraTarget:=this.thelloraTarget
 		if (this.combining) ;We need to do one jump to reach ThelloraTarget in this case, and will leave the Casino on an M jump, not whatever fits the zone
 		{
-			jumps:=this.zones[thelloraTarget + this.zonesPerJumpM].jumpsToFinish + 2 ;1 for the combine, 1 for the M-jump after the Casino 
+			jumps:=this.zones[thelloraTarget + this.zonesPerJumpM].jumpsToFinish + 2 ;1 for the combine, 1 for the M-jump after the Casino
 			if (rushNext AND this.CombineModeThelloraBossAvoidance AND this.IsFeatSwap() AND this.zonesPerJumpM > this.zonesPerJumpE) ;If Thellora won't reach her target, we have boss recovery on, we are using feat swapping and the M jump would have been larger than an E jump, we need to generate an additional jump's worth of stacks, as replacing an M with an E would result in us needing 1 more jump Note: As this is a recovery mode trying to work out if the jump being replaced is Q or E doesn't seem worthwhile (it's made complex by her erratic behaviour if not in W)
 			{
 				jumps++
@@ -347,9 +347,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return True
 		else if (this.cycleDisableOffline)
 			return False
-		else if (this.cycleMax == 1) ;Hybrid disabled
+		else if (this.cycleMax==1) ;Hybrid disabled
             return True
-        else if (this.cycleCount >= this.cycleMax) ;Hybrid Offline
+        else if (this.cycleCount>=this.cycleMax) ;Hybrid Offline
 			return True
 		else ;Stack online
 			return False
@@ -452,7 +452,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         {
             if (this.RelayBlankOffline AND this.RelayData.IsActive()) ;TODO: Something smart here
 			{
-				g_IBM.Logger.AddMessage("TestForSteelBonesStackFarming() force restart supressed due to Relay")
+				g_IBM.Logger.AddMessage("TestForSteelBonesStackFarming() force restart surpressed due to Relay")
 			}
 			else
 			{
@@ -502,6 +502,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.SetFormation() ;Ensure the correct formation is set for the zone before we stop progress and try to stack
 		StartTime := A_TickCount ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
 		this.ToggleAutoProgress(0, false, true)
+        if (g_Heroes[59].inW AND g_Heroes[59].NeedsLevelling()) ;If we're levelling Melf in the stack zone (e.g. due to using Baldric), we need to do his initial levelup as fast as possible after the formation swap to try and stop it failing TODO: Having Melf hard-coded like this is cludgy but I don't see a way around it...
 		{
 			if (g_Heroes[59].GetLevelsRequired() < 100)
 				fastMelf:=2 ;Modifier press
@@ -573,11 +574,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		Critical Off
 		generatedStacks:=stacks - startStacks
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
-		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime)
+		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone?
 		if (!runComplete)
 			this.SetFormation() ;Standard call to reset trustRecent
     }
-	
+
 	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
 	{
 		timeoutBase/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Reduces the 200s to 16s @ 12.5
@@ -641,7 +642,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             return 1
         if (g_SF.Memory.ReadCurrentZone() == 1) ; likely modron has reset
             return 1
-        if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ; don't stack below min stack zone ;TODO: Is this useful? Not making this check during Ultra stacking as we're looking at the highest zone, not the current one, and that should already be checked
+        if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ; don't stack below min stack zone ;TODO: Is this useful?
             return 1
         return 0
     }

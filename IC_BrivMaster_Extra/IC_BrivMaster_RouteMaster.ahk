@@ -436,7 +436,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         stackZone:=this.GetStackZone()
 		stacks:=g_Heroes[58].ReadSBStacks()
 		targetStacks:=this.GetTargetStacks()
- 		if (stacks < targetStacks)
+ 		if (stacks<targetStacks AND currentZone>=stackZone) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
 		{
 			if (this.ShouldOfflineStack())
 				this.StackRestart()

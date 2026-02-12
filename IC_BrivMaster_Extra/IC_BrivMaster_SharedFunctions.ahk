@@ -77,14 +77,13 @@ class IC_BrivMaster_SharedFunctions_Class
         currentFormation := this.Memory.GetCurrentFormation()
         if(!IsObject(currentFormation))
             return false
-        if(currentFormation.Count() != testformation.Count())
+        if(currentFormation.Count()!=testformation.Count()) 
             return false
         loop, % currentFormation.Count()
-            if(testformation[A_Index] != currentFormation[A_Index])
+            if(testformation[A_Index]!=currentFormation[A_Index])
                 return false
         return true
     }
-
 	
 
     DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)

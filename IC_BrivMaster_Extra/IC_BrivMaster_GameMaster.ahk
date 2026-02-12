@@ -446,14 +446,14 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         }
         else if (g_SF.Memory.ReadCurrentZone()=="")  ; game loaded but can't read zone? failed to load properly on last load? (Tests if game started without script starting it)
         {
-            g_IBM.Logger.AddMessage("SafetyCheck() Resetting process reader - old PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] ")
+            g_IBM.Logger.AddMessage("SafetyCheck() Resetting process reader - old PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]")
 			gameExe:=g_IBM_Settings["IBM_Game_Exe"]
 			this.Hwnd := WinExist("ahk_exe " . gameExe)
             Process, Exist, %gameExe% ;TODO: These could potentially return the PID and HWnd of 2 seperate IC processes - need to read one and use that to get the other?
             this.PID := ErrorLevel
             g_SF.Memory.OpenProcessReader()
             g_SF.ResetServerCall()
-			g_IBM.Logger.AddMessage("SafetyCheck() Reset process reader - new PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "] ")
+			g_IBM.Logger.AddMessage("SafetyCheck() Reset process reader - new PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]")
         }
         return true
     }

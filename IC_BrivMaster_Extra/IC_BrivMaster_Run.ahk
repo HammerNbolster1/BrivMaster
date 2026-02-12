@@ -709,7 +709,7 @@ class IC_BrivMaster_GemFarm_Class
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
     {
-        if (g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
+        if(g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
 			this.TriggerStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
 		else
         {

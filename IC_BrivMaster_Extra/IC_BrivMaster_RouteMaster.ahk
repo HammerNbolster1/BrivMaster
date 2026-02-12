@@ -59,7 +59,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
 		if (this.useBrivBoost)
 			this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
-		
 		this.CombineModeThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to avoid combining into a boss by delaying the combine?
 		g_SharedData.UpdateOutbound("IBM_RestoreWindow_Enabled",g_IBM_Settings["IBM_Route_Offline_Restore_Window"])
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
@@ -303,7 +302,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         while jumps > 0
         {
             if (calcResult.haste < 50) ;Won't jump with <50 stacks, script will in most cases abort the run when they run out
-            {    
+            {
 				calcResult.partialRun:=true
 				calcResult.jumpsToDepletion:=this.zones[calcResult.zone].jumpsToFinish - jumps
 				return calcResult
@@ -647,7 +646,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             return 1
         return 0
     }
-	
+
 	StackRestart() ;TODO: Put rollback detection back into this?
     {
 		startStacks:=lastStacks:=stacks:=g_Heroes[58].ReadSBStacks()
@@ -731,7 +730,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (elapsedTime >= TimeOut)
 			g_IBM.Logger.AddMessage("FAIL: StackFarmSetup() did not set W formation within " . TimeOut . "ms")
     }
-	
+
 	;Override to remove swap to E when feat swapping. TODO: Why did this swap to E anyway? Just using a normal SetFormation
 	;This is called when trying to stack, if for some reason we're trying to stack on a boss zone A) things have gone weird (fallback maybe?) and B) We should complete on the expected formation to stay on-route. If that jumps us into the Modron reset that's a route setup issue (although perhaps we should check for it)
 	KillCurrentBoss(maxLoopTime:=25000 )
@@ -844,7 +843,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.WaitForTransition(KEY)
         return fellBack
     }
-	
+
 	FallBackFromZone(maxLoopTime:=5000)
     {
         StartTime:=A_TickCount
@@ -866,7 +865,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         }
         this.WaitForTransition()
     }
-	
+
 	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
 	{
 		isEZone:=this.ShouldWalk(g_SF.Memory.ReadHighestZone())
@@ -977,7 +976,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;ReadFormationTransitionDir() 	| 0 = OnFromLeft, 1 = OnFromRight, 2 = OnFromTop, 3 = OffToLeft, 4 = OffToRight, 5 = OffToBottom
 		if (this.zonesPerJumpE == 1 AND g_SF.Memory.ReadTransitionDirection() == 1 AND g_SF.Memory.ReadFormationTransitionDir() == 4 )
 			return 2
-        if (isEZone) 
+        if (isEZone)
 			return 1
         return 0
     }
@@ -997,14 +996,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		return this.zones[zone].jumpZone==False
 	}
-	
+
 	GetStandardFormationKey(zone) ;Returns the key object for Q or E as appropriate for the zone
 	{
 		if (this.ShouldWalk(zone))
 			return this.Key_E
 		return this.KEY_Q
 	}
-	
+
 	GetStandardFormation(zone) ;Returns Q or E formation from the level manager as appropriate for the zone
 	{
 		if (this.ShouldWalk(zone))
@@ -1227,7 +1226,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	{
 		return this.State!=0 AND this.State!=6 ;Any any state but unstarted and complete
 	}
-	
+
 	HasTriggered() ;Has been activated this run
 	{
 		return this.State!=0
@@ -1311,7 +1310,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		g_IBM.Logger.AddMessage("Relay LogZone() at z[" . g_SF.Memory.ReadCurrentZone() . "] message=[" . message . "]")
 	}
 
-	CleanUpOnFail() 
+	CleanUpOnFail()
 	{
 		if (g_SF.GetProcessName(this.HelperPID) == "AutoHotkey.exe") ;Kill the relay script
 		{
@@ -1342,7 +1341,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		g_IBM.GameMaster.Hwnd:=this.RelayHwnd
 		g_IBM.Logger.AddMessage(logText . "to PID=[" . g_IBM.GameMaster.PID . "] and Hwnd=[" . g_IBM.GameMaster.Hwnd . "]")
 		g_SF.Memory.OpenProcessReader(g_IBM.GameMaster.PID)
-		if (g_IBM.GameMaster.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one 
+		if (g_IBM.GameMaster.WaitForGameReady(10000*g_IBM_Settings["IBM_OffLine_Timeout"],true)) ;Default is 5, so 50s. Call WaitForGameReady() with skipFinal:=true as we won't know where in the offline calc we are if we happen to trigger one
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")
@@ -1391,7 +1390,7 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 		this.overwhelmAdditivePenalty:=0.1
 		this.targetMultiplier:=targetMulti ;If we exactly matched Briv's HP to enemy damage he would be one-shot as soon as we reached 100 enemies attaching . This factor allows us to survive that and some enrage. 8 seems to be good for a fast stack, might need a bit more for long ones
 	}
-	
+
 	Apply()
 	{
 		currentLevel:=g_Heroes[58].ReadLevel()

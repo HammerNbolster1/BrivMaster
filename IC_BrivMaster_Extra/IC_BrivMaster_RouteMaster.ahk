@@ -49,7 +49,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			revokeFunc := ObjBindMethod(this, "RelayComObjectRevoke")
 			OnExit(revokeFunc)
 		}
+		this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
+		if (this.useFaridehUlt) ;Create a hero object for Farideh only if she's saved in W, this is so we don't get a pause whilst it's created at first call, which is in the stack setup
 		{
+			g_Heroes[33]
+			;this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
+			this.FaridehUltThreshold:=90
 		}
 		this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
 		if (this.useBrivBoost)
@@ -507,6 +512,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			fastMelf:=0
+		activateFariUlt:=this.useFaridehUlt ;TODO: Check for being under the min online zone due to recovery
 		this.WaitForZoneCompleted() ;Complete the current zone
 		this.OnlineStackFarmSetup(fastMelf, g_IBM.LevelManager.Champions[59].Key)
         ElapsedTime := 0
@@ -521,6 +527,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
+			if (activateFariUlt AND g_SF.Memory.ReadActiveMonstersCount()>=this.FaridehUltThreshold)
+			{
+				g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack
+				activateFariUlt:=false
+			}
 			if (precisionMode)
 			{
 				Sleep, 0 ;Fast sleep

@@ -477,7 +477,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	StackNormal()
     {
         currentZone:=g_SF.Memory.ReadCurrentZone()
-		if (this.PostponeStacking(currentZone)
+		if (this.PostponeStacking(currentZone))
             return 0
 		g_Heroes[58].InitFastSB()
 		startStacks:=stacks:=g_Heroes[58].FastReadSBStacks()

@@ -144,7 +144,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			}
 			else
 			{
-				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Offline_Stack_Min"]
+				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Online_Melf_Min"]
 			}
 			if (this.ShouldBlankRestart())
 			{

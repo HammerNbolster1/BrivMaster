@@ -323,7 +323,7 @@ class IC_IriBrivMaster_GUI
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
 		Gui, ICScriptHub:Add, Text, w200 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
-		Gui, ICScriptHub:Add, Text, w200 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+		Gui, ICScriptHub:Add, Text, w230 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 				
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers" 
@@ -474,8 +474,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Max
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
-		Gui, ICScriptHub:Add, CheckBox, x+10 h18 0x200 vIBM_Online_Ultra_Enabled gIBM_Generic_Setting_Int, Ultra Stack
-		GUIFunctions.AddToolTip("IBM_Online_Ultra_Enabled", "With sufficient BUD, attempts to swap to the W formation when exiting the zone prior to the stack zone and then exit the stack zone using Briv's ultimate. This requires specific stack zone settings")
 		;Offline config
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h99, Offline Settings
@@ -677,7 +675,6 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Min, % g_IBM_Settings.IBM_Online_Melf_Min
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
 		IBM_Online_Melf_Enable(g_IBM_Settings.IBM_Online_Use_Melf)
-		GuiControl, ICScriptHub:, IBM_Online_Ultra_Enabled, % g_IBM_Settings.IBM_Online_Ultra_Enabled
 		;Offline settings
 		GuiControl, ICScriptHub:, IBM_OffLine_Delay_Time, % g_IBM_Settings.IBM_OffLine_Delay_Time
 		GuiControl, ICScriptHub:, IBM_OffLine_Sleep_Time, % g_IBM_Settings.IBM_OffLine_Sleep_Time

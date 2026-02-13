@@ -28,7 +28,7 @@ Without feat swapping:
 
 With feat swapping:
 - Q: The farming team with Briv in the higher jump configuration (e.g. 12 for 12/11J)
-- W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well. When using Ultra stacking (below) Briv must be configured to match the jump value associated with the stack zones selected
+- W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well
 - E: The farming team with Briv in the lower jump configuration  (e.g. 11 for 12/11J)
 - M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 12/11J route could have 9J in M.
 
@@ -265,7 +265,6 @@ Import/Export: As these settings are time consuming to enter (90 selections!) th
 | 12/11J | {BeR7QfAfg,MB0MY8gGg} |
 | 14J | {hSFIV5CEA,AAAMY9gGg} |
 | 14/9J | {t_Hvn___w,AAAIYxgGg} |
-| 14/9J Ultra stacking | {t_Hvn___w,FrCtChrWg} |
 
 ### Briv Jumps
 The Briv jump value for each formation. The formations are described in more detail earlier in this document.
@@ -287,10 +286,6 @@ Online Stack with Melf: When enabled online stacking will be performed when Melf
 > Author's Note: For the curious Melf effective active in each block of 50 zones are based on the number of resets your account has performed in total.  
 
 Min/Max: The range that online stacking can be performed in. This should be as wide as possible to allow as many 50-zone segments as possible to be covered and so to maximise the chances of Melf's spawn speed buff being available. Due to the buffs being in those 50-zone blocks there is no need to encompass the whole range. For example if your route hits z49, setting the minimum to z349 would allow the z301 to z350 segment to be used, even if your stacking team's damage is too high to stack at say z330.
-	
-Ultra Stack: Normally with online stacking the party arrives, swaps to whichever of Q or E is appropriate, completes the zone, and then swaps to W. Any champions not already levelled are then levelled as stacking begins. This has some drawbacks - the first kill in the zone is wasted, and if levelling of important champions scuh as Melf is required it can delay their effects. It's also possible for an unfortunately timed attack to block the placement of a champion that was not yet levelled at all. 'Ultra' stacking is a different approach whereby the formation swap happens when exiting the previous zone, any levelling needed starts during the transition and the zone is completed once done via Briv's ultimate attack. This does therefore require sufficent BUD to clear the zone; when this option is selected BrivMaster will automatically select between Ultra and normal online stacking based on BUD and the stack zone for that run. Important: All allowed stack zones, configured in the Route grid described above, must use the same Briv configuration (i.e. all be Q 'Jump' zones, or all be E zones, and for feat swap the relevant feat must be saved on Briv in the W formation. Due to switching whilst in the previous zone, Diana should be included in the W formation.
-	
-> Author's Note: In my testing Ultra stacking is superior to normal stacking, but your mileage may vary. Particularly at lower general levels of items across the farm team, blessings, etc, your BUD may not be high enough for it to activate very often
 	
 ### Offline Settings 
 Platform Login: When a stacking restart is needed BrivMaster will restart the game early and hold it after platform login, in order to be as consistent as possible. IC requires 15s to elapse between the save when closing and the game login when restarting to trigger offline progress, therefore the upper bound for this value is 15000ms. As some time elapses between platform login and game login it should be possible to reduce this somewhat; slower PCs will be able to reduce it further to compensate.

@@ -196,7 +196,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Online_Use_Melf["_DEFAULT"]:=false
 		settings.IBM_Online_Melf_Min["_DEFAULT"]:=349
 		settings.IBM_Online_Melf_Max["_DEFAULT"]:=800
-		settings.IBM_Online_Ultra_Enabled["_DEFAULT"]:=false
 		settings.IBM_LevelManager_Input_Max["_DEFAULT"]:=5
 		settings.IBM_LevelManager_Boost_Use["_DEFAULT"]:=false
 		settings.IBM_LevelManager_Boost_Multi["_DEFAULT"]:=8

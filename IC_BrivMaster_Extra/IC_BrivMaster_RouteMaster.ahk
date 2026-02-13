@@ -474,19 +474,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return this.targetZone - this.zonesPerJumpQ * 5 ;TODO: Is it useful to check if this is after the Thellora target?
 	}
 
-	StackFarm() ;TODO: Unclear why this really needs to be a separate function?
-    {
-        if (this.ShouldOfflineStack())
-        {
-			this.StackRestart()
-		}
-        else
-        {
-			this.StackNormal()
-		}
-        this.StartAutoProgressSoft()
-    }
-
 	StackNormal()
     {
         currentZone:=g_SF.Memory.ReadCurrentZone()

@@ -186,7 +186,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Profile:
 		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1 ;TODO: Disable wrapping on these, as it seems that can happen here?
 		Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile, Profile 2
-		Gui, ICScriptHub:Add, Text, x+10 h18 w220 0x200 vIBM_Game_Settings_Status, Not checked
+		Gui, ICScriptHub:Add, Text, x+10 h18 w215 0x200 vIBM_Game_Settings_Status, Not checked
 		Gui, ICScriptHub:Add, Button, xs+398 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Game Settings Options Window
@@ -448,14 +448,17 @@ class IC_IriBrivMaster_GUI
 		nextY:=RouteEndPositionY+RouteEndPositionH+9
 		;Offline stacking zones (with Flames-based options)
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y%nextY% w%groupWidth% h101, Stacking Zones
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y%nextY% w%groupWidth% h129, Stacking Zones
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Offline:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking will be performed on or after this zone during normal operation. When flames-based stacking is enabled this will be used for 0 flames cards")
-		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Minimum stack zone:
+		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min recovery stack zone:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. Used for recovery")
+		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
+		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min online stack zone:
+		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
+		GUIFunctions.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Flames_Use gIBM_OffLine_Flames_Use, Flames-based:
 		GUIFunctions.AddToolTip("IBM_OffLine_Flames_Use", "Ellywick's Flames cards increase the damage enemies deal, reducing the stacks Briv gains during offline stacking. This option allows this to be accounted for. Spending the time calibrating your stack zone for the rare instances of 3 or more cards is unlikely to be worthwhile; set them to a lower zone so that Briv does not die. Remember that the Gem feat makes the 5-card value unnecessary")
 		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, 1
@@ -468,12 +471,15 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_4 Disabled
 		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 5
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_5 Disabled
-		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf:
+		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
-		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Max
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
+		GUIFunctions.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
+		Gui, ICScriptHub:Add, Text, xs+10 y+5 h18 0x200, % "Use Farideh's ultimate at:"
+		Gui, ICScriptHub:Add, Edit, +cBlack  w25 x+3 Number Limit3 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
+		Gui, ICScriptHub:Add, Text, x+3 h18 0x200, enemies
+		GUIFunctions.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 90+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
 		;Offline config
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h99, Offline Settings
@@ -675,6 +681,7 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Min, % g_IBM_Settings.IBM_Online_Melf_Min
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
 		IBM_Online_Melf_Enable(g_IBM_Settings.IBM_Online_Use_Melf)
+		GuiControl, ICScriptHub:, IBM_Online_Farideh_Threshold, % g_IBM_Settings.IBM_Online_Farideh_Threshold
 		;Offline settings
 		GuiControl, ICScriptHub:, IBM_OffLine_Delay_Time, % g_IBM_Settings.IBM_OffLine_Delay_Time
 		GuiControl, ICScriptHub:, IBM_OffLine_Sleep_Time, % g_IBM_Settings.IBM_OffLine_Sleep_Time
@@ -1581,15 +1588,9 @@ IBM_Online_Melf_Use()
 IBM_Online_Melf_Enable(enableControl)
 {
 	if (enableControl)
-	{
-		GuiControl, ICScriptHub:Enable, IBM_Online_Melf_Min_Edit
-		GuiControl, ICScriptHub:Enable, IBM_Online_Melf_Max_Edit
-	}
+		GuiControl, ICScriptHub:Enable, IBM_Online_Melf_Max
 	else
-	{
-		GuiControl, ICScriptHub:Disable, IBM_Online_Melf_Min_Edit
-		GuiControl, ICScriptHub:Disable, IBM_Online_Melf_Max_Edit
-	}
+		GuiControl, ICScriptHub:Disable, IBM_Online_Melf_Max
 }
 
 IBM_Route_Import_Button()

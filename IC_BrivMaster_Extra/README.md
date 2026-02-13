@@ -275,7 +275,13 @@ The Briv jump value for each formation. The formations are described in more det
 ### Stacking Zones  
 Offline: Offline stacking or blank restarts will be performed on or after this zone during normal operation. When flames-based stacking is enabled this will be used for 0 flames cards. If offline stacking, set this based on the stacks needed.
 	
-Minimum stack zone: The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. Used for recovery.  
+Min recovery stack zone: The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. If Farideh is present in W she will not be levelled and so should not be included when testing for this minimum. Used for recovery.
+
+> Author's Note: Naturally if Farideh is included in another formation and being levelled elsewhere she will be present in W in all cases and so must be included when determining this recovery minimum. Currently there is no reason for her to be outside of W, however.
+
+Min online stack zone: The full W formation must not be able to kill enemies in this zone.
+- If Online Stack with Melf (see below) is disabled, the farm will stack at the first stack zone greater than or equal to this.
+- If Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. It will also be the zone used if a spawn more buff cannot be found
 	
 Flames-based: When online stacking it is generally worth having Ellywick in the formation as her flames cards speed up the arrival of enemies, however when running hybrid with offline stacking the increased damage taken from flames cards will impact the number of stacks Brivs generates on a given zone. These options allow for a different offline stack zone to be configured based on the number of flames cards Elly holds to compensate for this.  
 	
@@ -283,9 +289,11 @@ Flames-based: When online stacking it is generally worth having Ellywick in the 
 	
 Online Stack with Melf: When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified. Melf has 3 different buffs that are 'randomly' active, but being a computer program it is only psuedo-random and is possible to predict.
 	
-> Author's Note: For the curious Melf effective active in each block of 50 zones are based on the number of resets your account has performed in total.  
+> Author's Note: For the curious the Melf effective active in each block of 50 zones are based on the number of resets your account has performed in total.  
 
-Min/Max: The range that online stacking can be performed in. This should be as wide as possible to allow as many 50-zone segments as possible to be covered and so to maximise the chances of Melf's spawn speed buff being available. Due to the buffs being in those 50-zone blocks there is no need to encompass the whole range. For example if your route hits z49, setting the minimum to z349 would allow the z301 to z350 segment to be used, even if your stacking team's damage is too high to stack at say z330.
+Max: This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity, which will be the first stack zone after the Min online stack zone above.
+
+> Author's Note: This means that if you have a reset of say z1200, setting z1020 here will allow stacking up to and including z1049. Disabling the later zones in the route grid would allow you to prevent stacking from z1021 to z1049, but will have consequences for the start of the run.
 	
 ### Offline Settings 
 Platform Login: When a stacking restart is needed BrivMaster will restart the game early and hold it after platform login, in order to be as consistent as possible. IC requires 15s to elapse between the save when closing and the game login when restarting to trigger offline progress, therefore the upper bound for this value is 15000ms. As some time elapses between platform login and game login it should be possible to reduce this somewhat; slower PCs will be able to reduce it further to compensate.

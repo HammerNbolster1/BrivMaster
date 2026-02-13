@@ -46,15 +46,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.RelayBlankOffline)
 		{
 			this.RelaySetup(logBase)
-			revokeFunc := ObjBindMethod(this, "RelayComObjectRevoke")
+			revokeFunc:=ObjBindMethod(this, "RelayComObjectRevoke")
 			OnExit(revokeFunc)
 		}
 		this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
 		if (this.useFaridehUlt) ;Create a hero object for Farideh only if she's saved in W, this is so we don't get a pause whilst it's created at first call, which is in the stack setup
 		{
 			g_Heroes[33]
-			;this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
-			this.FaridehUltThreshold:=90
+			this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
 		}
 		this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
 		if (this.useBrivBoost)
@@ -76,10 +75,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_IBM.Logger.SetRunCycle(this.cycleCount)
 		this.cycleMax:=g_IBM_Settings["IBM_OffLine_Freq"]
 		;Melf
-		if (g_IBM_Settings[ "IBM_Online_Use_Melf"])
+		if(g_IBM_Settings["IBM_Online_Use_Melf"])
 		{
 			this.UpdateMelfPatterns(true) ;Calling with (true) cleans up old data from this call; no need to do that regularly
-			this.MelfManager.Reset(g_IBM_Settings["IBM_Online_Melf_Min"],g_IBM_Settings["IBM_Online_Melf_Max"],5) ;TODO: Setting for lookahead
+			this.MelfManager.Reset(g_IBM_Settings["IBM_Online_Melf_Min"],g_IBM_Settings["IBM_Online_Melf_Max"],5)
 		}
 		;Only process Run Control input from the hub at the start of a run, as changing mid-run could make a mess
 		this.cycleDisableOffline:=g_SharedData.IBM_RunControl_DisableOffline
@@ -135,7 +134,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 		{
-			if (g_IBM_Settings[ "IBM_Online_Use_Melf"]) ;Online with melf
+			if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
 			{
 				melfRange:=this.MelfManager.GetFirstMelfSpawnMoreRange()
 				if (melfRange)
@@ -145,7 +144,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			}
 			else
 			{
-				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Offline_Stack_Min"]
+				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Online_Melf_Min"]
 			}
 			if (this.ShouldBlankRestart())
 			{
@@ -324,11 +323,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetStackZone() ;Dynamic to allow the Ellywick Flames card based option
     {
-        If (!this.ShouldOfflineStack()) ;Melf online is enabled and we shouldn't offline stack TODO: Removed Melf-only restriction, so the range can be used without Melf
-			stackZone:=g_IBM_Settings["IBM_Online_Melf_Min"] ;Melf online zone
-		else ;Offline
+        if (this.ShouldOfflineStack()) ;Offline
 		{
-			stackZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
+			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
 			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_Heroes[83].inW) ;if enabled and Elly is specifically in W, the stacking formation
 			{
 				flames:=g_Heroes[83].GetNumFlamesCards()
@@ -336,6 +333,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					stackZone:=g_IBM_Settings["IBM_OffLine_Flames_Zones"][flames]
 			}
         }
+		else ;Online
+			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Min"] ;This has a terrible name - it's the minimum stack zone in general. The target zone IBM_Online_Melf_Min (also a bad name) is checked via PostponeStacking() TODO: Some kind of unification is needed here to just check everything in one place...
 		return stackZone
     }
 
@@ -431,7 +430,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	TestForSteelBonesStackFarming() ;Returns true if we have a failure, namely the out of stacks and need to force restart case
     {
 		currentZone:=g_SF.Memory.ReadCurrentZone()
-        if (currentZone < 0 OR currentZone >= this.targetZone) ;Don't test while modron resetting
+        if (currentZone < 0 OR currentZone>=this.targetZone) ;Don't test while modron resetting
             return false
         stackZone:=this.GetStackZone()
 		stacks:=g_Heroes[58].ReadSBStacks()
@@ -441,18 +440,18 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (this.ShouldOfflineStack())
 				this.StackRestart()
 			else
-				this.StackNormal()
+				this.StackNormal() ;TODO: This might be a sensible place to do the postpone check
 			this.StartAutoProgressSoft()
 			return false
 		}
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early or resetting within 5 zones of a reset.
 		;Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
-        if (g_Heroes[58].ReadHasteStacks() < 50 AND stacks >= targetStacks AND g_SF.Memory.ReadHighestZone() > this.thelloraTarget AND (g_SF.Memory.ReadHighestZone() <= this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...)
+        if (g_Heroes[58].ReadHasteStacks() < 50 AND stacks>=targetStacks AND g_SF.Memory.ReadHighestZone()>this.thelloraTarget AND (g_SF.Memory.ReadHighestZone()<=this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...)
         {
             if (this.RelayBlankOffline AND this.RelayData.IsActive()) ;TODO: Something smart here
 			{
-				g_IBM.Logger.AddMessage("TestForSteelBonesStackFarming() force restart surpressed due to Relay")
+				g_IBM.Logger.AddMessage("TestForSteelBonesStackFarming() force restart suppressed due to Relay")
 			}
 			else
 			{
@@ -475,32 +474,18 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return this.targetZone - this.zonesPerJumpQ * 5 ;TODO: Is it useful to check if this is after the Thellora target?
 	}
 
-	StackFarm() ;TODO: Unclear why this really needs to be a separate function?
-    {
-        if (this.ShouldOfflineStack())
-        {
-			this.StackRestart()
-		}
-        else
-        {
-			this.StackNormal()
-		}
-        this.StartAutoProgressSoft()
-    }
-
 	StackNormal()
     {
-        if (g_IBM_Settings["IBM_Online_Use_Melf"] AND this.PostponeStacking(g_SF.Memory.ReadCurrentZone())) ; Melf stacking
+        currentZone:=g_SF.Memory.ReadCurrentZone()
+		if (this.PostponeStacking(currentZone))
             return 0
 		g_Heroes[58].InitFastSB()
 		startStacks:=stacks:=g_Heroes[58].FastReadSBStacks()
 		targetStacks:=this.GetTargetStacks(,true) ;Force recalculation of remaining haste stacks
         if (this.ShouldAvoidRestack(stacks, targetStacks))
-        {
 			return
-		}
 		this.SetFormation() ;Ensure the correct formation is set for the zone before we stop progress and try to stack
-		StartTime := A_TickCount ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
+		StartTime:=A_TickCount ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
 		this.ToggleAutoProgress(0, false, true)
         if (g_Heroes[59].inW AND g_Heroes[59].NeedsLevelling()) ;If we're levelling Melf in the stack zone (e.g. due to using Baldric), we need to do his initial levelup as fast as possible after the formation swap to try and stop it failing TODO: Having Melf hard-coded like this is cludgy but I don't see a way around it...
 		{
@@ -511,7 +496,16 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			fastMelf:=0
-		activateFariUlt:=this.useFaridehUlt ;TODO: Check for being under the min online zone due to recovery
+		if(this.useFaridehUlt)
+		{
+			if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Avoid levelling Farideh in recovery - as a decent DPS she massively increases the stack zone, forcing us to walk much further
+			{
+				g_IBM.LevelManager.OverrideLevelByIDLowerToMax(33, "min", 0)
+				activateFariUlt:=false
+			}
+			else
+				activateFariUlt:=true
+		}
 		this.WaitForZoneCompleted() ;Complete the current zone
 		this.OnlineStackFarmSetup(fastMelf, g_Heroes[59].Key)
         ElapsedTime := 0
@@ -522,7 +516,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_IBM.levelManager.LevelFormation("W", "min") ;Ensures we're levelled, and applies any changes made based by Briv Boost if used
 		maxOnlineStackTime:=this.GetOnlineStackTimeout()
 		precisionMode:=false
-		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this
+		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this TODO: This might need lowering as salvos of 100 will skip right over it?
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
 		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
         {
@@ -590,39 +584,49 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	WaitForZoneCompleted(maxTime:=3000)
     {
         this.SetFormation()
-        StartTime := A_TickCount
+       this.WaitForTransition() 
+		StartTime:=A_TickCount
         ElapsedTime := 0
-        this.WaitForTransition()
         quest:=g_SF.Memory.ReadQuestRemaining()
-        while (quest > 0 AND ElapsedTime < maxTime)
+        while (quest>0 AND ElapsedTime<maxTime)
         {
             g_IBM.IBM_Sleep(10)
-            this.SetFormation()
+            ;this.SetFormation() ;Trying without this, we should not need to spam-swap to Q/E as it will happen reliably in the transition
             quest:=g_SF.Memory.ReadQuestRemaining()
-			ElapsedTime := A_TickCount - StartTime
+			ElapsedTime:=A_TickCount-StartTime
         }
     }
 
-	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff
+	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff, or for a preferred stacking zone for non-Melf online
     {
-        if (g_Heroes[58].ReadHasteStacks() < 50) ;Stack immediately if Briv can't jump anymore.
+        if (g_Heroes[58].ReadHasteStacks()<50) ;Stack immediately if Briv can't jump anymore.
             return false
-		if (currentZone > this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
+		if (currentZone>this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
 			return false
-		nextSpawnMoreRange:=this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
-		if(nextSpawnMoreRange)
+		if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Below target minimum online zone (for Melf or otherwise, bad name). Here as this will be called once we pass the recovery minimum
+			return true
+		if(g_IBM_Settings["IBM_Online_Use_Melf"]) ;Melf mode
 		{
-			if (currentZone < nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
-				return true
-			else if (this.zones[currentZone].stackZone==false) ;Not on a stack zone
-				return true
-			else if (!this.MelfManager.IsMelfEffectSpawnMore(currentZone)) ;Not spawning more
-				return true
+			nextSpawnMoreRange:=this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
+			if(nextSpawnMoreRange)
+			{
+				if (currentZone<nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
+					return true
+				else if (!this.zones[currentZone].stackZone) ;Not on a stack zone
+					return true
+				else if (!this.MelfManager.IsMelfEffectSpawnMore(currentZone)) ;Not spawning more
+					return true
+			}
+			else ;No Spawn More available
+			{
+				if (this.zones[currentZone].stackZone==false) ;Even without spawn more, try to use a desired stackzone
+					return true
+			}
 		}
-		else ;No Spawn More available
+		else ;Non-Melf, this just needs to consider preferred zones
 		{
-			if (this.zones[currentZone].stackZone==false) ;Even without spawn more, try to use a desired stackzone
-				return true
+			if (this.zones[currentZone].stackZone==false)
+					return true
 		}
 		return false
     }
@@ -684,7 +688,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.GameMaster.SafetyCheck()
             stacks:=g_Heroes[58].ReadSBStacks()
             ;check if save reverted back to below stacking conditions
-            if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Irisiri - this might need to consider the offline fallback?
+            if (g_SF.Memory.ReadCurrentZone() < g_IBM_Settings["IBM_Offline_Stack_Min"])
             {
                 g_SharedData.UpdateOutbound("LoopString","Stack Sleep: Failed (zone < min)")
                 Break  ; "Bad Save? Loaded below stack zone, see value."

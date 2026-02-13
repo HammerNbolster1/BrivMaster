@@ -651,10 +651,15 @@ class IC_BrivMaster_EllywickDealer_NonFarm_Class extends IC_BrivMaster_EllywickD
 		}
 		else if (this.DrawsLeft() < remaining or !withinMax) ;Need to re-roll
 		{
-			If (this.CanUseEllyWickUlt() AND !this.UsedUlt)
+			if (this.CanUseEllyWickUlt() AND !this.UsedUlt)
 			{
-				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using ultimate")
+				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using Ellywick's ultimate")
 				this.UseEllywickUlt()
+			}
+			else if (this.CanUseDMUlt())
+			{
+				this.UseDMUlt()
+				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using DM's ultimate")
 			}
 			else
 				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Waiting for ultimate")

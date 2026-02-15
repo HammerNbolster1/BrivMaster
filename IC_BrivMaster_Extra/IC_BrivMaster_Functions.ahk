@@ -17,7 +17,6 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 			g_SharedData.UpdateOutbound("RunLogResetNumber",-1)
 		g_SharedData.UpdateOutbound("RunLog",{})
 		this.LogEntries:={}
-		this.OutputHeader()
 	}
 
 	NewRun()
@@ -73,7 +72,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 
 	OutputHeader()
 	{
-		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum,`n", % this.logPath
+		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum," . g_IBM.RouteMaster.GetStrategyString() . "`n", % this.logPath
 	}
 
 	ForceFail() ;The zone-based check does not capture runs that reach the target, but fail to reset, causing us to have Weird Stuff going on with no reported fails

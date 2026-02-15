@@ -101,6 +101,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
+		this.Logger.OutputHeader() ;After the RouteMaster is created so that the strategy string can be included in the header
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
 		this.offRamp:=false ;Limit the code that runs at the end of a run

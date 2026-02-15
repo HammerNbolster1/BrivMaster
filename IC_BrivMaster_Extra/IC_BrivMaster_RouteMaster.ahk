@@ -118,9 +118,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	UpdateStatusString()
 	{
-		targetStacks:=this.GetTargetStacks(true)
 		g_SharedData.UpdateOutbound("IBM_RunControl_CycleString","Cycle " . this.cycleCount . "/" . this.cycleMax . (this.cycleForceOffline ? " FO" : ""))
-		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString","Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . ", using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone)
+		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
+	}
+
+	GetStrategyString() ;Separated to allow it to be placed into the log
+	{
+		targetStacks:=this.GetTargetStacks(true)
+		return "Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . ", using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
 	}
 
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone

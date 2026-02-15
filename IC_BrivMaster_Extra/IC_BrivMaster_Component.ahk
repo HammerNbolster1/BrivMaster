@@ -652,18 +652,19 @@ Class IC_IriBrivMaster_Component
 		profile:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile
 		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
 		changeCount:=0
-		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
-		this.SettingCheck(gameSettings,"PercentOfParticlesSpawned","Particles",false,changeCount,change)
-		this.SettingCheck(gameSettings,"resolution_x","HRes",false,changeCount,change)
-		this.SettingCheck(gameSettings,"resolution_y","VRes",false,changeCount,change)
-		this.SettingCheck(gameSettings,"resolution_fullscreen","Fullscreen",true,changeCount,change)
-		this.SettingCheck(gameSettings,"ReduceFramerateWhenNotInFocus","CapFPSinBG",true,changeCount,change)
-		this.SettingCheck(gameSettings,"FormationSaveIncludeFeatsCheck","SaveFeats",true,changeCount,change)
-		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,change)
-		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,change)
-		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,change)
-		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that and the appearance isn't subject, so it isn't forced
-		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,change) ;Fixed, always 3 (x100 levelling)
+		changeString:=""
+		this.SettingCheck(gameSettings,"TargetFramerate","Framerate",false,changeCount,changeString,change) ;TODO: Just use the CNE names for all the simple ones and loop this?!
+		this.SettingCheck(gameSettings,"PercentOfParticlesSpawned","Particles",false,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"resolution_x","HRes",false,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"resolution_y","VRes",false,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"resolution_fullscreen","Fullscreen",true,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"ReduceFramerateWhenNotInFocus","CapFPSinBG",true,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"FormationSaveIncludeFeatsCheck","SaveFeats",true,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,changeString,change)
+		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,changeString,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that and the appearance isn't subject, so it isn't forced
+		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,changeString,change) ;Fixed, always 3 (x100 levelling)
 		if (changeCount)
 		{
 			if (change)
@@ -671,27 +672,27 @@ Class IC_IriBrivMaster_Component
 				if (this.IsGameClosed())
 				{
 					g_SF.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen")
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen",changeString)
 				}
 				else
 				{
 					MsgBox,48,Briv Master,Game settings cannot be changed whilst Idle Champions is running
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000",changeString)
 				}
 
 			}
 			else
 			{
-				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000")
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000",changeString)
 			}
 		}
 		else
 		{
-			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","cGreen")
+			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","cGreen",changeString)
 		}
 	}
 
-	SettingCheck(gameSettings, CNEName, IBMName,isBoolean, byRef changeCount,change:=false)
+	SettingCheck(gameSettings, CNEName, IBMName,isBoolean, byRef changeCount,byRef changeString,change:=false)
 	{
 		if (IBMName=="Swap25100") ;Special case for the hotkey swap
 		{
@@ -701,6 +702,7 @@ Class IC_IriBrivMaster_Component
 				if !(level25.Count()==1 AND level25[1]=="LeftControl")
 				{
 					changeCount++
+					changeString.=CNEName . ".hero_level_25 - Expected: LeftControl Actual: " . level25[1] . "(" . level25.Count() . " items)`n"
 					if (change)
 						gameSettings[CNEName,"hero_level_25"]:=["LeftControl"]
 				}
@@ -708,6 +710,7 @@ Class IC_IriBrivMaster_Component
 				if !(level100.Count()==2 AND ((level100[1]=="LeftShift" AND level100[2]=="LeftControl") OR (level100[1]=="LeftControl" AND level100[2]=="LeftShift"))) ;TODO: Shift,Control is how the game saves it, determine if Control,Shift is actually valid?
 				{
 					changeCount++
+					changeString.=CNEName . ".hero_level_100 - Expected: LeftShift and LeftControl Actual: " . level100[1] . " and " . level100[2] . "(" . level100.Count() . " items)`n"
 					if (change)
 						gameSettings[CNEName,"hero_level_100"]:=["LeftShift","LeftControl"]
 				}
@@ -718,19 +721,21 @@ Class IC_IriBrivMaster_Component
 			targetValue:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile,IBMName]==1 ? "true" : "false"
 		else
 			targetValue:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile,IBMName]
-		if gameSettings[CNEName]!=targetValue
+		if(gameSettings[CNEName]!=targetValue)
 		{
 			changeCount++
+			changeString.=CNEName . " - Expected: " . targetValue . " Actual: " . gameSettings[CNEName] . "`n"
 			if (change)
 				gameSettings[CNEName]:=targetValue
 		}
 	}
 
-	ForcedSettingCheck(gameSettings, CNEName, value, byRef changeCount,change:=false) ;For settings where we don't give or save an option
+	ForcedSettingCheck(gameSettings, CNEName, value, byRef changeCount,byRef changeString,change:=false) ;For settings where we don't give or save an option
 	{
 		if gameSettings[CNEName]!=value
 		{
 			changeCount++
+			changeString.=CNEName . " - Expected: " . targetValue . " Actual: " . gameSettings[CNEName] . "`n"
 			if (change)
 				gameSettings[CNEName]:=value
 		}

@@ -1015,11 +1015,11 @@ class IC_IriBrivMaster_GUI
 		}
 	}
 
-	GameSettings_Status(statusText, colour)
+	GameSettings_Status(statusText, colour,changeString)
 	{
 		GuiControl, ICScriptHub: +%colour%, IBM_Game_Settings_Status
 		GuiControl, ICScriptHub:Text, IBM_Game_Settings_Status, %statusText%
-		;GuiControl, ICScriptHub:MoveDraw,IBM_Game_Settings_Status
+		GUIFunctions.AddToolTip("IBM_Game_Settings_Status", changeString) ;TODO: Is it better to delete the tooltip entry if changeString is empty?
 	}
 
 	GetDPIScale()

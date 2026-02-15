@@ -118,20 +118,20 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	UpdateStatusString()
 	{
-		targetStacks:=this.GetTargetStacks(true)
 		g_SharedData.UpdateOutbound("IBM_RunControl_CycleString","Cycle " . this.cycleCount . "/" . this.cycleMax . (this.cycleForceOffline ? " FO" : ""))
-		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString","Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . ", using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone)
+		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
+	}
+
+	GetStrategyString() ;Separated to allow it to be placed into the log
+	{
+		targetStacks:=this.GetTargetStacks(true)
+		return "Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . ", using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
 	}
 
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone
 	{
 		if (this.ShouldOfflineStack()) ;Offline
-		{
-			if (g_IBM_Settings[ "IBM_OffLine_Flames_Use"])
-				stackString:="Stacking: Expecting offline at z" . this.GetStackZone() . " (subject to Flames-based adjustment)"
-			else
-				stackString:="Stacking: Expecting offline at z" . this.GetStackZone()
-		}
+			stackString:="Stacking: Expecting offline at z" . g_IBM_Settings["IBM_Offline_Stack_Zone"]
 		else
 		{
 			if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
@@ -321,23 +321,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return g_Heroes[58].ReadHasteStacks() >= this.zones[zone].stacksToFinish
 	}
 
-	GetStackZone() ;Dynamic to allow the Ellywick Flames card based option
-    {
-        if (this.ShouldOfflineStack()) ;Offline
-		{
-			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
-			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_Heroes[83].inW) ;if enabled and Elly is specifically in W, the stacking formation
-			{
-				flames:=g_Heroes[83].GetNumFlamesCards()
-				if (flames>0)
-					stackZone:=g_IBM_Settings["IBM_OffLine_Flames_Zones"][flames]
-			}
-        }
-		else ;Online
-			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Min"] ;This has a terrible name - it's the minimum stack zone in general. The target zone IBM_Online_Melf_Min (also a bad name) is checked via PostponeStacking() TODO: Some kind of unification is needed here to just check everything in one place...
-		return stackZone
-    }
-
 	ShouldOfflineStack()
     {
         if (this.HybridBlankOffline) ;This logic is not used if we are doing blank offlines
@@ -431,18 +414,24 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		currentZone:=g_SF.Memory.ReadCurrentZone()
         if (currentZone < 0 OR currentZone>=this.targetZone) ;Don't test while modron resetting
-            return false
-        stackZone:=this.GetStackZone()
+            return 0
 		stacks:=g_Heroes[58].ReadSBStacks()
 		targetStacks:=this.GetTargetStacks()
- 		if (stacks<targetStacks AND currentZone>=stackZone) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
+ 		if (stacks<targetStacks)
 		{
-			if (this.ShouldOfflineStack())
+			shouldOffline:=this.ShouldOfflineStack()
+			if(shouldOffline AND currentZone>=g_IBM_Settings["IBM_Offline_Stack_Zone"]) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
+			{
 				this.StackRestart()
-			else
-				this.StackNormal() ;TODO: This might be a sensible place to do the postpone check
-			this.StartAutoProgressSoft()
-			return false
+				this.StartAutoProgressSoft()
+				return 0
+			}
+			else if (!shouldOffline AND currentZone>=g_IBM_Settings["IBM_Offline_Stack_Min"]) ;TODO: This might be a sensible place to do the postpone check, i.e. ...AND this.PostponeOnline(currentZone)
+			{
+				this.StackNormal()
+				this.StartAutoProgressSoft()
+				return 0
+			}
 		}
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early or resetting within 5 zones of a reset.
 		;Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
@@ -457,10 +446,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				g_IBM.Logger.AddMessage("Out of stacks:z" . currentZone)
 				g_IBM.GameMaster.RestartAdventure("Out of Haste and have Steelbones for next")
-				return true
+				return 1
 			}
         }
-		return false
+		return 0
     }
 
 	ResetCycleCount()
@@ -476,7 +465,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackNormal()
     {
-        currentZone:=g_SF.Memory.ReadCurrentZone()
+		;***********
+		;Save checks
+		;DEBUG_LAST_SAVE_START:=g_SF.Memory.IBM_ReadLastSave()
+		;End save checks
+		;***************
+		currentZone:=g_SF.Memory.ReadCurrentZone()
 		if (this.PostponeStacking(currentZone))
             return 0
 		g_Heroes[58].InitFastSB()
@@ -496,19 +490,30 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			fastMelf:=0
+		flames:=g_Heroes[83].inW ? g_Heroes[83].GetNumFlamesCards() : 0 ;Only check Elly's cards if present in W
 		if(this.useFaridehUlt)
 		{
 			if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Avoid levelling Farideh in recovery - as a decent DPS she massively increases the stack zone, forcing us to walk much further
 			{
 				g_IBM.LevelManager.OverrideLevelByIDLowerToMax(33, "min", 0)
-				activateFariUlt:=false
+				activateFariUlt:=0
 			}
 			else
-				activateFariUlt:=true
+			{
+				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
+				if(!flames AND g_IBM_Settings["IBM_Online_Farideh_Delay_0"])
+				{
+					delayedFariUltDelay:=g_IBM_Settings["IBM_Online_Farideh_Delay_0"]//g_SF.Memory.IBM_ReadBaseGameSpeed() ;Convert to real time
+					activateFariUlt:=2 ;Apply time delay
+					delayedFariUltTime:=0
+				}
+				else
+					activateFariUlt:=1 ;Use as soon as condition is met
+			}
 		}
 		this.WaitForZoneCompleted() ;Complete the current zone
 		this.OnlineStackFarmSetup(fastMelf, g_Heroes[59].Key)
-        ElapsedTime := 0
+        ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Stack Normal")
         this.FallBackFromBossZone() ;Moved this out the loop, which might be a bad idea...
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
@@ -518,14 +523,61 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		precisionMode:=false
 		precisionTrigger:=Floor(targetStacks * 0.90) ;At a steady-state stack rate of 240/s, for 600 stacks this is 60 => ~250ms - which is plenty of time to activate precision mode. Note that because attacks can get synced we can't get too tight with this TODO: This might need lowering as salvos of 100 will skip right over it?
 		currentZone:=g_SF.Memory.ReadCurrentZone() ;Used to report the stack zone, here as it is recorded before we toggle progress back on
-		while (stacks < targetStacks AND ElapsedTime < maxOnlineStackTime )
-        {
-			if (activateFariUlt AND g_SF.Memory.ReadActiveMonstersCount()>=this.FaridehUltThreshold)
+		;++++++++++++++++++++++
+		;START FARI DEBUG BLOCK
+		/*
+		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[g_Heroes[33].HeroIndex].effects.effectKeysByHashedKeyName
+		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
+		DEBUG_FARI_READ:=""
+		loop, %EK_HANDLER_SIZE%
+		{
+			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
+			if ("farideh_infernal_aspect_handler"==PARENT_HANDLER.def.Key.Read())
 			{
-				g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack
-				activateFariUlt:=false
+				DEBUG_FARI_READ:=PARENT_HANDLER.activeEffectHandlers[0].QuickClone()
+				DEBUG_FARI_READ.FullOffsets.Push(192)
+				break
 			}
-			if (precisionMode)
+		}
+		DEBUG_FARI_LOG:="Fari Init:" . A_TickCount . ":S:" . g_Heroes[58].FastReadSBStacks() . ","
+		DEBUG_FARI_ALT_ACTIVE:=FALSE
+		*/
+		;END FARI DEBUG BLOCK
+		;++++++++++++++++++++
+		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
+        {
+			if (activateFariUlt)
+			{
+				if(activateFariUlt==3) ;Delayed ult primed
+				{
+					if(A_TickCount>=delayedFariUltTime)
+					{
+						g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack
+						activateFariUlt:=0
+						;g_IBM.Logger.AddMessage("Farideh Ult via delay=[" . ROUND(delayedFariUltDelay,0) . "]ms")
+					}
+				}
+				else
+				{
+					monsters:=_MemoryManager.instance.Read(MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS,"Int")
+					if(monsters>=this.FaridehUltThreshold)
+					{
+						if(activateFariUlt==1)
+						{
+							g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack
+							activateFariUlt:=0
+							;g_IBM.Logger.AddMessage("Farideh Ult direct via Active=[" . monsters . "]")
+						}
+						else ;activateFariUlt must be 2, queue
+						{
+							delayedFariUltTime:=A_TickCount+delayedFariUltDelay
+							activateFariUlt:=3 ;Queue timed
+							;g_IBM.Logger.AddMessage("Farideh Ult queued for Tick=[" . delayedFariUltTime . "]")
+						}
+					}
+				}
+			}
+			if (precisionMode OR activateFariUlt) ;This will mean if we never reach the FaridehUltThreshold we will be stuck on fast sleeps and not trigger the .gameFocus(). That being a problem requires 2 failures though, so is probably okay
 			{
 				Sleep, 0 ;Fast sleep
 			}
@@ -537,16 +589,53 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					g_InputManager.gameFocus() ;Set Game Focus so we don't have to do it when releasing from the stack (this will cause issues if the game loses focus in the last few hundred ms of stacking)
 					precisionMode:=true
 				}
-				g_IBM.IBM_Sleep(15)
+				g_IBM.IBM_Sleep(10)
+				;++++++++++++++++++++++
+				;START FARI DEBUG BLOCK
+				;Sleep, 0 ;FARI DEBUG - So as to not delay the debug checks
+				;END FARI DEBUG BLOCK
+				;++++++++++++++++++++
 			}
-			ElapsedTime := A_TickCount - StartTime
+			ElapsedTime:=A_TickCount - StartTime
 			stacks:=g_Heroes[58].FastReadSBStacks()
+			;++++++++++++++++++++++
+			;START FARI DEBUG BLOCK
+			/*
+			DEBUG_FARI_ULT_NOW:=DEBUG_FARI_READ.Read("Char")
+			if(DEBUG_FARI_ULT_NOW!=DEBUG_FARI_ALT_ACTIVE)
+			{
+				if(DEBUG_FARI_ULT_NOW)
+					DEBUG_FARI_LOG.="Fari Ult Start:" . A_TickCount . ":S:" . stacks . ","
+				else
+					DEBUG_FARI_LOG.="Fari Ult End:" . A_TickCount . ":S:" . stacks . ","
+				DEBUG_FARI_ALT_ACTIVE:=DEBUG_FARI_ULT_NOW
+			}
+			*/
+			;END FARI DEBUG BLOCK
+			;++++++++++++++++++++
         }
+		;++++++++++++++++++++++
+		;START FARI DEBUG BLOCK
+		;DEBUG_FARI_LOG.="Fari Stacked:" . A_TickCount . ":S:" . stacks
+		;END FARI DEBUG BLOCK
+		;++++++++++++++++++++
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
+		;***********
+		;Save checks
+		;DEBUG_LAST_SAVE_END:=g_SF.Memory.IBM_ReadLastSave()
+		;if(DEBUG_LAST_SAVE_END!=DEBUG_LAST_SAVE_START)
+		;	g_IBM.Logger.AddMessage("Save during online stacking - change=[" . DEBUG_LAST_SAVE_END-DEBUG_LAST_SAVE_START . "] start=[" . DEBUG_LAST_SAVE_START . "] end=[" . DEBUG_LAST_SAVE_END . "]")
+		;End save checks
+		;***************
+		;++++++++++++++++++++++
+		;START FARI DEBUG BLOCK
+		;g_IBM.Logger.AddMessage("Flames:" . flames . "," . DEBUG_FARI_LOG)
+		;END FARI DEBUG BLOCK
+		;++++++++++++++++++++
 		if (ElapsedTime >= maxOnlineStackTime)
         {
             Critical Off
-			g_IBM.GameMaster.RestartAdventure("Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO for both this and StackNormal() - this seems a bit extreme?
+			g_IBM.GameMaster.RestartAdventure("Normal took too long (" . ROUND(ElapsedTime/1000,1) . "s)") ;TODO: This seems a bit extreme?
             g_IBM.GameMaster.SafetyCheck()
             g_IBM.PreviousZoneStartTime:=A_TickCount
             return
@@ -555,25 +644,20 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         runComplete:=g_SF.Memory.ReadHighestZone()>=this.targetZone ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
 		if (!runComplete)
 		{
-			;If we're at reset
-			if (g_SF.Memory.ReadQuestRemaining() > 0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
-			{
+			if (g_SF.Memory.ReadQuestRemaining()>0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
 				this.FallBackFromZone()
-			}
 			else
-			{
 				this.ToggleAutoProgress(1, false, true)
-			}
 		}
 		Critical Off
 		generatedStacks:=stacks - startStacks
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/ 1000,2) . "s")
-		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone?
+		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " F=" . flames . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ElapsedTime) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone?
 		if (!runComplete)
 			this.SetFormation() ;Standard call to reset trustRecent
     }
 
-	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step) | TODO: No real need to be a function now there is only one online stack method, with Ultra having being removed, as much as having functions is nice. Could store the game speed so it can be used for both the timeout and the Farideh delay?
 	{
 		timeoutBase/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Reduces the 200s to 16s @ 12.5
 		if(g_IBM.failedConversionMode) ;In this case we're probably killing things as we've levelled champions, allow significantly more time
@@ -584,14 +668,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	WaitForZoneCompleted(maxTime:=3000)
     {
         this.SetFormation()
-       this.WaitForTransition() 
+		this.WaitForTransition()
 		StartTime:=A_TickCount
         ElapsedTime := 0
         quest:=g_SF.Memory.ReadQuestRemaining()
         while (quest>0 AND ElapsedTime<maxTime)
         {
-            g_IBM.IBM_Sleep(10)
-            ;this.SetFormation() ;Trying without this, we should not need to spam-swap to Q/E as it will happen reliably in the transition
+            g_IBM.IBM_Sleep(1) ;Very fast - this should be a brief window between WaitForTransition() and the first kill
             quest:=g_SF.Memory.ReadQuestRemaining()
 			ElapsedTime:=A_TickCount-StartTime
         }
@@ -769,21 +852,19 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.LevelManager.SetModifierKey(false)
 		}
 		else if (fastMelf==1)
-		{
 			levelKey.KeyPress_Bulk()
-		}
-		StartTime := A_TickCount
-        ElapsedTime := 0
-		TimeOut:=3000 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
-        g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
-		while (!g_SF.IsCurrentFormationWithIgnore(g_IBM.levelManager.GetFormation("W"),{33:true}) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack. Also TODO: Farideh should probably not be ignored unless we're resetting early for recovery
+		TimeOut:=2500 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
+        StartTime:=A_TickCount
+		ElapsedTime:=0
+		g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
+		while (!g_SF.IsCurrentFormationWithIgnore(g_IBM.levelManager.GetFormation("W"),{33:true}) AND ElapsedTime < TimeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack. Also TODO: Farideh should probably not be ignored unless we're stacking early for recovery
         {
 			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms
 			g_IBM.IBM_Sleep(15)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
-		if (ElapsedTime >= TimeOut)
+		if (ElapsedTime>=TimeOut)
 		{
 			g_IBM.Logger.AddMessage("FAIL: OnlineStackFarmSetup() did not set W formation within " . TimeOut . "ms")
 			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING() . " fastMelf=[" . fastMelf . "]")

@@ -116,7 +116,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.LastFormationSavesVersion:={} ;Irisiri- used for formation caching by the looks of it
 		this.SlotFormations:={} ;Irisiri - used for formation caching by the looks of it
     }
-	
+
 	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
     {
         _MemoryManager.exeName:=g_IBM_Settings["IBM_Game_Exe"]
@@ -335,7 +335,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
         return this.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.Read()
     }
-	
+
 	ReadActiveMonstersCount()
 	{
         return this.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.Read()

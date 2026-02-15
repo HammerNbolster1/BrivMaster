@@ -6,7 +6,7 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 		this.Init()
 	}
 
-	__Get(heroID)
+	__Get(heroID) ;TODO: Add a wrapper for the .InM etc functions that can check if the hero actually exists at all first, to avoid creating hero objects needlessly, i.e. you'd call g_Heroes.InM(59) which would return this[59].InM if this.HasKey(59), else false
 	{
 		if heroID is integer
 		{

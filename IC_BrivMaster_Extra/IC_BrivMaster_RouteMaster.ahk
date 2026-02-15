@@ -657,7 +657,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.SetFormation() ;Standard call to reset trustRecent
     }
 
-	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step)
+	GetOnlineStackTimeout(timeoutBase:=200000) ;Returns gamespeed-adjusted timeout, increased if Melf is not present or if recovery mode is on. 200s base might look excessive, but I think it would take ~170s at x1 speed to gain 1122 stacks (11J to 1510 w/o Thunder Step) | TODO: No real need to be a function now there is only one online stack method, with Ultra having being removed, as much as having functions is nice. Could store the game speed so it can be used for both the timeout and the Farideh delay?
 	{
 		timeoutBase/=g_SF.Memory.IBM_ReadBaseGameSpeed() ;Reduces the 200s to 16s @ 12.5
 		if(g_IBM.failedConversionMode) ;In this case we're probably killing things as we've levelled champions, allow significantly more time
@@ -852,7 +852,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.LevelManager.SetModifierKey(false)
 		}
 		else if (fastMelf==1)
-		{
 			levelKey.KeyPress_Bulk()
 		TimeOut:=2500 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf
         StartTime:=A_TickCount

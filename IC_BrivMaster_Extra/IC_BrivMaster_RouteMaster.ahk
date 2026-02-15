@@ -460,7 +460,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	StackNormal()
     {
-        currentZone:=g_SF.Memory.ReadCurrentZone()
+		;***********
+		;Save checks
+		;DEBUG_LAST_SAVE_START:=g_SF.Memory.IBM_ReadLastSave()
+		;End save checks
+		;***************
+		currentZone:=g_SF.Memory.ReadCurrentZone()
 		if (this.PostponeStacking(currentZone))
             return 0
 		g_Heroes[58].InitFastSB()
@@ -610,6 +615,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;END FARI DEBUG BLOCK
 		;++++++++++++++++++++
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on
+		;***********
+		;Save checks
+		;DEBUG_LAST_SAVE_END:=g_SF.Memory.IBM_ReadLastSave()
+		;if(DEBUG_LAST_SAVE_END!=DEBUG_LAST_SAVE_START)
+		;	g_IBM.Logger.AddMessage("Save during online stacking - change=[" . DEBUG_LAST_SAVE_END-DEBUG_LAST_SAVE_START . "] start=[" . DEBUG_LAST_SAVE_START . "] end=[" . DEBUG_LAST_SAVE_END . "]")
+		;End save checks
+		;***************
 		;++++++++++++++++++++++
 		;START FARI DEBUG BLOCK
 		;g_IBM.Logger.AddMessage("Flames:" . flames . "," . DEBUG_FARI_LOG)

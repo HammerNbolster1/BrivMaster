@@ -283,10 +283,6 @@ Min online stack zone: The full W formation must not be able to kill enemies in 
 - If Online Stack with Melf (see below) is disabled, the farm will stack at the first stack zone greater than or equal to this.
 - If Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. It will also be the zone used if a spawn more buff cannot be found
 	
-Flames-based: When online stacking it is generally worth having Ellywick in the formation as her flames cards speed up the arrival of enemies, however when running hybrid with offline stacking the increased damage taken from flames cards will impact the number of stacks Brivs generates on a given zone. These options allow for a different offline stack zone to be configured based on the number of flames cards Elly holds to compensate for this.  
-	
-> Author's Note: Remember that when using the Gem feat 5 flames is impossible so that value is not worth setting.  
-	
 Online Stack with Melf: When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified. Melf has 3 different buffs that are 'randomly' active, but being a computer program it is only psuedo-random and is possible to predict.
 	
 > Author's Note: For the curious the Melf effective active in each block of 50 zones are based on the number of resets your account has performed in total.  

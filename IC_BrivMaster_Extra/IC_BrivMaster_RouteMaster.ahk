@@ -126,12 +126,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone
 	{
 		if (this.ShouldOfflineStack()) ;Offline
-		{
-			if (g_IBM_Settings[ "IBM_OffLine_Flames_Use"])
-				stackString:="Stacking: Expecting offline at z" . this.GetStackZone() . " (subject to Flames-based adjustment)"
-			else
-				stackString:="Stacking: Expecting offline at z" . this.GetStackZone()
-		}
+			stackString:="Stacking: Expecting offline at z" . g_IBM_Settings["IBM_Offline_Stack_Zone"]
 		else
 		{
 			if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
@@ -321,23 +316,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return g_Heroes[58].ReadHasteStacks() >= this.zones[zone].stacksToFinish
 	}
 
-	GetStackZone() ;Dynamic to allow the Ellywick Flames card based option
-    {
-        if (this.ShouldOfflineStack()) ;Offline
-		{
-			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
-			if (g_IBM_Settings["IBM_OffLine_Flames_Use"] AND g_Heroes[83].inW) ;if enabled and Elly is specifically in W, the stacking formation
-			{
-				flames:=g_Heroes[83].GetNumFlamesCards()
-				if (flames>0)
-					stackZone:=g_IBM_Settings["IBM_OffLine_Flames_Zones"][flames]
-			}
-        }
-		else ;Online
-			stackZone:=g_IBM_Settings["IBM_Offline_Stack_Min"] ;This has a terrible name - it's the minimum stack zone in general. The target zone IBM_Online_Melf_Min (also a bad name) is checked via PostponeStacking() TODO: Some kind of unification is needed here to just check everything in one place...
-		return stackZone
-    }
-
 	ShouldOfflineStack()
     {
         if (this.HybridBlankOffline) ;This logic is not used if we are doing blank offlines
@@ -431,18 +409,24 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
 		currentZone:=g_SF.Memory.ReadCurrentZone()
         if (currentZone < 0 OR currentZone>=this.targetZone) ;Don't test while modron resetting
-            return false
-        stackZone:=this.GetStackZone()
+            return 0
 		stacks:=g_Heroes[58].ReadSBStacks()
 		targetStacks:=this.GetTargetStacks()
- 		if (stacks<targetStacks AND currentZone>=stackZone) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
+ 		if (stacks<targetStacks)
 		{
-			if (this.ShouldOfflineStack())
+			shouldOffline:=this.ShouldOfflineStack()
+			if(shouldOffline AND currentZone>=g_IBM_Settings["IBM_Offline_Stack_Zone"]) ;This is now >= so we don't have to go around taking 1 off the stackzone all the time
+			{
 				this.StackRestart()
-			else
-				this.StackNormal() ;TODO: This might be a sensible place to do the postpone check
-			this.StartAutoProgressSoft()
-			return false
+				this.StartAutoProgressSoft()
+				return 0
+			}
+			else if (!shouldOffline AND currentZone>=g_IBM_Settings["IBM_Offline_Stack_Min"]) ;TODO: This might be a sensible place to do the postpone check, i.e. ...AND this.PostponeOnline(currentZone)
+			{
+				this.StackNormal()
+				this.StartAutoProgressSoft()
+				return 0
+			}
 		}
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early or resetting within 5 zones of a reset.
 		;Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
@@ -457,10 +441,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				g_IBM.Logger.AddMessage("Out of stacks:z" . currentZone)
 				g_IBM.GameMaster.RestartAdventure("Out of Haste and have Steelbones for next")
-				return true
+				return 1
 			}
         }
-		return false
+		return 0
     }
 
 	ResetCycleCount()

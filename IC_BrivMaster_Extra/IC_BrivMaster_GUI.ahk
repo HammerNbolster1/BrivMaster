@@ -446,9 +446,9 @@ class IC_IriBrivMaster_GUI
 		;Due to the sidebar we need to get the Y location of the buttons at the bottom of the jump/stack box
 		GuiControlGet, RouteEndPosition, ICScriptHub:Pos, IBM_Route_Import_Button
 		nextY:=RouteEndPositionY+RouteEndPositionH+9
-		;Offline stacking zones (with Flames-based options)
+		;Stacking zones
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y%nextY% w%groupWidth% h129, Stacking Zones
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y%nextY% w%groupWidth% h101, Stacking Zones
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Offline:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
@@ -459,18 +459,6 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min online stack zone:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
-		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Flames_Use gIBM_OffLine_Flames_Use, Flames-based:
-		GUIFunctions.AddToolTip("IBM_OffLine_Flames_Use", "Ellywick's Flames cards increase the damage enemies deal, reducing the stacks Briv gains during offline stacking. This option allows this to be accounted for. Spending the time calibrating your stack zone for the rare instances of 3 or more cards is unlikely to be worthwhile; set them to a lower zone so that Briv does not die. Remember that the Gem feat makes the 5-card value unnecessary")
-		Gui, ICScriptHub:Add, Text, x+15 h18 0x200, 1
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_1 Disabled
-		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 2
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_2 Disabled
-		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 3
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_3 Disabled
-		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 4
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_4 Disabled
-		Gui, ICScriptHub:Add, Text, x+9 h18 0x200, 5
-		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_OffLine_Flames_Zone_Edit_5 Disabled
 		Gui, ICScriptHub:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Max
@@ -482,7 +470,7 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 90+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
 		;Offline config
 		Gui, ICScriptHub:Font, w700
-		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h99, Offline Settings
+		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+11 w%groupWidth% h99, Offline Settings
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Platform login:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w40 x+3 Number Limit5 vIBM_OffLine_Delay_Time gIBM_Generic_Setting_Int
@@ -671,12 +659,6 @@ class IC_IriBrivMaster_GUI
 		;Stacking Zone
 		GuiControl, ICScriptHub:, IBM_Offline_Stack_Zone, % g_IBM_Settings.IBM_Offline_Stack_Zone
 		GuiControl, ICScriptHub:, IBM_OffLine_Stack_Min, % g_IBM_Settings.IBM_Offline_Stack_Min
-		GuiControl, ICScriptHub:, IBM_OffLine_Flames_Use, % g_IBM_Settings.IBM_OffLine_Flames_Use
-		Loop, 5
-		{
-			GuiControl, ICScriptHub:, IBM_OffLine_Flames_Zone_Edit_%A_Index%, % g_IBM_Settings.IBM_OffLine_Flames_Zones[A_Index]
-		}
-		IBM_OffLine_Flames_Enable_Edit(g_IBM_Settings.IBM_OffLine_Flames_Use) ;And for the flames zone boxes
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Use, % g_IBM_Settings.IBM_Online_Use_Melf
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Min, % g_IBM_Settings.IBM_Online_Melf_Min
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
@@ -1244,13 +1226,6 @@ IBM_MainButtons_Save()
 {
 	Gui, ICScriptHub:Submit, NoHide
 	GuiControl, ICScriptHub: Disable, IBM_MainButtons_Save
-	flamesZones:=[]
-	loop, 5
-		{
-			GuiControlGet, curZone,, IBM_OffLine_Flames_Zone_Edit_%A_Index%
-			flamesZones[A_Index]:=curZone+0
-		}
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Zones",flamesZones)
 	g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards:=g_IriBrivMaster_GUI.ReadNonGemFarmEllySettings()
 	;Level Manager
 	if (g_IriBrivMaster_GUI.levelDataSet.Length() > 0) ;Only save if we have some formations loaded (prevents overwritting dates with nothing because we didn't read these in whilst saving other things), and check if we've actually made changes
@@ -1654,25 +1629,4 @@ IBM_Combine_Enable(enableControl)
 		GuiControl, ICScriptHub:Enable, IBM_Route_Combine_Boss_Avoidance
 	else
 		GuiControl, ICScriptHub:Disable, IBM_Route_Combine_Boss_Avoidance
-}
-
-IBM_OffLine_Flames_Use()
-	{
-	GuiControlGet, value,, IBM_OffLine_Flames_Use
-	g_IriBrivMaster.UpdateSetting("IBM_OffLine_Flames_Use",value)
-	IBM_OffLine_Flames_Enable_Edit(value)
-}
-
-IBM_OffLine_Flames_Enable_Edit(enableControl)
-{
-	if (enableControl)
-	{
-		loop, 5
-			GuiControl, ICScriptHub:Enable, IBM_OffLine_Flames_Zone_Edit_%A_Index%
-	}
-	else
-	{
-		loop, 5
-			GuiControl, ICScriptHub:Disable, IBM_OffLine_Flames_Zone_Edit_%A_Index%
-	}
 }

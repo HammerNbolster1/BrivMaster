@@ -174,8 +174,6 @@ Class IC_IriBrivMaster_Component
         settings:={}
 		settings.IBM_Offline_Stack_Zone["_DEFAULT"]:=500
 		settings.IBM_Offline_Stack_Min["_DEFAULT"]:=300
-		settings.IBM_OffLine_Flames_Use["_DEFAULT"]:=false
-        settings.IBM_OffLine_Flames_Zones["_DEFAULT"]:=[500,500,500,500,500]
 		settings.IBM_Route_Combine["_DEFAULT"]:=0
 		settings.IBM_Route_Combine_Boss_Avoidance["_DEFAULT"]:=1
 		settings.IBM_LevelManager_Levels["_DEFAULT",7]:={"min": 100,"prio": 0,"priolimit": "","z1": 100}

@@ -232,6 +232,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.IBM_Online_Farideh_Threshold["_DEFAULT"]:=90
+		settings.IBM_Online_Farideh_Delay_0["_DEFAULT"]:=0
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500

@@ -290,6 +290,10 @@ Online Stack with Melf: When enabled online stacking will be performed when Melf
 Max: This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity, which will be the first stack zone after the Min online stack zone above.
 
 > Author's Note: This means that if you have a reset of say z1200, setting z1020 here will allow stacking up to and including z1049. Disabling the later zones in the route grid would allow you to prevent stacking from z1021 to z1049, but will have consequences for the start of the run.
+
+Use Farideh's Ultimate
+- at: The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes.
+- delay by: With no Flames cards (either because Ellywick isn't in W, or she has none in hand) this delay will be applied after the specified number of enemies is reached before Farideh's ultimate is used. Use to account for melee enemies taking much longer to reach Briv without the movement speed Flames provides. The value is game milliseconds, so an entry of 5000 would result in a 500ms real time delay at x10 speed. Set to 0 to disable.
 	
 ### Offline Settings 
 Platform Login: When a stacking restart is needed BrivMaster will restart the game early and hold it after platform login, in order to be as consistent as possible. IC requires 15s to elapse between the save when closing and the game login when restarting to trigger offline progress, therefore the upper bound for this value is 15000ms. As some time elapses between platform login and game login it should be possible to reduce this somewhat; slower PCs will be able to reduce it further to compensate.

@@ -481,7 +481,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			fastMelf:=0
-		if (g_Heroes[33].inW AND g_Heroes[33].NeedsLevelling()) ;Same mess but for Fari :( TODO: This NEEDs some kind of general solution now there's 2 champions involved. 1 tap each unlevelled champion in W - make an array of key objects each for x100 and <x100?
+		if (g_Heroes[33].inW AND g_Heroes[33].NeedsLevelling()) ;Same mess but for Fari :( TODO: This NEEDs some kind of general solution now there's 2 champions involved. 1 tap each unlevelled champion in W - make an array of key objects each for x100 and <x100? Should this list be generated once at script start, on the assumption that champions in other formations will be levelled? Probably?
 		{
 			if (g_Heroes[33].GetLevelsRequired() < 100)
 				fastFari:=2 ;Modifier press
@@ -849,7 +849,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				levelKey.KeyPress_Bulk()
 				g_IBM.LevelManager.SetModifierKey(false)
 			}
-			g_IBM.Logger.AddMessage("FastFari level=[" . g_Heroes[33].ReadLevel() . "] Benched=[" . g_Heroes[33].Benched() . "]"
+			g_IBM.Logger.AddMessage("FastFari level=[" . g_Heroes[33].ReadLevel() . "] Benched=[" . g_Heroes[33].Benched() . "]")
 		}
 		if(fastMelf)
 		{
@@ -861,7 +861,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			}
 			else ;fastMelf==1
 				melfLevelKey.KeyPress_Bulk()
-			g_IBM.Logger.AddMessage("FastMelf level=[" . g_Heroes[59].ReadLevel() . "] Benched=[" . g_Heroes[59].Benched() . "]"
+			g_IBM.Logger.AddMessage("FastMelf level=[" . g_Heroes[59].ReadLevel() . "] Benched=[" . g_Heroes[59].Benched() . "]")
 		}
 		timeOut:=1500 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf. Particularly relevant with Farideh added
         StartTime:=A_TickCount

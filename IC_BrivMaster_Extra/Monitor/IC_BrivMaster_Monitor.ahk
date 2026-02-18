@@ -98,7 +98,7 @@ if(g_Settings.Dark)
 }
 else
 {
-    Gui, Font, s9
+    Gui, Font, s9 cBlack
 }
 Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit2 0x200 vIBM_Monitor_Settings_Rows
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 w180 0x200, Runs to display (requires restart)

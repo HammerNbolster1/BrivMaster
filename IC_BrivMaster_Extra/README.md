@@ -265,6 +265,7 @@ Import/Export: As these settings are time consuming to enter (90 selections!) th
 | 12/11J | {BeR7QfAfg,MB0MY8gGg} |
 | 14J | {hSFIV5CEA,AAAMY9gGg} |
 | 14/9J | {t_Hvn___w,AAAIYxgGg} |
+| 14/9J No Melf Safe | {t_Hvn___w,973vex73g} |
 
 ### Briv Jumps
 The Briv jump value for each formation. The formations are described in more detail earlier in this document.

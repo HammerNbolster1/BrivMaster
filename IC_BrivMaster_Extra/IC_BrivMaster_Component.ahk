@@ -232,7 +232,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.IBM_Online_Farideh_Threshold["_DEFAULT"]:=90
-		settings.IBM_Online_Farideh_Delay_0["_DEFAULT"]:=0
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
@@ -320,14 +319,17 @@ Class IC_IriBrivMaster_Component
 		this.Stats.Total.Fast:=""
 		this.Stats.Total.Slow:=""
 		this.Stats.Total.TotalTime:=0
+		this.Stats.Active.ValidRuns:=0 ;Not actually needed for this
 		this.Stats.Active:={}
 		this.Stats.Active.Fast:=""
 		this.Stats.Active.Slow:=""
 		this.Stats.Active.TotalTime:=0
+		this.Stats.Active.ValidRuns:=0 ;Not every reported run will have active/reset times due to fails
 		this.Stats.Reset:={}
 		this.Stats.Reset.Fast:=""
 		this.Stats.Reset.Slow:=""
 		this.Stats.Reset.TotalTime:=0
+		this.Stats.Reset.ValidRuns:=0
 
 		this.Stats.FailTotalTime:=0 ;We could add the rest to this?
 
@@ -446,24 +448,31 @@ Class IC_IriBrivMaster_Component
 					this.Stats.LastRun:=LogData.ResetNumber
 
 					totalDuration:=LogData.End - LogData.Start
-					activeTime:=LogData.ResetReached - LogData.ActiveStart
-					loadTime:=LogData.ActiveStart - LogData.Start
-					resetTime:=LogData.End - LogData.ResetReached
-					waitTime:=loadTime+resetTime
 					this.StatsUpdateFastSlow(this.Stats.Total,totalDuration)
-					if LogData.HasKey("ResetReached") ;Failed runs may not have a reset value
+					if(LogData.HasKey("ResetReached") AND LogData.HasKey("ActiveStart")) ;Failed runs may not have a reset value
 					{
+						activeTime:=LogData.ResetReached - LogData.ActiveStart
+						loadTime:=LogData.ActiveStart - LogData.Start
+						resetTime:=LogData.End - LogData.ResetReached
+						waitTime:=loadTime+resetTime
 						this.StatsUpdateFastSlow(this.Stats.Active,activeTime)
 						this.StatsUpdateFastSlow(this.Stats.Reset,waitTime)
+						waitTime:=ROUND(waitTime/1000,2) ;Round for display, done here so we can have options for missing data
+						activeTime:=ROUND(activeTime/1000,2)
+					}
+					else
+					{
+						activeTime:="-"
+						waitTime:="-"
 					}
 					this.Stats.TotalRuns++
 					this.Stats.PreviousRunEndTime:=LogData.End
 					Gui, ICScriptHub:Default
 					Gui, ListView, IBM_Stats_Run_LV
 					GuiControl, -Redraw, IBM_Stats_Run_LV
-					LV_Modify(1,,"Total",ROUND(totalDuration/1000,2),ROUND((this.Stats.Total.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Total.Fast/1000,2),ROUND(this.Stats.Total.Slow/1000,2))
-					LV_Modify(2,,"Active",ROUND(activeTime/1000,2),ROUND((this.Stats.Active.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Active.Fast/1000,2),ROUND(this.Stats.Active.Slow/1000,2))
-					LV_Modify(3,,"Wait",ROUND(waitTime/1000,2),ROUND((this.Stats.Reset.TotalTime/this.Stats.TotalRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
+					LV_Modify(1,,"Total",ROUND(totalDuration/1000,2),ROUND((this.Stats.Total.TotalTime/this.Stats.Total.ValidRuns)/1000,2),ROUND(this.Stats.Total.Fast/1000,2),ROUND(this.Stats.Total.Slow/1000,2))
+					LV_Modify(2,,"Active",activeTime,ROUND((this.Stats.Active.TotalTime/this.Stats.Active.ValidRuns)/1000,2),ROUND(this.Stats.Active.Fast/1000,2),ROUND(this.Stats.Active.Slow/1000,2))
+					LV_Modify(3,,"Wait",waitTime,ROUND((this.Stats.Reset.TotalTime/this.Stats.Reset.ValidRuns)/1000,2),ROUND(this.Stats.Reset.Fast/1000,2),ROUND(this.Stats.Reset.Slow/1000,2))
 					LV_ModifyCol(2,"AutoHdr")
 					LV_ModifyCol(3,"AutoHdr")
 					LV_ModifyCol(4,"AutoHdr")
@@ -637,6 +646,7 @@ Class IC_IriBrivMaster_Component
 		if (!Stat.Fast OR statTime < Stat.Fast)
 			Stat.Fast:=statTime
 		Stat.TotalTime+=statTime
+		Stat.ValidRuns++
 	}
 
 	GameSettingsCheck(change:=false) ;Checks settings but does not change them

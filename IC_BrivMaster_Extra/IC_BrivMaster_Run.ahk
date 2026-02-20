@@ -486,7 +486,7 @@ class IC_BrivMaster_GemFarm_Class
             if(dtCurrentZoneTime < 40000) ;TODO: What purpose does this serve? To avoid interfering with the next check block?
                 this.CheckifStuck_lastCheck:=dtCurrentZoneTime
         }
-        if (dtCurrentZoneTime > 45000 AND this.CheckifStuck_fallBackTries < 3 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 15000) ; second check - Fall back to previous zone and try to continue
+        if (dtCurrentZoneTime>45000 AND this.CheckifStuck_fallBackTries < 3 AND dtCurrentZoneTime - this.CheckifStuck_lastCheck > 15000) ; second check - Fall back to previous zone and try to continue
         {
 			; reset memory values in case they missed an update.
             this.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open. At least align with .PID?
@@ -498,7 +498,7 @@ class IC_BrivMaster_GemFarm_Class
             this.CheckifStuck_lastCheck:=dtCurrentZoneTime
             this.CheckifStuck_fallBackTries++
         }
-        if (dtCurrentZoneTime > 65000)
+        if (dtCurrentZoneTime>65000)
         {
 			this.GameMaster.RestartAdventure("Game is stuck z[" . g_SF.Memory.ReadCurrentZone() . "]" )
             this.GameMaster.SafetyCheck()
@@ -514,10 +514,11 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				this.offramp:=false ;Reset offramp
+		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
 		this.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
-		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
+		
 	}
 
 	;START PRE-FLIGHT CHECK

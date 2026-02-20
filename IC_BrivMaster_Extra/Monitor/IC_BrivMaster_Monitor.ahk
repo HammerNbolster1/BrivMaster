@@ -98,7 +98,7 @@ if(g_Settings.Dark)
 }
 else
 {
-    Gui, Font, s9
+    Gui, Font, s9 cBlack
 }
 Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit2 0x200 vIBM_Monitor_Settings_Rows
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 w180 0x200, Runs to display (requires restart)
@@ -110,7 +110,7 @@ Gui, IBM_Monitor_Settings:Add, Edit, cBlack xm+0 h20 w45 Number Limit3 0x200 vIB
 Gui, IBM_Monitor_Settings:Add, Text, x+5 h20 0x200, Red alert level threshold (s)
 Gui, IBM_Monitor_Settings:Add, Checkbox, xm+0 h20 0x200 vIBM_Monitor_Settings_Dark, Dark mode (requires restart)
 Gui, IBM_Monitor_Settings:Add, Button, xm+90 w50 vIBM_Monitor_Settings_OK gIBM_Monitor_Settings_OK, OK
-Gui, IBM_Monitor:Show
+Gui, IBM_Monitor:Show, X0 Y0
 
 A64 := (A_PtrSize = 8 ? 4 : 0) ;Alignment for pointers in 64-bit environment
 cbSize := 4 + A64 + A_PtrSize + 4 + 4 + 4 + A64

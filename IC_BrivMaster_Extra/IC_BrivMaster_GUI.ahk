@@ -466,11 +466,8 @@ class IC_IriBrivMaster_GUI
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
 		Gui, ICScriptHub:Add, Text, xs+10 y+5 h18 0x200, % "Use Farideh's ultimate at:"
 		Gui, ICScriptHub:Add, Edit, +cBlack  w25 x+3 Number Limit3 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
-		Gui, ICScriptHub:Add, Text, x+3 h18 0x200, enemies, delay by:
+		Gui, ICScriptHub:Add, Text, x+3 h18 0x200, enemies
 		GUIFunctions.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
-		Gui, ICScriptHub:Add, Edit, +cBlack  w30 x+3 Number Limit4 vIBM_Online_Farideh_Delay_0 gIBM_Generic_Setting_Int
-		Gui, ICScriptHub:Add, Text, x+3 h18 0x200, ms with no Flames cards
-		GUIFunctions.AddToolTip("IBM_Online_Farideh_Delay_0","With no Flames cards (either because Ellywick isn't in W, or she has none in hand) this delay will be applied after the specified number of enemies is reached before Farideh's ultimate is used.`nUse to account for melee enemies taking much longer to reach Briv without the movement speed Flames provides. The value is game milliseconds, so an entry of 5000 would result in a 500ms real time delay at x10 speed. Set to 0 to disable")
 		;Offline Settings
 		Gui, ICScriptHub:Font, w700
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+11 w%groupWidth% h99, Offline Settings
@@ -667,7 +664,6 @@ class IC_IriBrivMaster_GUI
 		GuiControl, ICScriptHub:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
 		IBM_Online_Melf_Enable(g_IBM_Settings.IBM_Online_Use_Melf)
 		GuiControl, ICScriptHub:, IBM_Online_Farideh_Threshold, % g_IBM_Settings.IBM_Online_Farideh_Threshold
-		GuiControl, ICScriptHub:, IBM_Online_Farideh_Delay_0, % g_IBM_Settings.IBM_Online_Farideh_Delay_0
 		;Offline settings
 		GuiControl, ICScriptHub:, IBM_OffLine_Delay_Time, % g_IBM_Settings.IBM_OffLine_Delay_Time
 		GuiControl, ICScriptHub:, IBM_OffLine_Sleep_Time, % g_IBM_Settings.IBM_OffLine_Sleep_Time
@@ -1314,7 +1310,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 		useExe:=currentExe
 		hWnd:=WinExist("ahk_exe " . useExe)
 	}
-	if(hWnd) ;A game window exists
+	if(hWnd) ;A game window exists TODO: We need to make more effort to set up and check memory reads here
 	{
 		location:=IBM_Game_Copy_From_Game_Location_Helper(useExe) . "\" ;Trailing \ is removed
 		if (g_SF.Memory.ReadPlatform()==21) ;21 is the EGS platform code

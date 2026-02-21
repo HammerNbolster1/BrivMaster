@@ -319,7 +319,7 @@ Class IC_IriBrivMaster_Component
 		this.Stats.Total.Fast:=""
 		this.Stats.Total.Slow:=""
 		this.Stats.Total.TotalTime:=0
-		this.Stats.Active.ValidRuns:=0 ;Not actually needed for this
+		this.Stats.Total.ValidRuns:=0 ;Not actually needed for this
 		this.Stats.Active:={}
 		this.Stats.Active.Fast:=""
 		this.Stats.Active.Slow:=""

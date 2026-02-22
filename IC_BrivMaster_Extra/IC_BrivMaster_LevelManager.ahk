@@ -2,10 +2,10 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 {
 	__New() ;This processes all the formations so it is only done once. As a result to change a target level the script would have to be restarted
 	{
-		levelingDone:={} ;Records if levelling type is completely done, so we don't go through all the checks when we're already done for the run, key by formation, then for z1,min,max, eg levelingDone["Q","min"]==true
-		savedFormations:={} ;Formations as per standard memory reads
-		savedFormationChamps:={} ;Champions in each formation, eg savedFormationChamps["E",58]==true -> Briv is in E
-		currentWorkList:="" ;Current IC_BrivMaster_LevelManager_WorkList_Class object
+		this.levelingDone:={} ;Records if levelling type is completely done, so we don't go through all the checks when we're already done for the run, key by formation, then for z1,min,max, eg levelingDone["Q","min"]==true
+		this.savedFormations:={} ;Formations as per standard memory reads
+		this.savedFormationChamps:={} ;Champions in each formation, eg savedFormationChamps["E",58]==true -> Briv is in E
+		this.currentWorkList:="" ;Current IC_BrivMaster_LevelManager_WorkList_Class object
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(1),"Q")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(3),"E")

@@ -332,7 +332,8 @@ class IC_BrivMaster_GemFarm_Class
 				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
-					this.routeMaster.SetFormationHighZone() ;Special version for use here on the immediate exit
+					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
+					this.RouteMaster.WaitForTransition()
 					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
 						this.EllywickCasino.UnlockHeroes()
 				}

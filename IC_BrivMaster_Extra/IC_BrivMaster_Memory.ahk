@@ -188,13 +188,13 @@ class IC_BrivMaster_MemoryFunctions_Class
 
     ReadUserID()
 	{
-        ; return this.GameManager.game.gameUser.ID.Read() ; alternative, not in imports currently
+        ; return this.GameManager.game.gameUser.ID.Read() ;Alternative, not in imports currently
         return this.GameSettings.UserID.Read()
     }
 
     ReadUserHash()
 	{
-        ; return this.GameManager.game.gameUser.Hash.Read() ; Alternative, not in imports currently
+        ; return this.GameManager.game.gameUser.Hash.Read() ;Alternative, not in imports currently
         return this.GameSettings.Hash.Read()
     }
 
@@ -670,7 +670,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 		return true
     }
 
-	IBM_IsCurrentFormationFull()
+	IsCurrentFormationFull()
     {
         size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
 		loop %size%

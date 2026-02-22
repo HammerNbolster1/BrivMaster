@@ -147,7 +147,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 				retryCount++ ;Counting this as 1/10th of a retry to avoid having to have some duplicate timeout in case the queued attack gets stuck forever
 				if (exitOnceQueued)
 					return retryCount
-				g_IBM.IBM_Sleep(15)
+				g_IBM.IBM_Sleep(10)
 			}
 			else
 			{
@@ -520,7 +520,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 			this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart
 	}
 
-	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate
+	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate. Used to detect when the ultimate ends, as the previous card state remains whilst it is in progress
 	{
 		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
 		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
@@ -568,7 +568,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		return this.GetNumCardsOfType(5)
 	}
 
-	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup
+	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup TODO: Might be possible to remove this once the non-timer Casino is implemented, but keep the non-farm tool in mind
 	{
 		if(this.EFFECT_HANDLER_CARDS=="")
 		{

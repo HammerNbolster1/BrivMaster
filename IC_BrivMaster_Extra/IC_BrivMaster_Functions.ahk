@@ -1,5 +1,174 @@
 ;This file is intended for functions used in the gem farm script, but not the hub
 
+class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, without the use of a timer
+{
+	static TIMEOUT_BASE:=100000  ;Allow 10s at x10 speed, 8s at x12.5
+	
+	__New(combining)
+	{
+		if(combining)
+		{
+			this.ghostLevelling:=g_IBM_Settings["IBM_Level_Options_Ghost"] ;Ghost levelling applies only to combining, where Briv is present for all of the Casino
+			this.levelFormation:="min"
+		}
+		else
+		{
+			this.ghostLevelling:=false
+			this.levelFormation:="z1"
+		}
+		this.Reset()
+	}
+
+	Reset()
+	{
+		this.Complete:=false
+		this.Redraws:=0
+		this.UsedUlt:=false ;This assumes Reset() will only be called after an adventure reset
+		this.MaxRedraws:=g_IBM_Settings["IBM_Casino_Redraws_Base"] ;Maximum redraws allowed (1, or 2 with DM)
+		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"] ;Target gem cards
+		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"] ;Minimum cards before exiting, used to try and avoid saving with a partial hand when hitting a boss shortly after the Casino
+		this.lockedFrontColumnChamps:={}
+	}
+
+	Casino(lockedFrontColumnChamps) ;lockedFrontColumnChamps are a list of champions from the front row whose levelling has been locked (set to 0)
+	{
+		this.lockedFrontColumnChamps:=lockedFrontColumnChamps ;Store in the object so external .UnlockHeroes() calls don't need to re-pass
+		frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()==0 ;If there are no locked champions there's no need to check for unlocking them
+		if (!g_Heroes[83].ReadBenched()) ;TODO: Could possibly check level as well?
+        {
+			ghostLevellingAllowed:=!this.ghostLevelling ;TODO: Fix these variable names...
+			MEMORY_MELEE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached)
+			MEMORY_MELEE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.ValueType
+			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
+			MEMORY_RANGE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
+			g_Heroes[83].InitDoMTHandler() ;TODO: We should perhaps check if this actually worked?
+			timeout:=IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/g_SF.Memory.IBM_ReadBaseGameSpeed()
+            ElapsedTime:=0
+            StartTime:=A_TickCount
+			while (ElapsedTime<timeout)
+            {
+				;Start Casino card logic
+				if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone()=="") ;Abort the loop if we hit a reset or the memory reads fail
+					break
+				if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
+					this.UsedUlt:=false
+				if (this.ShouldDrawMoreCards())
+				{
+					if (this.MaxRedraws-this.Redraws > 0) ;Use ultimate if it's not on cooldown and there are redraws left
+					{
+						 if (!this.UsedUlt AND this.ShouldRedraw())
+							this.UseEllywickUlt()
+					}
+					else if (this.MinCards==0 OR (!this.UsedUlt AND g_Heroes[83].ReadNumCards()>=this.MinCards)) ;If we want to release at a certain number of cards we need to wait for the ult to resolve to be able to count correctly
+						break
+				}
+				else
+					break
+				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
+				g_IBM.levelManager.LevelWorklist()
+				g_IBM.levelManager.LevelClickDamage()
+				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
+				{
+					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>1 OR _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>4) ;TODO: Investigate these thresholds
+					{
+						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
+						frontColumnLevellingAllowed:=True
+					}
+				}
+				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or doesn't care about the front row), or the formation is full so we can level away
+				{
+					g_IBM.levelManager.LevelFormation("A",this.levelFormation)
+					ghostLevellingAllowed:=true
+				}
+				g_IBM.IBM_Sleep(10)
+				ElapsedTime:=A_TickCount-StartTime
+            }
+			ElapsedTime:=A_TickCount-StartTime ;As we will break out of the loop normally
+			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
+			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
+		}
+		else
+		{
+			g_IBM.Logger.AddMessage("No Elly{z" . g_SF.Memory.ReadCurrentZone() . "}")
+			return !frontColumnLevellingAllowed
+		}
+	}
+	
+	UnlockHeroes(levelFormation:="") ;Separated as this must be called either during the Casino, or if Elly is MIA. TODO: Store lockedFrontColumnChamps in the object so the follow-up calls don't have to re-pass? Reset in, well, Reset()
+	{
+		if (this.lockedFrontColumnChamps.Count()>0)
+		{
+			for _,v in this.lockedFrontColumnChamps
+			{
+				g_IBM.LevelManager.ResetLevelByID(v)
+			}
+			if (levelFormation)
+				g_IBM.LevelManager.LevelFormation("M",levelFormation) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
+		}
+	}
+	
+	ShouldDrawMoreCards()
+	{
+		if (g_Heroes[83].ReadNumCards()<this.MinCards)
+			return true
+		return g_Heroes[83].GetNumGemCards() < this.GemCardsNeeded
+	}
+	
+	ShouldRedraw()
+	{
+		numCards:=g_Heroes[83].ReadNumCards()
+		if (numCards==5)
+			return true
+		else if (numCards==0)
+			return false
+		return (5-numCards) < (this.GemCardsNeeded - g_Heroes[83].GetNumGemCards())
+	}
+	
+	UseEllywickUlt()
+	{
+		if (g_SF.Memory.ReadTransitioning()) ;Do not try using the ults during a transition - possible source of Weird Stuff
+			return
+		if (g_Heroes[83].CanUseUltimate())
+		{
+			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
+			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
+			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
+			{
+				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				this.UsedUlt:=false
+			}
+			else
+			{
+				this.Redraws++
+				this.UseDMUlt()
+			}
+		}
+		else
+		{
+			if (g_Heroes[99].CanUseUltimate()) ;Somehow Elly's ult isn't ready by DM's is - try using it
+				this.UseDMUlt(0) ;No timeout since Elly's ult is not in progress (this.UsedUlt is false) and has not just been attempted
+			else ;Lower max re-rolls so we move on; this Casino is busted
+			{
+				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				this.MaxRedraws:=this.Redraws 
+			}
+		}
+	}
+
+	UseDMUlt(sleepTime:=30) ;30ms default sleep is for use after Elly's ult triggers, to let the game process it
+	{
+		if (g_Heroes[99].CanUseUltimate())
+		{
+			g_IBM.IBM_Sleep(sleepTime)
+			retryCount:=g_Heroes[99].UseUltimate(50)
+			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
+			{
+				g_IBM.Logger.AddMessage("Casino DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+			}
+		}
+	}
+}
+
 class IC_BrivMaster_Logger_Class ;A class for recording run logs
 {
 	__New(logDir)

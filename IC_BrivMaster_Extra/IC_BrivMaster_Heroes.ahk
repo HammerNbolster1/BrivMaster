@@ -216,6 +216,14 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 	;---General functions
 	;------------------------------------------------------------------------------------
 
+	CanUseUltimate() ;True if the champions is fielded and their ultimate is off cooldown
+	{
+		ultCD:=this.ReadUltimateCooldown()
+		if(ultCD)
+			return ultCD<=0 AND !this.ReadBenched()
+		return false
+	}
+
 	;------------------------------------------------------------------------------------
 	;---Levelling functions
 	;------------------------------------------------------------------------------------

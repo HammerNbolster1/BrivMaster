@@ -547,6 +547,12 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		}
 		return numCards
 	}
+	
+	ReadNumCards()
+	{
+		size:=this.EFFECT_HANDLER_CARDS.cardsInHand.size.Read()
+		return size=="" ? 0 : size
+	}
 
 	;------------------------------------------------------------------------------------
 	;---General functions

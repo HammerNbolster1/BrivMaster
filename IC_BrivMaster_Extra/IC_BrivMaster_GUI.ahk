@@ -452,7 +452,7 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Offline:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking will be performed on or after this zone during normal operation. When flames-based stacking is enabled this will be used for 0 flames cards")
+		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
 		Gui, ICScriptHub:Add, Text, x+10 h18 0x200, Min recovery stack zone:
 		Gui, ICScriptHub:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")

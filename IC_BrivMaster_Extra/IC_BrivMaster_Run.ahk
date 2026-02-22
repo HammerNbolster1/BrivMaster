@@ -105,7 +105,7 @@ class IC_BrivMaster_GemFarm_Class
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
 		this.offRamp:=false ;Limit the code that runs at the end of a run
-		this.EllywickCasino:=New IC_BrivMaster_EllywickDealer_Class()
+		this.EllywickCasino:=New IC_BrivMaster_EllywickCasino_Class(this.RouteMaster.combining)
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
@@ -124,7 +124,7 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.TriggerStart:=true
 					this.Logger.AddMessage("Missed Reset: Core reset count=[" . g_SF.Memory.ReadResetsCount() . "] lastResetCount=[" . lastResetCount . "]")
-				}		
+				}
 				else if (lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party. More thoughts: We should check the memory read is not >0 here, as this has the potential to intercept normal reset 0 to reset 1 progression? Possibly the modron reset code should reset the offramp (or possibly the offramp should just go...)
 				{
 					this.TriggerStart:=true
@@ -172,7 +172,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
 				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
 					Continue ;Go straight back to the start of the loop
-				this.routeMaster.SetFormation(true)
+				this.routeMaster.SetFormation(true) ;This is the only call that uses fastCheck, as it should be whilst just cruising along
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
 				{
@@ -199,12 +199,11 @@ class IC_BrivMaster_GemFarm_Class
 					if (!this.offRamp) ;Only until we're nearly at the end of the run
 					{
 						;Check for offRamp
-						if (!needToStack and (this.currentZone >= this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
+						if (!needToStack and (this.currentZone>=this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
 						{
 							If(this.routeMaster.EnoughHasteForCurrentRun())
 							{
 								this.offRamp:=True
-								this.EllywickCasino.Stop() ;Stop the Casino, to avoid it running as the next run starts
 								g_SharedData.UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
 							}
 						}
@@ -325,18 +324,18 @@ class IC_BrivMaster_GemFarm_Class
 				if (g_Heroes[139].inM)
 					g_SF.DoRushWait(true)
 				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
-				this.EllywickCasino.Start() ;Start the Elly handler before rushwaiting, using the post-rush Melf status
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-				unlockRequired:=this.IBM_EllywickCasino(frontColumn,"min",g_IBM_Settings["IBM_Level_Options_Ghost"])
+				unlockRequired:=this.EllywickCasino.Casino(frontColumn)
 				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
-					this.routeMaster.SetFormationHighZone() ;Special version for use here on the immediate exit
+					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
+					this.RouteMaster.WaitForTransition()
 					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.IBM_EllywickCasino_UnlockChamps(frontColumn)
+						this.EllywickCasino.UnlockHeroes()
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -349,7 +348,7 @@ class IC_BrivMaster_GemFarm_Class
 					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 					this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
 					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.IBM_EllywickCasino_UnlockChamps(frontColumn)
+						this.EllywickCasino.UnlockHeroes()
 				}
 				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
 			}
@@ -386,11 +385,10 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-				this.EllywickCasino.Start() ;Start the Elly handler
-				if(this.IBM_EllywickCasino(frontColumn,"z1")) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
-					this.IBM_EllywickCasino_UnlockChamps(frontColumn)
+				if(this.EllywickCasino.Casino(frontColumn)) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
+					this.EllywickCasino.UnlockHeroes()
 				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
-				while(quest > 0)
+				while(quest>0)
 				{
 					this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
 					this.IBM_Sleep(15)
@@ -415,64 +413,6 @@ class IC_BrivMaster_GemFarm_Class
 		}
 		else ;Not z1
 			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
-	}
-
-	IBM_EllywickCasino(lockedFrontColumnChamps,formationToLevelPostUnlock,allowGhostLevelling:=false) ;lockedFrontColumnChamps is a list of champions who have had levelling suppressed, who will be levelled once conditions in the Casino or met (or if we bypass due to no Elly)
-    {
-        if (!g_Heroes[83].ReadBenched())
-        {
-			frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()>0 ? false : true ;If there are no locked champions there's no need to check for unlocking them
-			ghostLevellingAllowed:=!allowGhostLevelling
-			timeout := 60000 ;Casino takes ~5s max at x10, so this is reasonable but might be worth scaling with game speed
-            ElapsedTime := 0
-            StartTime := A_TickCount
-			while (!this.EllywickCasino.Complete AND ElapsedTime < timeout)
-            {
-				this.levelManager.LevelWorklist()
-				this.levelManager.LevelClickDamage()
-				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
-				{
-					if (this.IBM_EllywickCasino_UnderAttackCheck())
-					{
-						this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps,formationToLevelPostUnlock)
-						frontColumnLevellingAllowed:=True
-					}
-				}
-				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IBM_IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or doesn't care about the front row), or the formation is full so we can level away
-				{
-					this.levelManager.LevelFormation("A",formationToLevelPostUnlock)
-					ghostLevellingAllowed:=true
-				}
-				this.IBM_Sleep(15)
-				ElapsedTime:=A_TickCount - StartTime
-            }
-			this.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.EllywickCasino.Redraws . " M=" . this.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . (this.EllywickCasino.StatusString ? " " . this.EllywickCasino.StatusString : "") . "}")
-			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
-		}
-		else
-		{
-			this.IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps,formationToLevelPostUnlock)
-			this.Logger.AddMessage("No Elly{z" . g_SF.Memory.ReadCurrentZone() . "}")
-		}
-    }
-
-	IBM_EllywickCasino_UnderAttackCheck()
-	{
-		melee:=g_SF.Memory.ReadNumAttackingMonstersReached()
-		return (melee>1) OR (melee + g_SF.Memory.ReadNumRangedAttackingMonsters() > 5) ;TODO: The numbers needs to be a setting
-	}
-
-	IBM_EllywickCasino_UnlockChamps(lockedFrontColumnChamps,formationToLevelPostUnlock:="") ;Separated as this must be called either during the Casino, or if Elly is MIA
-	{
-		if (lockedFrontColumnChamps.Count()>0)
-		{
-			for _,v in lockedFrontColumnChamps
-			{
-				this.levelManager.ResetLevelByID(v)
-			}
-			if (formationToLevelPostUnlock)
-				this.levelManager.LevelFormation("M",formationToLevelPostUnlock) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
-		}
 	}
 
     CheckifStuck() ;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
@@ -509,7 +449,7 @@ class IC_BrivMaster_GemFarm_Class
         }
         return false
     }
-	
+
 	RollBackAction(returnZone) ;Actions to take once a rollback is detected, separate function as needed for normal re-opens and for restarts
 	{
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
@@ -518,7 +458,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
-		
+
 	}
 
 	;START PRE-FLIGHT CHECK

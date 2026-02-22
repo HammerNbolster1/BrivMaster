@@ -1091,7 +1091,7 @@ Class IC_IriBrivMaster_Component
 			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Unable to read hero details")
 			return
 		}
-		this.Elly_NonGemFarm:=New IC_BrivMaster_EllywickDealer_NonFarm_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
+		this.Elly_NonGemFarm:=New IC_BrivMaster_EllywickDealer_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
         this.Elly_NonGemFarm.Start()
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Started")
     }
@@ -1708,4 +1708,118 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 			this.AddMessage("Open","Opened " . numChests " Gold in " . serverCallTime . "ms")
 		}
     }
+}
+
+class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outside of gem farms
+{
+    __New(minCards,maxCards)
+	{
+		this.CasinoTimer := ObjBindMethod(this, "Casino")
+		this.Redraws:=0
+		this.UsedUlt:=false ;Tracks Elly's ult being in progress, as her cards are only cleared when it ENDS, despite the visual
+		this.minCards:=minCards ;These are arrays indexed by card type, so 1 is Knight, 2 Moon, 3 Gem, 4 Fates, 5 Flames
+		this.maxCards:=maxCards
+		g_Heroes[83].Reset() ;Reset Elly to clear any previous handlers. This will also create the hero object if necessary
+		g_Heroes[99].Reset() ;And DM
+	}
+	
+	Start()
+	{
+		timerFunction:=this.CasinoTimer
+		SetTimer, %timerFunction%, 100, 0
+		g_Heroes[83].InitDoMTHandler() ;.Reset() is called by the constructor, and we create a new object every run (for some reason)
+		this.Casino()
+	}
+
+	Stop()
+	{
+		timerFunction:=this.CasinoTimer
+		SetTimer, %timerFunction%, Off
+	}
+
+	Casino()
+	{
+		if (g_Heroes[83].EFFECT_HANDLER_CARDS=="") ;Check the effect handler has been set up
+		{
+			g_Heroes[83].InitDoMTHandler()
+			return ;Re-check on next timer tick
+		}
+		if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone() == "" OR this.GetNumCards() == "")
+			return
+		if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
+			this.UsedUlt:=false
+		remaining:=this.GetRemainingCardsToDraw()
+		withinMax:=this.CheckWithinMax()
+		if (remaining==0 AND g_Heroes[83].ReadNumCards()==5 AND withinMax) ;We're done
+		{
+			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Complete after " . this.Redraws . " redraws")
+			this.Stop()
+		}
+		else if ((5-g_Heroes[83].ReadNumCards()) < remaining or !withinMax) ;Need to re-roll
+		{
+			if (this.CanUseEllyWickUlt() AND !this.UsedUlt)
+			{
+				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using Ellywick's ultimate")
+				this.UseEllywickUlt()
+			}
+			else if (this.CanUseDMUlt())
+			{
+				this.UseDMUlt()
+				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using DM's ultimate")
+			}
+			else
+				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Waiting for ultimate")
+		}
+		else
+			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Drawing Cards")
+	}
+	
+	GetRemainingCardsToDraw() ;Check the minimums to determine if we need to draw more
+	{
+		num:=0
+		for cardType, numCards in this.minCards
+		   num+=Max(0, numCards - g_Heroes[83].GetNumCardsOfType(cardType))
+		return num
+	}
+
+	CheckWithinMax() ;Check the maximums have not been exceeded, this is a pass/fail
+	{
+		for cardType, maxCards in this.maxCards
+		{
+			if (g_Heroes[83].GetNumCardsOfType(cardType) > maxCards)
+				return false
+		}
+		return true
+	}
+
+	UseEllywickUlt()
+	{
+		if (g_SF.Memory.ReadTransitioning()) ;Do not try using the ults during a transition - possible source of Weird Stuff
+			return
+		if (g_Heroes[83].CanUseUltimate())
+		{
+			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
+			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
+			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
+			{
+				this.UsedUlt:=false
+			}
+			else
+			{
+				this.Redraws++
+				this.UseDMUlt()
+			}
+		}
+		else if (g_Heroes[99].CanUseUltimate())
+			this.UseDMUlt(0) ;No timeout since Elly's ult is not in progress (this.UsedUlt is false) and has not just been attempted
+	}
+
+	UseDMUlt(sleepTime:=30) ;30ms default sleep is for use after Elly's ult triggers, to let the game process it
+	{
+		if (g_Heroes[99].CanUseUltimate())
+		{
+			g_IBM.IBM_Sleep(sleepTime)
+			g_Heroes[99].UseUltimate(50)
+		}
+	}
 }

@@ -2,14 +2,14 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 {
 	__New() ;This processes all the formations so it is only done once. As a result to change a target level the script would have to be restarted
 	{
-		levelingDone:={} ;Records if levelling type is completely done, so we don't go through all the checks when we're already done for the run, key by formation, then for z1,min,max, eg levelingDone["Q","min"]==true
-		savedFormations:={} ;Formations as per standard memory reads
-		savedFormationChamps:={} ;Champions in each formation, eg savedFormationChamps["E",58]==true -> Briv is in E
-		currentWorkList:="" ;Current IC_BrivMaster_LevelManager_WorkList_Class object
+		this.levelingDone:={} ;Records if levelling type is completely done, so we don't go through all the checks when we're already done for the run, key by formation, then for z1,min,max, eg levelingDone["Q","min"]==true
+		this.savedFormations:={} ;Formations as per standard memory reads
+		this.savedFormationChamps:={} ;Champions in each formation, eg savedFormationChamps["E",58]==true -> Briv is in E
+		this.currentWorkList:="" ;Current IC_BrivMaster_LevelManager_WorkList_Class object
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(1),"Q")
-		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(3),"E")
 		this.ExtractFormation(g_SF.Memory.GetActiveModronFormationSaveSlot(),"M")
+		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W") ;Must be last to allow W-only champions to be identified easily
 		this.ProcessFormation(g_IBM_Settings.IBM_LevelManager_Levels)
 		this.ResetLevellingDone()
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
@@ -106,7 +106,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
     {
         this.savedFormations[index]:={}
 		this.savedFormationChamps[index]:={}
-        size := g_SF.Memory.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation.size.Read()
+        size:=g_SF.Memory.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation.size.Read()
         if(size <= 0 OR size > 500) ; sanity check, should be less than 51 as of 2023-09-03
             return ""
         loop, %size%
@@ -116,6 +116,8 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			if (champID != -1)
             {
                 this.savedFormationChamps[index,champID]:=true
+				if(index=="W" AND !this.savedFormationChamps["A"].HasKey(champID)) ;For W, if the champion is not yet read in they are unique to W, which we want to check for fast placement with only stackinging
+					this.savedFormationChamps["XW",champID]:=true ;eXclusive W
 				this.savedFormationChamps["A",champID]:=true ;"A" is a meta-list of all champions in use
             }
         }

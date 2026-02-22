@@ -188,13 +188,13 @@ class IC_BrivMaster_MemoryFunctions_Class
 
     ReadUserID()
 	{
-        ; return this.GameManager.game.gameUser.ID.Read() ; alternative, not in imports currently
+        ; return this.GameManager.game.gameUser.ID.Read() ;Alternative, not in imports currently
         return this.GameSettings.UserID.Read()
     }
 
     ReadUserHash()
 	{
-        ; return this.GameManager.game.gameUser.Hash.Read() ; Alternative, not in imports currently
+        ; return this.GameManager.game.gameUser.Hash.Read() ;Alternative, not in imports currently
         return this.GameSettings.Hash.Read()
     }
 
@@ -670,7 +670,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 		return true
     }
 
-	IBM_IsCurrentFormationFull()
+	IsCurrentFormationFull()
     {
         size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
 		loop %size%
@@ -756,5 +756,10 @@ class IC_BrivMaster_MemoryFunctions_Class
 	IBM_GetActiveGameInstanceID() ;This is the instance ID 1 to 4, NOT the ID if the instance in the gameInstances collection
 	{
 		return this.GameManager.game.gameInstances[0].InstanceUserData_k__BackingField.InstanceId.Read()
+	}
+	
+	ResolvePointers(GOS) ;Takes a GameObjectStructure objects and uses the memory manager to extra the address
+	{
+		return _MemoryManager.instance.getAddressFromOffsets(GOS.BasePtr.BaseAddress,GOS.FullOffsets*)
 	}
 }

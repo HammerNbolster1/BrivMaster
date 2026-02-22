@@ -1,4 +1,4 @@
-;This file is intended for functions used across both the gem farm script and the hub. Currently meeting that goal is a WiP
+;This file is intended for classes used across both the gem farm script and the hub. Currently meeting that goal is a WiP
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_KeyHelper.ahk ;Used for IC_BrivMaster_InputManager_Class
 

@@ -662,7 +662,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/g_IBM.CounterFrequency,0) . "ms")
 		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " F=" . flames . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ROUND(ElapsedTime/g_IBM.CounterFrequency,0)) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone?
 		if (!runComplete)
-			this.SetFormation() ;Standard call to reset trustRecent TODO: Should this be SetFormationHighZone()? In which case we might need to reset trustRecent in SetFormation() somehow
+		{
+			this.SetFormation(,true) ;Use the high zone, as the current zone is complete
+			this.WaitForTransition() ;Wait for the zone transition so that a normal SetFormation() doesn't overwrite the highzone call TODO: Can we just wait for the jump-off part?
+		}
     }
 
 	OnlineStackFarmSetup(fastLevelList,expectFari,timeOut:=1000) ;TODO: Pass a scaled timeout from StackNormal()?

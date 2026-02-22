@@ -252,7 +252,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				{
 					g_Heroes[139].rushNext:=FLOOR(currentCharges + (zonesRemaining/5)) ;Number of charges she will have. Note the floor is required as this will be used as an array index and must be an INT as a result. The // operator returns a float because AHK is dumb. TODO: Like most the Thellora code, should read the feat
 				}
-				if (g_SF.Memory.ReadHighestZone() >= this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
+				if (g_SF.Memory.ReadHighestZone()>=this.thelloraTarget) ;If we've calculated post-Thellora, don't do so again - whilst technically we could reduce jumps by drifting that is not something we plan to do!
 					this.leftoverCalculated:=true
 			}
 			else
@@ -351,7 +351,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayData.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
 		{
-			restartZone:=g_IBM_Settings[ "IBM_Offline_Stack_Zone"] ;Default
+			restartZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
 			if (currentZone > restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
 			{
 				this.BlankRestart()
@@ -359,7 +359,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
 				relayZone:=this.RelayData.GetRelayZone(restartZone,this)
-				if (currentZone > relayZone) ;If beyond the relay threshold TODO: If we need to stack this has to wait. Maybe it could be set to go 500 zones before the expected stack zone if that many are available?
+				if (currentZone>relayZone) ;If beyond the relay threshold TODO: If we need to stack this has to wait. Maybe it could be set to go 500 zones before the expected stack zone if that many are available?
 				{
 					this.RelayData.Start()
 				}
@@ -668,7 +668,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
     }
 
-	OnlineStackFarmSetup(fastLevelList,expectFari,timeOut:=1000) ;TODO: Pass a scaled timeout from StackNormal()?
+	OnlineStackFarmSetup(fastLevelList,expectFari,timeOut:=1000)
     {
         MEMORY_QUEST_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.QuestRemaining)
 		MEMORY_QUEST_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.QuestRemaining.ValueType
@@ -937,12 +937,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		return formation
 	}
 
-	;Override to use Sleep
 	WaitForTransition(KEY:="", maxLoopTime:=5000) ;KEY is a IC_BrivMaster_InputManager_Key_Class object
     {
         if !g_SF.Memory.ReadTransitioning()
             return
-        StartTime := A_TickCount
+        StartTime:=A_TickCount
         g_SharedData.UpdateOutbound("LoopString","Waiting for transition...")
         if (KEY)
 			g_InputManager.gameFocus() ;Set focus once and use _Bulk()
@@ -955,7 +954,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return
     }
 
-	FallBackFromBossZone(KEY:="", maxLoopTime := 5000 )
+	FallBackFromBossZone(KEY:="", maxLoopTime:=5000)
     {
         fellBack:=false
         currentZone := g_SF.Memory.ReadCurrentZone()

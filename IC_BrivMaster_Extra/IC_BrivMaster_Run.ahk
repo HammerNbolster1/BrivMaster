@@ -172,7 +172,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
 				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
 					Continue ;Go straight back to the start of the loop
-				this.routeMaster.SetFormation(true)
+				this.routeMaster.SetFormation(true) ;This is the only call that uses fastCheck, as it should be whilst just cruising along
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (!this.offRamp) ;Only do the below until near the end
 				{

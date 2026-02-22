@@ -1727,7 +1727,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 	{
 		timerFunction:=this.CasinoTimer
 		SetTimer, %timerFunction%, 100, 0
-		g_Heroes[83].SetupDotMHandlerIfNeeded() ;.Reset() is called by the constructor, and we create a new object every run (for some reason)
+		g_Heroes[83].InitDoMTHandler() ;.Reset() is called by the constructor, and we create a new object every run (for some reason)
 		this.Casino()
 	}
 
@@ -1739,8 +1739,11 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 
 	Casino()
 	{
-		if (g_Heroes[83].SetupDotMHandlerIfNeeded()) ;Check the effect handler has been set up
+		if (g_Heroes[83].EFFECT_HANDLER_CARDS=="") ;Check the effect handler has been set up
+		{
+			g_Heroes[83].InitDoMTHandler()
 			return ;Re-check on next timer tick
+		}
 		if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone() == "" OR this.GetNumCards() == "")
 			return
 		if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate

@@ -567,14 +567,4 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	{
 		return this.GetNumCardsOfType(5)
 	}
-
-	SetupDotMHandlerIfNeeded() ;Returns true if the Handler needed setup TODO: Might be possible to remove this once the non-timer Casino is implemented, but keep the non-farm tool in mind
-	{
-		if(this.EFFECT_HANDLER_CARDS=="")
-		{
-			this.InitDoMTHandler()
-			return true
-		}
-		return false
-	}
 }

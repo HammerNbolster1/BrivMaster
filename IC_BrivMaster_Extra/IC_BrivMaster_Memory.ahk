@@ -757,4 +757,9 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
 		return this.GameManager.game.gameInstances[0].InstanceUserData_k__BackingField.InstanceId.Read()
 	}
+	
+	ResolvePointers(GOS) ;Takes a GameObjectStructure objects and uses the memory manager to extra the address
+	{
+		return _MemoryManager.instance.getAddressFromOffsets(GOS.BasePtr.BaseAddress,GOS.FullOffsets*)
+	}
 }

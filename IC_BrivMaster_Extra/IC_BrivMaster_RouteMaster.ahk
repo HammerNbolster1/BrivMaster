@@ -472,26 +472,33 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.SetFormation() ;Ensure the correct formation is set for the zone before we stop progress and try to stack
 		DllCall("QueryPerformanceCounter", "Int64*", startTime) ;Start counting time from the point we go to stop autoprogress - SetFormation() is a normal part of zone completion
 		this.ToggleAutoProgress(0, false, true)
-        if (g_Heroes[59].inW AND g_Heroes[59].NeedsLevelling()) ;If we're levelling Melf in the stack zone (e.g. due to using Baldric), we need to do his initial levelup as fast as possible after the formation swap to try and stop it failing TODO: Having Melf hard-coded like this is cludgy but I don't see a way around it...
-		{
-			if (g_Heroes[59].GetLevelsRequired() < 100)
-				fastMelf:=2 ;Modifier press
-			else
-				fastMelf:=1 ;Normal press
-		}
-		else
-			fastMelf:=0
-		if (g_Heroes[33].inW AND g_Heroes[33].NeedsLevelling()) ;Same mess but for Fari :( TODO: This NEEDs some kind of general solution now there's 2 champions involved. 1 tap each unlevelled champion in W - make an array of key objects each for x100 and <x100? Should this list be generated once at script start, on the assumption that champions in other formations will be levelled? Probably?
-		{
-			if (g_Heroes[33].GetLevelsRequired() < 100)
-				fastFari:=2 ;Modifier press
-			else
-				fastFari:=1 ;Normal press
-		}
-		else
-			fastFari:=0
-		flames:=g_Heroes[83].inW ? g_Heroes[83].GetNumFlamesCards() : 0 ;Only check Elly's cards if present in W
 		currentZone:=g_SF.Memory.ReadCurrentZone()
+	    if(this.useFaridehUlt)
+		{
+			if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Avoid levelling Farideh in recovery - as a decent DPS she massively increases the stack zone, forcing us to walk much further
+			{
+				g_IBM.LevelManager.OverrideLevelByIDLowerToMax(33, "min", 0)
+				activateFariUlt:=false
+			}
+			else
+			{
+				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
+				activateFariUlt:=true
+			}
+		}
+		fastLevelList:={} ;Champions to be levelled at the start of the formation swap to W
+		for heroID,_ in g_IBM.LevelManager.savedFormationChamps["XW"] ;eXclusive W
+		{
+			if(g_Heroes[heroID].NeedsLevelling())
+			{
+				if (g_Heroes[heroID].GetLevelsRequired() < 100)
+					g_Heroes[heroID].Current.UseModifierForFast:=true ;Modifier press TODO: If this works out, encapsulate it better?
+				else
+					g_Heroes[heroID].Current.UseModifierForFast:=false ;Normal press
+				fastLevelList.Push(g_Heroes[heroID])
+			}
+		}
+		flames:=g_Heroes[83].inW ? g_Heroes[83].GetNumFlamesCards() : 0 ;Only check Elly's cards if present in W
 		gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
 		if(this.useFaridehUlt)
 		{
@@ -506,8 +513,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				activateFariUlt:=true
 			}
 		}
-		this.WaitForZoneCompleted() ;Complete the current zone
-		this.OnlineStackFarmSetup(fastMelf,g_Heroes[59].Key,fastFari,g_Heroes[33].Key,activateFariUlt)
+		this.OnlineStackFarmSetup(fastLevelList,activateFariUlt,10000/gameSpeed) ;Allow 1000ms at x10 for each state, 800ms at x12.5
         ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Stack Normal")
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
@@ -646,7 +652,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         runComplete:=g_SF.Memory.ReadHighestZone()>=this.targetZone ;If we'll jump from stack zone straight to reset zone things get a bit weird as the game behaves differently transitioning to the reset zone
 		if (!runComplete)
 		{
-			if (g_SF.Memory.ReadQuestRemaining()>0) ;Irisiri - we can't use a WaitForZoneCompleted() return here in case the zone moved forward during the above checks. Progress SHOULD be stopped but...
+			if (g_SF.Memory.ReadQuestRemaining()>0)
 				this.FallBackFromZone()
 			else
 				this.ToggleAutoProgress(1, false, true)
@@ -656,20 +662,70 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/g_IBM.CounterFrequency,0) . "ms")
 		g_IBM.Logger.AddMessage("Online{M=" . this.MelfManager.GetCurrentMelfEffect() . " F=" . flames . " z" . currentZone . " Tar=" . targetStacks . "}," . generatedStacks . "," . ROUND(ElapsedTime/g_IBM.CounterFrequency,0)) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone?
 		if (!runComplete)
-			this.SetFormation() ;Standard call to reset trustRecent
+			this.SetFormation() ;Standard call to reset trustRecent TODO: Should this be SetFormationHighZone()? In which case we might need to reset trustRecent in SetFormation() somehow
     }
 
-	WaitForZoneCompleted(maxTime:=3000)
+	OnlineStackFarmSetup(fastLevelList,expectFari,timeOut:=1000) ;TODO: Pass a scaled timeout from StackNormal()?
     {
-        this.SetFormation()
+        MEMORY_QUEST_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.QuestRemaining)
+		MEMORY_QUEST_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].ActiveCampaignData.currentArea.QuestRemaining.ValueType
 		this.WaitForTransition()
-		endTime:=A_TickCount+maxTime
-        quest:=g_SF.Memory.ReadQuestRemaining()
-        while (quest>0 AND A_TickCount<endTime)
+		endTime:=A_TickCount+timeOut
+        active:=g_SF.Memory.ReadAreaActive()
+        while(!active AND A_TickCount<endTime) ;Wait for the zone to become active. The zone should complete ~35ms later at 12.5x, so we can briefly use a faster loop there without thrashing our CPU too much
         {
-            DllCall("Sleep", "UInt", 1) ;Very fast - this should be a brief window between WaitForTransition() and the first kill. No point calling g_IBM.IBM_Sleep for the smallest possible sleep
-            quest:=g_SF.Memory.ReadQuestRemaining()
+            DllCall("Sleep", "UInt", 1)
+            active:=g_SF.Memory.ReadAreaActive()
         }
+		endTime:=A_TickCount+timeOut ;Reset end time, this is applied once - if one fastLevelList times out the rest need to as well
+		quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
+		for _,Hero in fastLevelList
+		{
+			while(quest>0 AND A_TickCount<endTime)
+			{
+				quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE) ;No delay, single read - we want to catch completion as closely as possible
+			}
+			this.KEY_W.KeyPress_Bulk() ;Trying _Bulk here as we just stopped progress
+			loopCount:=0
+			while(!Hero.ReadSelectedInSeat() and loopCount<12) ;On my desktop usually managed by 8 before swap improvements were made - so this should be plenty, but probably needs checking on a slower system
+			{
+				if(loopCount) ;As there's no sleep before the first loop, avoid sending an immediate second input - we could potentially use an initial 'if' block to avoid this check, but whether it matters much will depend on how often it actually gets run
+					this.KEY_W.KeyPress_Bulk()
+				loopCount++
+			}
+			if (Hero.Current.UseModifierForFast)
+			{
+				g_IBM.LevelManager.SetModifierKey(true)
+				Hero.Key.KeyPress_Bulk()
+				g_IBM.LevelManager.SetModifierKey(false)
+			}
+			else
+				Hero.Key.KeyPress_Bulk()
+		}
+		if(quest>0) ;If the fast handlers didn't wait for quest completion (e.g. because there were none)
+		{
+			while(quest>0 AND A_TickCount<endTime) 
+			{
+				DllCall("Sleep", "UInt", 1) ;Sleep in this version as no massive rush to deploy champions
+				quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
+			}
+			this.KEY_W.KeyPress_Bulk()
+		}
+        StartTime:=A_TickCount
+		ElapsedTime:=0
+		g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
+		while(!this.FormationCheckWithFari(expectFari) AND ElapsedTime<timeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
+        {
+			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
+			g_IBM.levelManager.LevelFormation("W", "min",0) ;TODO: Can we do something specific to prioritise getting everyone fielded here? There might be both Melf and Fari to get out
+			DllCall("Sleep", "UInt", 10)
+            ElapsedTime:=A_TickCount - StartTime
+        }
+		if(ElapsedTime>=timeOut)
+		{
+			g_IBM.Logger.AddMessage("FAIL: OnlineStackFarmSetup() did not set W formation within " . timeOut . "ms")
+			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Fari Level=[" . g_Heroes[33].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
+		}
     }
 
 	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff, or for a preferred stacking zone for non-Melf online
@@ -836,54 +892,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         return 1
     }
 
-	OnlineStackFarmSetup(fastMelf,melfLevelKey,fastFari,fariLevelKey,useFari) ;Cuts out checking for bosses, stopping and waiting for the transition, since we're already parked up on a completed zone
-    {
-        this.KEY_W.KeyPress_Bulk() ;Trying _Bulk here as we just stopped progress
-		if(fastFari)
-		{
-			if (fastFari==1) ;Start with 1 as that is the normal case (Fari=125)
-			levelKey.KeyPress_Bulk()
-			else ;fastFari==2
-			{
-				g_IBM.LevelManager.SetModifierKey(true)
-				levelKey.KeyPress_Bulk()
-				g_IBM.LevelManager.SetModifierKey(false)
-			}
-			g_IBM.Logger.AddMessage("FastFari level=[" . g_Heroes[33].ReadLevel() . "] Benched=[" . g_Heroes[33].Benched() . "]")
-		}
-		if(fastMelf)
-		{
-			if (fastMelf==2) ;Start with 2 as that is the normal case with Baldric (Melf=75)
-			{
-				g_IBM.LevelManager.SetModifierKey(true)
-				melfLevelKey.KeyPress_Bulk()
-				g_IBM.LevelManager.SetModifierKey(false)
-			}
-			else ;fastMelf==1
-				melfLevelKey.KeyPress_Bulk()
-			g_IBM.Logger.AddMessage("FastMelf level=[" . g_Heroes[59].ReadLevel() . "] Benched=[" . g_Heroes[59].Benched() . "]")
-		}
-		timeOut:=1500 ;Must be short enough that failing to add a champion doesn't cause a delay - e.g. if Melf is to be levelled here, but Tatyana is also present and will complete the stack in reasonable time even without Melf. Particularly relevant with Farideh added
-        StartTime:=A_TickCount
-		ElapsedTime:=0
-		DEBUG_SWAP_RETRIES:=0
-		g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
-		while (!this.FormationCheckWithFari(useFari) AND ElapsedTime<timeOut) ;TODO: We might want to make a check that returns true if the formation is selected, either on field or in their bench seat, as this will fail if someone doesn't get placed after levelling due to the formation being under attack
-        {
-			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
-            DEBUG_SWAP_RETRIES++
-			g_IBM.levelManager.LevelFormation("W", "min",0) ;Should this be here? Needs to be time=0 so it doesn't eat all 5000ms loop ms
-			DllCall("Sleep", "UInt", 10)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-		if (ElapsedTime>=timeOut)
-		{
-			g_IBM.Logger.AddMessage("FAIL: OnlineStackFarmSetup() did not set W formation within " . timeOut . "ms")
-			g_IBM.Logger.AddMessage(">DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Fari Level=[" . g_Heroes[33].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING() . " fastMelf=[" . fastMelf . "] fastFari=[" . fastFari . "] Retries=[" . DEBUG_SWAP_RETRIES . "]")
-		}
-    }
-	
-	FormationCheckWithFari(faridehRequired:=false) ;True if the formations exactly match, EXCEPT for Farideh (33), is ignored if faridehRequired=false, or if true she must be present, but in any slot
+	FormationCheckWithFari(faridehRequired:=false) ;True if the formations exactly match, EXCEPT for Farideh (33), is ignored if faridehRequired=false, or if true she must be present, but in any slot. TODO: Might be best to change this to only check Briv is alone in the first column, and the required champions are present otherwise?
 	{
 		w:=g_IBM.levelManager.GetFormation("W")
         currentFormation:=g_SF.Memory.GetCurrentFormation()

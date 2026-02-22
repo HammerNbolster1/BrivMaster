@@ -994,51 +994,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.WaitForTransition()
     }
 
-	SetFormationHighZone() ;Used when we don't want to check the current zone as we know it's complete - namely after the Casino when combining, when we will be jumping with the M value regardless of the formation swap - in which case we need to prepare to the next zone
-	{
-		isEZone:=this.ShouldWalk(g_SF.Memory.ReadHighestZone())
-		Thread, NoTimers ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
-		benchReturn:=this.BenchBrivConditions(isEZone) ;check to bench briv
-		lastFormation:=g_SF.Memory.ReadMostRecentFormationFavorite() ;New Sep25 read, used in all cases as it is part of the bad formation check
-        if (benchReturn AND lastFormation!=3) ;New Sep25 read. Formation 3 is E
-        {
-			this.KEY_E.KeyPress()
-			if (benchReturn==2)
-			{
-				if (this.zones[g_SF.Memory.ReadHighestZone()].jumpZone) ;Only put Briv back in urgently if we need to jump right away. Note this does not have to consider featswap because we'll never enter this block with Briv in E, as we can't animation skip in that case
-				{
-					g_IBM.IBM_Sleep(15) ;Avoid swapping back instantly, given issues with multiple key presses
-					startTime:=A_TickCount
-					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND !g_Heroes[58].ReadBenched() AND (A_TickCount-startTime)<1000) ;Whilst we're in the transition and Briv is still on the field
-					{
-						g_IBM.IBM_Sleep(15)
-					}
-					this.KEY_Q.KeyPress_Bulk() ;_Bulk as follows the E.KeyPress()
-					while (g_SF.Memory.ReadFormationTransitionDir()==4 AND (A_TickCount-startTime)<1000) ;Having gone back to Q, wait for the transition to end (so we don't swap Briv straight back out again) TODO: We could block via a static variable or something instead of sleeping here? Not that transitions take overly long
-					{
-						g_IBM.IBM_Sleep(15)
-					}
-				}
-			}
-			Thread, NoTimers, False
-            return
-        }
-		else
-			Thread, NoTimers, False
-		;check to unbench briv
-        if (this.UnBenchBrivConditions(isEZone) AND lastFormation!=1) ;Formation 1 is Q
-        {
-			this.KEY_Q.KeyPress()
-			return
-        }
-	}
-
-	SetFormation(fastCheck:=false) ;To be called with FastCheck during straightforward progression, e.g. not after stacking, falling back, other fun things
+	SetFormation(fastCheck:=false,useHighZone:=false) ;To be called with FastCheck during straightforward progression, e.g. not after stacking, falling back, other fun things. Note we can't always use highZone because when a zone completes, the highzone is momentarily this+1 before the jump applies - if we can find a good check for that we could move over. ReadTransitioning() would appear to work as a test - if true, can use highzone safely, if false then?
     {
 		static trustRecent:=false ;Do we believe that the ReadMostRecentFormationFavorite() is respresentative? Needed as it changes even if the formation swap fails
 		if (!fastCheck)
 			trustRecent:=false ;Reset to false for all normal calls
-		isEZone:=this.ShouldWalk(g_SF.Memory.ReadCurrentZone())
+		isEZone:=this.ShouldWalk(useHighZone ? g_SF.Memory.ReadHighestZone() : g_SF.Memory.ReadCurrentZone())
 		Thread, NoTimers ;Here to handle the animation skip, maybe isn't needed for feat swap as a result?
 		benchReturn:=this.BenchBrivConditions(isEZone) ;check to bench briv
 		lastFormation:=g_SF.Memory.ReadMostRecentFormationFavorite() ;New Sep25 read, used in all cases as it is part of the bad formation check
@@ -1063,34 +1024,27 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				}
 			}
 			Thread, NoTimers, False
-            return
+			return
         }
 		else
 			Thread, NoTimers, False
 		;check to unbench briv
         if (this.UnBenchBrivConditions(isEZone) AND lastFormation!=1) ;Formation 1 is Q
         {
-			;OutputDebug % A_TickCount . "@z" . g_SF.Memory.ReadCurrentZone() . ": Swap to Q`n"
 			this.KEY_Q.KeyPress()
 			return
         }
 		if (trustRecent AND fastCheck)
 		{
 			if !(lastFormation==1 OR lastFormation==3)
-			{
 				isEZone ? this.KEY_E.KeyPress() : this.KEY_Q.KeyPress()
-			}
 		}
 		else
 		{
 			if !(g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("Q")) OR g_SF.IsCurrentFormation(g_IBM.levelManager.GetFormation("E")))
-			{
 				isEZone ? this.KEY_E.KeyPress() : this.KEY_Q.KeyPress()
-			}
 			else
-			{
 				trustRecent:=true ;As we've checked we're on Q or E via formation read, we should be in normal progression
-			}
 		}
     }
 

@@ -333,7 +333,7 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-					this.RouteMaster.WaitForTransition()
+					;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
 					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
 						this.EllywickCasino.UnlockHeroes()
 				}

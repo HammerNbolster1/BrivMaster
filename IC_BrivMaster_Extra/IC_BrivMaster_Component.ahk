@@ -1744,7 +1744,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 			g_Heroes[83].InitDoMTHandler()
 			return ;Re-check on next timer tick
 		}
-		if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone() == "" OR this.GetNumCards() == "")
+		if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone()=="")
 			return
 		if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
 			this.UsedUlt:=false
@@ -1757,12 +1757,12 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 		}
 		else if ((5-g_Heroes[83].ReadNumCards()) < remaining or !withinMax) ;Need to re-roll
 		{
-			if (this.CanUseEllyWickUlt() AND !this.UsedUlt)
+			if (g_Heroes[83].CanUseUltimate() AND !this.UsedUlt)
 			{
 				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using Ellywick's ultimate")
 				this.UseEllywickUlt()
 			}
-			else if (this.CanUseDMUlt())
+			else if (g_Heroes[99].CanUseUltimate())
 			{
 				this.UseDMUlt()
 				g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Using DM's ultimate")

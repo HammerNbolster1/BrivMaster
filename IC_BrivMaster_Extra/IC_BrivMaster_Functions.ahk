@@ -130,7 +130,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		if (g_Heroes[83].CanUseUltimate())
 		{
 			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
-			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
+			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait. Note that Elly has an override for this function to track her ult being active directly, instead of relying on the UI
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
 				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")

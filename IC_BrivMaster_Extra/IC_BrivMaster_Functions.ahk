@@ -149,6 +149,8 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			else ;Lower max re-rolls so we move on; this Casino is busted
 			{
 				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				;Sleep 250 ;To get some context in the recording
+				;Send !{f10} ;Alt+F10 for Nvidia overlay instant replay
 				this.MaxRedraws:=this.Redraws 
 			}
 		}

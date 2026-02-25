@@ -522,19 +522,21 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 
 	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate. Used to detect when the ultimate ends, as the previous card state remains whilst it is in progress
 	{
+		COTF_HANDLER:=this.ReadEllywickCalloftheFeywildHandler()
+		return	COTF_HANDLER.IsUltimateActive.Read()
+	}
+	
+	ReadEllywickCalloftheFeywildHandler() ;Returns the CotFeywild handler
+	{
 		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
 		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
-		EllyUltActive:=""
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
 			if (this.EFFECT_KEY_CotF==PARENT_HANDLER.def.Key.Read())
-			{
-				EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
-				break
-			}
+				return PARENT_HANDLER.activeEffectHandlers[0]
 		}
-		return EllyUltActive
+		return ""
 	}
 
 	GetNumCardsOfType(cardType) ;3 is Gem, 5 is Flames

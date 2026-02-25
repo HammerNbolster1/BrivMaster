@@ -77,7 +77,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				}
 				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or doesn't care about the front row), or the formation is full so we can level away
 				{
-					g_IBM.levelManager.LevelFormation("A",this.levelFormation)
+					g_IBM.levelManager.LevelFormation("A",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
 					ghostLevellingAllowed:=true
 				}
 				g_IBM.IBM_Sleep(10)

@@ -69,7 +69,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				g_IBM.levelManager.LevelClickDamage()
 				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
-					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>1 OR _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>4) ;TODO: Investigate these thresholds
+					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
 						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
 						frontColumnLevellingAllowed:=True

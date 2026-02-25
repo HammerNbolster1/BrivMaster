@@ -42,10 +42,10 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
 			MEMORY_RANGE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
 			g_Heroes[83].InitDoMTHandler() ;TODO: We should perhaps check if this actually worked?
-			timeout:=IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/g_SF.Memory.IBM_ReadBaseGameSpeed()
-            ElapsedTime:=0
-            StartTime:=A_TickCount
-			while (ElapsedTime<timeout)
+			DllCall("QueryPerformanceCounter", "Int64*", startTime)
+			timeOut:=startTime+(IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/g_SF.Memory.IBM_ReadBaseGameSpeed())*g_IBM.CounterFrequency ;Convert the timeout to counter ticks and add to the start time to determine the max allowed time. This avoids calculations each loop iteration
+			lastLoopEndTime:=startTime ;Set for the first loop
+			while (lastLoopEndTime<timeOut)
             {
 				;Start Casino card logic
 				if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone()=="") ;Abort the loop if we hit a reset or the memory reads fail
@@ -65,11 +65,11 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				else
 					break
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
-				g_IBM.levelManager.LevelWorklist()
+				g_IBM.levelManager.LevelWorklist() ;TODO: This should really be an 'Else' on the block that contains 'g_IBM.levelManager.LevelFormation("A",this.levelFormation)' so we don't try to level twice in one iteration?
 				g_IBM.levelManager.LevelClickDamage()
 				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
-					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>1 OR _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>4) ;TODO: Investigate these thresholds
+					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
 						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
 						frontColumnLevellingAllowed:=True
@@ -77,14 +77,13 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				}
 				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or doesn't care about the front row), or the formation is full so we can level away
 				{
-					g_IBM.levelManager.LevelFormation("A",this.levelFormation)
+					g_IBM.levelManager.LevelFormation("A",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
 					ghostLevellingAllowed:=true
 				}
-				g_IBM.IBM_Sleep(10)
-				ElapsedTime:=A_TickCount-StartTime
+				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Dynamic sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
+				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
-			ElapsedTime:=A_TickCount-StartTime ;As we will break out of the loop normally
-			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . ElapsedTime . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
+			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
 			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else
@@ -131,10 +130,10 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		if (g_Heroes[83].CanUseUltimate())
 		{
 			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
-			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
+			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait. Note that Elly has an override for this function to track her ult being active directly, instead of relying on the UI
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 				this.UsedUlt:=false
 			}
 			else
@@ -149,7 +148,9 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				this.UseDMUlt(0) ;No timeout since Elly's ult is not in progress (this.UsedUlt is false) and has not just been attempted
 			else ;Lower max re-rolls so we move on; this Casino is busted
 			{
-				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				;Sleep 250 ;To get some context in the recording
+				;Send !{f10} ;Alt+F10 for Nvidia overlay instant replay
 				this.MaxRedraws:=this.Redraws 
 			}
 		}
@@ -163,7 +164,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			retryCount:=g_Heroes[99].UseUltimate(50)
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				g_IBM.Logger.AddMessage("Casino DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				g_IBM.Logger.AddMessage("Casino DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 			}
 		}
 	}

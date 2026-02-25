@@ -522,19 +522,21 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 
 	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate. Used to detect when the ultimate ends, as the previous card state remains whilst it is in progress
 	{
+		COTF_HANDLER:=this.ReadEllywickCalloftheFeywildHandler()
+		return	COTF_HANDLER.IsUltimateActive.Read()
+	}
+	
+	ReadEllywickCalloftheFeywildHandler() ;Returns the CotFeywild handler
+	{
 		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
 		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
-		EllyUltActive:=""
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
 			if (this.EFFECT_KEY_CotF==PARENT_HANDLER.def.Key.Read())
-			{
-				EllyUltActive:=PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive.Read()
-				break
-			}
+				return PARENT_HANDLER.activeEffectHandlers[0]
 		}
-		return EllyUltActive
+		return ""
 	}
 
 	GetNumCardsOfType(cardType) ;3 is Gem, 5 is Flames
@@ -552,6 +554,55 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	{
 		size:=this.EFFECT_HANDLER_CARDS.cardsInHand.size.Read()
 		return size=="" ? 0 : size
+	}
+	
+	UseUltimate(maxRetries:=50,exitOnceQueued:=false) ;Use ultimate, retrying up to the given number of times if the cooldown doesn't change. If exitOnceQueued is true the function will return as soon as the ultimate is queued - which may mean it never activates if something changes in the game state (area change most likely). Returns the number of attempts made. This is an override to make use of Elly's IsUltimateActive read, done because the ultimates bar method is not accurate enough when we need to follow with a DM reset
+	{
+		;TODO: Not sure this function should be hard coded offsets in a specific file like this - constants in a main file might be better? Applies later in this function as well. Maybe some wrapper somewhere?
+		ULTIMATEITEMS_LIST:=g_SF.Memory.GameManager.game.gameInstances[0].Screen.uiController.ultimatesBar.ultimateItems
+        ULTIMATE_HOTKEY:=""
+		ADDRESS_ULTIMATEITEMS_LIST:=g_SF.Memory.ResolvePointers(ULTIMATEITEMS_LIST)
+		ADDRESS_ULTIMATEITEMS_ITEMS:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_LIST,0x10)
+		HEROID_OFFSET:=[ULTIMATEITEMS_LIST.hero.Offset[1],ULTIMATEITEMS_LIST.hero.def.Offset[1],ULTIMATEITEMS_LIST.hero.def.ID.Offset[1]] ;TODO: A lot of this never changes; should be prepared once only. Some kind of ultimate handler object?
+		HEROID_TYPE:=ULTIMATEITEMS_LIST.hero.def.ID.ValueType ;TODO: This one can't change
+		loop, % _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_LIST,"Int",0x18)
+        {
+            ADDRESS_ULTIMATEITEMS_ITEM:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEMS,0x20 + (A_Index-1) * 0x8)
+			if (this.ID == _MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,HEROID_TYPE,HEROID_OFFSET*))
+			{
+				ULTIMATE_HOTKEY:=_MemoryManager.instance.read(ADDRESS_ULTIMATEITEMS_ITEM,ULTIMATEITEMS_LIST.HotKey.ValueType,ULTIMATEITEMS_LIST.HotKey.Offset*)
+				break
+			}
+        }
+		if (ULTIMATE_HOTKEY=="") ;Return empty
+			return
+		COTF_HANDLER:=this.ReadEllywickCalloftheFeywildHandler()
+		if (COTF_HANDLER=="") ;Return empty TODO: We could fall back to base.UseUltimate() here, but that seems like it would lead to a lot sneaky glitches with DM resets?
+			return
+		ULTIMATE_KEY:=g_InputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
+		ULTIMATE_KEY.KeyPress()
+		retryCount:=0
+		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
+		ADDRESS_ULTIMATEATTACK:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEM, ULTIMATEATTACK.Offset*)
+		ULT_ACTIVE_ADDRESS:=g_SF.Memory.ResolvePointers(COTF_HANDLER.IsUltimateActive)
+		ULT_ACTIVE_TYPE:=COTF_HANDLER.IsUltimateActive.ValueType
+		while (_MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE)!=1 AND retryCount < maxRetries) ;Check Elly's IsUltimateActive
+		{
+			if (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*)) ;If the ultimate is queued, just wait on it
+			{
+				retryCount++ ;Counting this as 1/10th of a retry to avoid having to have some duplicate timeout in case the queued attack gets stuck forever
+				if (exitOnceQueued)
+					return retryCount
+				g_IBM.IBM_Sleep(10)
+			}
+			else
+			{
+				ULTIMATE_KEY.KeyPress()
+				retryCount+=10
+				Sleep 0
+			}
+		}
+		return retryCount
 	}
 
 	;------------------------------------------------------------------------------------

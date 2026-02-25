@@ -133,7 +133,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 				this.UsedUlt:=false
 			}
 			else
@@ -148,7 +148,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				this.UseDMUlt(0) ;No timeout since Elly's ult is not in progress (this.UsedUlt is false) and has not just been attempted
 			else ;Lower max re-rolls so we move on; this Casino is busted
 			{
-				g_IBM.Logger.AddMessage("Casino Elly(Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
 				this.MaxRedraws:=this.Redraws 
 			}
 		}
@@ -162,7 +162,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			retryCount:=g_Heroes[99].UseUltimate(50)
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				g_IBM.Logger.AddMessage("Casino DM(Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				g_IBM.Logger.AddMessage("Casino DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 			}
 		}
 	}

@@ -1,13 +1,9 @@
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk
-#include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
 #include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
-
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
-SH_UpdateClass.AddClassFunctions(_MemoryManager, IBM_Memory_Manager)
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
@@ -1116,7 +1112,7 @@ Class IC_IriBrivMaster_Component
 
 	RunVersionCheck() ;Main version check wrapper
 	{
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up: TODO: SH_ServerCalls needs to be dropped to purge the JS based JSON, consider building a 2-tier object setup to keep a simple class available
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		this.VersionCheckSH()
 		this.VersionCheckAddons()
 		this.BasicServerCaller:=""
@@ -1277,6 +1273,8 @@ Class IC_IriBrivMaster_Component
 
 	GetPlayServerFriendly() ;Finds the ps19.idlechampions.com portion, or returns a descriptive error
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
@@ -1291,6 +1289,8 @@ Class IC_IriBrivMaster_Component
 
 	CheckOffsetVersions()
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
@@ -1322,7 +1322,7 @@ Class IC_IriBrivMaster_Component
 		if(platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
@@ -1350,6 +1350,8 @@ Class IC_IriBrivMaster_Component
 
 	DownloadOffsets() ;TODO: Resolve the massive duplication with CheckOffsetVersions()
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
@@ -1379,7 +1381,7 @@ Class IC_IriBrivMaster_Component
 		if (platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
@@ -1610,7 +1612,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		if(numChests > 0)
 		{
 			callTime:=A_TickCount
-			response := g_ServerCall.CallBuyChests( chestID, numChests )
+			response:=g_ServerCall.CallBuyChests(chestID, numChests)
 			serverCallTime:=A_TickCount-callTime
 			if(response.okay AND response.success)
 			{
@@ -1673,7 +1675,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		chestName:=chestID==2 ? "Gold" : "Silver"
         callTime:=A_TickCount
 		this.AddMessage("Open","Opening " . numChests . " " . chestName . "...")
-		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
+		chestResults:=g_ServerCall.CallOpenChests(chestID, numChests)
 		serverCallTime:=A_TickCount-callTime
         if (!chestResults.success)
 		{

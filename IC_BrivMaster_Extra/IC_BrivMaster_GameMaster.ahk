@@ -75,7 +75,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
         StartTime:=A_TickCount
         while (!this.PID AND ElapsedTime < timeoutLeft )
         {
-            g_SharedData.UpdateOutbound("LoopString","Opening IC...")
+			g_SharedData.UpdateOutbound("LoopString","Opening IC...")
             existingPIDs:=this.GetExistingPIDList() ;Save a list of existing PIDs so we can find the new one the Run command creates TODO: Instead of checking if the Run command is executing the exe directly at run time, work it out once from the name so we don't save this when not needed?
 			programLoc:=g_IBM_Settings["IBM_Game_Launch"]
             try
@@ -96,7 +96,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				this.PID:=openPID
 				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
 			}
-			else
+			else ;TODO: In this case might want to consider what happens when the launcher doesn't actually launch the game for a while - we could end up spawning a lot of them that eventually all spring to life. Note it might also be the EGS URN so need to factor that in too, although the EGS client won't allow multiple copies. Might need to kill the launcher.
 			{
 				StartTimePID:=A_TickCount
 				ElapsedTimePID:=0
@@ -274,7 +274,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		}
 	}
 	
-	SuspendProcess(PID,doSuspend:=True)
+	SuspendProcess(PID,doSuspend:=True) ;TODO: Class memory appears to offer these calls, could save us opening/closing the process if we can use them? Appears to require addional access on the process than default, though
 	{
 		h:=DllCall("OpenProcess","uInt",0x1F0FFF,"Int",0,"Int",PID)
 		if (!h)
@@ -337,9 +337,9 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			SendMessage, 0x112, 0xF060,,, %sendMessageString%,,,, %timeout% ; WinClose
 		saveCompleteTime:=-1 ;Unset
 		;The memory reads through the usual game instance structure become invalid before the actual saveHandler object is gone, potentially resulting in us detecting a save early and killing the game before it is done - most likely to impact slow systems. Reading the handler directly prevents that
-		ADDRESS_DIRTY:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].isDirty.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].isDirty.FullOffsets*) 
+		ADDRESS_DIRTY:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].isDirty.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].isDirty.FullOffsets*) 
 		TYPE_DIRTY:=g_SF.Memory.GameManager.game.gameInstances[0].isDirty.ValueType
-		ADDRESS_CURRENT_SAVE:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.FullOffsets*)
+		ADDRESS_CURRENT_SAVE:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.FullOffsets*)
 		TYPE_CURRENT_SAVE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.SaveHandler.currentSave.ValueType
 		StartTime:=A_TickCount
 		while (WinExist(sendMessageString) AND A_TickCount - StartTime < timeout) ;TODO: In PID mode we could just check process exist, rather than using the window?
@@ -388,8 +388,8 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	
 	CloseIC_SaveCheck(ADDRESS_DIRTY,TYPE_DIRTY,ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE) ;Returns 2 if either of memory reads are invalid, 1 if the game is active and has saved and 0 otherwise
 	{
-		dirty:=_MemoryManager.instance.read(ADDRESS_DIRTY,TYPE_DIRTY)
-		currentSave:=_MemoryManager.instance.read(ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)
+		dirty:=_IBM_MM.instance.read(ADDRESS_DIRTY,TYPE_DIRTY)
+		currentSave:=_IBM_MM.instance.read(ADDRESS_CURRENT_SAVE,TYPE_CURRENT_SAVE)
 		if(dirty=="" OR currentSave=="") ;Memory reads are gone, so game has proceeded to close. This also seems to happen if the relay fails to stop the game and the current copy has the 'Instance invalid' error
 			return 2
 		else if (dirty==0 AND currentSave==0) ;Save complete. Dirty appears to get set to 0 before the save instance in some cases, so best to check both

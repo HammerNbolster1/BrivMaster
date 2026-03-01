@@ -7,9 +7,9 @@ SetBatchLines, -1 ; How fast a script will run (affects CPU utilization).(Defaul
 ListLines Off
 Process, Priority,, Realtime
 
-#include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\classMemory.ahk ;Memory manager
+#include %A_LineFile%\..\IC_BrivMaster_Memory_Reader.ahk ;Memory reader
 
-Relay:=new IC_BrivMaster_Relay_Class(A_Args[1]) ;Must be called with the relay COM object GUI as an argument
+Relay:=new IC_BrivMaster_Relay_Class(A_Args[1]) ;Must be called with the relay COM object GUID as an argument
 Relay.RunRelay()
 ExitApp
 
@@ -70,7 +70,6 @@ class IC_BrivMaster_Relay_Class
 			FileAppend, % A_TickCount . " Relay launched without Relay Data COM object GUID`n", % this.LogFile ;Save
 			ExitApp
 		}
-
 	}
 
 	RunRelay()
@@ -265,16 +264,13 @@ class IC_BrivMaster_Relay_Class
     {
         static MaxTime:=""
 		if (MaxTime=="")
-		{
-			MaxTime := A_TickCount + timeout
-		}
-		if (A_TickCount <= MaxTime)
+			MaxTime:=A_TickCount + timeout
+		if (A_TickCount<=MaxTime)
 		{
 			isExeRead:=this.MemoryManagerRefresh()
 			;this.MemoryManager.exeName := this.ExeName ;What is the purpose of this?
 			if(isExeRead AND this.handle!="")
 			{
-				;this.Is64Bit := this.MemoryManager.is64Bit ;Is this useful?
 				this.LogString.=A_TickCount . " OpenProcessReader() with PID=[" . this.MemoryManager.PID . "]`n"
 				this.Stage++
 			}
@@ -288,15 +284,13 @@ class IC_BrivMaster_Relay_Class
 
 	MemoryManagerRefresh() ;Replacing part of _MemoryManager so we don't need a full instance of everything memory
     {
-        moduleName := "mono-2.0-bdwgc.dll"
-		this.MemoryManager := new _ClassMemory("AHK_PID " . this.PID, "", handle) ;Must use PID
-        this.handle := handle
-        if !IsObject(this.MemoryManager)
-		{
+        moduleName:="mono-2.0-bdwgc.dll"
+		this.MemoryManager:=New _IC_BrivMaster_Memory_Reader_Class("AHK_PID " . this.PID, "", handle) ;Must use PID
+        this.handle:=handle
+        if(!IsObject(this.MemoryManager))
             return false
-        }
 		this.gameBaseAddress:=this.MemoryManager.getModuleBaseAddress(moduleName) + this.MEMORY_baseAddress
-		this.LogString.= A_TickCount . " MemoryManagerRefresh() complete with gameBaseAddress=[" . this.gameBaseAddress . "]`n"
+		this.LogString.=A_TickCount . " MemoryManagerRefresh() complete with gameBaseAddress=[" . this.gameBaseAddress . "]`n"
 		return true
     }
 

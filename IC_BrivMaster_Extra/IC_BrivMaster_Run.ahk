@@ -19,7 +19,6 @@ CoordMode, Mouse, Client
 
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Indirectly #includes IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Functions.ahk
-#include %A_LineFile%\..\IC_BrivMaster_Overrides.ahk
 #include %A_LineFile%\..\IC_BrivMaster_GameMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
@@ -27,10 +26,9 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
-global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM MemoryFunctions in g_SF.Memory
+global g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it
@@ -42,9 +40,6 @@ global g_SharedData:=New IC_BrivMaster_SharedData_Class
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
-SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
-
 g_SharedData.Init() ;Loads settings so must be prior to the icon set and Window:Show in CreateWindow()
 g_IBM.CreateWindow()
 
@@ -55,8 +50,8 @@ if(A_Args[1])
 }
 else
 {
-    GuidCreate := ComObjCreate("Scriptlet.TypeLib")
-    guid := GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
+    GuidCreate:=ComObjCreate("Scriptlet.TypeLib")
+    guid:=GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
     ObjRegisterActive(g_SharedData, guid)
     g_SF.WriteObjectToAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
 }
@@ -140,11 +135,10 @@ class IC_BrivMaster_GemFarm_Class
 					g_SharedData.UpdateOutbound("BossesHitThisRun",0)
 				}
 				this.Logger.NewRun()
-				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
+				this.currentZone:=this.WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
 				this.failedConversionMode:=false
-				needToStack:=true ;Irisiri - added initialisation to make sure the offramp doesn't trigger if we've never checked
                 this.levelManager.Reset()
                 this.routeMaster.Reset()
 				this.EllywickCasino.Reset()
@@ -159,7 +153,7 @@ class IC_BrivMaster_GemFarm_Class
                 this.previousZone:=this.currentZone ;Update these as we may have progressed during first-zone logic. Previous zone is an object variable so it can be reset if a fallback is detected TODO: This should be in the RouteMaster
 				this.currentZone:=g_SF.Memory.ReadCurrentZone()
             }
-			g_SharedData.UpdateOutbound("LoopString",this.offRamp ? "Off Ramp" : "Main Loop")
+			g_SharedData.UpdateOutbound("LoopString","Main Loop")
 			if (g_SF.Memory.ReadResetting())
 			{
 				this.Logger.ResetReached()
@@ -174,13 +168,8 @@ class IC_BrivMaster_GemFarm_Class
 					Continue ;Go straight back to the start of the loop
 				this.routeMaster.SetFormation(true) ;This is the only call that uses fastCheck, as it should be whilst just cruising along
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
-				if (!this.offRamp) ;Only do the below until near the end
-				{
-					needToStack:=this.routeMaster.NeedToStack()
-					; Check for failed stack conversion
-					if (this.currentZone>1)
-						this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
-				}
+				if (this.currentZone>1)
+					this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
 				if(this.currentZone > this.previousZone) ;Things to be done every new zone
 				{
 					this.Logger.UpdateZone(this.currentZone)
@@ -190,24 +179,14 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.UpdateOutbound_Increment("BossesHitThisRun")
-						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.offRamp AND !this.failedConversionMode AND needToStack AND g_Heroes[58].ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss. Checks offramp as needtostack won't be updated if true
+						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.failedConversionMode AND this.routeMaster.NeedToStack() AND g_Heroes[58].ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss
 						{
 							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
 						}
 					}
-					if (!this.offRamp) ;Only until we're nearly at the end of the run
-					{
-						;Check for offRamp
-						if (!needToStack and (this.currentZone>=this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J
-						{
-							If(this.routeMaster.EnoughHasteForCurrentRun())
-							{
-								this.offRamp:=True
-								g_SharedData.UpdateOutbound("IBM_BuyChests",false) ;Cancel any pending chest order at this point
-							}
-						}
-					}
+					if (!this.offRamp and this.currentZone>=this.RouteMaster.targetZone - this.RouteMaster.zonesPerJumpQ * 3) ;Set offramp to provide a backup missed-reset check
+						this.offRamp:=true
 				}
 				else
 					this.routeMaster.StartAutoProgressSoft() ;InitZone() will handle this for new zones (which makes it odd it is separate...) TODO: Checking this every single tick seems excessive?
@@ -256,18 +235,15 @@ class IC_BrivMaster_GemFarm_Class
 		}
 	}
 
-	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
+	WaitForZoneLoad(currentZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
-		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
-			return existingZone
-		currentZone:=existingZone
-		startTime:=A_TickCount
-		ElapsedTime:=0
-		while (currentZone=="" and ElapsedTime < 2000) ;Was 1s - possibly not enough for potatotablet
+		if (currentZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
+			return currentZone
+		endTime:=A_TickCount+2000
+		while (currentZone=="" AND A_TickCount<endTime) 
 		{
 			this.IBM_Sleep(15)
 			currentZone:=g_SF.Memory.ReadCurrentZone()
-			ElapsedTime:=A_TickCount-startTime
 		}
 		return currentZone
 	}
@@ -636,8 +612,7 @@ class IC_BrivMaster_GemFarm_Class
         genericMsg.="1. Be sure Imports are up to date. Current imports are for: v" . g_SF.Memory.GetImportsVersion() . "`n"
         genericMsg.="2. Check the correct memory file is being used. Current version: " . g_SF.Memory.GameManager.GetVersion() . "`n"
         genericMsg.="3. If IC is running with admin privileges, then the script will also require admin privileges.`n"
-        if (_MemoryManager.is64bit)
-            genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
+        genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
 		return genericMsg
 	}
 

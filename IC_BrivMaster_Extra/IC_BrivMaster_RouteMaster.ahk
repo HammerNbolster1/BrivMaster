@@ -457,11 +457,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.cycleCount:=0 ;Reset the count of runs in a cycle at offline. TODO: Could resetting this during the run cause problems? Might need to set a variable and process in Reset() - Note at this point the script expects this to happen
 	}
 
-	GetOffRampZone() ;returns the zone 5 Q-jumps from the reset, used to trigger offramp
-	{
-		return this.targetZone - this.zonesPerJumpQ * 5 ;TODO: Is it useful to check if this is after the Thellora target?
-	}
-
 	StackNormal()
     {
 		g_Heroes[58].InitFastSB()
@@ -482,7 +477,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			}
 			else
 			{
-				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
+				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
 				activateFariUlt:=true
 			}
 		}
@@ -509,11 +504,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			}
 			else
 			{
-				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
+				MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.area.activeMonsters.size.FullOffsets*)
 				activateFariUlt:=true
 			}
 		}
-		this.OnlineStackFarmSetup(fastLevelList,activateFariUlt,10000/gameSpeed) ;Allow 1000ms at x10 for each state, 800ms at x12.5
+		this.OnlineStackFarmSetup(fastLevelList,activateFariUlt,15000/gameSpeed) ;Allow 1500ms at x10 for each state, 1200ms at x12.5
         ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Stack Normal")
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
@@ -561,9 +556,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		DEBUG_FARI_LOG:="Fari Init," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . g_Heroes[58].FastReadSBStacks() . ","
 		DEBUG_TATY_LOG:=""
 		DEBUG_FARI_ALT_ACTIVE:=FALSE
-		MEMORY_MELEE_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.FullOffsets*)
+		MEMORY_MELEE_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.FullOffsets*)
 		MEMORY_MELEE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.ValueType
-		MEMORY_RANGED_ADDRESS:=_MemoryManager.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.FullOffsets*)
+		MEMORY_RANGED_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.FullOffsets*)
 		MEMORY_RANGED_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
 		DEBUG_FARI_ZONE_FULL:=false
 		*/
@@ -571,7 +566,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;++++++++++++++++++++
 		while (stacks<targetStacks AND ElapsedTime<maxOnlineStackTime)
         {
-			if (activateFariUlt AND _MemoryManager.instance.Read(MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS,"Int")>=this.FaridehUltThreshold)
+			if (activateFariUlt AND _IBM_MM.instance.Read(MEMORY_ACTIVE_MONSTERS_SIZE_ADDRESS,"Int")>=this.FaridehUltThreshold)
 			{
 				g_Heroes[33].UseUltimate(,true) ;Using ExitOnceQueued so we don't stay waiting for the activation and potentially overstack
 				activateFariUlt:=false
@@ -619,7 +614,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					DEBUG_FARI_LOG.="Fari Ult End," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ","
 				DEBUG_FARI_ALT_ACTIVE:=DEBUG_FARI_ULT_NOW
 			}
-			if(!DEBUG_FARI_ZONE_FULL AND _MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _MemoryManager.instance.Read(MEMORY_RANGED_ADDRESS,MEMORY_RANGED_TYPE)>=100)
+			if(!DEBUG_FARI_ZONE_FULL AND _IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGED_ADDRESS,MEMORY_RANGED_TYPE)>=100)
 			{
 				DEBUG_FARI_LOG.="Fari 100 Atk," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ","
 				DEBUG_FARI_ZONE_FULL:=true
@@ -653,7 +648,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (!runComplete)
 		{
 			if (g_SF.Memory.ReadQuestRemaining()>0)
+			{
+				g_IBM.Logger.AddMessage("Online stack zone not complete - falling back")
 				this.FallBackFromZone()
+			}
 			else
 				this.ToggleAutoProgress(1, false, true)
 		}
@@ -681,12 +679,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             active:=g_SF.Memory.ReadAreaActive()
         }
 		endTime:=A_TickCount+timeOut ;Reset end time, this is applied once - if one fastLevelList times out the rest need to as well
-		quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
+		quest:=_IBM_MM.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
 		for _,Hero in fastLevelList
 		{
 			while(quest>0 AND A_TickCount<endTime)
 			{
-				quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE) ;No delay, single read - we want to catch completion as closely as possible
+				quest:=_IBM_MM.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE) ;No delay, single read - we want to catch completion as closely as possible
 			}
 			this.KEY_W.KeyPress_Bulk() ;Trying _Bulk here as we just stopped progress
 			loopCount:=0
@@ -710,7 +708,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			while(quest>0 AND A_TickCount<endTime) 
 			{
 				DllCall("Sleep", "UInt", 1) ;Sleep in this version as no massive rush to deploy champions
-				quest:=_MemoryManager.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
+				quest:=_IBM_MM.instance.Read(MEMORY_QUEST_ADDRESS,MEMORY_QUEST_TYPE)
 			}
 			this.KEY_W.KeyPress_Bulk()
 		}
@@ -942,14 +940,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if !g_SF.Memory.ReadTransitioning()
             return
         StartTime:=A_TickCount
-        g_SharedData.UpdateOutbound("LoopString","Waiting for transition...")
+        ;g_SharedData.UpdateOutbound("LoopString","Waiting for transition...") ;Not sure if this will generally be displayed long enough to be useful
         if (KEY)
 			g_InputManager.gameFocus() ;Set focus once and use _Bulk()
 		while (g_SF.Memory.ReadTransitioning()==1 AND A_TickCount - StartTime < maxLoopTime)
         {
 			If (KEY)
 				KEY.KeyPress_Bulk()
-			g_IBM.IBM_Sleep(15) ;Sleep as we don't want to go back multiple zones
+			g_IBM.IBM_Sleep(15)
         }
         return
     }

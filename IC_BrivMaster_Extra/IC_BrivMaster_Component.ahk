@@ -1612,7 +1612,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		if(numChests > 0)
 		{
 			callTime:=A_TickCount
-			response := g_ServerCall.CallBuyChests( chestID, numChests )
+			response:=g_ServerCall.CallBuyChests(chestID, numChests)
 			serverCallTime:=A_TickCount-callTime
 			if(response.okay AND response.success)
 			{
@@ -1675,7 +1675,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		chestName:=chestID==2 ? "Gold" : "Silver"
         callTime:=A_TickCount
 		this.AddMessage("Open","Opening " . numChests . " " . chestName . "...")
-		chestResults := g_ServerCall.CallOpenChests( chestID, numChests )
+		chestResults:=g_ServerCall.CallOpenChests(chestID, numChests)
 		serverCallTime:=A_TickCount-callTime
         if (!chestResults.success)
 		{

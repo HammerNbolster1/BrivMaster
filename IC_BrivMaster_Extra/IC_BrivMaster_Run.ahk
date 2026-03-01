@@ -50,8 +50,8 @@ if(A_Args[1])
 }
 else
 {
-    GuidCreate := ComObjCreate("Scriptlet.TypeLib")
-    guid := GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
+    GuidCreate:=ComObjCreate("Scriptlet.TypeLib")
+    guid:=GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
     ObjRegisterActive(g_SharedData, guid)
     g_SF.WriteObjectToAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
 }

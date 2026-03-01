@@ -86,6 +86,96 @@ class IC_BrivMaster_IdleGameManager_Class extends SH_MemoryPointer ;GameManager 
     }
 }
 
+class IC_BrivMaster_Memory_Static_Pointer_Class extends IC_BrivMaster_Memory_Pointer_Class
+{
+    staticOffset:=0
+
+    __new(moduleOffset := 0, staticOffset:=0, structureOffsets:=0)
+    {
+        this.ModuleOffset:=moduleOffset + 0  ;Do maths on strings created by json to make sure they are values, otherwise memory leaks can occur in memory reads
+        this.StaticOffset:=staticOffset + 0
+        if(structureOffsets.Count() > 0)
+        {
+            size:=structureOffsets.Count()
+            loop, %size%
+            {
+                structureOffsets[A_Index]:=structureOffsets[A_Index] + 0
+            }
+        }
+        else
+            structureOffsets:=structureOffsets + 0
+        this.structureOffsets:=structureOffsets
+        this.Refresh()
+    }
+}
+
+class IC_BrivMaster_Memory_Base_Pointer_Class
+{
+    ModuleOffset:=0
+    StructureOffsets:=0
+    BaseAddress:=""
+
+    __new(baseAddress:=0, moduleOffset:=0, structureOffsets:=0, className:="")
+    {
+        this.BaseAddress:=baseAddress
+        this.ModuleOffset:=moduleOffset
+        this.StructureOffsets:=structureOffsets
+        this.ClassName:=className
+    }
+}
+
+class IC_BrivMaster_Memory_Pointer_Class
+{
+    ModuleOffset:=0
+    StructureOffsets:=0
+    BasePtr:={}
+
+    __new(moduleOffset:=0, structureOffsets:=0)
+    {
+        this.ModuleOffset:=moduleOffset=="" ? "" : moduleOffset + 0 ;Do maths on strings created by json to make sure they are values, otherwise memory leaks can occur in memory reads.
+
+        if(structureOffsets.Count() > 0)
+        {
+            size:=structureOffsets.Count()
+            loop, %size%
+            {
+                structureOffsets[A_Index] := structureOffsets[A_Index] + 0
+            }
+        }
+        else
+            structureOffsets:=structureOffsets + 0
+        this.StructureOffsets:=structureOffsets
+        this.Refresh()
+    }
+
+    ResetBasePtr(currentObj)
+    {
+        this["basePtr"] := currentObj.BasePtr
+        for k,v in this
+        {
+            if(IsObject(v) AND ObjGetBase(v).__Class == "IBM_GOS" AND v.FullOffsets != "")
+            {
+                v.BasePtr:=currentObj.BasePtr
+                v.ResetBasePtr(this) ; Go into game objects
+            }
+        }
+    }
+
+    Refresh() ;Scaffolding
+	{ 
+    }
+
+    ResetUnstableCollectionsOnly()
+    {
+        for k,v in this
+        {
+            if(!IsObject(v) OR !ObjGetBase(v).__Class=="IBM_GOS" OR k=="BasePtr")
+                continue
+            else
+                this[k].ResetUnstableCollectionsOnly()
+        }
+    }
+}
 class IC_BrivMaster_MemoryFunctions_Class
 {
 	__new(fileLoc:="IC_Offsets.json")

@@ -1291,6 +1291,8 @@ Class IC_IriBrivMaster_Component
 
 	CheckOffsetVersions()
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
@@ -1350,6 +1352,8 @@ Class IC_IriBrivMaster_Component
 
 	DownloadOffsets() ;TODO: Resolve the massive duplication with CheckOffsetVersions()
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"

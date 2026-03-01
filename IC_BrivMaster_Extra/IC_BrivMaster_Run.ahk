@@ -140,7 +140,7 @@ class IC_BrivMaster_GemFarm_Class
 					g_SharedData.UpdateOutbound("BossesHitThisRun",0)
 				}
 				this.Logger.NewRun()
-				this.currentZone:=this.IBM_WaitForZoneLoad(this.currentZone)
+				this.currentZone:=this.WaitForZoneLoad(this.currentZone)
 				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
 				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
 				this.failedConversionMode:=false
@@ -240,18 +240,15 @@ class IC_BrivMaster_GemFarm_Class
 		}
 	}
 
-	IBM_WaitForZoneLoad(existingZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
+	WaitForZoneLoad(currentZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
-		if (existingZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
-			return existingZone
-		currentZone:=existingZone
-		startTime:=A_TickCount
-		ElapsedTime:=0
-		while (currentZone=="" and ElapsedTime < 2000) ;Was 1s - possibly not enough for potatotablet
+		if (currentZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
+			return currentZone
+		endTime:=A_TickCount+2000
+		while (currentZone=="" AND A_TickCount<endTime) 
 		{
 			this.IBM_Sleep(15)
 			currentZone:=g_SF.Memory.ReadCurrentZone()
-			ElapsedTime:=A_TickCount-startTime
 		}
 		return currentZone
 	}

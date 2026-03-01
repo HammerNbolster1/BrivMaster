@@ -1112,7 +1112,7 @@ Class IC_IriBrivMaster_Component
 
 	RunVersionCheck() ;Main version check wrapper
 	{
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up: TODO: SH_ServerCalls needs to be dropped to purge the JS based JSON, consider building a 2-tier object setup to keep a simple class available
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		this.VersionCheckSH()
 		this.VersionCheckAddons()
 		this.BasicServerCaller:=""
@@ -1322,7 +1322,7 @@ Class IC_IriBrivMaster_Component
 		if(platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
@@ -1381,7 +1381,7 @@ Class IC_IriBrivMaster_Component
 		if (platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
-		this.BasicServerCaller:=new SH_ServerCalls() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
+		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
 		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended

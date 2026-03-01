@@ -712,11 +712,12 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
                 response:=AHK_JSON.Load(data)
             }
         }
-		WR:=""
         catch exception
 		{
+			WR:=""
 			return exception
 		}
-        return response
+        WR:=""
+		return response
     }
 }

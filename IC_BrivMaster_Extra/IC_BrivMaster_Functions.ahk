@@ -3,6 +3,7 @@
 class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, without the use of a timer
 {
 	static TIMEOUT_BASE:=100000  ;Allow 10s at x10 speed, 8s at x12.5
+	static ULT_DELAY:=3750 ;Half of the 7500ms duration of Elly's ult, including run out time, per the CotFeywild .IsUltimateActive read TODO: This is for 5 cards (1000 start+750 per card+750 applying debuffs+2000 end), possibly should go halfway between 4 and 5?
 	
 	__New(combining)
 	{
@@ -28,6 +29,8 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"] ;Target gem cards
 		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"] ;Minimum cards before exiting, used to try and avoid saving with a partial hand when hitting a boss shortly after the Casino
 		this.lockedFrontColumnChamps:={}
+		;this.DEBUG_STRING:=""
+		this.DeferredDMUlt:=0
 	}
 
 	Casino(lockedFrontColumnChamps) ;lockedFrontColumnChamps are a list of champions from the front row whose levelling has been locked (set to 0)
@@ -42,16 +45,30 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
 			MEMORY_RANGE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
 			g_Heroes[83].InitDoMTHandler() ;TODO: We should perhaps check if this actually worked?
+			gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
+			this.DMUltDelay:=(IC_BrivMaster_EllywickCasino_Class.ULT_DELAY/gameSpeed)*g_IBM.CounterFrequency
 			DllCall("QueryPerformanceCounter", "Int64*", startTime)
-			timeOut:=startTime+(IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/g_SF.Memory.IBM_ReadBaseGameSpeed())*g_IBM.CounterFrequency ;Convert the timeout to counter ticks and add to the start time to determine the max allowed time. This avoids calculations each loop iteration
+			timeOut:=startTime+(IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/gameSpeed)*g_IBM.CounterFrequency ;Convert the timeout to counter ticks and add to the start time to determine the max allowed time. This avoids calculations each loop iteration
 			lastLoopEndTime:=startTime ;Set for the first loop
 			while (lastLoopEndTime<timeOut)
             {
 				;Start Casino card logic
 				if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone()=="") ;Abort the loop if we hit a reset or the memory reads fail
 					break
+				if(this.DeferredDMUlt AND lastLoopEndTime > this.DeferredDMUlt)
+				{
+					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() deferred DM pre DM call:"
+					this.UseDMUlt()
+					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() deferred DM post DM call:"
+				}
 				if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
+				{
+					DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+					this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() Elly ult expired:"
 					this.UsedUlt:=false
+				}
 				if (this.ShouldDrawMoreCards())
 				{
 					if (this.MaxRedraws-this.Redraws > 0) ;Use ultimate if it's not on cooldown and there are redraws left
@@ -65,25 +82,29 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				else
 					break
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
-				g_IBM.levelManager.LevelWorklist() ;TODO: This should really be an 'Else' on the block that contains 'g_IBM.levelManager.LevelFormation("A",this.levelFormation)' so we don't try to level twice in one iteration?
-				g_IBM.levelManager.LevelClickDamage()
 				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
 					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
 						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
-						frontColumnLevellingAllowed:=True
+						frontColumnLevellingAllowed:=true
 					}
 				}
-				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or doesn't care about the front row), or the formation is full so we can level away
+				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or don't care about the front row), or the formation is full so we can level away
 				{
 					g_IBM.levelManager.LevelFormation("A",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
 					ghostLevellingAllowed:=true
+				}
+				else
+				{
+					g_IBM.levelManager.LevelWorklist()
+					g_IBM.levelManager.LevelClickDamage()
 				}
 				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Dynamic sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
+			;g_IBM.Logger.AddMessage("DEBUG:" . this.DEBUG_STRING)
 			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else
@@ -125,30 +146,43 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	
 	UseEllywickUlt()
 	{
+		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+		;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() entry:"
 		if (g_SF.Memory.ReadTransitioning()) ;Do not try using the ults during a transition - possible source of Weird Stuff
 			return
 		if (g_Heroes[83].CanUseUltimate())
 		{
-			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
+			this.UsedUlt:=true ;Assumed
 			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait. Note that Elly has an override for this function to track her ult being active directly, instead of relying on the UI
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				;g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Fail retries=[" . retryCount . "]:"
 				this.UsedUlt:=false
 			}
 			else
 			{
+				DllCall("QueryPerformanceCounter", "Int64*", delayStart)
+				this.DeferredDMUlt:=delayStart+this.DMUltDelay ;This adds 3750ms game time, 300ms at x12.5
+				;this.DEBUG_STRING.=ROUND(delayStart/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Success retries=[" . retryCount . "] DeferredDMUlt=[" . ROUND(this.DeferredDMUlt/g_IBM.CounterFrequency,3) . "]:"
 				this.Redraws++
-				this.UseDMUlt()
 			}
 		}
 		else
 		{
 			if (g_Heroes[99].CanUseUltimate()) ;Somehow Elly's ult isn't ready by DM's is - try using it
-				this.UseDMUlt(0) ;No timeout since Elly's ult is not in progress (this.UsedUlt is false) and has not just been attempted
+			{
+				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Elly ult not available using DM:"
+				this.UseDMUlt()
+				;g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available but DM Ult available")
+			}
 			else ;Lower max re-rolls so we move on; this Casino is busted
 			{
 				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
+				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Elly ult and DM ult both not available - screwed:"
 				;Sleep 250 ;To get some context in the recording
 				;Send !{f10} ;Alt+F10 for Nvidia overlay instant replay
 				this.MaxRedraws:=this.Redraws 
@@ -156,17 +190,21 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		}
 	}
 
-	UseDMUlt(sleepTime:=30) ;30ms default sleep is for use after Elly's ult triggers, to let the game process it
+	UseDMUlt() ;30ms default sleep is for use after Elly's ult triggers, to let the game process it - upped to 50ms 26Feb26 as 30ms does not appear to be enough TODO: We might need to defer this to a subsequent loop iteration if we keep having to increase it
 	{
 		if (g_Heroes[99].CanUseUltimate())
 		{
-			g_IBM.IBM_Sleep(sleepTime)
+			;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+			;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " DM Ult pre-use:"
 			retryCount:=g_Heroes[99].UseUltimate(50)
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
 				g_IBM.Logger.AddMessage("Casino DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 			}
+			;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+			;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " DM Ult post-use retryCount=[" . retryCount . "]:"
 		}
+		this.DeferredDMUlt:=0 ;Reset in all cases
 	}
 }
 

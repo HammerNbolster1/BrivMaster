@@ -26,7 +26,6 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
 global g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Includes IBM MemoryFunctions in g_SF.Memory

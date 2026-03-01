@@ -513,7 +513,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				activateFariUlt:=true
 			}
 		}
-		this.OnlineStackFarmSetup(fastLevelList,activateFariUlt,10000/gameSpeed) ;Allow 1000ms at x10 for each state, 800ms at x12.5
+		this.OnlineStackFarmSetup(fastLevelList,activateFariUlt,15000/gameSpeed) ;Allow 1500ms at x10 for each state, 1200ms at x12.5
         ElapsedTime:=0
         g_SharedData.UpdateOutbound("LoopString","Stack Normal")
 		if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP

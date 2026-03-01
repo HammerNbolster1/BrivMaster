@@ -457,11 +457,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.cycleCount:=0 ;Reset the count of runs in a cycle at offline. TODO: Could resetting this during the run cause problems? Might need to set a variable and process in Reset() - Note at this point the script expects this to happen
 	}
 
-	GetOffRampZone() ;returns the zone 5 Q-jumps from the reset, used to trigger offramp
-	{
-		return this.targetZone - this.zonesPerJumpQ * 5 ;TODO: Is it useful to check if this is after the Thellora target?
-	}
-
 	StackNormal()
     {
 		g_Heroes[58].InitFastSB()

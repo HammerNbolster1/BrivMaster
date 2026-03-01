@@ -614,8 +614,7 @@ class IC_BrivMaster_GemFarm_Class
         genericMsg.="1. Be sure Imports are up to date. Current imports are for: v" . g_SF.Memory.GetImportsVersion() . "`n"
         genericMsg.="2. Check the correct memory file is being used. Current version: " . g_SF.Memory.GameManager.GetVersion() . "`n"
         genericMsg.="3. If IC is running with admin privileges, then the script will also require admin privileges.`n"
-        if (_MemoryManager.is64bit)
-            genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
+        genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
 		return genericMsg
 	}
 

@@ -580,12 +580,16 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		if (COTF_HANDLER=="") ;Return empty TODO: We could fall back to base.UseUltimate() here, but that seems like it would lead to a lot sneaky glitches with DM resets?
 			return
 		ULTIMATE_KEY:=g_InputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
+		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-press retryCount=[" . retryCount . "] ellyUltActive=[" . _MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 		ULTIMATE_KEY.KeyPress()
 		retryCount:=0
 		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
 		ADDRESS_ULTIMATEATTACK:=_MemoryManager.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEM, ULTIMATEATTACK.Offset*)
 		ULT_ACTIVE_ADDRESS:=g_SF.Memory.ResolvePointers(COTF_HANDLER.IsUltimateActive)
 		ULT_ACTIVE_TYPE:=COTF_HANDLER.IsUltimateActive.ValueType
+		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-loop retryCount=[" . retryCount . "] ellyUltActive=[" . _MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 		while (_MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE)!=1 AND retryCount < maxRetries) ;Check Elly's IsUltimateActive
 		{
 			if (_MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*)) ;If the ultimate is queued, just wait on it
@@ -594,14 +598,20 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 				if (exitOnceQueued)
 					return retryCount
 				g_IBM.IBM_Sleep(10)
+				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Queued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 			}
 			else
 			{
 				ULTIMATE_KEY.KeyPress()
 				retryCount+=10
 				Sleep 0
+				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() unqueued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 			}
 		}
+		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() return retryCount=[" . retryCount . "] ellyUltActive=[" . _MemoryManager.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _MemoryManager.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 		return retryCount
 	}
 

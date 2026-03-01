@@ -360,3 +360,363 @@ class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_
 	}
 }
 
+class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
+{
+	userID:=0 ;TODO: Review the population and updating of all of these class variables
+    userHash:=""
+    instanceID:=0
+    networkID:=11
+    clientVersion:=999
+    activeModronID:=1
+    activePatronID:=0
+    dummyData:=""
+    webRoot:="http://ps22.idlechampions.com/~idledragons/" ;Default
+    timeoutVal:=60000
+
+	__New(userID:=0, userHash:=0, instanceID:=0)
+    {
+        this.userID:=userID
+        this.userHash:=userHash
+        this.instanceID:=instanceID
+        this.shinies:=0
+        this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+        return this
+    }
+
+	CallPreventStackFail(sprint, steelbones, message,launchScript:=false) ;This function should be called after checking sprint & steelbones are valid - i.e. move 0 if no value is present. TODO: Can maybe bring this in too?
+    {
+        stacks:=sprint + FLOOR(steelbones * g_IBM.RouteMaster.stackConversionRate)
+		g_IBM.Logger.AddMessage("Servercall Save via: "  . message . " Converted Haste=[" . stacks . "] from Haste=[" . sprint . "] and Steelbones=[" . steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
+		jsonString:="{""stats"":{""briv_steelbones_stacks"":0,""briv_sprint_stacks"":" . stacks . "}}"
+		boundaryHeader:=this.GetBoundryHeader()
+		save:=this.GetSaveFromJSON(jsonString,boundaryHeader)
+		if(launchScript) ;Do server call from new script to prevent hanging script due to network issues.
+        {
+            webRoot:=this.webRoot
+            scriptLocation:=A_LineFile . "\..\IC_BrivMaster_SaveStacks.ahk"
+            Run, %A_AhkPath% "%scriptLocation%" "%webRoot%" "%save%" "%boundaryHeader%"
+        }
+        else
+        {
+            try
+                response:=this.ServerCallSave(save,boundaryHeader)
+            catch
+                g_IBM.Logger.AddMessage("Failed to save Briv stacks")			
+        }
+		return response ;Note this will only be meaningful for the synchronous version of the call
+    }
+	
+    ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specifically for use with saves. saveBody must be encoded before using this call.
+    {
+        response:=""
+        WR:=ComObjCreate( "WinHttp.WinHttpRequest.5.1" )
+        ; https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
+        WR.SetTimeouts( "0", "15000", "7500", "30000" )
+        Try 
+		{
+            WR.Open("POST",this.webroot . "post.php?call=saveuserdetails&", true)
+            WR.SetRequestHeader("Accept-Encoding", "identity")
+			WR.SetRequestHeader("Content-Type", "multipart/form-data; boundary=""" . boundaryHeader . """")
+            WR.SetRequestHeader("User-Agent", "BestHTTP")
+            WR.Send(saveBody)
+            WR.WaitForResponse(-1)
+            data:=WR.ResponseText
+            if(data) ;Don't try to JSON.Load the string if empty TODO: Review this codepath, does it retry in the no response case? I don't think so...
+			{
+				try
+				{
+					response:=AHK_JSON.Load(data)
+					if(!(response.switch_play_server=="")) ;NOT(response.switch_play_server=="") => switch_play_server exists. TODO: Should this retry when the server was valid? Probably not given the nature of this call - if the server is down we probably want to return to the run
+					{
+						retryNum++
+						this.WebRoot:=response.switch_play_server
+						if(retryNum<=3)
+						{						
+							WR:=""
+							return this.ServerCallSave(saveBody,boundaryHeader,retryNum) 
+						}
+					}
+				}
+			}
+        }
+		WR:=""
+        return response
+    }
+
+    __Delete() ;Free library after use
+    {
+        DllCall("FreeLibrary", "Ptr", this.md5Module)
+    }
+
+    MD5Save(stringVal) ;Creates a salted md5 checksum for a save string. Modified from https://www.autohotkey.com/boards/viewtopic.php?f=6&t=21
+    {
+        stringVal:=stringVal . "somethingpoliticallycorrect"
+        VarSetCapacity(MD5_CTX, 104, 0)
+		DllCall("advapi32\MD5Init", "Ptr", &MD5_CTX)
+        DllCall("advapi32\MD5Update", "Ptr", &MD5_CTX, "AStr", stringVal, "UInt", StrLen(stringVal))
+        DllCall("advapi32\MD5Final", "Ptr", &MD5_CTX)
+        loop, 16
+            o.=Format("{:02" (case ? "X" : "x") "}", NumGet(MD5_CTX, 87 + A_Index, "UChar"))
+        StringLower, o,o
+        return o
+    }
+
+    GetSaveFromJSON(jsonString,boundaryHeader,timeStamp:="0") ;Converts user's data into form data that can be submitted for a save
+    {
+		userData:=g_zlib.Deflate(jsonString)
+		checksum:=this.MD5Save(jsonString)
+		Random, r1, 0, 65535
+		Random, r2, 0, 65535
+		boundrySuffix:=Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
+        mimicSave:="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""call""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 15`r`n`r`n"
+        mimicSave.="saveuserdetails`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""language_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 1`r`n`r`n"
+        mimicSave.="1`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""user_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.userID)  "`r`n`r`n"
+        mimicSave.=this.userID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""hash""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 32`r`n`r`n"
+        mimicSave.=this.userHash . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""details_compressed""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  (StrLen(userData))  "`r`n`r`n"
+        mimicSave.=userData . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""checksum""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 32`r`n`r`n"
+        mimicSave.=checksum . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""timestamp""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(timeStamp)  "`r`n`r`n"
+        mimicSave.=timeStamp . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""request_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: 1`r`n`r`n"
+        mimicSave.="1`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""network_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: " StrLen(this.networkID)  "`r`n`r`n"
+        mimicSave.=this.networkID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""mobile_client_version""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.clientVersion)  "`r`n`r`n"
+        mimicSave.=this.clientVersion . "`r`n"
+        mimicSave.="--" . boundaryHeader . "`r`n"
+        mimicSave.="Content-Disposition: form-data; name=""instance_id""`r`n"
+        mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
+        mimicSave.="Content-Length: "  StrLen(this.instanceID)  "`r`n`r`n"
+        mimicSave.=this.instanceID . "`r`n"
+        mimicSave.="--" . boundaryHeader . "--`r`n"
+        return mimicSave
+    }
+	
+	GetBoundryHeader()
+	{
+		Random, r1, 0, 65535
+		Random, r2, 0, 65535
+		return "BestHTTP_HTTPMultiPartForm_" . Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
+	}
+
+    UpdateDummyData()
+    {
+        this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
+    }
+
+    ;============================================================
+    ;Various server call functions that should be pretty obvious.
+    ;============================================================
+    ;Except this one, it is used internally and shouldn't be called directly.
+    ServerCall(callName, parameters, timeout:="", retryNum:=0) 
+    {
+        response:=""
+        URLtoCall:=this.webRoot . "post.php?call=" . callName . parameters
+        timeout:=timeout ? timeout : this.timeoutVal
+        WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        WR.SetTimeouts(0,45000,30000,timeout) ;https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
+        Try
+		{
+            WR.Open("POST",URLtoCall,true)
+            WR.SetRequestHeader("Content-Type","application/x-www-form-urlencoded")
+            WR.Send()
+            WR.WaitForResponse(-1)
+            data:=WR.ResponseText
+            Try
+            {
+                response:=AHK_JSON.Load(data)
+                if(!(response.switch_play_server==""))
+                {
+                    retryNum++
+                    this.WebRoot:=response.switch_play_server
+                    if(retryNum<=3) 
+                        return this.ServerCall(callName,parameters,timeout,retryNum)
+                }
+            }
+        }
+		WR:=""
+        return response
+    }
+
+	/* Only used by IsOnWorldMap which we've commented out
+    CallUserDetails() ; Pulls user details from the server and returns it in a json parsed object
+    {
+        getUserParams := this.dummyData . "&include_free_play_objectives=true&instance_key=1&user_id=" . this.userID . "&hash=" . this.userHash
+        userDetails := this.ServerCall( "getuserdetails", getUserParams )
+        return userDetails
+    }
+	*/
+
+    CallLoadAdventure(adventureToLoad) ;Starts a new adventure and returns the response
+    {
+        patronTier:=this.activePatronID ? 1 : 0
+        advParams:=this.dummyData . "&patron_tier=" . patronTier . "&user_id=" . this.userID . "&hash=" . this.userHash . "&instance_id=" . this.instanceID 
+            . "&game_instance_id=" . this.activeModronID . "&adventure_id=" . adventureToLoad . "&patron_id=" . this.activePatronID
+        return this.ServerCall("setcurrentobjective", advParams)
+    }
+
+    CallEndAdventure() ;Calling this loses everything earned during the adventure, should only be used when stuck
+    {
+        advParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&game_instance_id=" this.activeModronID
+        return this.ServerCall("softreset",advParams)
+    }
+
+    CallBuyChests(chestID,chests,chestType:="") ;Buys <chests> number of <chestID> chests. Automatically uses Patron purchase call for patron chests. TODO: Either add Elminster patron, or strip this back to just basic chests
+    {
+        if (chests>250)
+            chests:=250
+        else if (chests<1)
+            return
+        if(chestType=="eventV2")
+        {
+            chestParams := this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests "&spend_event_v2_tokens=1"
+            return this.ServerCall("buysoftcurrencychest",chestParams)
+        }
+        else if(chestID!=152 AND chestID!=153 AND chestID!=219  AND chestID!=311)
+        {
+            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests
+            return this.ServerCall("buysoftcurrencychest",chestParams)
+        }
+        else
+        {
+            switch chestID
+            {
+                case 152:
+                    itemID := 1
+                    patronID := 1
+                case 153:
+                    itemID := 23
+                    patronID := 2
+                case 219:
+                    itemID := 45
+                    patronID := 3
+                case 311:
+                    itemID := 76
+                    patronID := 4
+                Default:
+                    return ""
+            }
+            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&patron_id=" patronID "&shop_item_id=" itemID
+            return this.ServerCall( "purchasepatronshopitem", chestParams )
+        }
+    }
+
+    CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest.
+    {
+        if (chests>1000)
+            chests:=1000
+        else if (chests<1)
+            return
+        chestParams:="&gold_per_second=0&checksum=4c5f019b6fc6eefa4d47d21cfaf1bc68&user_id=" this.userID "&hash=" this.userHash 
+            . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests
+        return this.ServerCall("opengenericchest",chestParams,60000)
+    }
+
+	/* ;Not actually used, we just seem to assume LoadAdventure will work after sending the end adventure call
+    ;A method to check if the party is on the world map. Necessary state to use callLoadAdventure()
+    IsOnWorldMap()
+    {
+        currentAdventure := 0
+        userDetails := this.CallUserDetails()
+        if ( !IsObject( userDetails ) )
+            return "Failed to fetch or build user details."
+        for k, v in userDetails.details.game_instances
+        {
+            if (v.game_instance_id == this.activeInstanceID) 
+            {
+                currentAdventure := v.current_adventure_id
+            }
+        }
+        if ( currentAdventure == -1 )
+            return 1
+        else
+            return 0
+    }
+	*/
+    
+    CallGetPlayServer() ;Get the loadbalanced Play Server
+    {
+        return this.ServerCall("getPlayServerForDefinitions", this.dummyData)
+    }
+
+    UpdatePlayServer() ;TODO: Consider how this interacts with the webroot memory read
+    {
+		oldWebRoot:=this.webRoot
+		this.webRoot:="http://ps23.idlechampions.com/~idledragons/" ;Assume ps23 will always be available (avoiding using master) TODO: Why do we call ps23 and not the current server to check this?
+		response:=this.CallGetPlayServer()
+		if (response!="" AND response.play_server!="")
+			this.webRoot:=response.play_server
+		else
+			this.webRoot:=oldWebRoot
+		;Note: A repeat this.CallGetPlayServer() call and logic was removed, it might have been for debugging...or might have served an actual purpose
+    }
+}
+
+class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCalls without the proxy settings
+{
+    __New()
+    {
+        return this
+    }
+
+    BasicServerCall(url, timeout:=60000 ) 
+    {
+        response:=""
+        WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        WR.SetTimeouts( 0, 45000, 30000, timeout)
+        Try
+		{
+            WR.Open("GET", Url, true)
+            WR.SetRequestHeader( "Content-Type","application/x-www-form-urlencoded" )
+            WR.SetRequestHeader( "Accept","application/json" )
+            WR.Send()
+            WR.WaitForResponse(-1)
+            data:=WR.ResponseText
+            Try
+            {
+                response:=AHK_JSON.Load(data)
+            }
+        }
+		WR:=""
+        catch exception
+		{
+			return exception
+		}
+        return response
+    }
+}

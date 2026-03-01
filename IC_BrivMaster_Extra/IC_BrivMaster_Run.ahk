@@ -42,9 +42,6 @@ global g_SharedData:=New IC_BrivMaster_SharedData_Class
 
 #include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
 
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add)
-SH_UpdateClass.UpdateClassFunctions(_MemoryManager, IBM_Memory_Manager)
-
 g_SharedData.Init() ;Loads settings so must be prior to the icon set and Window:Show in CreateWindow()
 g_IBM.CreateWindow()
 

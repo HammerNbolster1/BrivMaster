@@ -6,9 +6,6 @@
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
-SH_UpdateClass.AddClassFunctions(GameObjectStructure, IC_BrivMaster_GameObjectStructure_Add) ;Required so that the Ellywick tool can work in the same way as the main script
-SH_UpdateClass.AddClassFunctions(_MemoryManager, IBM_Memory_Manager)
-
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
 global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI

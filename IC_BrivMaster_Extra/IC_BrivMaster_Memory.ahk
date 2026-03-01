@@ -1,86 +1,77 @@
-#include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH__MemoryManager.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH_MemoryPointer.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\MemoryRead\SH_StaticMemoryPointer.ahk
+;Memory related functions, excluding the actual reader as that needs to be separate so the Relay can #include only that
+#include %A_LineFile%\..\IC_BrivMaster_Memory_Reader.ahk
 
-class IC_BrivMaster_EngineSettings_Class extends SH_StaticMemoryPointer ;EngineSettings class contains IC's EngineSettings class structure. Useful for finding webroot for doing server calls.
+class IC_BrivMaster_EngineSettings_Class extends IC_BrivMaster_Memory_Static_Pointer_Class ;EngineSettings class contains IC's EngineSettings class structure. Useful for finding webroot for doing server calls.
 {
     Refresh()
     {
-        if (_MemoryManager.is64bit=="") ;Don't build offsets if no client is available to check variable types.
+        if (!_IBM_MM.IsAttached) ;Don't build offsets if no client is available to check variable types.
             return
-        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress
-            this.Is64Bit:=_MemoryManager.is64bit
             if (this.UnityGameEngine=="")
             {
                 this.UnityGameEngine:={}
                 this.UnityGameEngine.Core:={}
-                this.UnityGameEngine.Core.EngineSettings:=new GameObjectStructure(this.StructureOffsets)
-                this.UnityGameEngine.Core.EngineSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
-                this.UnityGameEngine.Core.EngineSettings.Is64Bit:=_MemoryManager.is64Bit
+                this.UnityGameEngine.Core.EngineSettings:=new IBM_GOS(this.StructureOffsets)
+                this.UnityGameEngine.Core.EngineSettings.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
                 #include *i %A_LineFile%\..\Offsets\IC_EngineSettings_Import.ahk
                 return
             }
-            this.UnityGameEngine.Core.EngineSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "EngineSettings")
+            this.UnityGameEngine.Core.EngineSettings.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "EngineSettings")
             this.ResetBasePtr(this.UnityGameEngine.Core.EngineSettings)
         }
     }
 }
 
-class IC_BrivMaster_GameSettings_Class extends SH_StaticMemoryPointer ;GameSettings class contains IC's GameSettings class structure. Useful for finding details for doing server calls
+class IC_BrivMaster_GameSettings_Class extends IC_BrivMaster_Memory_Static_Pointer_Class ;GameSettings class contains IC's GameSettings class structure. Useful for finding details for doing server calls
 {
     Refresh()
     {
-        if (_MemoryManager.is64bit == "") ;Don't build offsets if no client is available to check variable types.
+        if (!_IBM_MM.IsAttached) ;Don't build offsets if no client is available to check variable types.
             return
-        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress
-            this.Is64Bit:=_MemoryManager.is64bit
             if (this.CrusadersGame=="")
             {
                 this.CrusadersGame:={}
-                this.CrusadersGame.GameSettings:=new GameObjectStructure(this.StructureOffsets)
-                this.CrusadersGame.GameSettings.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
-                this.CrusadersGame.GameSettings.Is64Bit:=_MemoryManager.is64Bit
+                this.CrusadersGame.GameSettings:=new IBM_GOS(this.StructureOffsets)
+                this.CrusadersGame.GameSettings.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
                 #include *i %A_LineFile%\..\Offsets\IC_GameSettings_Import.ahk
                 return
             }
-            this.CrusadersGame.GameSettings.BasePtr := new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "GameSettings")
+            this.CrusadersGame.GameSettings.BasePtr := new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "GameSettings")
             this.ResetBasePtr(this.CrusadersGame.GameSettings)
         }
     }
 }
 
-class IC_BrivMaster_IdleGameManager_Class extends SH_MemoryPointer ;GameManager class contains the in game data structure layout
+class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_Class ;GameManager class contains the in game data structure layout
 {
     Refresh()
     {
-        baseAddress:=_MemoryManager.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
-        if (_MemoryManager.is64bit == "") ;Don't build offsets if no client is available to check variable types. TODO: This is really being used as a 'is attached to process' flag, which works because wer'e only using 64 bit, but should probably be it's own thing - see 64bit purge
+        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
+        if (!_IBM_MM.IsAttached) ;Don't build offsets if no client is available to check variable types
             return
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress
-            this.Is64Bit:=_MemoryManager.is64bit
             ; Note: Using example Offsets 0xCB0,0 from CE, 0 is a mod (+) and disappears leaving just 0xCB0
             ; this.StructureOffsets[1] += 0x10
             if (this.IdleGameManager=="")
             {
-                this.IdleGameManager:=New GameObjectStructure(this.StructureOffsets)
-                this.IdleGameManager.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "IdleGameManager")
-                this.IdleGameManager.Is64Bit:=_MemoryManager.is64bit
+                this.IdleGameManager:=New IBM_GOS(this.StructureOffsets)
+                this.IdleGameManager.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "IdleGameManager")
                 #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk ;Build offsets for class using imported AHK files.
-                ; DEBUG: Enable this line to be able to view the variable name of the GameObject. (e.g. this.game would have a GSOName variable that says "game" )
-                ; this.game.SetNames()
                 return
             }
             ; Objects exist, update memory addresses only
             ; Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
-            this.IdleGameManager.BasePtr:=new SH_BasePtr(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
+            this.IdleGameManager.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
             this.ResetBasePtr(this.IdleGameManager)
         }
     }
@@ -853,9 +844,8 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.Versions.Pointer_Revision:=currentPointers["Pointer_Revision"]
 		this.Versions.Pointer_Version_Major:=currentPointers["Pointer_Version_Major"]
 		this.Versions.Pointer_Version_Minor:=currentPointers["Pointer_Version_Minor"]
-        _MemoryManager.exeName:=g_IBM_Settings["IBM_Game_Exe"]
-        _MemoryManager.Refresh()
-        this.Is64bit:=_MemoryManager.Is64Bit ;TODO: We need to remove 32 bit support in general
+        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this. Setting won't be available here so what is this actually acheveing?
+        _IBM_MM.Refresh()
         this.GameManager:=new IC_BrivMaster_IdleGameManager_Class(currentPointers.IdleGameManager.moduleAddress, currentPointers.IdleGameManager.moduleOffset)
         this.GameSettings:=new IC_BrivMaster_GameSettings_Class(currentPointers.GameSettings.moduleAddress, currentPointers.GameSettings.staticOffset, currentPointers.GameSettings.moduleOffset)
         this.EngineSettings:=new IC_BrivMaster_EngineSettings_Class(currentPointers.EngineSettings.moduleAddress, currentPointers.EngineSettings.staticOffset, currentPointers.EngineSettings.moduleOffset)
@@ -866,13 +856,12 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
     {
-        _MemoryManager.exeName:=g_IBM_Settings["IBM_Game_Exe"]
-        isExeRead:=_MemoryManager.Refresh(,pid)
+        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this
+        isExeRead:=_IBM_MM.Refresh(,pid)
         if(isExeRead==-1)
             return
-        if(_MemoryManager.handle=="")
+        if(_IBM_MM.handle=="")
             MsgBox, , , Could not read from exe. Try running as Admin. , 7
-        this.Is64Bit:=_MemoryManager.is64Bit
 		this.GameManager.Refresh()
         this.GameSettings.Refresh()
         this.EngineSettings.Refresh()
@@ -1505,8 +1494,8 @@ class IC_BrivMaster_MemoryFunctions_Class
 		return this.GameManager.game.gameInstances[0].InstanceUserData_k__BackingField.InstanceId.Read()
 	}
 	
-	ResolvePointers(GOS) ;Takes a GameObjectStructure objects and uses the memory manager to extra the address
+	ResolvePointers(GOS) ;Takes an IBM_GOS object and uses the memory manager to extract the address
 	{
-		return _MemoryManager.instance.getAddressFromOffsets(GOS.BasePtr.BaseAddress,GOS.FullOffsets*)
+		return _IBM_MM.instance.getAddressFromOffsets(GOS.BasePtr.BaseAddress,GOS.FullOffsets*)
 	}
 }

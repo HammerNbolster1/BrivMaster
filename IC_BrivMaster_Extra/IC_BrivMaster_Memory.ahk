@@ -176,6 +176,663 @@ class IC_BrivMaster_Memory_Pointer_Class
         }
     }
 }
+     
+class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit only. GameObjectStructure per the original, and given a short name as it's in every line of imports and saving a few bytes is saving a few bytes
+{
+    ;Reserved words for IBM_GOS. Imports with same name will cause unpredictable behavior.
+    FullOffsets:=Array()		; Full list of offsets required to get from base pointer to this object
+    ValueType:="Int"            ; ValueType describes what kind of data is at the location in memory. Note: "List", "Dict", "Stack", "Queue" and "HashSet" are not a memory data type but are being used to identify conditions such as when a ListIndex must be added.
+    Offset:=0x0                 ; The offset from last object to this object.
+    IsAddedIndex:=false         ; __Get lookups on non-existent keys will create key objects with this value being true. Prevents cloning non-existent values.
+    _CollectionKeyType:=""
+    _CollectionValType:=""
+    BasePtr:={}
+    LastDictVersion:=""
+    LastDictVersionByKey:={}
+    StartAtLastPos:=False
+    LastDictIndex:={}
+    DictionaryObject:={}
+    static LastDictPos:=0
+    static ReadIsLocked:=False
+    static InvalidDictionaryKeyString:="<invalid key>"
+    static SystemTypes:={ "System.Byte" : "Char"
+        ,"System.UByte" : "UChar"
+        ,"System.Short" : "Short"
+        ,"System.UShort" : "UShort"
+        ,"System.Int32" : "Int"
+        ,"System.UInt32" : "UInt"
+        ,"System.Int64" : "Int64"
+        ,"System.Enum" : "Int"
+        ,"System.UInt64" : "Int64"
+        ,"System.Single" : "Float"
+        ,"System.USingle" : "UFloat"
+        ,"System.Double" : "Double"
+        ,"System.Boolean" : "Char"
+        ,"System.String" : "UTF-16"
+        ,"Engine.Numeric.Quad" : "Quad" }
+    static ValueTypeToBytes := { "Char": 0x4, "UChar": 0x4, "Short": 0x4
+                                , "UShort": 0x4, "Int": 0x4, "UInt": 0x4
+                                , "Int64": 0x8, "UInt64": 0x8, "Float": 0x4
+                                , "UFloat": 0x4, "Double": 0x8, "Char": 0x4, "UTF-16" : 0x8, "Quad": 0x10 }
+
+     __new(baseStructureOrFullOffsets, ValueType := "Int", appendedOffsets*) ;Creates a new instance of IBM_GOS
+    {
+        this.ValueType:=ValueType
+        if(appendedOffsets[1]) ; Copy base and add offset
+        {
+            this.BasePtr:=baseStructureOrFullOffsets.BasePtr
+            this.Offset:=appendedOffsets[1]
+            this.FullOffsets:=baseStructureOrFullOffsets.FullOffsets.Clone()
+            this.FullOffsets.Push(this.Offset*)
+        }
+        else
+            this.FullOffsets.Push(baseStructureOrFullOffsets*)
+    }
+
+    ; BEWARE of cases where you may be looking in a dictionary for a key that is the same as a value of the object in the dictionary (e.g. dictionary["Effect"].Effect)
+    ; When a key is not found for objects which have collections, use this function.
+    __Get(key, index:=0, startAtLastPos:=False, byteSizeOverride:=0x0) ;TODO: Why does this assign to returnObj which is never used?
+    {
+        static notificationSet:=False
+        this.StartAtLastPos:=startAtLastPos ;Always default to false unless set otherwise
+        ; Properties are not found using HasKey().
+        if(key=="" OR key=="_ArrayDimensions")
+            return returnObj:=this.ReturnGameObject("")
+        else if(key=="size") ;size attempts to find choose the offset for the size of the collection and return a IBM_GOS that has that offset included.
+            return returnObj:=this.ReturnGameObject(this.CreateSizeObject())
+        else if(key=="_head" AND this.ValueType=="Queue")
+            return returnObj:=this.ReturnGameObject(this.CreateHeadObject())
+        else if (key=="__version")
+            return returnObj:=this.ReturnGameObject(this.CreateVersionObject())
+        if(this.ValueType=="Dict" OR this.ValueType=="SortedDict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys.
+            return returnObj:=this.ReturnGameObject(this.GetDictionaryObject(key, index))
+        else if(this.ValueType=="List" OR this.ValueType=="Stack" OR this.ValueType=="Queue") ;Special case for List/Stack/Queue collections in a gameobject.
+		{
+            if ((resultObject:=this.HandleListStackQueue(key))!="")
+                return returnObj:=this.ReturnGameObject(resultObject)
+        }
+        else if (this.ValueType== "HashSet")
+		{
+            if key is not integer ;Don't try to create key objects when keys are invalid
+                return returnObj:=this.ReturnGameObject("")
+            this.UpdateCollectionOffsets(key, 0x18, this.CalculateHashSetOffset(key) + 0)
+            return returnObj:=this.ReturnGameObject(this[key])
+        }
+        else if key is number
+        {
+            this.UpdateCollectionOffsets(key, "", (this.CalculateArrayOffset(key,, byteSizeOverride) + 0))
+            return returnObj:=this.ReturnGameObject(this[key])
+        }
+        return returnObj:=this.ReturnGameObject("")
+    }
+
+    GetOffsets() ; Returns the full offsets of this object after BaseAddress.
+	{
+        return this.FullOffsets
+    }
+
+    CreateSizeObject()
+    {
+        ; TODO: Check HashSet<T> variations that appear to have 0x20, 0x30 for "count"
+        sizeObject := this.QuickClone()
+        sizeObject.ValueType := "Int"
+        if(this.ValueType == "Stack")
+            sizeObject.FullOffsets.Push(0x20)
+        else if(this.ValueType == "Queue")
+            sizeObject.FullOffsets.Push(0x28)
+        else if(this.ValueType == "Dict")
+            sizeObject.FullOffsets.Push(0x40)
+        else if(this.ValueType == "SortedDict")
+            sizeObject.FullOffsets.Push(0x20,0x30)
+        else if(this.ValueType == "HashSet")
+            sizeObject.FullOffsets.Push(0x30)
+        else
+        { ; Assume Array / this.ValueType == "List"
+            sizeObject.ValueType:=this.ValueType ;TODO: Why does this overwrite the Int type with array/list type? The size can only be an Int?
+            sizeObject.FullOffsets.Push(0x18)
+        }
+        return sizeObject
+    }
+
+    ; Create an object to read the head of a Queue.
+    CreateHeadObject()
+    {
+        headObject:=this.QuickClone()
+        headObject.FullOffsets.Push(0x20)
+        return headObject
+    }
+
+    CreateVersionObject()
+    {
+        versionObject:=this.QuickClone()
+        versionObject.ValueType:="Int"
+        if(this.ValueType == "Stack")
+            versionObject.FullOffsets.Push(0x2C)
+        else if(this.ValueType == "List")
+            versionObject.FullOffsets.Push(0x1C)
+        else if(this.ValueType == "Queue")
+            versionObject.FullOffsets.Push(0x28)
+        else if(this.ValueType == "Dict")
+            versionObject.FullOffsets.Push(0x4C)
+        else if(this.ValueType == "SortedDict")
+            sizeObject.FullOffsets.Push(0x20,0x30) ;This was 0x20,0x3, which seems unlikely as not 4-byte aligned? We don't actually use any of these to test with
+        else if(this.ValueType == "HashSet")
+            versionObject.FullOffsets.Push(0x104)
+        else ; Unsupported ValueType
+            return ""
+        return versionObject
+    }
+
+    HandleListStackQueue(key)
+    {
+        IBM_GOS.ReadIsLocked:=True ;Lock before creating list/stack/queue collections
+        if key is number
+        {
+            offset := this.CalculateOffset(key) + 0
+            this.UpdateCollectionOffsets(key, 0x10, offset)
+            return returnObj := this.ReturnGameObject(this[key])
+        }
+        else if (key=="_items")
+        {
+            _items:=this.StableClone()
+            _items.FullOffsets.Push(0x10)
+            _items.ValueType:="Int64"
+            return returnObj:=this.ReturnGameObject(_items)
+        }
+        return returnObj := this.ReturnGameObject("")
+    }
+
+    GetDictionaryObject(key, index)
+    {
+        IBM_GOS.ReadIsLocked:=True                                            				; Lock gameobject reads while a dictionary is being built
+        if(IsObject(key) AND key.Count()==2)
+            key:=key[1], index:=key[2]
+        isUnstable:=IBM_GOS.SystemTypes[this._CollectionKeyType] == ""        				; Check if Key value is not a known type - Unstable is a dictionary of pointers that can change k,v pairs often.
+        if(isUnstable AND this.DoesCollectionNeedReset())
+            this.ResetCollection()
+        if (key=="key")
+        {
+            offset:=this.CalculateDictOffset(["key",index]) + 0                         	; Expected offset to the key for the <index>th entry.
+            keyReadObj:=this.GetKeyObj(index)
+            offsetInsertLoc:=keyReadObj.FullOffsets.Count() + 1,                          	; Current offsets count
+            this.UpdateChildrenWithFullOffsets(keyReadObj, offsetInsertLoc, [0x18, offset])	; Update all sub-objects with their missing collection/item offsets.
+            return returnObj:=this.ReturnGameObject(keyReadObj)                             ; return temporary key object
+        }
+        else if (key=="value")
+        {
+            offset:=this.CalculateDictOffset(["value",index]) + 0                           ; Expected offset to the key for the <index>th entry.
+            keyReadObj:=this.GetKeyObj(index)
+            IBM_GOS.ReadIsLocked:=False                                      				; Disable lock before read
+            key:=keyReadObj.Read()
+            if(index==this.LastDictIndex[key])                                            	; Use previously created object if it is still being used.
+                return this.DictionaryObject[key]                                           ; Return cached key
+            else if (key=="")
+                return this.ReturnGameObject("")
+            else
+                this.DictionaryObject[key]:=""                                            	; Clear cached key if it exists.
+            IBM_GOS.ReadIsLocked:=True                                       				; Enable Lock before building entry
+            this.BuildDictionaryEntry(key, index, 0x18, offset)          					; Build a dictionary entry for this key.
+            return returnObj:=this.ReturnGameObject(this.DictionaryObject[key])				; return the temporary value object with access to all objects it has access to.
+        }
+        else
+        {
+            ; TODO: Look into feasibility of using same dictionary hash function to look up keys. (Requires DLL call?) Current method is O(n) instead of O(1)
+            if(this.LastDictVersionByKey[key]!="" AND this.__version.Read()==this.LastDictVersionByKey[key])                    ; Use previously created object if it is still being used.
+                return returnObj:=this.ReturnGameObject(this.DictionaryObject[key])
+            keyIndex:=this.GetDictIndexOfKeyQuick(key)                                    	; Look up what index has the key entry equal to the key passed in.
+            if(keyIndex < 0)                                                                ; Failed to find index, do not create an entry.
+                return returnObj:=this.ReturnGameObject("")                               	; Reset read lock before returning nothing
+            if(keyIndex!="" AND keyIndex==this.LastDictIndex[key])                          ; Use previously created object if it is still being used.
+                return returnObj:=this.ReturnGameObject(this.DictionaryObject[key])       	; Return cached key
+            else
+                this.DictionaryObject[key] := ""
+        }
+        return returnObj := this.ReturnGameObject("")
+    }
+
+    GetKeyObj(index)
+    {
+        keyOffset:=this.CalculateDictOffset(["key",index]) + 0					; Expected offset to the value for the <index>th entry.
+        keyReadObject:=this.QuickClone()										; temp object for lookup
+        keyReadObject.FullOffsets.Push(0x18, keyOffset)							; add offsets for key
+        keyReadObject.ValueType:=IBM_GOS.SystemTypes[this._CollectionKeyType]	; Update key's value type if it is known
+        if (keyReadObject.ValueType=="")                                     	; Key value is not a known type which means the key is likely a pointer and subject to unpredictable changes. (Do not cache these dictionary lookups)
+            keyReadObject.ValueType:="Int64"
+        return keyReadObject
+    }
+
+    ReturnGameObject(object)
+    {
+        IBM_GOS.ReadIsLocked:=False ; Reset read lock before returning if needed
+        return object
+    }
+
+    QuickClone() ; Function makes copy of the current object and its lists but not a full deep copy.
+    {
+        var:=new IBM_GOS(this.FullOffsets)
+        var.BasePtr:=this.BasePtr.Clone() ;TODO: Why do we need to clone the base pointer, it's just a reference? Might have been something added to try to address a memory leak due to AHK reference counting?
+        var.ValueType:=this.ValueType
+        var.Offset:=this.Offset
+        var._CollectionKeyType:=this._CollectionKeyType
+        var._CollectionValType:=this._CollectionValType
+        if (this._ArrayDimensions)
+            var._ArrayDimensions:=this._ArrayDimensions
+        return var
+    }
+
+    Clone(typeOfObject:="") ; Function makes a deep copy of the current object.
+    {
+        var:=new IBM_GOS(this.FullOffsets)
+        for k,v in this ;Iterate all the elements of the game object structure and clone time
+        {
+            if(isObject(v) AND k=="DictionaryObject") ; Ignore self referential dictionary.
+                continue
+            else if(IsObject(v) AND k!="BasePtr") ; Keep BasePtr as a reference
+                var[k]:=v.Clone()
+            else
+                var[k]:=v
+        }
+        return var
+    }
+
+    StableClone() ; For cloning without copying dynamically added items to the clone. Ignores objects with IsAddedIndex = true
+    {
+        var:=new IBM_GOS(this.FullOffsets)
+        for k,v in this ;Iterate all the elements of the game object structure and clone them
+        {
+            if(isObject(v) AND k=="DictionaryObject") ; Do not copy self referential dictionary objects
+                continue
+            if(!IsObject(v) OR k=="BasePtr") ; Keep BasePtr as a reference
+            {
+                var[k] := v
+                continue
+            }
+            if(ObjGetBase(v).__Class == "IBM_GOS" AND !v.IsAddedIndex)
+                var[k]:=v.StableClone()
+            else if(ObjGetBase(v).__Class != "IBM_GOS")
+                var[k]:=v.Clone()
+        }
+        return var
+    }
+
+    BuildDictionaryEntry(key, keyindex, collectionEntriesOffset, offset)     ; Build a dictonary entry for the key.
+    {
+        this.DictionaryObject[key]:=""                                               ; Delete key object before building new ones.
+        this.DictionaryObject.Delete(key)
+        this.DictionaryObject[key]:=this.Clone()                                     ; Deep copy of this object.
+        this.LastDictIndex[key]:=keyIndex                                            ; Creating new index for key; remember this index.
+        this.DictionaryObject[key].IsAddedIndex:=true                                ; Stable clones won't copy this object
+        offsetInsertLoc:=this.DictionaryObject[key].FullOffsets.Count() + 1,         ; Current offsets count.
+        this.DictionaryObject[key].FullOffsets.Push(collectionEntriesOffset, offset)   ; Add the offsets to this object so the .Read() will give the value of the value.
+        this.DictionaryObject[key].ValueType:=IBM_GOS.SystemTypes[this._CollectionValType] ? IBM_GOS.SystemTypes[this._CollectionValType] : this.DictionaryObject[key].ValueType
+        this.LastDictVersionByKey[key]:=this.__version.Read()
+        this.UpdateChildrenWithFullOffsets(this.DictionaryObject[key], offsetInsertLoc, [collectionEntriesOffset, offset]) ; Update all sub-objects with their missing collection/item offsets.
+    }
+
+    UpdateCollectionOffsets(key, collectionEntriesOffset, offset) ;Creates a gameobject at key, updates its offsets, copies the other values in the object to key object, propagates changes down chain of objects under key.
+    {
+        this[key]:=this.StableClone()
+        this[key].IsAddedIndex:=true
+        if (this._ArrayDimensions)
+            this[key]._ArrayDimensions := this._ArrayDimensions - 1
+        location := this.FullOffsets.Count() + 1
+        if(collectionEntriesOffset=="") ; Array type, has no items
+        {
+            this[key].FullOffsets.Push(offset)
+            this.UpdateChildrenWithFullOffsets(this[key], location, [offset])
+        }
+        else
+        {
+            this[key].FullOffsets.Push(collectionEntriesOffset, offset)
+            this.UpdateChildrenWithFullOffsets(this[key], location, [collectionEntriesOffset, offset])
+        }
+    }
+
+    UpdateChildrenWithFullOffsets(currentObj, insertLoc:=1, offset:="") ; Starting at currentObj, updates the fulloffsets variable in key and all children of key recursively.
+    {
+        for k,v in currentObj
+        {
+            if(IsObject(v) AND ObjGetBase(v).__Class=="IBM_GOS" AND v.FullOffsets!="")
+            {
+                v.FullOffsets.InsertAt(insertLoc, offset*)
+                v.UpdateChildrenWithFullOffsets(v, insertLoc, offset)
+            }
+            else if (k=="DictionaryObject")
+                for x,y in v
+                    y.UpdateChildrenWithFullOffsets(y, insertLoc, offset)
+        }
+    }
+
+    Read(valueType:="")
+    {
+        if(IBM_GOS.ReadIsLocked)
+            return ""
+        if(!valueType)
+            valueType:=this.ValueType
+        baseAddress:=this.BasePtr.BaseAddress ? this.BasePtr.BaseAddress + 0 : this.BasePtr.BaseAddress ; do math on non-null non-zero value to ensure number instead of string. Prevents memory leaks.
+        if (baseAddress<=0)
+            return ""
+        if(valueType=="UTF-16") ; take offsets of string and add offset to "value" of string
+        {
+            offsets:=this.FullOffsets.Clone()
+            offsets.Push(0x14)
+            var:=_IBM_MM.instance.readstring(baseAddress, bytes:=0, valueType, offsets*) ;TODO: Why the assignment to 'bytes' here?
+        }
+        else if (valueType=="List" OR valueType=="Dict" OR valueType=="SortedDict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk
+        {
+            var:=_IBM_MM.instance.read(baseAddress, "Int", (this.GetOffsets())*)
+        }
+        else if (valueType=="Array")
+        {
+            valueType := IBM_GOS.SystemTypes[this._CollectionValType]
+            if (this._ArrayDimensions > 0)
+                valueType := "Int64"
+            var := _IBM_MM.instance.read(baseAddress, , (this.GetOffsets())*)
+        }
+        else if (valueType == "Quad") ; custom ValueTypes not in classMemory.ahk
+        {
+            offsets := this.GetOffsets().Clone()
+            first8 := _IBM_MM.instance.read(baseAddress, "Int64", (offsets)*)
+            lastIndex := offsets.Count()
+            offsets[lastIndex] := offsets[lastIndex] + 0x8
+            second8 := _IBM_MM.instance.read(baseAddress, "Int64", (offsets)*)
+            var := this.ConvQuadToString3( first8, second8 )
+        }
+        else if (valueType=="Double?") ;TODO: What is going on here - this might be Anti's test code, a weird way of commenting this block out, or a mistake? It might also be a new import type to handle what appear to be doubles with stange or varying offsets?
+        {
+            var:=_IBM_MM.instance.read(baseAddress, "Double", (this.GetOffsets())*)
+            if !var
+            {
+                offsets:=this.GetOffsets().Clone()
+                lastIndex:=offsets.Count()
+                offsets[lastIndex]:=offsets[lastIndex] + 0x8
+                var:=_IBM_MM.instance.read(baseAddress, "Double", (offsets)*)
+            }
+        }
+        else
+        {
+            var:=_IBM_MM.instance.read(baseAddress, valueType, (this.GetOffsets())*)
+        }
+        return var
+    }
+
+    ;==============
+    ;Helper Methods
+    ;==============
+
+    CalculateOffset(listItem, indexStart:=0) ;Used to calculate offsets the offsets of an item in a list by its index value.
+    {
+        if(indexStart) ; If list is not 0 based indexing
+            listItem--             ; AHK uses 1 based array indexing, switch to 0 based
+		; Note: Some 64-bit lists will still use 4 byte offsets instead of 8.
+		; Handle lists of varying size items
+		hasType1:=IBM_GOS.SystemTypes[this._CollectionValType]!=""
+		type1Bytes:=hasType1 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionValType]] : 0x8
+		itemSize:=hasType1 ? type1Bytes : 0x8
+		offset:=0x20 + (listItem*itemSize)
+		return offset
+    }
+
+    CalculateDictOffset(array) ;Used to calculate offsets of an item in a dict. requires an array with "key" or "value" as first entry and the dict index as second. indices start at 0.
+    {
+        ; Special Case not included here:
+        ; 64-Bit Entries start at 0x18
+        ; Values follow rule: [0x20 + 0x10 + (index * 0x18)
+        ; 0x20 = baseOffset ?
+        ; 0x10 = valueOffset ?
+        ; index = array.2
+        ; 0x18 = offsetInterval
+        ; Second Special case:
+        ; 0x20 + (A_index - 1) * 0x10 | 0x10 + (A_Index - 1) * 0x10
+		
+		; --- handle dictionary types with different size offsets ---
+		; Look up if it's a key/value are standard types
+		hasType1:=IBM_GOS.SystemTypes[this._CollectionKeyType]!=""
+		hasType2:=IBM_GOS.SystemTypes[this._CollectionValType]!=""
+		; Look up correct byte sizes for standard types used in c# dictionaries. Default non-standard byte size (8) otherwise.
+		type1Bytes:=hasType1 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionKeyType]] : 0x8
+		type2Bytes:=hasType2 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionValType]] : 0x8
+		itemSize:=(hasType1 AND hasType2 AND type1Bytes == 0x4 and type2Bytes == 0x4) ? 0x4 : 0x8
+		; ---
+		; 64-bit dictionary entries start at 0x28
+		baseOffset:=0x28
+		; Default entry sizes (e.g. int/int dict entries will be 0x10 bytes apart)
+		offsetInterval:=itemSize==0x4 ? 0x10 : 0x18
+		; Special case for Quads as values
+		offsetInterval:=IBM_GOS.SystemTypes[this._CollectionValType]=="Quad" ? 0x20 : offsetInterval
+		; value of entry starts after the key for the entry
+		valueOffset:=itemSize
+        offset:=baseOffset + (offsetInterval * array.2)
+        if (array.1=="value")
+            offset+=valueOffset
+        return offset
+    }
+
+    CalculateArrayOffset(indexLoc, indexStart:=0, byteSizeOverride:=0x0)
+    {
+        if(indexStart) ; If list is not 0 based indexing
+            indexLoc--             ; AHK uses 0 based array indexing, switch to 0 based
+		if(!byteSizeOverride) ; _ArrayDimensions not decremented until after this function is called. 1 is effectively 0.
+			itemSize:=(this._ArrayDimensions != "" AND  this._ArrayDimensions <= 1 AND _IC_BrivMaster_Memory_Reader_Class.aTypeSize[IBM_GOS.SystemTypes[this._CollectionValType]]) ? _IC_BrivMaster_Memory_Reader_Class.aTypeSize[IBM_GOS.SystemTypes[this._CollectionValType]] : 0x8
+		else
+			itemSize:=byteSizeOverride
+		offset:=0x20 + (indexLoc * itemSize)
+		return offset
+    }
+
+    CalculateHashSetOffset(key) ;Used to calculate offsets of an item in a dict. requires an array with "key" or "value" as first entry and the dict index as second. indices start at 0.
+    {
+		hasType1:=IBM_GOS.SystemTypes[this._CollectionKeyType] != "" ;Look up if key is a standard type
+		type1Bytes:=hasType1 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionKeyType]] : 0x8 ;Look up correct byte sizes for standard types used in c# HashSets. Default non-standard byte size (8) otherwise.
+		itemSize:=(hasType1 AND type1Bytes == 0x4) ? 0x4 : 0x8
+		baseOffset:=itemSize==0x4 ? 0x20 : 0x28 ; 64-bit HashSet entries start at 0x20 for base types, 0x28 for class types
+		; Default entry sizes (e.g. int hash entries will be 0xC bytes apart. Class types willbe 0x10 bytes apart)
+		offsetInterval:=itemSize==0x4 ? 0xC : 0x10
+		; Special case for Quads as values TODO: Find out why this is commented out, do Quads not provide a hash function?
+		;offsetInterval := IBM_GOS.SystemTypes[this._CollectionValType] == "Quad" ? 0x20 : offsetInterval
+		; value of entry starts after the key for the entry
+		valueOffset:=itemSize ;TODO: What is the point of this variable?
+        offset:=baseOffset + (offsetInterval * key)
+        return offset
+    }
+
+    GetDictIndexOfKeyQuick(key) ;Iterates a dictionary collection looking for the matching key value
+    {
+        wasLocked:=IBM_GOS.ReadIsLocked
+        IBM_GOS.ReadIsLocked:=False                                               ; Disable lock before read
+        dictCount:=this.size.Read()
+        IBM_GOS.ReadIsLocked:=wasLocked                                           ; Reset read lock after read
+        if (dictCount<0 OR dictCount>32000)                                                 ; skip attempts on unreasonable dictionary sizes.
+            return ""
+        currIndex:=Array()
+        currIndex[1]:="Key"
+        indexReadObject:=new IBM_GOS(this.FullOffsets)
+        indexReadObject.BasePtr:=this.BasePtr
+        indexReadObject.FullOffsets.Push(0x18) ; Collection Items offset for Dictionaries
+        indexReadObject.ValueType:=IBM_GOS.SystemTypes[this._CollectionKeyType] ? IBM_GOS.SystemTypes[this._CollectionKeyType] : "Int64"
+        loop, % dictCount
+        {
+            if (A_Index > 1)
+                indexReadObject.FullOffsets.Pop()                                               ; pop last index offset that was added in loop
+            if (this.StartAtLastPos)
+                currIndex[2]:=position:=Mod(A_Index + IBM_GOS.LastDictPos, dictCount + 1)  ; Continue lookup from last location searched. Useful for ordered dictionaries.
+            else
+                currIndex[2]:=position:=A_Index - 1
+            currIndexOffset:=this.CalculateDictOffset(currIndex)                              ; Index offset
+            indexReadObject.FullOffsets.Push(currIndexOffset)
+            IBM_GOS.ReadIsLocked:=False                                           ; Disable lock before read
+            currKey:=indexReadObject.Read()
+            IBM_GOS.ReadIsLocked:=wasLocked                                       ; Reset read lock after read
+            if (currKey==key)
+            {
+                indexReadObject:=""
+                valueOffset:=this.CalculateDictOffset(["value",position]) + 0
+                this.BuildDictionaryEntry(key, position, 0x18, valueOffset)          ; fully Build Dictionary object.
+                this.LastDictVersionByKey[key] := this.__version.Read()
+                IBM_GOS.LastDictPos:=position                                     ; Save last position used for this dict entry, save last place in dictionary reads for faster sequential dictionary lookups.
+                return position
+            }
+        }
+        IBM_GOS.LastDictPos:=0
+        return -1
+    }
+
+    ConvQuadToString3(FirstEight, SecondEight) ;Converts 16 byte Quad value into a string representation.
+    {
+        f := log(FirstEight + (2.0**63))
+        decimated:=(log(2) * SecondEight / log(10)) + f
+        if(decimated<=4)
+            return Round((FirstEight + (2.0**63)) * (2.0**SecondEight), 2) . ""
+        exponent:=floor(decimated)
+        significand:=round(10**(decimated - exponent), 2)
+        return significand . "e" . exponent
+    }
+
+    ResetBasePtr(currentObj, name :="")
+    {
+        this.BasePtr:=currentObj.BasePtr
+        for k,v in this
+        {
+            if(IsObject(v) AND ObjGetBase(v).__Class == "IBM_GOS" AND v.FullOffsets != "")
+                v.ResetBasePtr(currentObj)
+            else if(k=="DictionaryObject")
+                for dictKey, dictValue in v
+                    dictValue.ResetBasePtr(currentObj) ; Assume gameobjects, since dictionaryObject should be dict of gameobjects.
+        }
+    }
+
+    DoesCollectionNeedReset()
+    {
+        wasLocked:=IBM_GOS.ReadIsLocked
+        IBM_GOS.ReadIsLocked:=False                                           ; Disable lock before read
+        needsReset:=(this.LastDictVersion!=this.__version.Read())
+        IBM_GOS.ReadIsLocked:=wasLocked                                       ; Reset lock before return
+        return needsReset
+    }
+
+    ResetCollection()
+    {
+        this.DictionaryObject:={}
+        this.LastDictIndex:={}
+        wasLocked:=IBM_GOS.ReadIsLocked
+        IBM_GOS.ReadIsLocked:=False                                           ; Disable lock before read
+        this.LastDictVersion:=this.__version.Read()
+        IBM_GOS.ReadIsLocked:=wasLocked                                       ; Reset lock before return
+    }
+
+    ResetCollections()
+    {
+        this.DictionaryObject:={}
+        this.LastDictIndex:={}
+        for k,v in this
+        {
+            if(!IsObject(v) OR !(ObjGetBase(v).__Class=="IBM_GOS") OR k=="BasePtr")
+                continue
+            if(v.IsAddedIndex)
+                this[k]:="", this.Delete(k)
+            else
+                this[k].ResetCollections()
+        }
+    }
+
+    ResetUnstableCollectionsOnly()
+    {
+        for k,v in this
+        {
+            if(!IsObject(v) OR !(ObjGetBase(v).__Class=="IBM_GOS") OR k=="BasePtr")
+                continue
+            if(v.IsAddedIndex AND IBM_GOS.SystemTypes[this._CollectionKeyType]=="")
+                this[k]:="", this.Delete(k)
+            else
+                this[k].ResetUnstableCollectionsOnly()
+        }
+    }
+
+	IBM_ReBase(baseItem:="") ;Propogate a new base address through all child objects. Call without argument for base item TODO: Remove from overrides when using this class
+	{
+		if (IsObject(baseItem)) ;Child object
+		{
+			this.BasePtr:=baseItem.BasePtr
+			this.FullOffsets:=baseItem.FullOffsets.Clone()
+			this.FullOffsets.Push(this.Offset*)
+		}
+		else ;The base item we called from
+		{
+			this.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(_IBM_MM.instance.getAddressFromOffsets(this.BasePtr.BaseAddress,this.FullOffsets*))
+			this.FullOffsets:=Array()          ; Full list of offsets required to get from base pointer to this object
+			this.BaseAddressPtr:=""            ; The name of the pointer class that created this object.
+			this.Offset:=0x0                   ; The offset from last object to this object.
+			;TODO: Is forcing IsAddedIndex below appropriate? I think it is so that we can ReBase collection members without the next read just overwriting it
+			this.IsAddedIndex:=false           ; __Get lookups on non-existent keys will create key objects with this value being true. Prevents cloning non-existent values.
+		}
+		for k,v in this ;Recurse children
+        {
+			if(IsObject(v) AND ObjGetBase(v).__Class == "IBM_GOS" AND v.FullOffsets != "" AND k != "BasePtr")
+            {
+                if(v.IsAddedIndex) ;Remove created objects
+					this.Delete(k)
+				else
+					v.IBM_ReBase(this)
+            }
+        }
+
+	}
+}
+
+class _IBM_MM ;A class to manage and make available instances of _IC_BrivMaster_Memory_Reader_Class
+{
+    _exeName:=""
+    baseAddress:={}
+    handle:=""
+
+    exeName[]
+    {
+        get
+        {
+            return this._exeName
+        }
+        set
+        {
+            return this._exeName:=value
+        }
+    } 
+
+    isAttached ;TODO: Update this to some form of IsAttached
+    {
+        get
+        {
+            return this.instance.attached
+        }
+    }
+	
+    Refresh(moduleName:="mono-2.0-bdwgc.dll", pid:="")
+    {
+        this.isInstantiated:=false
+        ;Open a process with sufficient access to read and write memory addresses (this is required before you can use the other functions)
+        ;You only need to do this once. But if the process closes/restarts, then you will need to perform this step again. Refer to the notes section below.
+        ;Also, if the target process is running as admin, then the script will also require admin rights!
+        ;Note: The program identifier can be any AHK windowTitle i.e.ahk_exe, ahk_class, ahk_pid, or simply the window title.
+        ;handle is an optional variable in which the opened handle is stored.
+        if (pid)
+			processLookup:="AHK_PID " . pid
+		else
+			processLookup:="AHK_EXE " . this._exeName
+		this.instance:=New _IC_BrivMaster_Memory_Reader_Class(processLookup, "", handle)
+        this.handle:=handle
+        if IsObject(this.instance)
+        {
+            this.isInstantiated := true
+        }
+        else
+        {
+            this.baseAddress[moduleName]:=-1
+            return false
+        }
+        this.baseAddress[moduleName]:=this.instance.getModuleBaseAddress(moduleName)
+        return true
+    }
+}
+
 class IC_BrivMaster_MemoryFunctions_Class
 {
 	__new(fileLoc:="IC_Offsets.json")

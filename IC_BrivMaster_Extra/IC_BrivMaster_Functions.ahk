@@ -84,7 +84,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
 				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
-					if (_MemoryManager.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _MemoryManager.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
+					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
 						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
 						frontColumnLevellingAllowed:=true

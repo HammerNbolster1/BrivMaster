@@ -196,7 +196,7 @@ class IC_BrivMaster_GemFarm_Class
 							this.levelManager.SetupFailedConversion()
 						}
 					}
-					if (!this.offRamp) ;Only until we're nearly at the end of the run
+					if (!this.offRamp) ;Only until we're nearly at the end of the run TODO: Is the offramp still relevant? Possibly just as a flag that we're near the end to help catch missed resets? We might be doing more work overall checking for it  (via repeated GetOffRampZone() and EnoughHasteForCurrentRun() calls) than it saves now that there's less timer crazy going on?
 					{
 						;Check for offRamp
 						if (!needToStack and (this.currentZone>=this.routeMaster.GetOffRampZone())) ;Eg 50 zones for 9J

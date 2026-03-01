@@ -653,7 +653,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (!runComplete)
 		{
 			if (g_SF.Memory.ReadQuestRemaining()>0)
+			{
+				g_IBM.Logger.AddMessage("Online stack zone not complete - falling back")
 				this.FallBackFromZone()
+			}
 			else
 				this.ToggleAutoProgress(1, false, true)
 		}
@@ -942,14 +945,14 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if !g_SF.Memory.ReadTransitioning()
             return
         StartTime:=A_TickCount
-        g_SharedData.UpdateOutbound("LoopString","Waiting for transition...")
+        ;g_SharedData.UpdateOutbound("LoopString","Waiting for transition...") ;Not sure if this will generally be displayed long enough to be useful
         if (KEY)
 			g_InputManager.gameFocus() ;Set focus once and use _Bulk()
 		while (g_SF.Memory.ReadTransitioning()==1 AND A_TickCount - StartTime < maxLoopTime)
         {
 			If (KEY)
 				KEY.KeyPress_Bulk()
-			g_IBM.IBM_Sleep(15) ;Sleep as we don't want to go back multiple zones
+			g_IBM.IBM_Sleep(15)
         }
         return
     }

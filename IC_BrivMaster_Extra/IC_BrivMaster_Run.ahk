@@ -30,7 +30,7 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\..\..\SharedFunctions\SH_UpdateClass.ahk
 #include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
 
-global g_SF:=New IC_BrivMaster_SharedFunctions_Class ; includes IBM MemoryFunctions in g_SF.Memory
+global g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it

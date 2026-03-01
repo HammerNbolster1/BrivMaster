@@ -1277,6 +1277,8 @@ Class IC_IriBrivMaster_Component
 
 	GetPlayServerFriendly() ;Finds the ps19.idlechampions.com portion, or returns a descriptive error
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{

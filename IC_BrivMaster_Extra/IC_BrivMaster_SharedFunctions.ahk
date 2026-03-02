@@ -1,6 +1,5 @@
-;This file is intended for classes used across both the gem farm script and the hub. Currently meeting that goal is a WiP
+;This file is intended for classes used across both the gem farm script and the hub
 #include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\SH_KeyHelper.ahk ;Used for IC_BrivMaster_InputManager_Class
 
 class IC_BrivMaster_SharedFunctions_Class
 {
@@ -262,16 +261,13 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 
 	__new() ;Currently it is up to code using this to add the necessary keys TODO: Pass the object containing the HWnd to be used byRef, so it can be used with g_IBM.GameMaster.Hwnd in main and g_SF.Hwnd in hub?
 	{
-		this.KeyMap:={}
-		this.SCKeyMap:={}
-		KeyHelper.BuildVirtualKeysMap(this.KeyMap, this.SCKeyMap) ;Note: KeyHelper is in SH_KeyHelper.ahk
 		this.gameFocus()
 	}
 
 	addKey(key)
 	{
 		if (!this.keyList.HasKey(key))
-			this.keyList[key]:=new IC_BrivMaster_InputManager_Key_Class(key,this.KeyMap,this.SCKeyMap)
+			this.keyList[key]:=new IC_BrivMaster_InputManager_Class.IC_BrivMaster_InputManager_Key_Class(key)
 	}
 
 	getKey(key)
@@ -286,77 +282,84 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 		hwnd:=g_IBM.GameMaster.Hwnd
 		ControlFocus,, ahk_id %hwnd%
 	}
-}
-
-class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_BrivMaster_InputManager_Class
-{
-	__new(key,KeyMap,SCKeyMap)
+	
+	class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_BrivMaster_InputManager_Class
 	{
-		this.key:=key
-		this.mappedKey:=KeyMap[key]
-		sc:=SCKeyMap[key] << 16
-        this.lparamDown := Format("0x{:X}", 0x0 | sc)
-		this.lparamUp := Format("0x{:X}", 0xC0000001 | sc)
-		this.tag:="" ;Used for tracking arbitary infomation on the key, e.g. the associated seat for F-keys
-	}
+		__new(key)
+		{
+			this.key:=key
+			if(g_IBM_Settings["IBM_Scan_Codes"].HasKey(key)) ;Key logic taken from SH_KeyHelper.ahk
+			{
+				formattedSC:=Format("sc{:X}", g_IBM_Settings["IBM_Scan_Codes",key])    ;Reformat for use in GetKeyVK (sc + hex. e.g. scC0)
+				vk:=GetKeyVK(formattedSC)            ;Get virtual key value (dec)
+				this.mappedKey:=Format("0x{:X}", vk) ;convert virtual key to hex code 
+				sc:=g_IBM_Settings["IBM_Scan_Codes",key] << 16
+				this.lparamDown:=Format("0x{:X}", 0x0 | sc)
+				this.lparamUp:=Format("0x{:X}", 0xC0000001 | sc)
+			}
+			else
+				g_IBM.Logger.AddMessage("InputManager: No scancode for key=[" . key . "]")
+			this.tag:="" ;Used for tracking arbitary infomation on the key, e.g. the associated seat for F-keys
+		}
 
-	Press() ;Hold a key and do not release
-	{
-        hwnd:=g_IBM.GameMaster.Hwnd
-		mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
-		lD:=this.lparamDown
-        ControlFocus,, ahk_id %hwnd%
-		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-	}
+		Press() ;Hold a key and do not release
+		{
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
+			lD:=this.lparamDown
+			ControlFocus,, ahk_id %hwnd%
+			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
+		}
 
-	Release() ;Release a key
-	{
-        hwnd:=g_IBM.GameMaster.Hwnd
-		mk:=this.mappedKey
-		lU:=this.lparamUp
-        ControlFocus,, ahk_id %hwnd% ;As above
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
-	}
+		Release() ;Release a key
+		{
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey
+			lU:=this.lparamUp
+			ControlFocus,, ahk_id %hwnd% ;As above
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+		}
 
-	KeyPress() ;Press then release a key
-	{
-		startCritical:=A_IsCritical ;Store existing state of critical
-		Critical, On
-        hwnd:=g_IBM.GameMaster.Hwnd
-        mk:=this.mappedKey
-		lD:=this.lparamDown
-		lU:=this.lparamUp
-		ControlFocus,, ahk_id %hwnd% ;As above
-		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
-        if (!startCritical) ;Only turn critical off if wasn't on when we entered this function
-			Critical, Off
-	}
+		KeyPress() ;Press then release a key
+		{
+			startCritical:=A_IsCritical ;Store existing state of critical
+			Critical, On
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey
+			lD:=this.lparamDown
+			lU:=this.lparamUp
+			ControlFocus,, ahk_id %hwnd% ;As above
+			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+			if (!startCritical) ;Only turn critical off if wasn't on when we entered this function
+				Critical, Off
+		}
 
-	Press_Bulk() ;The _Bulk versions do not set ControlFocus, and are intended for code that will send a lot of input together (e.g. levelling) and that code will be responsible for calling ControlFocus once
-	{
-        hwnd:=g_IBM.GameMaster.Hwnd
-		mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
-		lD:=this.lparamDown
-    	SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-	}
+		Press_Bulk() ;The _Bulk versions do not set ControlFocus, and are intended for code that will send a lot of input together (e.g. levelling) and that code will be responsible for calling ControlFocus once
+		{
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey ;We have to copy the variables locally due to limitations of AHK :(
+			lD:=this.lparamDown
+			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
+		}
 
-	Release_Bulk() ;Release a key
-	{
-        hwnd:=g_IBM.GameMaster.Hwnd
-		mk:=this.mappedKey
-		lU:=this.lparamUp
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
-	}
+		Release_Bulk() ;Release a key
+		{
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey
+			lU:=this.lparamUp
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+		}
 
-	KeyPress_Bulk() ;Press then release a key
-	{
-        hwnd:=g_IBM.GameMaster.Hwnd
-        mk:=this.mappedKey
-		lD:=this.lparamDown
-		lU:=this.lparamUp
-		SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-		SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+		KeyPress_Bulk() ;Press then release a key
+		{
+			hwnd:=g_IBM.GameMaster.Hwnd
+			mk:=this.mappedKey
+			lD:=this.lparamDown
+			lU:=this.lparamUp
+			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+		}
 	}
 }
 

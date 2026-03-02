@@ -228,6 +228,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.IBM_Online_Farideh_Threshold["_DEFAULT"]:=90
+		settings.IBM_Scan_Codes["_DEFAULT"]:={"a":30,"Alt":56,"b":48,"c":46,"ClickDmg":41,"Ctrl":29,"d":32,"e":18,"Esc":1,"f":33,"F1":59,"F10":68,"F11":87,"F12":88,"F2":60,"F3":61,"F4":62,"F5":63,"F6":64,"F7":65,"F8":66,"F9":67,"g":34,"h":35,"i":23,"j":36,"k":37,"l":38,"LCtrl":29,"Left":331,"m":50,"n":49,"o":24,"p":25,"q":16,"r":19,"RCtrl":285,"Right":333,"s":31,"Shift":42,"t":20,"u":22,"v":47,"w":17,"x":45,"y":21,"z":44,0:11,1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10} ;Note the numbers must come after a non-number value to avoid parsing issues (loaded as array not object) TODO: Decide if we want to keep all of these
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500

@@ -411,6 +411,7 @@ Occasionally a setting may be added to Briv Master but not exposed via the GUI, 
 - IBM_Format_Date_Display: AutoHotKey date format string (per https://www.autohotkey.com/docs/v1/lib/FormatTime.htm) to be used for date and time display.
 - IBM_Format_Date_File: As above, but must only use characters valid in file names. This notably means the colon is not permitted.
 - IBM_Offsets_URL: The GitHub URL to check for Offsets. Change this if you do not wish to use my repository.
+- IBM_Scan_Codes: This is a mapping of keys to the scan codes that a keyboard sends when you press them. The defaults will be appropriate for QWERTY keyboards, but other layouts might require changes. Click damage, which is ` on QWERTY keyboards, is most likely to need changes.
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 

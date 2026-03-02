@@ -184,8 +184,8 @@ class IC_IriBrivMaster_GUI
 		Gui, ICScriptHub:Add, Groupbox, Section xm+5 y+12 w%groupWidth% h50 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
 		Gui, ICScriptHub:Font, w400
 		Gui, ICScriptHub:Add, Text, xs+10 ys+20 h18 0x200, Profile:
-		Gui, ICScriptHub:Add, Radio, x+5 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1 ;TODO: Disable wrapping on these, as it seems that can happen here?
-		Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile, Profile 2
+		Gui, ICScriptHub:Add, Radio, x+5 w100 h18 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile, Profile 1 ;TODO: Disable wrapping on these, as it seems that can happen here?
+		;Gui, ICScriptHub:Add, Radio, x+0 h18 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile, Profile 2
 		Gui, ICScriptHub:Add, Text, x+10 h18 w215 0x200 vIBM_Game_Settings_Status, Not checked
 		Gui, ICScriptHub:Add, Button, xs+398 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
 		Gui, ICScriptHub:Add, Button, x+5 w20 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
@@ -197,9 +197,9 @@ class IC_IriBrivMaster_GUI
 		this.IBM_Game_Settings_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		Gui, IBM_Game_Settings_Options:Add, Text, xm+0 w80 h18 0x200 Center, Profile 1
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Option
-		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Profile 2
+		;Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Profile 2
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit12 vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit15 vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Name
 		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit12 vIBM_Game_Settings_Option_Name_2 gIBM_Game_Settings_Option_Change
 

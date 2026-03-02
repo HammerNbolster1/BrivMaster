@@ -695,7 +695,7 @@ Class IC_IriBrivMaster_Component
 		}
 		else
 		{
-			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","cGreen",changeString)
+			g_IriBrivMaster_GUI.GameSettings_Status(g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile, "Name"] .  " WE BE MATCHING!! " . checkTime,"cGreen",changeString)
 		}
 	}
 

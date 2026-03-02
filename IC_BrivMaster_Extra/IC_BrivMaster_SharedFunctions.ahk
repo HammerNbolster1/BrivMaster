@@ -727,7 +727,7 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
         return this
     }
 
-    BasicServerCall(url, timeout:=60000 ) 
+    BasicServerCall(url, timeout:=60000) 
     {
         response:=""
         WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
@@ -742,7 +742,7 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
             data:=WR.ResponseText
             Try
             {
-                response:=AHK_JSON.Load(data)
+                response:=AHK_JSON.Load(data) ;We could potentially handle an empty return / exception from AKH_JSON.Load() rather than have BasicServerCallRaw(), but that might mean something JSON-adjacent gets processed when it shouldn't
             }
         }
         catch exception
@@ -752,5 +752,28 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
 		}
         WR:=""
 		return response
+    }
+	
+	BasicServerCallRaw(url, timeout:=60000) ;Does not parse as JSON
+    {
+        data:=""
+        WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
+        WR.SetTimeouts( 0, 45000, 30000, timeout)
+        Try
+		{
+            WR.Open("GET", Url, true)
+            WR.SetRequestHeader( "Content-Type","application/x-www-form-urlencoded" )
+            WR.SetRequestHeader( "Accept","application/json" )
+            WR.Send()
+            WR.WaitForResponse(-1)
+            data:=WR.ResponseText
+        }
+        catch exception
+		{
+			WR:=""
+			return exception
+		}
+        WR:=""
+		return data
     }
 }

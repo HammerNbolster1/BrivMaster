@@ -1122,7 +1122,7 @@ Class IC_IriBrivMaster_Component
     {
         currentVersionLine:=GetScriptHubVersion() ;e.g. "v4.4.6, 2025-11-03"
         remoteURL:="https://raw.githubusercontent.com/antilectual/Idle-Champions/refs/heads/main/ICScriptHub.ahk" ;This would ideally be a global variable somewhere in ICScriptHub.ahk
-		remoteScript:=this.BasicServerCaller.BasicServerCall(remoteURL)
+		remoteScript:=this.BasicServerCaller.BasicServerCallRaw(remoteURL) ;.ahk file
         line:=StrSplit(remoteScript, "`n", "`r")
         remoteVersionLine:=line[25]
         comparison:=this.VersionComparison(remoteVersionLine,currentVersionLine)
@@ -1156,7 +1156,7 @@ Class IC_IriBrivMaster_Component
 			versionString:=v.Name . ": " . v.Version
 			if(remoteURL)
 			{
-				addonDetails:=this.BasicServerCaller.BasicServerCall(remoteURL)
+				addonDetails:=this.BasicServerCaller.BasicServerCall(remoteURL) ;JSON file
 				comparison:=this.VersionComparison(addonDetails.Version,v.Version)
 				if(comparison.GT)
 				{
@@ -1323,7 +1323,7 @@ Class IC_IriBrivMaster_Component
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
-		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
+		offsetHeader:=this.BasicServerCaller.BasicServerCallRaw(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
 		{
@@ -1382,7 +1382,7 @@ Class IC_IriBrivMaster_Component
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
 		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
-		offsetHeader:=this.BasicServerCaller.BasicServerCall(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
+		offsetHeader:=this.BasicServerCaller.BasicServerCallRaw(remoteURL) ;CSV: Import version, import revision, pointer version, pointer revision
 		splitCSV:=StrSplit(offsetHeader,",")
 		if(splitCSV.Count()>=4) ;Allowing greater than so other info can be appended
 		{
@@ -1407,7 +1407,7 @@ Class IC_IriBrivMaster_Component
 			ifMsgBox Yes
 			{
 				remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Data_P" . platformID . ".zlib"
-				offsetZlib:=this.BasicServerCaller.BasicServerCall(remoteURL)
+				offsetZlib:=this.BasicServerCaller.BasicServerCallRaw(remoteURL) ;Binary data
 				if(offsetZlib)
 				{
 					zlib:=new IC_BrivMaster_Budget_Zlib_Class ;Currently zlib is only used for offset updates, which should be rare, so create and free an instance just for this

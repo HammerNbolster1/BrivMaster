@@ -489,6 +489,8 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	{
 		base.__new(heroID,heroIndex)
 		this.EFFECT_HANDLER_CARDS:="" ;Deck of Many Things effect handler cards object, dereferrenced from main memory functions for performance
+		this.MEMORY_COTF_ULT_ACTIVE_ADDRESS:=""
+		this.MEMORY_COTF_ULT_ACTIVE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName.List[0].parentEffectKeyHandler.activeEffectHandlers[0].IsUltimateActive.ValueType ;This is a rather long way of writing "Char"
 		this.EFFECT_KEY_DoMT:="ellywick_deck_of_many_things"
 		this.EFFECT_KEY_CotF:="ellywick_call_of_the_feywild"
 	}
@@ -497,6 +499,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	{
 		base.Reset()
 		this.EFFECT_HANDLER_CARDS:=""
+		this.MEMORY_COTF_ULT_ACTIVE_ADDRESS:=""
 	}
 
 	;--------------------------------------------------------------------------------------
@@ -520,23 +523,30 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 			this.EFFECT_HANDLER_CARDS.IBM_ReBase() ;Breaks the links with the main memory management structure. This will mean it could (and usually will) become invalid on reset or restart
 	}
 
-	ReadEllywickUltimateActive() ;Direct read, slower than using an ActiveEffectKeyHandler, but this is the only thing read from CotFeywild - the rest is in DoMThings which is separate. Used to detect when the ultimate ends, as the previous card state remains whilst it is in progress
+	ReadEllywickUltimateActive() ;Uses InitCotFUltActive to set up the memory read. This will fail if the game has been restarted since the first call in the run
 	{
-		COTF_HANDLER:=this.ReadEllywickCalloftheFeywildHandler()
-		return	COTF_HANDLER.IsUltimateActive.Read()
+		if(this.InitCotFUltActive())
+			return _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE)
+		else
+			return ""
 	}
 	
-	ReadEllywickCalloftheFeywildHandler() ;Returns the CotFeywild handler
+	InitCotFUltActive() ;Tries to initialise this.MEMORY_COTF_ULT_ACTIVE_ADDRESS, returns true if already set up or if setup is successful
 	{
+		if(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS)
+			return true
 		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
 		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
 			if (this.EFFECT_KEY_CotF==PARENT_HANDLER.def.Key.Read())
-				return PARENT_HANDLER.activeEffectHandlers[0]
+			{
+				this.MEMORY_COTF_ULT_ACTIVE_ADDRESS:=g_SF.Memory.ResolvePointers(PARENT_HANDLER.activeEffectHandlers[0].IsUltimateActive)
+				return true
+			}
 		}
-		return ""
+		return false
 	}
 
 	GetNumCardsOfType(cardType) ;3 is Gem, 5 is Flames
@@ -576,21 +586,18 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
         }
 		if (ULTIMATE_HOTKEY=="") ;Return empty
 			return
-		COTF_HANDLER:=this.ReadEllywickCalloftheFeywildHandler()
-		if (COTF_HANDLER=="") ;Return empty TODO: We could fall back to base.UseUltimate() here, but that seems like it would lead to a lot sneaky glitches with DM resets?
+		if(!this.InitCotFUltActive()) ;Return empty
 			return
 		ULTIMATE_KEY:=g_InputManager.getKey(ULTIMATE_HOTKEY) ;TODO: Maybe the input manager should be passed as an argument to this function? Or if moved to an object it could just be passed over once at setup of that
 		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-press retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-press maxRetries=[" . maxRetries . "] ellyUltActive=[" . _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 		ULTIMATE_KEY.KeyPress()
 		retryCount:=0
 		ULTIMATEATTACK:=ULTIMATEITEMS_LIST.ultimateAttack
 		ADDRESS_ULTIMATEATTACK:=_IBM_MM.instance.getAddressFromOffsets(ADDRESS_ULTIMATEITEMS_ITEM, ULTIMATEATTACK.Offset*)
-		ULT_ACTIVE_ADDRESS:=g_SF.Memory.ResolvePointers(COTF_HANDLER.IsUltimateActive)
-		ULT_ACTIVE_TYPE:=COTF_HANDLER.IsUltimateActive.ValueType
 		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-loop retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
-		while (_IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE)!=1 AND retryCount < maxRetries) ;Check Elly's IsUltimateActive
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Pre-loop retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
+		while (_IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE)!=1 AND retryCount < maxRetries) ;Check Elly's IsUltimateActive
 		{
 			if (_IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*)) ;If the ultimate is queued, just wait on it
 			{
@@ -599,7 +606,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 					return retryCount
 				g_IBM.IBM_Sleep(10)
 				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Queued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
+				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() Queued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 			}
 			else
 			{
@@ -607,11 +614,11 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 				retryCount+=10
 				Sleep 0
 				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() unqueued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
+				;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() unqueued post-sleep retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 			}
 		}
 		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() return retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(ULT_ACTIVE_ADDRESS,ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
+		;OutputDebug % DEBUG_TIME/g_IBM.CounterFrequency . " UseUltimate() return retryCount=[" . retryCount . "] ellyUltActive=[" . _IBM_MM.instance.read(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS,this.MEMORY_COTF_ULT_ACTIVE_TYPE) . "] queued=[" . _IBM_MM.instance.read(ADDRESS_ULTIMATEATTACK,ULTIMATEATTACK.queued.ValueType,ULTIMATEATTACK.queued.Offset*) . "]"
 		return retryCount
 	}
 

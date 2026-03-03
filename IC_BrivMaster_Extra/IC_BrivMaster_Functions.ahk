@@ -65,8 +65,8 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				}
 				if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
 				{
-					DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-					this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() Elly ult expired:"
+					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
+					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() Elly ult expired:"
 					this.UsedUlt:=false
 				}
 				if (this.ShouldDrawMoreCards())
@@ -156,7 +156,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait. Note that Elly has an override for this function to track her ult being active directly, instead of relying on the UI
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
-				;g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
+				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
 				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Fail retries=[" . retryCount . "]:"
 				this.UsedUlt:=false

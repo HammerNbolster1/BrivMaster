@@ -14,7 +14,7 @@ class IC_BrivMaster_SharedFunctions_Class
 		this.PatronID:=0
     }
 
-	LoadObjectFromAHKJSON(fileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file TODO: Move JSON load/write somewhere the main script can use them too. Down with IE!
+	LoadObjectFromAHKJSON(fileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file
     {
         FileRead, oData, %fileName%
         data:=""
@@ -178,7 +178,6 @@ class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath sta
 		this.TotalBossesHit:=0
         this.TotalRollBacks:=0
         this.BadAutoProgress:=0
-		this.IBM_RestoreWindow_Enabled:=false
 		this.IBM_RunControl_DisableOffline:=false
 		this.IBM_RunControl_ForceOffline:=false
 		this.IBM_ProcessSwap:=false
@@ -288,7 +287,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 		__new(key)
 		{
 			this.key:=key
-			if(g_IBM_Settings["IBM_Scan_Codes"].HasKey(key)) ;Key logic taken from SH_KeyHelper.ahk
+			if(g_IBM_Settings["IBM_Scan_Codes"].HasKey(key)) ;Following key logic taken from SH_KeyHelper.ahk
 			{
 				formattedSC:=Format("sc{:X}", g_IBM_Settings["IBM_Scan_Codes",key])    ;Reformat for use in GetKeyVK (sc + hex. e.g. scC0)
 				vk:=GetKeyVK(formattedSC)            ;Get virtual key value (dec)

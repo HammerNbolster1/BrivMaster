@@ -66,7 +66,7 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
             {
                 this.IdleGameManager:=New IBM_GOS(this.StructureOffsets)
                 this.IdleGameManager.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets, "IdleGameManager")
-                #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk ;Build offsets for class using imported AHK files.
+                #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk
                 return
             }
             ; Objects exist, update memory addresses only
@@ -529,7 +529,8 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             second8 := _IBM_MM.instance.read(baseAddress, "Int64", (offsets)*)
             var := this.ConvQuadToString3( first8, second8 )
         }
-        else if (valueType=="Double?") ;TODO: What is going on here - this might be Anti's test code, a weird way of commenting this block out, or a mistake? It might also be a new import type to handle what appear to be doubles with stange or varying offsets?
+		/*
+        else if (valueType=="Double?") ;This is for nullable double, which BM is not currently using
         {
             var:=_IBM_MM.instance.read(baseAddress, "Double", (this.GetOffsets())*)
             if !var
@@ -540,6 +541,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
                 var:=_IBM_MM.instance.read(baseAddress, "Double", (offsets)*)
             }
         }
+		*/
         else
         {
             var:=_IBM_MM.instance.read(baseAddress, valueType, (this.GetOffsets())*)

@@ -1,56 +1,57 @@
 # Introduction
 
-Briv Master is a consolidated Idle Champions addon for Script Hub. It aims to provide comprehensive Briv-based gem farming without needing multiple additional addons.
+Briv Master is a consolidated Idle Champions gem farming script. It aims to provide comprehensive Briv-based gem farming without needing multiple separate elements.
 
-Requires ScriptHub by MikeBaldi and Antilectual (the latter being the current author), which can be found at https://github.com/antilectual/Idle-Champions, which also hosts the BrivGemFarm addon on which BrivMaster is based.  This was formerly hosted at https://github.com/mikebaldi/Idle-Champions. This addon replaces the functionality of 3 of ImpEGamer's addons from https://github.com/imp444/IC_Addons: HybridTurboStacking and LevelUp, which are full replacements, and RNGWaitingRoom on which the 'Casino' in BrivMaster is heavily based.
+Based on ScriptHub by MikeBaldi and Antilectual (the latter being the current author), which can be found at https://github.com/antilectual/Idle-Champions, which also hosts the BrivGemFarm addon from which much of BrivMaster is derived.  This was formerly hosted at https://github.com/mikebaldi/Idle-Champions. This addon replaces the functionality of 3 of ImpEGamer's addons from https://github.com/imp444/IC_Addons: HybridTurboStacking, LevelUp and RNGWaitingRoom.
 
-This addon would not have been possible without the work of those who came before.
+This script would not have been possible without the work of those who came before.
 
 Briv Master is available at https://github.com/RLee-EN/BrivMaster. It requires specific imports, the generator for which can be found at https://github.com/RLee-EN/BrivMaster-Imports. The latter respository also contains the imports themselves, however I cannot commit to always updating them promptly.
 
-This ReadMe has been written 06Dec25 for BrivMaster v0.2.7. Changes are actively being made so things may have changed by the time you read this. When reviewing settings note that many options which might not be intuitive have tooltips to aid you.
+This ReadMe has been written 05Mar26 for BrivMaster v0.5.0. Changes are actively being made so things may have changed by the time you read this. When reviewing settings note that many options which might not be intuitive have tooltips to aid you.
 
 # Environment
 
-BrivMaster does not require any other addons to function.
-Do not load BrivGemFarm or addons that modify it, and in general it is advisable to only enable addons you are actively using.
+BrivMaster is a standalone script; as of 0.5.0 it is no longer an ScriptHub addon and will not be loadable by SH.
 
 You require a modron core with automation to gem farm. Four formations are used, Q,W,E which are named after their formation hotkeys, and M, which is short for Modron and is the formation selected in the modron core.  
 The difference between Q and E will depend on whether feat swapping is being used or not. Feat swapping is the use of feats to give Briv 2 different jump values, one for the Q formation and one for the E formation, to give more route options. This allows use to use jumps that are not paractical on their own as they'd either hit bosses, or require so many walks as to be inferior to a lower jump value. Emmote's route calculator (https://emmotes.github.io/ic_scripting_routes/#stacksTab_pure4TT_500_100_490_2_q_1_1_1_0, this has a Tall Tales 4J route selected) is an invaluable tool in setting this up. In this document feat swap setups are written in the style of 12/11J, 6/4J. Those using the round-down feat sometimes written in the style of 12-1J (one item level from 12J) in other resources.  
 
-In general feats should not be saved in these formations. If you are concerned about forgetting to set feats, e.g. on Elly after using her for gold farming, saving into M is acceptable. Emmote's site can again help with example formations: https://emmotes.github.io/ic_scripting_routes/#formsTab.  
+In general feats should not be saved in these formations. If you are concerned about forgetting to set feats, e.g. on Elly after using her for gold farming, use the Feats options under BM Levels described below. Emmote's site can again help with example formations: https://emmotes.github.io/ic_scripting_routes/#formsTab.  
 
 Without feat swapping:  
-- Q: The farming team with Briv
+- Q: The farming team with Briv.
 - W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well.
-- E: The farming team with Briv removed
-- M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 9J route could have 4J in M to allow it to land on z1 instead of z6 without walks. Whether that is a benefit or not for an individual setup would need testing
+- E: The farming team with Briv removed.
+- M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 9J route could have 4J in M to allow it to land on z1 instead of z6 without walks. Whether that is a benefit or not for an individual setup would need testing.
 
 With feat swapping:
-- Q: The farming team with Briv in the higher jump configuration (e.g. 12 for 12/11J)
-- W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well
-- E: The farming team with Briv in the lower jump configuration  (e.g. 11 for 12/11J)
+- Q: The farming team with Briv in the higher jump configuration (e.g. 12 for 12/11J).
+- W: The stacking team, with Briv at the front, possibly only Briv. When online stacking the relevant supporting champions must be included as well.
+- E: The farming team with Briv in the lower jump configuration  (e.g. 11 for 12/11J).
 - M: The team to start the run with. Only champions in this formation can have specialisation choices taken. Regardless of using feat swap, a different jump value can be used in the Modron formation to control the start of the route, allowing bosses to be avoided. For example, a 12/11J route could have 9J in M.
 
 With feat swapping Briv must have feats saved in each formation, to ensure that changes are applied consistently. When using Thunder Step this feat will be sufficent
 
 # Settings
 
-BrivMaster presents itself in 3 ScriptHub tabs. The following details the contents of these tabs. 
+BrivMaster presents itself in 4 tabs. The following details the contents of these tabs. 
 
 ## Briv Master
 
-This is the 'home' tab of the addon, and is intended to be the one shown during general use - the other two contain settings that will not need to be reviewed regularly
+This is the default tab, and is intended to be the one shown during general use - the others contain settings that will not need to be reviewed regularly.
 
 ### Buttons
+- Launch the game
+- Reload the home script
 - Start the gem farm script
 - Stop the gem farm script
-- Reconnect the hub with the script (e.g. when restarting the hub without restarting the script)
-- Save settings - this saves settings from all 3 tabs
+- Reconnect the home script to the gem farm script (e.g. when restarting home without restarting the script)
+- Save settings - this saves settings from **all** tabs
 - Reset Stats
 
 ### Cycle display
-Mostly relevant when running hybrid stacking (which is the mid to end game method of stacking), this displays progression towards the next offline restart / stack, e.g. with an 'Offline every: x runs' setting of 40, this will initially display '1/40', and a restart will normally occur on Run '40/40'. When forcing an offline (see below) this will show 'FO' after the cycle numbers.
+Mostly relevant when running hybrid stacking (which is the mid to end game method of stacking), this displays progression towards the next offline restart / stack, e.g. with an 'Offline every: x runs' setting of 40, this will initially display '1/40', and a restart will normally occur on '40/40'. When forcing an offline (see below) this will show 'FO' after the cycle numbers.
 
 ### Run Control
 Offline stacking: Controls whether game restarts are allowed (stacking or otherwise). Normally on, shown by a green indicator. These can be disabled whilst the script is running by pressing 'Pause', which will be shown by a red indicator. The button will change to 'Resume' which can be used to allow restarts again.  
@@ -58,12 +59,9 @@ Queue: Queue an offline restart for the next run, regardless of the above genera
 	
 > Author's Note: These options are intended for use when playing other games that you do not wish to be interupted by loss of focus as IC restarts whilst using Hybrid stacking (again, the mid-end game method). Whilst playing such a game you can disable offline restarts, preventing those interuptions, and manually queue a restart when taking a break to clear memory bloat which will otherwise degrade performance very significantly.
 	
-Restore Window: Toggles whether focus is return to the IC window when the game is restarted or not. The default at script start is set by an option presented later.  
-	
 Strategy: This displays the RouteMaster's 'strategy' based on the read game state and your settings, including Thellora's jump target, the stacks required, and the jump number (or numbers when feat swapping), along with the target zone.  
 	
-> Author's Note 1: Thellora's jump will not display correctly for the first run if she is not in the field when the script is started. It will be update during the first full Run.  
-> Author's Note 2: The jumps are displayed in zones jumped, not Briv 'J' number, i.e. 9J is listed as 10z/J, as that is the number relevant to routing - from z1, a '9J' Briv jumps to z11, having proceeded 10 zones.  
+> Author's Note: The jumps are displayed in zones jumped, not Briv 'J' number, i.e. 9J is listed as 10z/J, as that is the number relevant to routing - from z1, a '9J' Briv jumps to z11, having proceeded 10 zones.  
 	
 Stacking: The expected stacking to be performed this run, or after stacking the result. This will showing the stacking intent even if no stacks are actually required, i.e. it shows where stacking will occur if needed.  
 	
@@ -71,7 +69,9 @@ Stage: Shows the current progression of the script through the run.
 	
 Last Close: The reason for the last closure, e.g. a restart, recovering from getting stuck.  
 	
-Current Area / Run (s): The time taken in the current area and current run. Note that due to the limited refresh rate of the display, the area time will generally show 0.0s outside of the Casino or stacking.  
+Current Area / Run (s): The time taken in the current area and current run. 
+
+> Author's Note: Due to the limited refresh rate of the display, the area time will generally show 0.0s outside of the Casino or stacking.  
 	
 Current SB / Haste Stacks: Briv's current Steelbones and Haste stacks.  
 	
@@ -84,13 +84,15 @@ Briv Master can buy and open chests, and claim daily login rewards. The log disp
 Click the cog icon for the settings for this tool:
 Gold to buy per call: Number of gold chests to buy per server call. Should generally be left at 250 as buying chests is a fast operation
 	
-> Author's Note: Buying Silver chests is not supported because there is no reason to do so. Consider other tools if you really want to buy Silver chests
+> Author's Note: Buying Silver chests is not supported because there is no reason to do so. Consider other tools if you *really* want to buy Silver chests
 	
-Gold/Silver to open per call: Number of chests to buy per call. Whilst IC allows 1000 to be opened at a time this can result in a very long servercall which has the potential to impact the game, e.g. when resetting, so using a smaller amount is advised to keep the buy time (which is displayed in the log) lower. Aim for less than 4s. Gold chests are much slower to open than Silvers (e.g. I am using 150 Gold / 500 Silver)
+Gold/Silver to open per call: Number of chests to buy per call. Whilst IC allows 1000 to be opened at a time this can result in a very long servercall which has the potential to impact the game, e.g. when resetting, so using a smaller amount is advised to keep the buy time (which is displayed in the log) lower.
+
+> Author's Note: Aim for less than 4s. Gold chests are much slower to open than Silvers, e.g. I am using 150 Gold / 500 Silver
 	
 Reserve Gems: Stay above this number of gems when purchasing chests. Use this to ensure you can always buy a needed Feat or such
 	
-> Author's Note: Gems are not useful directly - you use them to buy chests, which lead to iLevels. Do not hoard them! A pile of gems does nothing for you - invested iLevels will. Only set this to what you might actually need - if saving for a Modron Core, 500000, otherwise much less.
+> Author's Note: Gems are not useful directly - you use them to buy chests, which lead to iLevels. Do not hoard them! A pile of gems does nothing for you - invested iLevels will. Only set this to what you might actually need - if saving for a Modron Core, 500000, otherwise less.
 	
 Reserve Gold / Silver: Stay above this number of each chest when opening. Reserving a small number of gold chests allows you to get the feats for new champions as soon as you unlock them.
 	
@@ -98,7 +100,7 @@ Reserve Gold / Silver: Stay above this number of each chest when opening. Reserv
 	
 Claim Daily Rewards: Enables claiming of daily rewards. The log will report the standard and premium reward claim status, along with the premimum duration remaining if applicable
 	
-> Author's Note: The first check of daily rewards will not be made for a minute after starting, to avoid spamming the server when testing and restarting the hub a lot. After that the check will be made every 8h, or at the reported reset time. This feature is based on Emmote's ClaimDailyPlatinum addon available at https://github.com/Emmotes/IC_Addons.
+> Author's Note: The first check of daily rewards will not be made for a minute after starting, to avoid spamming the server when testing and restarting a lot. After that the check will be made every 8h, or at the reported reset time. This feature is based on Emmote's ClaimDailyPlatinum addon available at https://github.com/Emmotes/IC_Addons.
 	
 ### Game Settings
 Game settings are important to farming; settings like the framerate cap can slow down a farm, and the Modifer key based levelling requires that the appropriate key binds are set. Briv Master allows 2 profiles to be defined, and they can be swapped between using the radio buttons. The selected profile saves with the rest of the settings. Briv Master will never automatically modify game settings, but checks periodically that they match the selected profile so that corrective action can be taken if needed. This is generally the case after modifying settings in-game.
@@ -106,7 +108,7 @@ Game settings are important to farming; settings like the framerate cap can slow
 > Author's Note 1: I use one profile for farming (which is the one I save as the default) which is set to the resolution I use for farming, and another for other activities which is set to a higher resolution.  
 > Author's Note 2: This feature is based on Emmote's GameSettingsFix addon available at https://github.com/Emmotes/IC_Addons.
 	
-Set Now: Applies the current settings profile; the game must be closed. The result of the check will be reported.
+Set Now: Applies the current settings profile; the game must be closed. The result of the check will be reported. If there are differences found they can be viewed in the tooltip of the status message.
 
 Click the cog icon for the settings for this tool. Two columns of entries are available for each setting; one for each of the 2 profiles.
 
@@ -130,7 +132,7 @@ Level Amount: I am not even going to let you screw this up.
 
 Console Portaits: Enable for face-on portraits, Disable for three-quarter view. This is personal preference.
 
-Narrow Hero Boxes: Enable for narrow hero boxes to allow all 12 to be displayed at once. Personal preference, but disabling it might make issues with champions in the hidden seats harder to identify.
+Narrow Hero Boxes: Enable for narrow hero boxes to allow all 12 to be displayed at once. Personal preference, but all seats used must be visible for the script to work, so at lower resolutions this is mandatory.
 
 Show All Heroes: Personal preference.
 
@@ -141,7 +143,8 @@ As the name suggests, this tool is not for use whilst farming, but leverages the
 	
 Min:Max: The target number of each card can be entered. The default of 4:5 Moon and 0:1 Fates means that any combination of 4 Moon and 1 Fate, or 5 Moon are accepted outcomes.  
 
-> Author's Note: I use these settings as I find 5 Moon takes to long to get, you are free to just set 5:5 Moon and the others to 0:0 if you have more patience than I do.
+> Author's Note 1: I use these settings as I find 5 Moon takes to long to get, you are free to just set 5:5 Moon and the others to 0:0 if you have more patience than I do.
+> Author's Note 2: The settings do not validate combinations: take care not to enter nonsense. For example, 3:5 Moon and the other to 0:0 does not make sense - if the maximum we can have of any non-Moon card is 0, the only valid combination is 5 Moon, so this is no different from 5:5 Moon.
 	
 Start: Start re-rolling. The current status is displayed below the buttons, including the number of re-rolls used once completed.  
 
@@ -161,6 +164,8 @@ Executable: The name of the game executable, normally IdleDragons.exe. This shou
 Location: The game install location.
 	
 Launch Command: The command used to launch the game. For non-EGS setups this will just be the Executable and Location fields combined, however for EGS it will either be the EGS URI for the game, or if using an alternative to the EGS Launcher the appropriate command will need to be added here.
+
+> Author's Note: For the CNE client, your account details will be in this field, so do not share unredacted screenshots of it.
 	
 Hide launcher: Selecting this option will hide the window created by invoking the Launch Command. Use this only for 3rd party EGS launchers that might otherwise pop up a command window. Using it with the game directly will cause it to fail to start.
 	
@@ -189,7 +194,7 @@ Log zone progression: When selected a log entry will be made for each new zone r
 ### Offsets
 
 Offsets are the distance from one memory location to another. We use this to allow us to find a small number of lower level objects in memory and then determine the locations of the many individual items we need from those.
-- Pointers: These define the locations of the small number of lower level objects. They take significant effort to find, but fortunately change rarely; usually only when the Unity version the game is based on changes.
+- Pointers: These define the locations of the small number of lower level objects. They take significant effort to find, but fortunately change rarely.
 - Imports: These define path from one of the lower level objects in the Pointers to a specific variable in memory that the script needs.  There are large numbers of them but they are generated as a single operation. They usually change with every major game version. Minor versions tend not to require new imports.
 This group provides an overview of the game version and the offsets currently installed.
 
@@ -210,12 +215,12 @@ Refresh: Updates the play server.
 
 ### Core Versions
 
-This group shows the Script Hub and AHK versions in use. If versions are checked the circular indicator to the left will show a colour based on the version status:
+This group shows the Briv Master and AHK versions in use. If versions are checked the circular indicator to the left will show a colour based on the version status:
 -Green: Current version is installed.
 -Amber: Current version is out of date.
 -Blue: Current version is newer than the one on github
 
-> Author's Note: Blue will be seen by those developing add-ons.
+> Author's Note: Blue will usually only be seen by me!
 
 A link to the Readme is also provided.
 
@@ -226,10 +231,6 @@ This group controls checking of versions.
 On Load: When this option is selected the Script Hub and Addon versions will be checked against GitHub when Script Hub starts.
 
 Check now: Use to manually perform a version check.
-
-### Addon Versions
-
-This group lists all enabled addons along with version information. Refer to the Core Versions group.
 	
 ## BM Route
 
@@ -412,6 +413,7 @@ Occasionally a setting may be added to Briv Master but not exposed via the GUI, 
 - IBM_Format_Date_File: As above, but must only use characters valid in file names. This notably means the colon is not permitted.
 - IBM_Offsets_URL: The GitHub URL to check for Offsets. Change this if you do not wish to use my repository.
 - IBM_Scan_Codes: This is a mapping of keys to the scan codes that a keyboard sends when you press them. The defaults will be appropriate for QWERTY keyboards, but other layouts might require changes. Click damage, which is ` on QWERTY keyboards, is most likely to need changes.
+- IBM_OffLine_Blank_Stop: Stops progress for blank restarts. This might be necessary for slow systems that cannot reliably avoid offline progress triggering
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 

@@ -1,5 +1,3 @@
-#include %A_LineFile%\..\..\..\SharedFunctions\CSharpRNG.ahk ;Used for Melf things
-
 class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 {
 	zoneCap:=2501
@@ -40,7 +38,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.KEY_W:=g_InputManager.getKey("w")
 		this.KEY_E:=g_InputManager.getKey("e")
 		this.KEY_LEFT:=g_InputManager.getKey("Left")
-		this.KEY_RIGHT:=g_InputManager.getKey("Right")
 		this.HybridBlankOffline:=g_IBM_Settings["IBM_OffLine_Blank"] ;Should we avoid trying to get stacks when restarting during hybrid?
 		this.RelayBlankOffline:=g_IBM_Settings["IBM_OffLine_Blank_Relay"]
 		if (this.RelayBlankOffline)
@@ -59,7 +56,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if (this.useBrivBoost)
 			this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
 		this.CombineModeThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to avoid combining into a boss by delaying the combine?
-		g_SharedData.UpdateOutbound("IBM_RestoreWindow_Enabled",g_IBM_Settings["IBM_Route_Offline_Restore_Window"])
+
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
 		g_SharedData.UpdateOutbound("IBM_RunControl_ForceOffline",false) ;Default to off
 		this.LastSafeStackZone:=this.GetLastSafeStackZone() ;No reason to re-calcuate this every zone
@@ -367,8 +364,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	BlankRestart() ;Restart without stacking TODO: We need an option to stop progress here for potatoes
+	BlankRestart() ;Restart without stacking
     {
+		if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
+			this.ToggleAutoProgress(0,false,true)
 		startStacks:=g_Heroes[58].ReadSBStacks()
 		offlineStartTime:=A_TickCount
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
@@ -406,7 +405,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 		else
 			g_IBM.Logger.AddMessage("BlankRestart() Exit, End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
-        g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
+        if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
+			this.ToggleAutoProgress(1,false,true)
+		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
 		g_IBM.PreviousZoneStartTime:= A_TickCount
     }
 
@@ -1294,7 +1295,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			this.RequestRelease:=false
 			this.MainPID:=g_IBM.GameMaster.PID
 			this.MainHwnd:=g_IBM.GameMaster.Hwnd
-			this.RestoreWindow:=g_SharedData.IBM_RestoreWindow_Enabled ;This can be changed at run time
+			this.RestoreWindow:=g_IBM_Settings["IBM_Route_Offline_Restore_Window"]
 			scriptLocation := A_LineFile . "\..\IC_BrivMaster_RouteMaster_Relay.ahk"
 			guid:=this.GUID
 			Run, %A_AhkPath% "%scriptLocation%" "%guid%",,,helperPID
@@ -1635,8 +1636,8 @@ class IC_BrivMaster_MelfMaster_Class ;A class for tracking Melf's buffs
 				this.Patterns[reset] := []
 				this.NextSpawnMore[reset] := []
 				this.NextSpawnFaster[reset] := []
-				rng := new CSharpRNG(reset * 10)
-				segments := Ceil(this.zoneCap / 50)
+				rng:=new IC_BrivMaster_MelfMaster_Class.CSharpRNG(reset * 10)
+				segments:=Ceil(this.zoneCap / 50)
 				Loop, % segments
 					this.Patterns[reset,A_Index] := rng.NextRange(0, 3)
 				index:=segments ;Now we iterate backwards to fill NextSpawnMore / Next Spawn Faster
@@ -1757,5 +1758,106 @@ class IC_BrivMaster_MelfMaster_Class ;A class for tracking Melf's buffs
 		if (segment)
 			return segment[1] . "-" . segment[2]
 		return "None"
+	}
+	
+	Class CSharpRNG
+	{
+		static MBIG := 2147483647
+		static MSEED := 161803398
+		static MZ := 0
+
+		inext := 0
+		inextp := 0
+		SeedArray := []
+
+		__New(Seed)
+		{
+			seedArray := this.SeedArray
+			subtraction := (Seed == -2147483648) ? 2147483647 : Abs(Seed)
+			mj := this.MSEED - subtraction
+			seedArray[55] := mj
+			mk := 1
+			Loop, 54
+			{
+				ii := Mod((21 * A_Index), 55)
+				seedArray[ii] := mk
+				mk := mj - mk
+				if (mk < 0)
+					mk += this.MBIG
+				mj := seedArray[ii]
+			}
+			Loop, 4
+			{
+				Loop, 55
+				{
+					seedArray[A_Index] -= seedArray[1 + Mod(A_Index + 30, 55)]
+					if (seedArray[A_Index] < 0)
+						seedArray[A_Index] += this.MBIG
+				}
+			}
+			this.inext := 0
+			this.inextp := 21
+		}
+
+		Sample()
+		{
+			return this.InternalSample() / this.MBIG
+		}
+
+		InternalSample()
+		{
+			seedArray := this.SeedArray
+			locINext := this.inext
+			locINextp := this.inextp
+			if (++locINext >= 56)
+				locINext := 1
+			if (++locINextp >= 56)
+				locINextp := 1
+			retVal := seedArray[locINext] - seedArray[locINextp]
+			if (retVal == this.MBIG)
+				retVal--
+			if (retVal < 0)
+				retVal += this.MBIG
+			seedArray[locINext] := retVal
+			this.inext := locINext
+			this.inextp := locINextp
+			return retVal
+		}
+
+		Next()
+		{
+			return this.InternalSample()
+		}
+
+		GetSampleForLargeRange()
+		{
+			result := this.InternalSample()
+			if (Mod(this.InternalSample(), 2) == 0)
+				result := -result
+			return (result + 2147483646) / 4294967293
+		}
+
+		NextRange(minValue, maxValue)
+		{
+			if (minValue > maxValue)
+				throw "'" . minValue . "' cannot be greater than " . maxValue . "."
+			range := maxValue - minValue
+			if (range <= 2147483647)
+				return Floor(this.Sample() * range) + minValue
+			else
+				return Floor(this.GetSampleForLargeRange() * range + minValue)
+		}
+
+		NextPositive(maxValue)
+		{
+			if (maxValue < 0)
+				throw "'" . maxValue . "' must be greater than zero."
+			return Floor(this.Sample() * maxValue)
+		}
+
+		NextDouble()
+		{
+			return this.Sample()
+		}
 	}
 }

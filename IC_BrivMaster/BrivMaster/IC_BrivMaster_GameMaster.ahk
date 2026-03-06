@@ -185,7 +185,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 	
 	ActivateLastWindow()
     {
-        if (!g_SharedData.IBM_RestoreWindow_Enabled)
+        if (!g_IBM_Settings["IBM_Route_Offline_Restore_Window"])
             return
         g_IBM.IBM_Sleep(80)
         hwnd:=this.Hwnd

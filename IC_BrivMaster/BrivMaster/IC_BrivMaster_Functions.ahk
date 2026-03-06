@@ -45,6 +45,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
 			MEMORY_RANGE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
 			g_Heroes[83].InitDoMTHandler() ;TODO: We should perhaps check if this actually worked?
+			g_Heroes[83].InitCotFUltActive() ;May fail if Elly is not level 200 yet, but this one will recover itself
 			gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
 			this.DMUltDelay:=(IC_BrivMaster_EllywickCasino_Class.ULT_DELAY/gameSpeed)*g_IBM.CounterFrequency
 			DllCall("QueryPerformanceCounter", "Int64*", startTime)
@@ -114,7 +115,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		}
 	}
 	
-	UnlockHeroes(levelFormation:="") ;Separated as this must be called either during the Casino, or if Elly is MIA. TODO: Store lockedFrontColumnChamps in the object so the follow-up calls don't have to re-pass? Reset in, well, Reset()
+	UnlockHeroes(levelFormation:="") ;Separated as this must be called either during the Casino, or if Elly is MIA
 	{
 		if (this.lockedFrontColumnChamps.Count()>0)
 		{
@@ -190,7 +191,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		}
 	}
 
-	UseDMUlt() ;30ms default sleep is for use after Elly's ult triggers, to let the game process it - upped to 50ms 26Feb26 as 30ms does not appear to be enough TODO: We might need to defer this to a subsequent loop iteration if we keep having to increase it
+	UseDMUlt()
 	{
 		if (g_Heroes[99].CanUseUltimate())
 		{

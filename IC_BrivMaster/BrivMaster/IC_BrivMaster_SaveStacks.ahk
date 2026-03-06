@@ -1,10 +1,10 @@
 #SingleInstance force
 #NoTrayIcon
 #Persistent
-#NoEnv ; Avoids checking empty variables to see if they are environment variables.
+#NoEnv
 ListLines Off
 
-#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
+#include %A_LineFile%\..\..\Lib\IC_BrivMaster_JSON.ahk
 global g_webRoot:=A_Args[1] ? A_Args[1] : "http://ps22.idlechampions.com/~idledragons/" ;TODO: Just pass this to the function instead of making it a global?
 ServerCallSave(A_Args[2],A_Args[3])
 ExitApp

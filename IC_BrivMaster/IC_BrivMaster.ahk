@@ -1,33 +1,125 @@
-#include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk
-#include %A_LineFile%\..\IC_BrivMaster_GUI.ahk
-#include %A_LineFile%\..\IC_BrivMaster_Memory.ahk
-#include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
+#Requires AutoHotkey 1.1.37+ <1.2
+#SingleInstance Force
+#NoEnv
+SetWorkingDir %A_ScriptDir%
+SetWinDelay, 32 ; Sets the delay that will occur after each windowing command, such as WinActivate. (Default is 100)
+SetControlDelay, 0 ; Sets the delay that will occur after each control-modifying command. -1 for no delay, 0 for smallest possible delay. The default delay is 20.
+SetBatchLines, -1 ; How fast a script will run (affects CPU utilization).(Default setting is 10ms - prevent the script from using any more than 50% of an idle CPU's time. This allows scripts to run quickly while still maintaining a high level of cooperation with CPU sensitive tasks such as games and video capture/playback.
+ListLines Off
+Process, Priority,, Normal
+CoordMode, Mouse, Client
+
+global g_TabList:=""
+global g_MouseTooltips:={}
+global g_TabControlHeight:=600
+global g_TabControlStartHeight
+global g_TabControlWidth:=440 ;Targetting 440, maybe slightly less
+global g_GlobalFontSize:=8
+
+
+try
+{
+	Menu Tray, Icon, %A_LineFile%\..\Resources\IBM.ico
+}
+
+Reload_Clicked()
+{
+    Reload
+    return
+}
+
+Launch_Clicked()
+{
+	programLoc:=g_IBM_Settings.IBM_Game_Launch
+    try
+    {
+		if (g_IBM_Settings.IBM_Game_Hide_Launcher)
+			Run, %programLoc%,,Hide, openPID
+		else
+			Run, %programLoc%,,,openPID
+    }
+    catch
+    {
+        MsgBox, 48, % "Unable to launch game, `nVerify the game location is set properly in the Briv Master settings. If you do not wish to use Briv Master's location settings please disable the addon"
+    }
+	if (g_SF.GetProcessName(openPID)==g_IBM_Settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+		g_SF.PID:=openPID
+    else
+	{
+		Process, Exist, % g_IBM_Settings.IBM_Game_Exe
+		g_SF.PID:=ErrorLevel
+	}
+	Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority
+}
+
+IBM_HomeGuiClose()
+{
+    MsgBox 4,, Are you sure you want to `exit?
+    IfMsgBox Yes
+        ExitApp
+    IfMsgBox No
+        return True
+}
+
+; Shows a tooltip if the control with mouseover has a tooltip associated with it.
+CheckControlForTooltip()
+{
+	MouseGetPos,,,VarWin, VarControl
+	varTTLoc := VarWin . VarControl
+	if(varTTLoc)
+		ToolTip % g_MouseToolTips[varTTLoc]
+	else
+		ToolTip
+	SetTimer, HideToolTip, -3000
+}
+
+HideToolTip()
+{
+    ToolTip
+}
+
+;+++++++++++
+;Briv Master
+;+++++++++++
+
+#include %A_LineFile%\..\BrivMaster\IC_BrivMaster_SharedFunctions.ahk
+#include %A_LineFile%\..\BrivMaster\IC_BrivMaster_GUI.ahk
+#include %A_LineFile%\..\BrivMaster\IC_BrivMaster_Heroes.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
 ; Naming convention in Script Hub is that simple global variables should start with ``g_`` to make it easy to know that a global variable is what is being used.
+global g_SF:={} ;Must be instantiated after settings are loaded
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
 global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI
 global g_Heroes:={}
 global g_IBM_Settings:={}
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
 global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to be in g_IBM.GameMaster.Hwnd, which is needed for the Elly tool TODO: Make this less horrible. Possibly by actually having g_IBM used for IBM things?!
-global g_IriBrivMaster_ModLoc := A_LineFile . "\..\IC_BrivMaster_Mods.ahk"
+global g_IriBrivMaster_ModLoc := A_LineFile . "\..\GemFarm\IC_BrivMaster_Mods.ahk"
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
+global g_ServerCall:={} ;This is instantiated by g_SF.ResetServerCall()
 
-scriptHubFontSize:=g_GlobalFontSize ;SH gained a font size setting with a default of 9, which is larger than the 8 that the BM UI was designed for. TODO: This needs a more elegant solution
-g_GlobalFontSize:=8
+OnMessage(0x200, "CheckControlForTooltip") ;ToolTip Test
+
 g_IriBrivMaster.Init()
-g_GlobalFontSize:=scriptHubFontSize ;Restore default
 g_IriBrivMaster.ResetModFile()
+
+if(g_IBM_Settings.HUB.IBM_Version_Check) ;Version Checks last
+	g_IriBrivMaster.RunVersionCheck()
+if(g_IBM_Settings.HUB.IBM_Offsets_Check)
+	g_IriBrivMaster.CheckOffsetVersions()
+
+GuiControl, IBM_Home:MoveDraw, ModronTabControl, % "w" . g_TabControlWidth . " h" . g_TabControlHeight
+Gui, IBM_Home:Show, % "w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
 
 ClearButtonStatusMessage()
 {
     g_IriBrivMaster.LEGACY_UpdateStatus("")
 }
 
-Gui, ICScriptHub:Submit, NoHide
+Gui, IBM_Home:Submit, NoHide
 
 Class IC_IriBrivMaster_Component
 {
@@ -57,13 +149,13 @@ Class IC_IriBrivMaster_Component
         {
             g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
             g_SF.Memory.OpenProcessReader()
-            scriptLocation := A_LineFile . "\..\IC_BrivMaster_Run.ahk"
-            GuiControl, ICScriptHub:Choose, ModronTabControl, Stats
+            scriptLocation := A_LineFile . "\..\BrivMaster\IC_BrivMaster_Run.ahk"
+            GuiControl, IBM_Home:Choose, ModronTabControl, Stats
             for k,v in g_IriBrivMaster_StartFunctions
             {
                 v.Call()
             }
-            GuidCreate := ComObjCreate("Scriptlet.TypeLib")
+            GuidCreate:=ComObjCreate("Scriptlet.TypeLib")
             this.GemFarmGUID := guid := GuidCreate.Guid
             Run, %A_AhkPath% "%scriptLocation%" "%guid%"
         }
@@ -71,7 +163,7 @@ Class IC_IriBrivMaster_Component
 
     UpdateGUIDFromLast()
     {
-        this.GemFarmGUID := g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+        this.GemFarmGUID := g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\BrivMaster\LastGUID_IBM_GemFarm.json")
     }
 
     Stop_Clicked()
@@ -97,7 +189,7 @@ Class IC_IriBrivMaster_Component
         }
     }
 
-    Connect_Clicked()
+    Connect_Clicked() ;TODO: Consolidate Connect and Run
     {
         this.LEGACY_UpdateStatus("Connecting to Gem Farm...")
         this.UpdateGUIDFromLast()
@@ -127,7 +219,7 @@ Class IC_IriBrivMaster_Component
 
     LEGACY_UpdateStatus(msg)
     {
-        GuiControl, ICScriptHub:, IBM_MainButtons_Status, % msg
+        GuiControl, IBM_Home:, IBM_MainButtons_Status, % msg
         if (msg=="")
 			return
 		SetTimer, ClearButtonStatusMessage,-3000
@@ -137,12 +229,12 @@ Class IC_IriBrivMaster_Component
 
 	Init()
     {
-		this.GemFarmGUID:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json")
+		this.GemFarmGUID:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\BrivMaster\LastGUID_IBM_GemFarm.json")
         g_Heroes:=new IC_BrivMaster_Heroes_Class()
 		this.LoadSettings()
-		g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Overwrite with IBM class entirely
+		g_SF:=New IC_BrivMaster_SharedFunctions_Class
 		g_IriBrivMaster_GUI.Init() ;Must follow IBM memory manager being set up in g_SF
-		g_IriBrivMaster_GUI.UpdateGUISettings() ;TODO: Given we're loading settings before displaying the UI now, they should just be applied via Init() to avoid setting defaults and immediately overwriting them?
+		g_IriBrivMaster_GUI.UpdateGUISettings()
 		this.ChestSnatcher:=New IC_IriBrivMaster_ChestSnatcher_Class()
 		this.ResetStats() ;Before we initiate the timers
 		g_IriBrivMaster_StartFunctions.Push(ObjBindMethod(this, "Start"))
@@ -159,10 +251,6 @@ Class IC_IriBrivMaster_Component
 		this.Chests.OpenedGold:=0
 		this.Chests.OpenedSilver:=0
 		this.Chests.OpenedGold:=0
-		if(g_IBM_Settings.HUB.IBM_Version_Check)
-			this.RunVersionCheck() ;TODO: It might make sense to delay this via a timer?
-		if(g_IBM_Settings.HUB.IBM_Offsets_Check)
-			this.CheckOffsetVersions() ;TODO: Again a timer perhaps?
     }
 
 	GetSettingsTemplate() ;_DEFAULT property allows us to seperate the object structure from the default values, as some defaults are themselves objects
@@ -228,7 +316,39 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.IBM_Online_Farideh_Threshold["_DEFAULT"]:=90
-		settings.IBM_Scan_Codes["_DEFAULT"]:={"a":30,"Alt":56,"b":48,"c":46,"ClickDmg":41,"Ctrl":29,"d":32,"e":18,"Esc":1,"f":33,"F1":59,"F10":68,"F11":87,"F12":88,"F2":60,"F3":61,"F4":62,"F5":63,"F6":64,"F7":65,"F8":66,"F9":67,"g":34,"h":35,"i":23,"j":36,"k":37,"l":38,"LCtrl":29,"Left":331,"m":50,"n":49,"o":24,"p":25,"q":16,"r":19,"RCtrl":285,"Right":333,"s":31,"Shift":42,"t":20,"u":22,"v":47,"w":17,"x":45,"y":21,"z":44,0:11,1:2,2:3,3:4,4:5,5:6,6:7,7:8,8:9,9:10} ;Note the numbers must come after a non-number value to avoid parsing issues (loaded as array not object) TODO: Decide if we want to keep all of these
+		settings.IBM_Scan_Codes["Esc","_DEFAULT"]:=1 ;Escape for skipping splash screen
+		settings.IBM_Scan_Codes["F1","_DEFAULT"]:=59 ;F-keys for levelling
+		settings.IBM_Scan_Codes["F2","_DEFAULT"]:=60
+		settings.IBM_Scan_Codes["F3","_DEFAULT"]:=61
+		settings.IBM_Scan_Codes["F4","_DEFAULT"]:=62
+		settings.IBM_Scan_Codes["F5","_DEFAULT"]:=63
+		settings.IBM_Scan_Codes["F6","_DEFAULT"]:=64
+		settings.IBM_Scan_Codes["F7","_DEFAULT"]:=65
+		settings.IBM_Scan_Codes["F8","_DEFAULT"]:=66
+		settings.IBM_Scan_Codes["F9","_DEFAULT"]:=67
+		settings.IBM_Scan_Codes["F10","_DEFAULT"]:=68
+		settings.IBM_Scan_Codes["F11","_DEFAULT"]:=87
+		settings.IBM_Scan_Codes["F12","_DEFAULT"]:=88
+		settings.IBM_Scan_Codes["q","_DEFAULT"]:=16 ;QWE for formation swapping
+		settings.IBM_Scan_Codes["w","_DEFAULT"]:=17
+		settings.IBM_Scan_Codes["e","_DEFAULT"]:=18
+		settings.IBM_Scan_Codes["g","_DEFAULT"]:=34 ;Auto progress
+		settings.IBM_Scan_Codes["Left","_DEFAULT"]:=331 ;Left for moving back a zone
+		settings.IBM_Scan_Codes["ClickDmg","_DEFAULT"]:=41 ;Click damage, using text instead of tilde as it's a special character in AHK
+		settings.IBM_Scan_Codes["LCtrl","_DEFAULT"]:=29 ;Modifier keys for adjusting levelling amount 
+		settings.IBM_Scan_Codes["Shift","_DEFAULT"]:=42
+		settings.IBM_Scan_Codes["Alt","_DEFAULT"]:=56
+		settings.IBM_Scan_Codes[1,"_DEFAULT"]:=2 ;Ultimates
+		settings.IBM_Scan_Codes[2,"_DEFAULT"]:=3
+		settings.IBM_Scan_Codes[3,"_DEFAULT"]:=4
+		settings.IBM_Scan_Codes[4,"_DEFAULT"]:=5
+		settings.IBM_Scan_Codes[5,"_DEFAULT"]:=6
+		settings.IBM_Scan_Codes[6,"_DEFAULT"]:=7
+		settings.IBM_Scan_Codes[7,"_DEFAULT"]:=8
+		settings.IBM_Scan_Codes[8,"_DEFAULT"]:=9
+		settings.IBM_Scan_Codes[9,"_DEFAULT"]:=10
+		settings.IBM_Scan_Codes[0,"_DEFAULT"]:=11
+		settings.IBM_OffLine_Blank_Stop["_DEFAULT"]:=false
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
@@ -347,9 +467,9 @@ Class IC_IriBrivMaster_Component
 			this.SharedRunData.ResetRunStats()
 		}
 
-		GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats"
+		GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats"
 		GuiControl, -Redraw, IBM_Stats_Run_LV
-		Gui, ICScriptHub:Default
+		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
 		LV_Modify(1,,"Total","--.--","--.--","--.--","--.--")
 		LV_Modify(2,,"Active","--.--","--.--","--.--","--.--")
@@ -360,29 +480,29 @@ Class IC_IriBrivMaster_Component
 		LV_ModifyCol(4,"AutoHdr")
 		LV_ModifyCol(5,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Run_LV
-		GuiControl, ICScriptHub:, IBM_Stats_Total_Runs, 0
-		GuiControl, ICScriptHub:, IBM_Stats_Total_Time, 0s (0h)
-		GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, 0
-		GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, 0s
-		GuiControl, ICScriptHub:, IBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
+		GuiControl, IBM_Home:, IBM_Stats_Total_Runs, 0
+		GuiControl, IBM_Home:, IBM_Stats_Total_Time, 0s (0h)
+		GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, 0
+		GuiControl, IBM_Home:, IBM_Stats_Fail_Time, 0s
+		GuiControl, IBM_Home:, IBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
 
-		GuiControl, ICScriptHub:, IBM_Stats_BPH, BPH: --.--
-		GuiControl, ICScriptHub:, IBM_Stats_GPH, GPH: --.--
-		GuiControl, ICScriptHub:, IBM_Stats_TotalGems, 0
-		GuiControl, ICScriptHub:, IBM_Stats_GPB, -.-
-		GuiControl, ICScriptHub:, IBM_Stats_Gem_Bonus, -.-`%
-		GuiControl, ICScriptHub:, IBM_Stats_BSC_Reward, --.-- (Bosses: --.--, Gems: --.--)
-		GuiControl, ICScriptHub:, IBM_Stats_Total_Reward, --.-- (Bosses: --.--, Gems: --.--)
-		GuiControl, ICScriptHub:+cBlack, IBM_Stats_Gem_Hunter
-		GuiControl, ICScriptHub:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
+		GuiControl, IBM_Home:, IBM_Stats_BPH, BPH: --.--
+		GuiControl, IBM_Home:, IBM_Stats_GPH, GPH: --.--
+		GuiControl, IBM_Home:, IBM_Stats_TotalGems, 0
+		GuiControl, IBM_Home:, IBM_Stats_GPB, -.-
+		GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, -.-`%
+		GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, --.-- (Bosses: --.--, Gems: --.--)
+		GuiControl, IBM_Home:, IBM_Stats_Total_Reward, --.-- (Bosses: --.--, Gems: --.--)
+		GuiControl, IBM_Home:+cBlack, IBM_Stats_Gem_Hunter
+		GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 
-		GuiControl, ICScriptHub:, IBM_Stats_Current_Area_Run_Time, - / -
-		GuiControl, ICScriptHub:, IBM_Stats_Loop, -
-		GuiControl, ICScriptHub:, IBM_Stats_Current_Briv, - / -
-		GuiControl, ICScriptHub:, IBM_Stats_Last_Close, -
-		GuiControl, ICScriptHub:, IBM_Stats_Boss_Hits, - / -
-        GuiControl, ICScriptHub:, IBM_Stats_Rollbacks, 0
-        GuiControl, ICScriptHub:, IBM_Stats_Bad_Auto, 0
+		GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time,Area / Run (s): - / -
+		GuiControl, IBM_Home:, IBM_Stats_Loop, Stage: - 
+		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, SB / Haste Stacks: - / -
+		GuiControl, IBM_Home:, IBM_Stats_Last_Close, Last Close: -
+		GuiControl, IBM_Home:, IBM_Stats_Boss_Hits, - / -
+        GuiControl, IBM_Home:, IBM_Stats_Rollbacks, 0
+        GuiControl, IBM_Home:, IBM_Stats_Bad_Auto, 0
 	}
 
 	UpdateStats(dirty)
@@ -405,7 +525,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=1
-					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to start)"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to start)"
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
 					this.Stats.PreviousRunEndTime:=LogData.End ;Include this so it is available for run timing
 				}
@@ -413,7 +533,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=2
-					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to complete)"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to complete)"
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 					{
@@ -464,7 +584,7 @@ Class IC_IriBrivMaster_Component
 					}
 					this.Stats.TotalRuns++
 					this.Stats.PreviousRunEndTime:=LogData.End
-					Gui, ICScriptHub:Default
+					Gui, IBM_Home:Default
 					Gui, ListView, IBM_Stats_Run_LV
 					GuiControl, -Redraw, IBM_Stats_Run_LV
 					LV_Modify(1,,"Total",ROUND(totalDuration/1000,2),ROUND((this.Stats.Total.TotalTime/this.Stats.Total.ValidRuns)/1000,2),ROUND(this.Stats.Total.Fast/1000,2),ROUND(this.Stats.Total.Slow/1000,2))
@@ -485,10 +605,10 @@ Class IC_IriBrivMaster_Component
 						this.Stats.StartTime:=LogData.Start
 					}
 					totalTime:=LogData.End - this.Stats.StartTime
-					GuiControl, ICScriptHub:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
-					GuiControl, ICScriptHub:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
-					GuiControl, ICScriptHub:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
-					GuiControl, ICScriptHub:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
+					GuiControl, IBM_Home:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
+					GuiControl, IBM_Home:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
+					GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
+					GuiControl, IBM_Home:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 					{
@@ -501,10 +621,10 @@ Class IC_IriBrivMaster_Component
 					}
 					silverString:=this.Chests.CurrentSilver - this.Stats.Chests.SilverStart + this.Chests.OpenedSilver - this.Chests.PurchasedSilver . " / " . this.Chests.PurchasedSilver . " / " . this.Chests.OpenedSilver ; Start + Purchased + Dropped - Opened
 					goldString:=this.Chests.CurrentGold - this.Stats.Chests.GoldStart + this.Chests.OpenedGold - this.Chests.PurchasedGold . " / " . this.Chests.PurchasedGold . " / " . this.Chests.OpenedGold
-					GuiControl, ICScriptHub:, IBM_Stats_Chests, % "Silver: " . silverString . " Gold: " . goldString
+					GuiControl, IBM_Home:, IBM_Stats_Chests, % "Silver: " . silverString . " Gold: " . goldString
 					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
-					GuiControl, ICScriptHub:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
 					if(gems!="")
 					{
@@ -512,8 +632,8 @@ Class IC_IriBrivMaster_Component
 					}
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
-					GuiControl, ICScriptHub:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
-					GuiControl, ICScriptHub:, IBM_Stats_TotalGems, % gemsTotal
+					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % gemsTotal
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states
 					{
@@ -534,9 +654,9 @@ Class IC_IriBrivMaster_Component
 					}
 					gemMulti:=this.Stats.GHActive>0 ? 1.5 : 1 ;Mixed is processed as active TODO: Is it worth dealing with it dropping off? Doesn't seem like something we need to track
 					rawGPB:=gph/bph
-					GuiControl, ICScriptHub:, IBM_Stats_GPB, % ROUND(rawGPB/gemMulti,1)
+					GuiControl, IBM_Home:, IBM_Stats_GPB, % ROUND(rawGPB/gemMulti,1)
 					gemBonus:=(rawGPB/CONSTANT_baseGPB)/gemMulti
-					GuiControl, ICScriptHub:, IBM_Stats_Gem_Bonus, % ROUND((gemBonus-1)*100,1) . "%" ;Best expressed as a percentage
+					GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, % ROUND((gemBonus-1)*100,1) . "%" ;Best expressed as a percentage
 					silverChestIncome:=bph*CONSTANT_silversPerBoss
 					goldChestIncomeDrops:=bph*CONSTANT_goldPerBoss
 					goldChestIncomeGems:=gph/this.CONSTANT_goldCost
@@ -544,8 +664,8 @@ Class IC_IriBrivMaster_Component
 					BSCIncomeGems:=goldChestIncomeGems * CONSTANT_BSCPerGold
 					BountyIncomeDrops:=((goldChestIncomeDrops * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					BountyIncomeGems:=((goldChestIncomeGems * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
-					GuiControl, ICScriptHub:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1) . ")"
-					GuiControl, ICScriptHub:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1) . ")"
+					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1) . ")"
+					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1) . ")"
 					if (this.Stats.GHActive==0)
 						GH_colour:="cRed"
 					else if (this.Stats.GHActive==1)
@@ -554,10 +674,10 @@ Class IC_IriBrivMaster_Component
 						GH_colour:="cFFC000" ;Amber
 					else
 						GH_colour:="c000000"
-					GuiControl, ICScriptHub:+%GH_colour%, IBM_Stats_Gem_Hunter
-					GuiControl, ICScriptHub:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
+					GuiControl, IBM_Home:+%GH_colour%, IBM_Stats_Gem_Hunter
+					GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-					GuiControl, ICScriptHub:, IBM_Stats_Group, % "Run Stats (" . formattedDateTime . ")"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (" . formattedDateTime . ")"
 				}
 			}
 		}
@@ -626,14 +746,14 @@ Class IC_IriBrivMaster_Component
             this.Stats.StacksHaste:=stacks
 			message_Haste:=this.Stats.StacksHaste
         }
-        GuiControl, ICScriptHub:, IBM_Stats_Current_Area_Run_Time, % ROUND(areaTime/1000,1) . " / " . Round(runTime/1000,1)
-		GuiControl, ICScriptHub:, IBM_Stats_Loop, % this.SharedRunData.LoopString
-		GuiControl, ICScriptHub:, IBM_Stats_Current_Briv, % message_SB . " / " . message_Haste
-		GuiControl, ICScriptHub:, IBM_Stats_Last_Close, % this.SharedRunData.LastCloseReason
+        GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time, % "Area / Run (s): " . ROUND(areaTime/1000,1) . " / " . Round(runTime/1000,1)
+		GuiControl, IBM_Home:, IBM_Stats_Loop, % "Stage: " . this.SharedRunData.LoopString
+		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, % "SB / Haste Stacks: " . message_SB . " / " . message_Haste
+		GuiControl, IBM_Home:, IBM_Stats_Last_Close, % "Last Close: " . this.SharedRunData.LastCloseReason
 		;Gem farm stats
-		GuiControl, ICScriptHub:, IBM_Stats_Boss_Hits, % this.SharedRunData.BossesHitThisRun . " / " . this.SharedRunData.TotalBossesHit
-        GuiControl, ICScriptHub:, IBM_Stats_Rollbacks, % this.SharedRunData.TotalRollBacks
-        GuiControl, ICScriptHub:, IBM_Stats_Bad_Auto, % this.SharedRunData.BadAutoProgress
+		GuiControl, IBM_Home:, IBM_Stats_Boss_Hits, % this.SharedRunData.BossesHitThisRun . " / " . this.SharedRunData.TotalBossesHit
+        GuiControl, IBM_Home:, IBM_Stats_Rollbacks, % this.SharedRunData.TotalRollBacks
+        GuiControl, IBM_Home:, IBM_Stats_Bad_Auto, % this.SharedRunData.BadAutoProgress
 	}
 
 	StatsUpdateFastSlow(Stat,statTime) ;Helper for the slow/fast/total stat for each category
@@ -776,14 +896,6 @@ Class IC_IriBrivMaster_Component
         }
     }
 
-	SetControl_RestoreWindow() ;Toggles
-	{
-		if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
-            this.SharedRunData.UpdateOutbound("IBM_RestoreWindow_Enabled",!this.SharedRunData.IBM_RestoreWindow_Enabled)
-		else
-			Msgbox 48, "BrivMaster",Failed to update script ;48 is excamation, +0 for just OK
-	}
-
 	ParseRouteImportString(routeString)
 	{
 		RegExMatch(routeString,"{([A-Za-z0-9-_]+),.*}",routeMatches)
@@ -888,14 +1000,12 @@ Class IC_IriBrivMaster_Component
 				this.SharedRunData.IBM_OutboundDirty:=false ;Needs to be reset right away, so updates during processing are not lost
 				if (dirty)
 				{
-					GuiControlGet, activeTab, ICScriptHub:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each of the 3 functions checking it
-					brivMasterTabActive:=activeTab=="Briv Master"
+					GuiControlGet, activeTab, IBM_Home:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each function checking it
+					brivMasterTabActive:=activeTab=="Home"
 					this.STATUS_RunControlOffline:=this.SharedRunData.IBM_RunControl_DisableOffline
 					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.STATUS_RunControlOffline,brivMasterTabActive)
 					this.STATUS_RunControlForce:=this.SharedRunData.IBM_RunControl_ForceOffline
 					g_IriBrivMaster_GUI.UpdateRunControlForce(this.STATUS_RunControlForce,brivMasterTabActive)
-					this.STATUS_RestoreWindow:=this.SharedRunData.IBM_RestoreWindow_Enabled
-					g_IriBrivMaster_GUI.UpdateRestoreWindow(this.SharedRunData.IBM_RestoreWindow_Enabled,brivMasterTabActive)
 					this.CYCLE_Message_String:=this.SharedRunData.IBM_RunControl_CycleString
 					this.STATUS_Message_String:=this.SharedRunData.IBM_RunControl_StatusString
 					this.STATUS_Stack_String:=this.SharedRunData.IBM_RunControl_StackString
@@ -1037,6 +1147,8 @@ Class IC_IriBrivMaster_Component
 
 	IBM_GetGUIFormationData() ;Generates formation data for the level manager GUI
 	{
+		if(g_SF.Memory.ReadGameStarted()!=1)
+			this.RefreshUserData()
 		championData:={} ;This will be per seat, then champID with a list of formations containing, eg championData[1][58] being [1,3,4] if Briv is in Q/E/M but not W
 		if (!g_Heroes.Init()) ;Initialise the hero handler, otherwise we won't be able to get champion details - likely if this fails the formation reads would also fail anyway
 			return
@@ -1062,7 +1174,7 @@ Class IC_IriBrivMaster_Component
 			if heroID>0
 			{
 				seat:=g_Heroes[heroID].Seat
-                if !(championData.hasKey(seat) and championData[seat].hasKey(heroID)) ;Create entry for this champ
+                if !(championData.hasKey(seat) AND championData[seat].hasKey(heroID)) ;Create entry for this champ
                 {
                     championData[seat,heroID,"Name"]:=g_Heroes[heroID].ReadName() ;We need to create the array if it doesn't yet exist
                     championData[seat,heroID,"Q"]:=false
@@ -1105,7 +1217,7 @@ Class IC_IriBrivMaster_Component
         cards:=[]
         Loop 5
         {
-            GuiControlGet, cap, ICScriptHub:, IBM_NonGemFarm_Elly_%capType%_%A_Index% ;Eg IBM_NonGemFarm_Elly_Min_1
+            GuiControlGet, cap, IBM_Home:, IBM_NonGemFarm_Elly_%capType%_%A_Index% ;Eg IBM_NonGemFarm_Elly_Min_1
             cards.Push(cap)
         }
         return cards
@@ -1114,74 +1226,41 @@ Class IC_IriBrivMaster_Component
 	RunVersionCheck() ;Main version check wrapper
 	{
 		this.BasicServerCaller:=new IBM_ServerCall_Class() ;For basic server calls when version checking only - we won't be attached to the farm script / game at start up
-		this.VersionCheckSH()
-		this.VersionCheckAddons()
+		this.VersionCheckBM()
 		this.BasicServerCaller:=""
 	}
 
-	VersionCheckSH() ;SH has the version on line 25 of the main ICScriptHub.ahk file
+	VersionCheckBM() ;SH has the version on line 25 of the main IBM_Home.ahk file
     {
-        currentVersionLine:=GetScriptHubVersion() ;e.g. "v4.4.6, 2025-11-03"
-        remoteURL:="https://raw.githubusercontent.com/antilectual/Idle-Champions/refs/heads/main/ICScriptHub.ahk" ;This would ideally be a global variable somewhere in ICScriptHub.ahk
-		remoteScript:=this.BasicServerCaller.BasicServerCallRaw(remoteURL) ;.ahk file
-        line:=StrSplit(remoteScript, "`n", "`r")
-        remoteVersionLine:=line[25]
-        comparison:=this.VersionComparison(remoteVersionLine,currentVersionLine)
-        versionString:="Script Hub: "
+		details:=this.GetCurrentBMDetails()
+		addonDetails:=this.BasicServerCaller.BasicServerCall(this.ExtractAddonUrl(details[2]))
+		comparison:=this.VersionComparison(addonDetails.Version,details[1])
+        versionString:="Briv Master: "
 		if(comparison.GT)
 		{
-            versionString.=currentVersionLine . " - New version " . comparison.TestVersion . " available"
+            versionString.=details[1] . " - New version " . comparison.TestVersion . " available"
 			colour:="cFFC000" ;Amber
 		}
         else if(comparison.E)
         {
-			versionString.=currentVersionLine
+			versionString.=details[1]
 			colour:="cGreen"
 		}
 		else
         {
-			versionString.=currentVersionLine . " - Server version " . comparison.TestVersion
+			versionString.=details[1] . " - Server version " . comparison.TestVersion
 			colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
 		}
-		GuiControl, ICScriptHub:, IBM_Version_Text_SH, %versionString% ;Update UI
-		GuiControl, ICScriptHub:+%colour%, IBM_Version_Status_SH
-		GuiControl, ICScriptHub:MoveDraw,IBM_Version_Status_SH ;Required to update the colour as we don't change the text
+		GuiControl, IBM_Home:, IBM_Version_Text_SH, %versionString% ;Update UI
+		GuiControl, IBM_Home:+%colour%, IBM_Version_Status_SH
+		GuiControl, IBM_Home:MoveDraw,IBM_Version_Status_SH ;Required to update the colour as we don't change the text
 	}
-
-	VersionCheckAddons()
-    {
-		index:=1
-		for k,v in AddonManagement.EnabledAddons
-        {
-            remoteURL:=this.ExtractAddonUrl(v.Url)
-			versionString:=v.Name . ": " . v.Version
-			if(remoteURL)
-			{
-				addonDetails:=this.BasicServerCaller.BasicServerCall(remoteURL) ;JSON file
-				comparison:=this.VersionComparison(addonDetails.Version,v.Version)
-				if(comparison.GT)
-				{
-					versionString.=" - New version " . comparison.TestVersion . " available"
-					colour:="cFFC000" ;Amber
-				}
-				else if(comparison.E)
-				{
-					colour:="cGreen" ;Nothing to add to the text here
-				}
-				else
-				{
-					versionString.=" - Server version " . comparison.TestVersion
-					colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
-				}
-			}
-			else
-				versionString.="`t Check Failed"
-			GuiControl, ICScriptHub:, IBM_Version_Text_Addon_%index%, %versionString% ;Update UI
-			GuiControl, ICScriptHub:+%colour%, IBM_Version_Status_Addon_%index%
-			GuiControl, ICScriptHub:MoveDraw,IBM_Version_Status_Addon_%index% ;Required to update the colour as we don't change the text
-			index++
-        }
-    }
+	
+	GetCurrentBMDetails() ;Returns [version,url]
+	{
+		details:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\IC_BrivMaster.json")
+		return [details.Version, details.Url]
+	}
 
 	ExtractAddonUrl(url) ;The addon URL will have a format like https://github.com/RLee-EN/BrivMaster/tree/main/IC_BrivMaster_Extra, but directly downloading the file requires https://raw.githubusercontent.com/RLee-EN/BrivMaster/refs/heads/main/IC_BrivMaster_Extra. Returns "" if the URL is not in the expected format
 	{
@@ -1295,17 +1374,17 @@ Class IC_IriBrivMaster_Component
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		currentPointers:=this.GetPointersVersion()
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
 			colour:=this.GetThemeTextColour("WarningTextColor")
 		else
 			colour:=this.GetThemeTextColour()
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
-		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
+		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
 		if(!platformID)
 		{
@@ -1314,12 +1393,10 @@ Class IC_IriBrivMaster_Component
 			prompt.="`nEpic Games Store: 21"
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)
-			if(platformID!=11 AND platformID!=21)
-			{
+			if(ErrorLevel==1 OR (platformID!=11 AND platformID!=21)) ;ErrorLevel of 1 means cancel was pressed
 				return
-			}
 		}
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
 		if(platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
@@ -1333,15 +1410,15 @@ Class IC_IriBrivMaster_Component
 				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
-			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
-			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
+			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
+			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
-			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
-			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
+			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
+			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
 		}
 		else
@@ -1356,17 +1433,17 @@ Class IC_IriBrivMaster_Component
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		currentPointers:=this.GetPointersVersion()
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
 			colour:=this.GetThemeTextColour("WarningTextColor")
 		else
 			colour:=this.GetThemeTextColour()
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
-		GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_Current%index%
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
+		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
 		if(!platformID)
 		{
@@ -1375,10 +1452,10 @@ Class IC_IriBrivMaster_Component
 			prompt.="`nEpic Games Store: 21"
 			InputBox, platformID , Platform Selection, %prompt%,,,,,,,, 11
 			platformID:=Trim(platformID)
-			if(platformID!=11 AND platformID!=21)
+			if(ErrorLevel==1 OR (platformID!=11 AND platformID!=21)) ;ErrorLevel of 1 means cancel was pressed
 				return
 		}
-		GuiControl, ICScriptHub:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
+		GuiControl, IBM_Home:, IBM_Offsets_Text_Platform, % "Platform: " . this.GetPlatform(platformID)
 		if (platformID==18) ;CNE client should be treated as Steam
 			platformID:=11
 		remoteURL:=g_IBM_Settings.HUB.IBM_Offsets_URL . "IC_Offsets_Header_P" . platformID . ".csv"
@@ -1392,15 +1469,15 @@ Class IC_IriBrivMaster_Component
 				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
-			GuiControl, ICScriptHub:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
-			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
+			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
+			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:=this.GetThemeTextColour("WarningTextColor")
 			else
 				colour:=this.GetThemeTextColour()
-			GuiControl, ICScriptHub:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
-			GuiControl, ICScriptHub:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
+			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
+			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"
 			prompt.=g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers ? "`nPointers preserved" : "`nPointers: " . splitCSV[3] . " " . splitCSV[4]
 			prompt.="`nImports: " . splitCSV[1] . " " . splitCSV[2]
@@ -1422,11 +1499,11 @@ Class IC_IriBrivMaster_Component
 					for importFile,importString in offsetData["Imports"]
 					{
 						Splitpath A_LineFile,,scriptDir
-						dataPath:=scriptDir . "\Offsets\IC_" . importFile .  "_Import.ahk"
+						dataPath:=offsetDirectory . "IC_" . importFile .  "_Import.ahk"
 						FileDelete, %dataPath%
 						FileAppend, %importString%, %dataPath%
 					}
-					dataPath:=scriptDir . "\Offsets\IC_Offsets.json"
+					dataPath:=offsetDirectory . "IC_Offsets.json"
 					if(g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers) ;In this case we have to load the existing pointer file, update the import versions, and re-output
 					{
 						FileRead, existingJSON, %dataPath%

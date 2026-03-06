@@ -23,10 +23,8 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\IC_BrivMaster_RouteMaster.ahk
 #include %A_LineFile%\..\IC_BrivMaster_LevelManager.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Heroes.ahk
-#include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
-#include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\SH_GUIFunctions.ahk
-#include %A_LineFile%\..\..\..\SharedFunctions\ObjRegisterActive.ahk ;TODO: This was the very last line in IC_BrivGemFarm_Functions.ahk, why?
+#include %A_LineFile%\..\..\Lib\IC_BrivMaster_JSON.ahk
+#include %A_LineFile%\..\..\Lib\IC_BrivMaster_Zlib.ahk
 
 global g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
@@ -93,7 +91,7 @@ class IC_BrivMaster_GemFarm_Class
         g_SF.ResetServerCall()
         g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
-		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\Logs\")
+		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
 		this.Logger.OutputHeader() ;After the RouteMaster is created so that the strategy string can be included in the header
@@ -697,4 +695,48 @@ class IC_BrivMaster_GemFarm_Class
 		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
 	}
 	;END GEM FARM WINDOW
+}
+
+/*
+    ObjRegisterActive(Object, CLSID, Flags:=0)
+    
+        Registers an object as the active object for a given class ID.
+        Requires AutoHotkey v1.1.17+; may crash earlier versions.
+    
+    Object:
+            Any AutoHotkey object.
+    CLSID:
+            A GUID or ProgID of your own making.
+            Pass an empty string to revoke (unregister) the object.
+    Flags:
+            One of the following values:
+              0 (ACTIVEOBJECT_STRONG)
+              1 (ACTIVEOBJECT_WEAK)
+            Defaults to 0.
+    
+    Related:
+        http://goo.gl/KJS4Dp - RegisterActiveObject
+        http://goo.gl/no6XAS - ProgID
+        http://goo.gl/obfmDc - CreateGUID()
+*/
+ObjRegisterActive(Object, CLSID, Flags:=0)
+{
+    static cookieJar := {}
+    if (!CLSID)
+	{
+        if (cookie:=cookieJar.Remove(Object))!=""
+            DllCall("oleaut32\RevokeActiveObject", "uint", cookie, "ptr", 0)
+        return
+    }
+    if cookieJar[Object]
+        throw Exception("Object is already registered", -1)
+    VarSetCapacity(_clsid, 16, 0)
+    if (hr:=DllCall("ole32\CLSIDFromString", "wstr", CLSID, "ptr", &_clsid))<0
+        throw Exception("Invalid CLSID", -1, CLSID)
+    hr:=DllCall("oleaut32\RegisterActiveObject"
+        , "ptr", &Object, "ptr", &_clsid, "uint", Flags, "uint*", cookie
+        , "uint")
+    if hr<0
+        throw Exception(format("Error 0x{:x}", hr), -1)
+    cookieJar[Object]:=cookie
 }

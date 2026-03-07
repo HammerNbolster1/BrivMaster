@@ -408,7 +408,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
 			this.ToggleAutoProgress(1,false,true)
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
-		g_IBM.PreviousZoneStartTime:= A_TickCount
     }
 
 	TestForSteelBonesStackFarming() ;Returns true if we have a failure, namely the out of stacks and need to force restart case. TODO: Are we covering needing to stack at the recovery minimum when only offline stacking?

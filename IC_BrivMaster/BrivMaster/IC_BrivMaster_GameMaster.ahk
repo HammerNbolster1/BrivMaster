@@ -220,7 +220,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		g_IBM.RefreshImportCheck() ;The game has started so version memory reads should be available
         ; check if game has offline progress to calculate
         offlineTime:=g_SF.Memory.ReadOfflineTime()
-		if(gameStarted AND offlineTime <= 0 AND offlineTime != "")
+		if(gameStarted AND offlineTime<=0 AND offlineTime!="")
         {
 			return true ; No offline progress to calculate, game started
 		}

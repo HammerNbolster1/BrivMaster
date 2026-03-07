@@ -13,7 +13,7 @@
 	static IBM_SYMBOL_UI_LEFT:="◀"
 	static IBM_SYMBOL_UI_CLEAR:="○"
 	static IBM_SYMBOL_UI_LIGHT:="⬤"
-	
+
 	levelDataSet:={}
 	controlLock:=false
 
@@ -21,12 +21,12 @@
 	{
 		global ;Required for GUI control variables
 		this.controlLock:=true
-		
+
 		GUIFunctions.LoadTheme()
-		Gui, IBM_Home:New 
-		Gui, IBM_Home:+Resize -MaximizeBox 
+		Gui, IBM_Home:New
+		Gui, IBM_Home:+Resize -MaximizeBox
 		Gui, IBM_Home:+HwndGUIIBM_Home
-		
+
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control
 		;Buttons for starting, saving etc
 		buttonWidth:=25
@@ -40,6 +40,17 @@
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\connect-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Save vIBM_MainButtons_Save, %A_LineFile%\..\..\Resources\save-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Reset vIBM_MainButtons_Reset, %A_LineFile%\..\..\Resources\Reset-100x100.png
+		;Tab control
+		g_TabControlStartHeight:=buttonWidth+7
+		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
+		GUIFunctions.UseThemeBackgroundColor()
+		GUIFunctions.AddTab("Home")
+		GUIFunctions.AddTab("Game")
+		GUIFunctions.AddTab("Route")
+		GUIFunctions.AddTab("Levels")
+		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
+		GUIFunctions.UseThemeTitleBar("IBM_Home")
+		;Tooltips must come after the first GUI:Show so the controls are created
 		GUIFunctions.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm")
         GUIFunctions.AddToolTip("IBM_MainButtons_Stop", "Stop Gem Farm")
         GUIFunctions.AddToolTip("IBM_MainButtons_Connect", "Reconnect to Gem Farm script")
@@ -47,16 +58,6 @@
 		GUIFunctions.AddToolTip("IBM_MainButtons_Reset", "Reset stats")
 		GUIFunctions.AddToolTip("LaunchClickButton", "Launch Idle Champions")
 		GUIFunctions.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
-		;Tab control
-		g_TabControlStartHeight:=buttonWidth+7
-		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
-		GUIFunctions.UseThemeBackgroundColor()		
-		GUIFunctions.AddTab("Home")
-		GUIFunctions.AddTab("Game")
-		GUIFunctions.AddTab("Route")
-		GUIFunctions.AddTab("Levels")
-		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
-		GUIFunctions.UseThemeTitleBar("IBM_Home")
 		;MAIN TAB
 		GUIFunctions.UseThemeTextColor()
 		Gui, IBM_Home:Tab, Home
@@ -329,18 +330,18 @@
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
 		Gui, IBM_Home:Add, Text, w200 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		Gui, IBM_Home:Add, Text, w200 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
-				
+
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers" 
+		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w150 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
 		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
 		Gui, IBM_Home:Add, Button, xs+350 yp+0 w70 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now, Check now
-		
+
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Imports" 
+		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Imports"
 		Gui, IBM_Home:Font, w400
-		
+
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=g_IriBrivMaster.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
@@ -348,9 +349,9 @@
 		else
 			colour:=g_IriBrivMaster.GetThemeTextColour()
 		Gui, IBM_Home:Add, Text, w150 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
-		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"		
+		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
 		Gui, IBM_Home:Add, Button, xs+350 yp+0 w70 vIBM_Offsets_Download gIBM_Offsets_Download, Download
-		
+
 		Gui, IBM_Home:Add, CheckBox, xs+10 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int, Check automatically
 		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 		Gui, IBM_Home:Add, CheckBox, x+10 w120 h18 0x200 Center vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int, Update imports only
@@ -373,7 +374,7 @@
 		if(FileExist(readMeLocation))
 			Gui, IBM_Home:Add, Link, xs+280 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
 		Gui, IBM_Home:Add, Text, w200 xs+25 yp+20 h18 0x200, % "AHK Version: " . A_AhkVersion
-		
+
 		;Versions - check options sidebar
 		sideBarOffset:=mainWidth+10
 		Gui, IBM_Home:Font, w700
@@ -527,7 +528,7 @@
 		Gui, IBM_Home:Add, Text, w40 h20 x+1 0x200, Normal
 		Gui, IBM_Home:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
 		Gui, IBM_Home:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
-		
+
 		;Level manager - create the maximum of 40 rows (4 formations x 10 champions), we will hide what we don't need when populating TODO: Decide if we really need 40 here, it's a complete solution...but also pointlessly overkill. 12 is relatively high (as of 23Aug25)
 		this.LevelRow_Priority_Value:=[5,4,3,2,1,0,-1,-2,-3,-4,-5,5,4,3,2,1,5,4,3,2,1]
 		this.LevelRow_Priority_Limit:=["","","","","","","","","","","",100,100,100,100,100,200,200,200,200,200]
@@ -589,9 +590,9 @@
 	UpdateGUISettings()
     {
         this.controlLock:=true ;Prevent control g-labels messing things up whilst populating. This is particularly important when one label processes multiple controls, as it can read values out of yet-to-be-populated controls and thus blank that setting
-		
+
 		;BRIV MASTER TAB
-		
+
 		;Chests & Rewards
 		this.UpdateChestSnatcherOptions()
 		;Game settings
@@ -599,9 +600,9 @@
 		GuiControl, IBM_Home:, IBM_Game_Settings_Profile_2, % g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile!=1
 		this.GameSettings_Update()
 		this.UpdateNonGemFarmEllySettings(g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards) ;TODO: Shouldn't need to have a global passed to it
-		
+
 		;BM GAME TAB
-		
+
 		;Game Location
 		GuiControl, IBM_Home:, IBM_Game_Exe, % g_IBM_Settings.IBM_Game_Exe
 		GuiControl, IBM_Home:, IBM_Game_Path, % g_IBM_Settings.IBM_Game_Path
@@ -620,9 +621,9 @@
 		GuiControl, IBM_Home:, IBM_Offsets_Lock_Pointers, % g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers
 		;Versions
 		GuiControl, IBM_Home:, IBM_Version_Check, % g_IBM_Settings.HUB.IBM_Version_Check
-		
+
 		;BM ROUTE TAB
-		
+
 		;Combine options
 		GuiControl, IBM_Home:, IBM_Route_Combine, % g_IBM_Settings.IBM_Route_Combine
 		IBM_Combine_Enable(g_IBM_Settings.IBM_Route_Combine)
@@ -656,7 +657,7 @@
 		GuiControl, IBM_Home:, IBM_Casino_Target_Base, % g_IBM_Settings.IBM_Casino_Target_Base
 		GuiControl, IBM_Home:, IBM_Casino_Redraws_Base, % g_IBM_Settings.IBM_Casino_Redraws_Base
 		GuiControl, IBM_Home:, IBM_Casino_MinCards_Base, % g_IBM_Settings.IBM_Casino_MinCards_Base
-				
+
 		;BM LEVELS TAB
 
 		;Levelling options
@@ -898,7 +899,7 @@
 		}
 		GuiControl, IBM_Home:Enable, IBM_RunControl_Offline_Toggle
 		if(allowMoveDraw)
-			GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusPause 
+			GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusPause
 	}
 
 	UpdateRunControlForce(queueOffline,allowMoveDraw:=true) ;Force Queue
@@ -1274,7 +1275,7 @@ IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. No
 	{
 		location:=IBM_Game_Copy_From_Game_Location_Helper(useExe) . "\" ;Trailing \ is removed
 		if (g_SF.Memory.ReadPlatform()==21) ;21 is the EGS platform code
-		{	
+		{
 			Msgbox 36, Briv Master, Use standard Epic Games Store Launcher?`nSelect No for Legendary or Rare ;32 is question, 4 is Yes/No
 			IfMsgBox Yes
 				launch:="explorer.exe ""com.epicgames.launcher://apps/7e508f543b05465abe3a935960eb70ac%3A48353a502e72433298f25827e03dbff0%3A40cb42e38c0b4a14a1bb133eb3291572?action=launch&silent=true"""
@@ -1585,26 +1586,34 @@ IBM_Combine_Enable(enableControl)
 		GuiControl, IBM_Home:Disable, IBM_Route_Combine_Boss_Avoidance
 }
 
-class GUIFunctions ;Dumped in here for now
+class GUIFunctions ;From SH, dumped in here for now
 {
-    isDarkMode := false
-    CurrentTheme := ""
-    FileOverride := ""
+    isDarkMode:=false
+    CurrentTheme:=""
+    FileOverride:=""
 
     ; Adds a tab to Script Hub's tab control
     AddTab(Tabname)
 	{
-        addedTabs := Tabname . "|"
-        GuiControl,IBM_Home:,ModronTabControl, % addedTabs
-        g_TabList .= addedTabs
+        addedTabs:=Tabname . "|"
+        GuiControl,IBM_Home:,ModronTabControl,% addedTabs
+        g_TabList.=addedTabs
     }
 
     ; Add a tooltip message to a control in a specific window.
-    AddToolTip(controlVariableName, tipMessage) ;TODO: Improve this so that we can change tooltips without having to get the control ID again, either via an UpdateToolTip() type method, or by storing in a way they can be accessed via control name and the window handle + control handle pair
+    AddToolTip(controlVariableName, tipMessage) ;Note this never removes tips - it's assumed if we've added one to a control we'll probably keep something there
     {
         global
-        toolTipTarget := this.GetToolTipTarget(controlVariableName)
-        g_MouseToolTips[toolTipTarget] := tipMessage
+        if(g_MouseToolTips.ByName.HasKey(controlVariableName))
+			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
+		else if(toolTipTarget:=this.GetToolTipTarget(controlVariableName))
+		{
+			newTip:={}
+			newTip.Tip:=tipMessage
+			OutputDebug % "Adding controlVariableName=" . controlVariableName . " toolTipTarget=" . toolTipTarget . " tipMessage=" . tipMessage . "`n"
+			g_MouseToolTips.ByName[controlVariableName]:=newTip
+			g_MouseToolTips.ByHandle[toolTipTarget]:=newTip
+		}
     }
 
     ; Finds a control ID based on its variable name.
@@ -1614,14 +1623,10 @@ class GUIFunctions ;Dumped in here for now
         GuiControl IBM_Home:Focus, %controlVariableName%
         WinGet IBM_Home_ID, ID, A
         ControlGetFocus toolTipTarget, ahk_id %IBM_Home_ID%
-        return IBM_Home_ID . toolTipTarget
-    }
-
-    ; Returns true if string is alphanumeric (can include -)
-    TestInputForAlphaNumericDash(textValue)
-    {
-        match := RegExMatch(textValue, "i)[^a-z^0-9^\-]")
-        return match == 0 ? True : False
+        if(IBM_Home_ID AND toolTipTarget)
+			return IBM_Home_ID . toolTipTarget
+		else
+			return ""
     }
 
     ;=================================
@@ -1660,24 +1665,6 @@ class GUIFunctions ;Dumped in here for now
         this.isDarkMode:=this.currentTheme["UseDarkThemeGraphics"]
     }
 
-    ; Will update the ByRef control passed in and then clear it after timer (ms) has expired (should not be negative number).
-    UpdateStatusTextWithClear(byref controlVal, msg, timer)
-    {
-        GuiControlGet, hwnd, IBM_Home:Hwnd, controlVal
-        GuiControl, IBM_Home:, %hwnd%, % msg
-        if(timer) ; != 0, != ""
-        {
-            clearFnc := ObjBindMethod(GUIFunctions, "ClearValueOfControl", hwnd)
-            SetTimer, %clearFnc%, -%timer%
-        }
-    }
-
-    ; Clears value from hwnd passed.
-    ClearValueOfControl(hwnd)
-    {
-        GuiControl, IBM_Home:, %hwnd%, % ""
-    }
-
     ; Sets the color/weight for subsequent text based on the theme.
     UseThemeTextColor(textType := "default", weight := 400)
     {
@@ -1712,7 +1699,7 @@ class GUIFunctions ;Dumped in here for now
     }
 
     ; Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
-    UseThemeTitleBar(guiName, refresh := true)
+    UseThemeTitleBar(guiName,refresh:=true)
     {
         if(this.isDarkMode AND guiName != "")
         {

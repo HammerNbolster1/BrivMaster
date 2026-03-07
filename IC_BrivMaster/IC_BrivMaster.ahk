@@ -11,6 +11,8 @@ CoordMode, Mouse, Client
 
 global g_TabList:=""
 global g_MouseTooltips:={}
+g_MouseTooltips.ByName:={}
+g_MouseTooltips.ByHandle:={}
 global g_TabControlHeight:=600
 global g_TabControlStartHeight
 global g_TabControlWidth:=440 ;Targetting 440, maybe slightly less
@@ -61,16 +63,21 @@ IBM_HomeGuiClose()
         return True
 }
 
-; Shows a tooltip if the control with mouseover has a tooltip associated with it.
-CheckControlForTooltip()
+
+CheckControlForTooltip() ;Shows a tooltip if the control with mouseover has a tooltip associated with it
 {
 	MouseGetPos,,,VarWin, VarControl
-	varTTLoc := VarWin . VarControl
+	varTTLoc:=VarWin . VarControl
 	if(varTTLoc)
-		ToolTip % g_MouseToolTips[varTTLoc]
-	else
-		ToolTip
-	SetTimer, HideToolTip, -3000
+	{
+		if(g_MouseToolTips.ByHandle.HasKey(varTTLoc))
+		{
+			ToolTip % g_MouseToolTips.ByHandle[varTTLoc].Tip
+			SetTimer, HideToolTip, -3000
+		}
+		else
+			ToolTip
+	}
 }
 
 HideToolTip()
@@ -335,7 +342,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Scan_Codes["g","_DEFAULT"]:=34 ;Auto progress
 		settings.IBM_Scan_Codes["Left","_DEFAULT"]:=331 ;Left for moving back a zone
 		settings.IBM_Scan_Codes["ClickDmg","_DEFAULT"]:=41 ;Click damage, using text instead of tilde as it's a special character in AHK
-		settings.IBM_Scan_Codes["LCtrl","_DEFAULT"]:=29 ;Modifier keys for adjusting levelling amount 
+		settings.IBM_Scan_Codes["LCtrl","_DEFAULT"]:=29 ;Modifier keys for adjusting levelling amount
 		settings.IBM_Scan_Codes["Shift","_DEFAULT"]:=42
 		settings.IBM_Scan_Codes["Alt","_DEFAULT"]:=56
 		settings.IBM_Scan_Codes[1,"_DEFAULT"]:=2 ;Ultimates
@@ -497,7 +504,7 @@ Class IC_IriBrivMaster_Component
 		GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 
 		GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time,Area / Run (s): - / -
-		GuiControl, IBM_Home:, IBM_Stats_Loop, Stage: - 
+		GuiControl, IBM_Home:, IBM_Stats_Loop, Stage: -
 		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, SB / Haste Stacks: - / -
 		GuiControl, IBM_Home:, IBM_Stats_Last_Close, Last Close: -
 		GuiControl, IBM_Home:, IBM_Stats_Boss_Hits, - / -
@@ -1108,7 +1115,7 @@ Class IC_IriBrivMaster_Component
 		}
 		return needSave
 	}
-	
+
 	CreateDefaultSettingsFromTemplate(template) ;Extracts all values from the _DEFAULT keys, e.g. template.IBM_Setting._DEFAULT:=true becomes template.IBM_Setting:=true. This is done in place
 	{
 		for k,v in template
@@ -1118,7 +1125,7 @@ Class IC_IriBrivMaster_Component
 		}
 		return template
 	}
-	
+
 	CreateDefaultSettingsFromTemplate_Recurse(parentObj,key,value)
 	{
 		for k,v in value.Clone()
@@ -1255,7 +1262,7 @@ Class IC_IriBrivMaster_Component
 		GuiControl, IBM_Home:+%colour%, IBM_Version_Status_SH
 		GuiControl, IBM_Home:MoveDraw,IBM_Version_Status_SH ;Required to update the colour as we don't change the text
 	}
-	
+
 	GetCurrentBMDetails() ;Returns [version,url]
 	{
 		details:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\IC_BrivMaster.json")
@@ -1560,10 +1567,10 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		this.Messages:={}
 		this.NextDailyClaimCheck:=A_TickCount+180000 ;Wait 3min before making the first check, to avoid spamming calls whilst testing things
 	}
-	
+
 	Snatch() ;Process chest purchase orders
 	{
-		if (g_IriBrivMaster.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests. Note it is assumed that SharedRunData has been checked as valid before calling this function 
+		if (g_IriBrivMaster.SharedRunData.IBM_BuyChests) ;Check daily rewards or Open chests. Note it is assumed that SharedRunData has been checked as valid before calling this function
 		{
 			if (g_IBM_Settings.HUB.IBM_DailyRewardClaim_Enable AND A_TickCount>=this.NextDailyClaimCheck)
 			{
@@ -1601,7 +1608,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		if (this.Messages.Count()>20)
 			this.Messages.RemoveAt(1)
 	}
-	
+
 	StartMessage()
 	{
 		this.AddMessage("General","Awaiting first order")
@@ -1739,7 +1746,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 			this.AddMessage("Open","Not enough chests to process open order")
 		g_IriBrivMaster_GUI.IBM_ChestsSnatcher_Status_Update()
 	}
-	
+
 	CNETimeStampToDate(timeStamp) ;Takes a timestamp in seconds-since-day-0 format and converts it to a date for AHK use TODO: There might be a case for making this a more general function
 	{
 		unixTime:=timeStamp-62135596800 ;Difference between day 1 (01Jan0001) and unix time (AHK doesn't support dates before 1601 so we can't just set converted:=1)
@@ -1802,7 +1809,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 		g_Heroes[83].Reset() ;Reset Elly to clear any previous handlers. This will also create the hero object if necessary
 		g_Heroes[99].Reset() ;And DM
 	}
-	
+
 	Start()
 	{
 		timerFunction:=this.CasinoTimer
@@ -1853,7 +1860,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 		else
 			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Drawing Cards")
 	}
-	
+
 	GetRemainingCardsToDraw() ;Check the minimums to determine if we need to draw more
 	{
 		num:=0

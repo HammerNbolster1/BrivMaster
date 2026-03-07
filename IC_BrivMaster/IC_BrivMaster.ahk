@@ -1500,7 +1500,7 @@ Class IC_IriBrivMaster_Component
 					zlib:="" ;Free as above
 					offsetData:=AHK_JSON.Load(offsetJSON)
 					Splitpath A_LineFile,,scriptDir
-					offsetDirectory:=scriptDir . "\Offsets\"
+					offsetDirectory:=scriptDir . "\BrivMaster\Offsets\"
 					if !InStr(FileExist(offsetDirectory), "D") ;Create the directory if missing
 						FileCreateDir, %offsetDirectory%
 					for importFile,importString in offsetData["Imports"]

@@ -746,3 +746,51 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
 		return data
     }
 }
+
+class IBM_Theme
+{
+    __new()
+	{
+		this.defaultFontSize:=8
+		this.Theme:=g_IBM_Settings["IBM_Theme_Current"]
+	}
+	
+    UseThemeTextColor(guiName, textType:="DefaultText", weight:=400) ;Sets the color/weight for subsequent text based on the theme
+    {
+        textColor:=Format("{:#x}", this.Theme[textType])
+        Gui, %guiName%:Font, % "c" . textColor . " w" . weight . " s" . this.defaultFontSize
+    }
+	
+	GetThemeTextColour(textType:="DefaultText") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
+    {
+        return "c" . Format("{:#x}", this.Theme[textType])
+    }
+
+	GetThemeBackgroundColor()
+    {
+        return Format("{:#x}", this.Theme["WindowColor"]) ;No 'c' prefix here
+    }
+
+	GetThemeListViewBackgroundColor()
+    {
+		return Format("{:#x}", this.Theme["TableBackgroundColor"]) ;No 'c' prefix here
+    }
+
+    ; Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
+    UseThemeTitleBar(guiName)
+    {
+        if(this.Theme.DarkMode)
+        {
+            if (A_OSVersion>="10.0.17763" AND SubStr(A_OSVersion, 1, 3)="10.")
+            {
+                attr:=19
+                if (A_OSVersion>="10.0.18985")
+                    attr:=20
+                Gui, %guiName%: +hwndGuiID
+                DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)             
+                Gui, %guiName%:Hide
+                Gui, %guiName%:Show
+            }
+        }
+    }
+}

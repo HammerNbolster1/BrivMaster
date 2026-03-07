@@ -13,7 +13,7 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=750
+global g_TabControlHeight:=760
 global g_TabControlStartHeight
 global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
 global g_GlobalFontSize:=8
@@ -642,7 +642,7 @@ Class IC_IriBrivMaster_Component
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
 					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . this.AddThousandsSeperator(ROUND(gph,2)) ;Includes the prefix so it can be properly centered
-					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % gemsTotal
+					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % this.AddThousandsSeperator(gemsTotal)
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states
 					{
@@ -672,9 +672,9 @@ Class IC_IriBrivMaster_Component
 					BSCIncomeGems:=goldChestIncomeGems * CONSTANT_BSCPerGold
 					BountyIncomeDrops:=((goldChestIncomeDrops * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					BountyIncomeGems:=((goldChestIncomeGems * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
-					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1)
+					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % this.AddThousandsSeperator(ROUND(BSCIncomeDrops+BSCIncomeGems,1))
 					GUIFunctions.AddToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
-					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1)
+					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % this.AddThousandsSeperator(ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1))
 					GUIFunctions.AddToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
 					if (this.Stats.GHActive==0)
 						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,No

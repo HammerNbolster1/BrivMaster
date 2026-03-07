@@ -13,7 +13,7 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=760
+global g_TabControlHeight:=750
 global g_TabControlStartHeight
 global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
 global g_GlobalFontSize:=8

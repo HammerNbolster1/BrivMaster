@@ -89,7 +89,7 @@
 		Gui, IBM_Home:Add, Text, x+4 w188 vIBM_Stats_Current_Briv, SB / Haste stacks: - / -
 		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h210 vIBM_Stats_Group, Run Rewards
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h200 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
 		LVBGColour:=GUIFunctions.GetThemeListViewBackgroundColor()
 		;>Highlights (BPH/GPH)
@@ -100,9 +100,8 @@
 		GUIFunctions.UseThemeTextColor("SpecialTextColor2", 700)
 		Gui, IBM_Home:Font, s10, Cascadia Code
 		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
-		;Gui, IBM_Home:Font
+		Gui, IBM_Home:Font
 		GUIFunctions.UseThemeTextColor()
-		Gui, IBM_Home:Font, s8, Cascadia Code
 		;>Gems
 		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_TotalGems,
@@ -111,11 +110,10 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem bonus:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Gem_Bonus, -.-`% (-.- GPB)
 		;>Reward summary
-		Gui, IBM_Home:Add, Text, xs+10 y+5 w100, BSC iLevels/h:
+		Gui, IBM_Home:Add, Text, xs+10 y+5 w75, BSC iLevels/h:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_BSC_Reward, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w100, Total iLevels/h:
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w75, Total iLevels/h:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Reward, -
-		Gui, IBM_Home:Font
 		;>Chests
 		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Chests_LV
@@ -397,7 +395,7 @@
 		
 		;Versions - core, static
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%mainWidth% h63, Core Versions
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%mainWidth% h70, Core Versions
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
 		Gui, IBM_Home:Add, Text, x+5 w218 h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
@@ -408,11 +406,11 @@
 
 		;Versions - check sidebar
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
+		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h70, Version Check
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w74 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-12 h18 0x200, On load
+		Gui, IBM_Home:Add, Text, x+-12 h19 0x200, On load
 		GUIFunctions.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 
 		;++++++++++++++++++ROUTE TAB++++++++++++++++++

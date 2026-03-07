@@ -13,7 +13,7 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=600
+global g_TabControlHeight:=755
 global g_TabControlStartHeight
 global g_TabControlWidth:=440 ;Targetting 440, maybe slightly less
 global g_GlobalFontSize:=8
@@ -56,7 +56,7 @@ Launch_Clicked()
 
 IBM_HomeGuiClose()
 {
-    MsgBox 4,, Are you sure you want to `exit?
+    MsgBox 36,Briv Master Home,Are you sure you want to `exit? ;4 for Yes/No, 32 for Question Mark
     IfMsgBox Yes
         ExitApp
     IfMsgBox No
@@ -474,32 +474,36 @@ Class IC_IriBrivMaster_Component
 			this.SharedRunData.ResetRunStats()
 		}
 
-		GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats"
+		GuiControl, IBM_Home:, IBM_Stats_Group,Run Rewards
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
 		LV_Modify(1,,"Total","--.--","--.--","--.--","--.--")
 		LV_Modify(2,,"Active","--.--","--.--","--.--","--.--")
 		LV_Modify(3,,"Wait","--.--","--.--","--.--","--.--")
-		LV_ModifyCol(1,"AutoHdr")
+		;LV_ModifyCol(1,"AutoHdr")
 		LV_ModifyCol(2,"AutoHdr")
 		LV_ModifyCol(3,"AutoHdr")
 		LV_ModifyCol(4,"AutoHdr")
 		LV_ModifyCol(5,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Run_LV
-		GuiControl, IBM_Home:, IBM_Stats_Total_Runs, 0
-		GuiControl, IBM_Home:, IBM_Stats_Total_Time, 0s (0h)
-		GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, 0
-		GuiControl, IBM_Home:, IBM_Stats_Fail_Time, 0s
-		GuiControl, IBM_Home:, IBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
-
+		Gui, ListView, IBM_Stats_Chests_LV
+		GuiControl, -Redraw, IBM_Stats_Chests_LV
+		LV_Modify(1,,"Silver","--.--","--.--","--.--")
+		LV_Modify(2,,"Gold","--.--","--.--","--.--")
+		LV_ModifyCol(2,"AutoHdr")
+		LV_ModifyCol(3,"AutoHdr")
+		LV_ModifyCol(4,"AutoHdr")
+		GuiControl, +Redraw, IBM_Stats_Chests_LV
+		GuiControl, IBM_Home:, IBM_Stats_Total_Runs, 0 0s (0h)
+		GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, 0 0s
 		GuiControl, IBM_Home:, IBM_Stats_BPH, BPH: --.--
 		GuiControl, IBM_Home:, IBM_Stats_GPH, GPH: --.--
 		GuiControl, IBM_Home:, IBM_Stats_TotalGems, 0
 		GuiControl, IBM_Home:, IBM_Stats_GPB, -.-
 		GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, -.-`%
-		GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, --.-- (Bosses: --.--, Gems: --.--)
-		GuiControl, IBM_Home:, IBM_Stats_Total_Reward, --.-- (Bosses: --.--, Gems: --.--)
+		GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, --.--
+		GuiControl, IBM_Home:, IBM_Stats_Total_Reward, --.--
 		GuiControl, IBM_Home:+cBlack, IBM_Stats_Gem_Hunter
 		GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 
@@ -532,7 +536,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=1
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to start)"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (Waiting for first full run to start)"
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
 					this.Stats.PreviousRunEndTime:=LogData.End ;Include this so it is available for run timing
 				}
@@ -540,7 +544,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=2
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (Waiting for first full run to complete)"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (Waiting for first full run to complete)"
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 					{
@@ -612,31 +616,31 @@ Class IC_IriBrivMaster_Component
 						this.Stats.StartTime:=LogData.Start
 					}
 					totalTime:=LogData.End - this.Stats.StartTime
-					GuiControl, IBM_Home:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns
-					GuiControl, IBM_Home:, IBM_Stats_Total_Time, % ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
-					GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns
-					GuiControl, IBM_Home:, IBM_Stats_Fail_Time, % ROUND(this.Stats.FailTotalTime/1000,2) . "s"
+					GuiControl, IBM_Home:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns . " " . ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
+					GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns . " " . ROUND(this.Stats.FailTotalTime/1000,2) . "s"
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
-					{
 						this.Chests.CurrentSilver:=silvers
-					}
 					golds:=g_SF.Memory.ReadChestCountByID(2)
 					if(golds!="")
-					{
 						this.Chests.CurrentGold:=golds
-					}
-					silverString:=this.Chests.CurrentSilver - this.Stats.Chests.SilverStart + this.Chests.OpenedSilver - this.Chests.PurchasedSilver . " / " . this.Chests.PurchasedSilver . " / " . this.Chests.OpenedSilver ; Start + Purchased + Dropped - Opened
-					goldString:=this.Chests.CurrentGold - this.Stats.Chests.GoldStart + this.Chests.OpenedGold - this.Chests.PurchasedGold . " / " . this.Chests.PurchasedGold . " / " . this.Chests.OpenedGold
-					GuiControl, IBM_Home:, IBM_Stats_Chests, % "Silver: " . silverString . " Gold: " . goldString
+					
+					Gui, IBM_Home:Default
+					Gui, ListView, IBM_Stats_Chests_LV
+					GuiControl, -Redraw, IBM_Stats_Chests_LV
+					LV_Modify(1,,"Silver",this.Chests.CurrentSilver - this.Stats.Chests.SilverStart + this.Chests.OpenedSilver - this.Chests.PurchasedSilver,this.Chests.PurchasedSilver,this.Chests.OpenedSilver) ; Start + Purchased + Dropped - Opened
+					LV_Modify(2,,"Gold",this.Chests.CurrentGold - this.Stats.Chests.GoldStart + this.Chests.OpenedGold - this.Chests.PurchasedGold,this.Chests.PurchasedGold,this.Chests.OpenedGold)
+					LV_ModifyCol(2,"AutoHdr")
+					LV_ModifyCol(3,"AutoHdr")
+					LV_ModifyCol(4,"AutoHdr")
+					GuiControl, +Redraw, IBM_Stats_Chests_LV
+										
 					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
 					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
 					if(gems!="")
-					{
 						this.CurrentGems:=gems
-					}
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
 					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
@@ -671,8 +675,10 @@ Class IC_IriBrivMaster_Component
 					BSCIncomeGems:=goldChestIncomeGems * CONSTANT_BSCPerGold
 					BountyIncomeDrops:=((goldChestIncomeDrops * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					BountyIncomeGems:=((goldChestIncomeGems * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
-					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1) . ")"
-					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1) . " (Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1) . ")"
+					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1)
+					GUIFunctions.AddToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
+					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1)
+					GUIFunctions.AddToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
 					if (this.Stats.GHActive==0)
 						GH_colour:="cRed"
 					else if (this.Stats.GHActive==1)
@@ -684,7 +690,7 @@ Class IC_IriBrivMaster_Component
 					GuiControl, IBM_Home:+%GH_colour%, IBM_Stats_Gem_Hunter
 					GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Stats (" . formattedDateTime . ")"
+					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (" . formattedDateTime . ")"
 				}
 			}
 		}
@@ -1044,30 +1050,6 @@ Class IC_IriBrivMaster_Component
         }
         else
         {
-        	;MIGRATION STUFF, added for 0.3.3 for Feb26 release - consider removing after a while
-			if(!g_IBM_Settings.HasKey("HUB"))
-			{
-				g_IBM_Settings.HUB:={} ;Create HUB sub-object and copy over existing settings - they will be removed by the usual extra setting checking
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gem:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Gem
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Gold:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Gold
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Silver:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Silver
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Min_Buy:=g_IBM_Settings.IBM_ChestSnatcher_Options_Min_Buy
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Gold:=g_IBM_Settings.IBM_ChestSnatcher_Options_Open_Gold
-				g_IBM_Settings.HUB.IBM_ChestSnatcher_Options_Open_Silver:=g_IBM_Settings.IBM_ChestSnatcher_Options_Open_Silver
-				g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile:=g_IBM_Settings.IBM_Game_Settings_Option_Profile
-				g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set:=g_IBM_Settings.IBM_Game_Settings_Option_Set
-				g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards:=g_IBM_Settings.IBM_Ellywick_NonGemFarm_Cards
-				g_IBM_Settings.HUB.IBM_Version_Check:=g_IBM_Settings.IBM_Version_Check
-				g_IBM_Settings.HUB.IBM_Offsets_Check:=g_IBM_Settings.IBM_Offsets_Check
-				g_IBM_Settings.HUB.IBM_Offsets_Lock_Pointers:=g_IBM_Settings.IBM_Offsets_Lock_Pointers
-				g_IBM_Settings.HUB.IBM_Offsets_URL:=g_IBM_Settings.IBM_Offsets_URL
-				MSGBOX 36, Briv Master Settings Migration, % "Hello, I'm Irisiri and I've been screwing around with Briv Master's settings structure. To avoid you having to get set up again BM will attempt to migrate your existing settings.`n`nBM no longer saves champion level settings seperately for the Combine and Non-combine strategy options.`n`nSelect Yes to migrate your Combine level settings`nSelect No to migrate your Non-combine level settings.`n`nYour current setting is: " . (g_IBM_Settings.IBM_Route_Combine ? "Combine (Yes)" : "Non-Combine (No)") ;32 is question, 4 is Yes/No
-				ifMsgBox Yes
-					g_IBM_Settings.IBM_LevelManager_Levels:=g_IBM_Settings.IBM_LevelManager_Levels[1]
-				ifMsgBox No
-					g_IBM_Settings.IBM_LevelManager_Levels:=g_IBM_Settings.IBM_LevelManager_Levels[0]
-			}
-			;END MIGRATION STUFF
 			needSave:=this.CheckForExtraSettings(g_IBM_Settings, template) ;Delete extra settings, without removing object-based values for them
             needSave:=this.CheckForMissingSettings(g_IBM_Settings,template) OR needSave ;Add extra settings, along with their default values. Order matters here due to lazy OR
         }
@@ -1263,7 +1245,7 @@ Class IC_IriBrivMaster_Component
 		GuiControl, IBM_Home:MoveDraw,IBM_Version_Status_SH ;Required to update the colour as we don't change the text
 	}
 
-	GetCurrentBMDetails() ;Returns [version,url]
+	GetCurrentBMDetails() ;Returns [version,url] TODO: Should we handle this file being missing?
 	{
 		details:=g_SF.LoadObjectFromAHKJSON(A_LineFile . "\..\IC_BrivMaster.json")
 		return [details.Version, details.Url]
@@ -1387,9 +1369,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=this.GetThemeTextColour("WarningTextColor")
+			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 		else
-			colour:=this.GetThemeTextColour()
+			colour:=GUIFunctions.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1414,16 +1396,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=this.GetThemeTextColour("WarningTextColor")
+				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 			else
-				colour:=this.GetThemeTextColour()
+				colour:=GUIFunctions.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=this.GetThemeTextColour("WarningTextColor")
+				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 			else
-				colour:=this.GetThemeTextColour()
+				colour:=GUIFunctions.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
@@ -1446,9 +1428,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=this.GetThemeTextColour("WarningTextColor")
+			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 		else
-			colour:=this.GetThemeTextColour()
+			colour:=GUIFunctions.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1473,16 +1455,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=this.GetThemeTextColour("WarningTextColor")
+				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 			else
-				colour:=this.GetThemeTextColour()
+				colour:=GUIFunctions.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=this.GetThemeTextColour("WarningTextColor")
+				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
 			else
-				colour:=this.GetThemeTextColour()
+				colour:=GUIFunctions.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"
@@ -1551,13 +1533,7 @@ Class IC_IriBrivMaster_Component
 		return g_SF.Memory.Versions.Pointer_Version_Major . g_SF.Memory.Versions.Pointer_Version_Minor . " " . g_SF.Memory.Versions.Pointer_Revision . " " . this.GetPlatform(g_SF.Memory.Versions.Platform)
 	}
 
-	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
-    {
-        if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()
-            textType:="DefaultTextColor"
-        textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
-		return "c" . textColour
-    }
+
 }
 
 class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and opening chests and associcated servercalls TODO: This has very weak encapsulation due to using various g_IriBrivMaster variables (chests, fails, etc) directly

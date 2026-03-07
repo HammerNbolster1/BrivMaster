@@ -23,10 +23,11 @@
 		this.controlLock:=true
 
 		GUIFunctions.LoadTheme()
+		winBGColour:=GUIFunctions.GetThemeBackgroundColor()
 		Gui, IBM_Home:New
-		Gui, IBM_Home:+Resize -MaximizeBox
-		Gui, IBM_Home:+HwndGUIIBM_Home
-
+		Gui, IBM_Home:+Resize -MaximizeBox +HwndGUIIBM_Home
+		Gui, IBM_Home:Color, %winBGColour%
+		GUIFunctions.UseThemeTextColor()
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control
 		;Buttons for starting, saving etc
 		buttonWidth:=25
@@ -43,7 +44,7 @@
 		;Tab control
 		g_TabControlStartHeight:=buttonWidth+7
 		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
-		GUIFunctions.UseThemeBackgroundColor()
+		GUIFunctions.UseThemeTextColor()
 		GUIFunctions.AddTab("Home")
 		GUIFunctions.AddTab("Game")
 		GUIFunctions.AddTab("Route")
@@ -59,7 +60,6 @@
 		GUIFunctions.AddToolTip("LaunchClickButton", "Launch Idle Champions")
 		GUIFunctions.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
 		;MAIN TAB
-		GUIFunctions.UseThemeTextColor()
 		Gui, IBM_Home:Tab, Home
 		;Run control
 		Gui, IBM_Home:Font, w700
@@ -86,11 +86,50 @@
 		Gui, IBM_Home:Add, Text, xs+10 yp+16 w405 vIBM_Stats_Last_Close, Last Close: -
 		Gui, IBM_Home:Add, Text, xs+10 yp+16 w200 vIBM_Stats_Current_Area_Run_Time, Area / Run (s): - / -
 		Gui, IBM_Home:Add, Text, x+5 w200 vIBM_Stats_Current_Briv, SB / Haste Stacks: - / -
-		;Stats
+		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h220 vIBM_Stats_Group, Run Stats
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h206 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView , +cBlack xs+10 ys+19 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		LVBGColour:=GUIFunctions.GetThemeListViewBackgroundColor()
+		;>Highlights (BPH/GPH)
+		highlightWidth:=FLOOR((groupWidth-21)/2)
+		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
+		Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highlightWidth% Center vIBM_Stats_BPH, BPH
+		GUIFunctions.UseThemeTextColor("SpecialTextColor2", 700)
+		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
+		GUIFunctions.UseThemeTextColor()
+		;>Gems
+		Gui, IBM_Home:Add, Text, xs+10 y+10, Total Gems:
+		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_TotalGems,
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem Hunter:
+		Gui, IBM_Home:Add, Text, x+3 vIBM_Stats_Gem_Hunter, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
+		GUIFunctions.AddToolTip("IBM_Stats_Gem_Hunter", "Gem Hunter potion status for the recorded runs. Green means it was active for all runs, amber for some runs and red for none")
+		Gui, IBM_Home:Add, Text, xs+10 y+3, GPB:
+		Gui, IBM_Home:Add, Text, x+3 w30 vIBM_Stats_GPB, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bonus:
+		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Gem_Bonus, -
+		;>Reward summary
+		Gui, IBM_Home:Add, Text, xs+10 y+5 w75, BSC iLevels/h:
+		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_BSC_Reward, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w75, Total iLevels/h:
+		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_Total_Reward, -
+		;>Chests
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		GuiControl, -Redraw, IBM_Stats_Chests_LV
+		Gui, IBM_Home:Default
+		Gui, ListView, IBM_Stats_Chests_LV
+		LV_Add(,"Silver","--.--","--.--","--.--","--.--")
+		LV_Add(,"Gold","--.--","--.--","--.--","--.--")
+		LV_ModifyCol(1,"AutoHdr")
+		LV_ModifyCol(2,"AutoHdr")
+		LV_ModifyCol(3,"AutoHdr")
+		LV_ModifyCol(4,"AutoHdr")
+		GuiControl, +Redraw, IBM_Stats_Chests_LV
+		;Stats - Timing
+		Gui, IBM_Home:Font, w700
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h180, Run Timings
+		Gui, IBM_Home:Font, w400
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
@@ -103,48 +142,24 @@
 		LV_ModifyCol(4,"AutoHdr")
 		LV_ModifyCol(5,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Run_LV
-		GuiControlGet, statsLVEndPos, IBM_Home:Pos, IBM_Stats_Run_LV
-		highlightY:=statsLVEndPosY+statsLVEndPosH+15
-		Gui, IBM_Home:Add, Text, xs+250 ys+20 w85, Total Runs:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_Total_Runs, -
-		Gui, IBM_Home:Add, Text, xs+250 y+4 w85, Total Time:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_Total_Time, -
-		Gui, IBM_Home:Add, Text, xs+250 y+4 w85, Failed Runs:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_Fail_Runs, -
-		Gui, IBM_Home:Add, Text, xs+250 y+4 w85, Failed Run Time:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_Fail_Time, -
-		highlightWidth:=FLOOR((groupWidth-21)/2)
-		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
-		Gui, IBM_Home:Add, Text, xs+10 y%highlightY% w%highlightWidth% Center vIBM_Stats_BPH, BPH
-		GUIFunctions.UseThemeTextColor("SpecialTextColor2", 700)
-		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
-		GUIFunctions.UseThemeTextColor()
-		Gui, IBM_Home:Add, Text, xs+10 y+10, Total Gems:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_TotalGems,
-		Gui, IBM_Home:Add, Text, x+10, Gem Hunter:
-		Gui, IBM_Home:Add, Text, x+3 vIBM_Stats_Gem_Hunter, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
-		GUIFunctions.AddToolTip("IBM_Stats_Gem_Hunter", "Gem Hunter potion status for the recorded runs. Green means it was active for all runs, amber for some runs and red for none")
-		Gui, IBM_Home:Add, Text, x+10, GPB:
-		Gui, IBM_Home:Add, Text, x+3 w30 vIBM_Stats_GPB, -
-		Gui, IBM_Home:Add, Text, x+10, Bonus:
-		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Gem_Bonus, -
-		Gui, IBM_Home:Add, Text, xs+10 y+5, Chests (Dropped/Bought/Opened)
-		Gui, IBM_Home:Add, Text, x+3 w250 vIBM_Stats_Chests, Gold: - / - / - Silver: - / - / -
-		Gui, IBM_Home:Add, Text, xs+10 y+5 w75, BSC iLevels/h:
-		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_BSC_Reward, -
-		Gui, IBM_Home:Add, Text, xs+10 y+0 w75, Total iLevels/h:
-		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_Total_Reward, -
-		Gui, IBM_Home:Add, Text, xs+10 y+5, Boss Levels Hit (Run / Total):
+		;GuiControlGet, statsLVEndPos, IBM_Home:Pos, IBM_Stats_Run_LV
+		;highlightY:=statsLVEndPosY+statsLVEndPosH+15
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Total Runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed Runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Boss Levels Hit (Run / Total):
 		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
-		Gui, IBM_Home:Add, Text, x+10, Rollbacks:
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
 		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
-		Gui, IBM_Home:Add, Text, x+10, Bad Autoprogressions:
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad Autoprogressions:
 		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
+				
 		;Chests
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+12 w%groupWidth% h50 vIBM_Chest_Group, Chests && Daily Platinum
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h50 vIBM_Chest_Group, Chests && Daily Platinum
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView , +cBlack xs+10 ys+20 w358 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w358 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status
@@ -156,7 +171,7 @@
 		Gui, IBM_ChestSnatcher_Log:Margin, 0,0
 		Gui, IBM_ChestSnatcher_Log:-Resize -MaximizeBox -Caption +HwndLog_Hwnd
 		this.IBM_ChestSnatcher_Log_Hwnd:=Log_Hwnd ;Save handle to the log window
-		Gui, IBM_ChestSnatcher_Log:Add, ListView , w358 0x2000 LV0x10000 vIBM_ChestsSnatcher_Status_Expanded Count20 R20, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_ChestSnatcher_Log:Add, ListView, +Background%LVBGColour% w358 0x2000 LV0x10000 vIBM_ChestsSnatcher_Status_Expanded Count20 R20, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, vIBM_ChestsSnatcher_Status_Expanded
 		Gui, IBM_ChestSnatcher_Log:Default
 		Gui, ListView, vIBM_ChestsSnatcher_Status_Expanded
@@ -170,18 +185,20 @@
 		;>Chest options
 		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an Accept button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy 12 chests whilst you were typing 123 into the box)
 		Gui, IBM_ChestSnatcher_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
+		Gui, IBM_ChestSnatcher_Options:Color, %winBGColour%
+		GUIFunctions.UseThemeTextColor(,,"IBM_ChestSnatcher_Options")
 		this.IBM_ChestSnatcher_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to buy per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Silver to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gems
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gold
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Silver
 		Gui, IBM_ChestSnatcher_Options:Add, CheckBox, xm+10 h18 0x200 vIBM_ChestSnatcher_Options_Claim, Claim Daily Rewards
 		gui, IBM_ChestSnatcher_Options:Add, Button, xm+100 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
@@ -192,38 +209,40 @@
 		Gui, IBM_Home:Add, Text, xs+10 ys+22 h18 0x200, Profile:
 		Gui, IBM_Home:Add, Radio, x+5 yp-7 h18 w75 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile ;TODO: Disable wrapping on these, as it seems that can happen here?
 		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w75 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
-		Gui, IBM_Home:Add, Text, x+5 yp-12 h18 w215 0x200 vIBM_Game_Settings_Status, Not checked
+		Gui, IBM_Home:Add, Text, x+5 yp-12 h18 w215 r2 0x200 vIBM_Game_Settings_Status, Not checked
 		Gui, IBM_Home:Add, Button, xs+346 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
 		Gui, IBM_Home:Add, Button, x+5 w20 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Game Settings Options Window
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Game_Settings_Options:New , , Game Settings
 		Gui, IBM_Home:Font, w400
+		Gui, IBM_Game_Settings_Options:Color, %winBGColour%
 		Gui, IBM_Game_Settings_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_Game_Settings_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
+		GUIFunctions.UseThemeTextColor(,700,"IBM_Game_Settings_Options")
 		Gui, IBM_Game_Settings_Options:Add, Text, xm+0 w80 h18 0x200 Center, Profile 1
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Option
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Profile 2
-
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit12 vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
+		GUIFunctions.UseThemeTextColor(,400,"IBM_Game_Settings_Options")
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit12 +cBlack vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Name
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit12 vIBM_Game_Settings_Option_Name_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit12 +cBlack vIBM_Game_Settings_Option_Name_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 vIBM_Game_Settings_Option_Framerate_1 Limit4 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack vIBM_Game_Settings_Option_Framerate_1 Limit4 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Framerate
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit4 vIBM_Game_Settings_Option_Framerate_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_Framerate_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit3 vIBM_Game_Settings_Option_Particles_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit3 vIBM_Game_Settings_Option_Particles_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, % "% Particles"
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit3 vIBM_Game_Settings_Option_Particles_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit3 vIBM_Game_Settings_Option_Particles_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit4 vIBM_Game_Settings_Option_HRes_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit4 vIBM_Game_Settings_Option_HRes_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, H. Resolution
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit4 vIBM_Game_Settings_Option_HRes_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_HRes_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit4 vIBM_Game_Settings_Option_VRes_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit4 vIBM_Game_Settings_Option_VRes_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, V. Resolution
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit4 vIBM_Game_Settings_Option_VRes_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_VRes_2 gIBM_Game_Settings_Option_Change
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_Fullscreen_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Fullscreen
@@ -351,9 +370,8 @@
 		Gui, IBM_Home:Add, Text, w150 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
 		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
 		Gui, IBM_Home:Add, Button, xs+350 yp+0 w70 vIBM_Offsets_Download gIBM_Offsets_Download, Download
-
 		Gui, IBM_Home:Add, CheckBox, xs+10 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int, Check automatically
-		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
 		Gui, IBM_Home:Add, CheckBox, x+10 w120 h18 0x200 Center vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int, Update imports only
 		GUIFunctions.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
 		;Server
@@ -396,7 +414,7 @@
 		GUIFunctions.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead. If using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
 		;Route settings for jump/stacking zones
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h272 vIBM_Route_Group, Route
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h276 vIBM_Route_Group, Route
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+12 ys+15 h18 0x200, % "Select zones to jump with the Q formation ("
 		textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP
@@ -409,7 +427,7 @@
 		this.RefreshRouteJumpBoxes()
 		this.RefreshRouteStackBoxes()
 		GUIFunctions.UseThemeTextColor() ;The route grid appears to mess with themes (due to the use of GUI Font?), so reset here
-		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, Briv Jumps
+		Gui, IBM_Home:Add, Text, xs+11 y+5 h18 0x200, Briv Jumps
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Q:
 		Gui, IBM_Home:Add, Edit, +cBlack w20 x+3 Number Limit2 vIBM_Route_BrivJump_Q gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, E:
@@ -419,7 +437,7 @@
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_Q", "The number of additional zones Briv jumps using the Q formation")
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_E", "The number of additional zones Briv jumps using the E formation when feat swapping. Ignored if Briv is not saved in E")
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_M", "The number of additional zones Briv jumps using the M (Modron) formation when feat swapping. Used when combining to determine the initial jump.")
-		Gui, IBM_Home:Add, Button, w80 xs+245 yp+0 h22 vIBM_Route_Import_Button gIBM_Route_Import_Button, Import
+		Gui, IBM_Home:Add, Button, w80 xs+244 yp+0 h22 vIBM_Route_Import_Button gIBM_Route_Import_Button, Import
 		Gui, IBM_Home:Add, Button, w80 x+10 h22 vIBM_Route_Export_Button gIBM_Route_Export_Button, Export
 
 		;Stacking zones
@@ -427,10 +445,10 @@
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+11 w%groupWidth% h102, Stacking Zones
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Offline:
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +cBlack w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min recovery stack zone:
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +cBlack w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min online stack zone:
 		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
@@ -561,7 +579,7 @@
 	CreateRouteBoxes(sectionOffsetY) ;sectionOffsetY is the number of pixels from the top of the current section to start the grid
 	{
 		global
-		rowSpacing:=40
+		rowSpacing:=41
 		counter:=1
 		loop, 5
 		{
@@ -570,8 +588,8 @@
 			Gui, IBM_Home:Add, Text, w35 xs+12 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 			Gui, IBM_Home:Font, s16
 			textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
-			Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+14  Center gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
-			Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+0  Center gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
+			Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
+			Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 			counter++
 			loop, 9
 			{
@@ -579,8 +597,8 @@
 				Gui, IBM_Home:Add, Text, w35 x+8 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 				Gui, IBM_Home:Font, s16
 				textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
-				Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+14  Center gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
-				Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+0  Center gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
+				Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
+				Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 				counter++
 			}
 		}
@@ -1529,13 +1547,13 @@ IBM_Online_Melf_Enable(enableControl)
 		GuiControl, IBM_Home:Disable, IBM_Online_Melf_Max
 }
 
-IBM_Route_Import_Button()
+IBM_Route_Import_Button() ;TODO: Provide some instructions...
 {
 	InputBox routeString, Route Import,,,,100,,,,, ;InputBox, OutputVar , Title, Prompt, Hide, Width, Height, X, Y, Locale, Timeout, Default
 	g_IriBrivMaster.ParseRouteImportString(routeString)
 }
 
-IBM_Route_Export_Button()
+IBM_Route_Export_Button() ;TODO: Provide some instructions...
 {
 	InputBox _, Route Export,,,,100,,,,, % g_IriBrivMaster.GetRouteExportString() ;InputBox, OutputVar , Title, Prompt, Hide, Width, Height, X, Y, Locale, Timeout, Default
 }
@@ -1666,11 +1684,12 @@ class GUIFunctions ;From SH, dumped in here for now
     }
 
     ; Sets the color/weight for subsequent text based on the theme.
-    UseThemeTextColor(textType := "default", weight := 400)
+    UseThemeTextColor(textType:="default", weight:=400, guiName:="")
     {
         global g_GlobalFontSize
-        guiName := this.GUIName
-        if(textType == "default")
+        if(!guiName)
+			guiName:=this.GUIName
+        if(textType=="default")
             textType := "DefaultTextColor"
         ; if number, convert to hex
         textColor := (this.CurrentTheme[textType] * 1 == "") ? this.CurrentTheme[textType] : Format("{:#x}", this.CurrentTheme[textType])
@@ -1678,6 +1697,14 @@ class GUIFunctions ;From SH, dumped in here for now
             Gui, %guiName%:Font, c%textColor% w%weight% s%g_GlobalFontSize%
         else
             Gui, %guiName%:Font, c%textColor% w%weight%
+    }
+	
+	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
+    {
+        if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()
+            textType:="DefaultTextColor"
+        textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
+		return "c" . textColour
     }
 
     ; Sets the script GUI background color based on the theme.
@@ -1688,6 +1715,12 @@ class GUIFunctions ;From SH, dumped in here for now
         windowColor := (this.CurrentTheme[ "WindowColor" ] * 1 == "") ? this.CurrentTheme[ "WindowColor" ] : Format("{:#x}", this.CurrentTheme[ "WindowColor" ])
         Gui, %guiName%:Color, % windowColor
     }
+	
+	GetThemeBackgroundColor()
+    {
+        windowColor:=(this.CurrentTheme[ "WindowColor" ] * 1 == "") ? this.CurrentTheme[ "WindowColor" ] : Format("{:#x}", this.CurrentTheme[ "WindowColor" ]) ;If number, convert to hex
+        return windowColor
+    }
 
     ; Sets a listview background color based on the theme.
     UseThemeListViewBackgroundColor(controlID := "")
@@ -1696,6 +1729,12 @@ class GUIFunctions ;From SH, dumped in here for now
         ; if number, convert to hex
         bgColor := (this.CurrentTheme[ "TableBackgroundColor" ] * 1 == "") ? this.CurrentTheme[ "TableBackgroundColor" ] : Format("{:#x}", this.CurrentTheme[ "TableBackgroundColor" ])
         GuiControl, %guiName%: +Background%bgColor%, %controlID%
+    }
+	
+	GetThemeListViewBackgroundColor()
+    {
+        bgColor:=(this.CurrentTheme[ "TableBackgroundColor" ] * 1 == "") ? this.CurrentTheme[ "TableBackgroundColor" ] : Format("{:#x}", this.CurrentTheme[ "TableBackgroundColor" ])  ;If number, convert to hex
+        return bgColor ;No "c" for background colours for some reason
     }
 
     ; Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.

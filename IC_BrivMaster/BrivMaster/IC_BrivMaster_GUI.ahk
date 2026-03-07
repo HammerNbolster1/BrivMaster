@@ -25,7 +25,7 @@
 		GUIFunctions.LoadTheme()
 		winBGColour:=GUIFunctions.GetThemeBackgroundColor()
 		Gui, IBM_Home:New
-		Gui, IBM_Home:+Resize -MaximizeBox +HwndGUIIBM_Home
+		Gui, IBM_Home:+Resize -MaximizeBox
 		Gui, IBM_Home:Color, %winBGColour%
 		GUIFunctions.UseThemeTextColor()
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control

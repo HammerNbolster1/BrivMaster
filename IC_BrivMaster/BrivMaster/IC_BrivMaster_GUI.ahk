@@ -35,7 +35,7 @@
 		Gui, IBM_Home:Add, Picture, xm+5 y+3 h-1 w%buttonWidth% gLaunch_Clicked vLaunchClickButton, %A_LineFile%\..\..\Resources\idledragons-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gReload_Clicked vReloadClickButton, %A_LineFile%\..\..\Resources\refresh-100x100.png
 		firstButtonOffset:=groupWidth-buttonWidth*5-buttonSpacing*4-5
-		Gui, IBM_Home:Add, Text, x+10 w150 r2 0x200 vIBM_MainButtons_Status
+		Gui, IBM_Home:Add, Text, x+10 w125 r2 vIBM_MainButtons_Status
 		Gui, IBM_Home:Add, Picture, xm+%firstButtonOffset% yp+0 h-1 w%buttonWidth% gIBM_MainButtons_Start vIBM_MainButtons_Start, %A_LineFile%\..\..\Resources\play-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Stop vIBM_MainButtons_Stop, %A_LineFile%\..\..\Resources\stop-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\connect-100x100.png
@@ -59,36 +59,37 @@
 		GUIFunctions.AddToolTip("IBM_MainButtons_Reset", "Reset stats")
 		GUIFunctions.AddToolTip("LaunchClickButton", "Launch Idle Champions")
 		GUIFunctions.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
-		;MAIN TAB
+	
+		;++++++++++++++++++HOME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Home
 		;Run control
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h152, Run Control
 		Gui, IBM_Home:Font, w400
 		;>Group for offline control options
-		Gui, IBM_Home:Add, Groupbox, xs+7 ys+9 w304 h39
+		Gui, IBM_Home:Add, Groupbox, xs+7 ys+9 w280 h38
 		;>Pause offline
-		Gui, IBM_Home:Add, Text, xp+10 yp+12 w80 0x200 h20, Offline stacking ;0x200 centres vertically
-		Gui, IBM_Home:Add, Button, x+5 w50 vIBM_RunControl_Offline_Toggle gIBM_RunControl_Offline_Toggle, Pause
-		Gui, IBM_Home:Add, Text, x+10 w10 0x200 h20 vIBM_RunControl_Offline_StatusPause, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
+		Gui, IBM_Home:Add, Text, xp+8 yp+13 0x200 h18, Offline stacking ;0x200 centres vertically
+		Gui, IBM_Home:Add, Button, x+10 w45 h18 vIBM_RunControl_Offline_Toggle gIBM_RunControl_Offline_Toggle, Pause
+		Gui, IBM_Home:Add, Text, x+10 w10 0x200 h18 vIBM_RunControl_Offline_StatusPause, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
 		;>Queue offline
-		Gui, IBM_Home:Add, Text, x+10 yp+0 w40 0x200 h20, Queue ;0x200 centres vertically
-		Gui, IBM_Home:Add, Button, x+5 w50 vIBM_RunControl_Offline_Queue_Toggle gIBM_RunControl_Offline_Queue_Toggle, Force
-		Gui, IBM_Home:Add, Text, x+10 w10 0x200 h20 vIBM_RunControl_Offline_StatusQueue, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
+		Gui, IBM_Home:Add, Text, x+10 yp+0 0x200 h18, Queue ;0x200 centres vertically
+		Gui, IBM_Home:Add, Button, x+10 w45 h18 vIBM_RunControl_Offline_Queue_Toggle gIBM_RunControl_Offline_Queue_Toggle, Force
+		Gui, IBM_Home:Add, Text, x+10 w10 0x200 h18 vIBM_RunControl_Offline_StatusQueue, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
 		;>Cycle
-		Gui, IBM_Home:Add, Groupbox, xs+318 ys+9 w100 h39
-		Gui, IBM_Home:Add, Text, xp+5 yp+12 w90 0x200 h20 Center vIBM_RunControl_Cycle, % "Cycle -/-"
+		Gui, IBM_Home:Add, Groupbox, xs+293 ys+9 w95 h38
+		Gui, IBM_Home:Add, Text, xp+5 yp+13 w85 0x200 h18 Center vIBM_RunControl_Cycle, % "Cycle -/-"
 		;>RunControl status
 		Gui, IBM_Home:Add, Text, xs+10 yp+30,Strategy:
-		Gui, IBM_Home:Add, Text, x+5 r2 w360 vIBM_RunControl_Status, -
-		Gui, IBM_Home:Add, Text, xs+10 yp+30 w405 vIBM_RunControl_Stack, Stacking: -
-		Gui, IBM_Home:Add, Text, xs+10 yp+16 w405 vIBM_Stats_Loop, Stage: -
-		Gui, IBM_Home:Add, Text, xs+10 yp+16 w405 vIBM_Stats_Last_Close, Last Close: -
-		Gui, IBM_Home:Add, Text, xs+10 yp+16 w200 vIBM_Stats_Current_Area_Run_Time, Area / Run (s): - / -
-		Gui, IBM_Home:Add, Text, x+5 w200 vIBM_Stats_Current_Briv, SB / Haste Stacks: - / -
+		Gui, IBM_Home:Add, Text, x+5 r2 w330 vIBM_RunControl_Status, -
+		Gui, IBM_Home:Add, Text, xs+10 yp+30 w380 vIBM_RunControl_Stack, Stacking: -
+		Gui, IBM_Home:Add, Text, xs+10 yp+16 w380 vIBM_Stats_Loop, Stage: -
+		Gui, IBM_Home:Add, Text, xs+10 yp+16 w380 vIBM_Stats_Last_Close, Last close: -
+		Gui, IBM_Home:Add, Text, xs+10 yp+16 w188 vIBM_Stats_Current_Area_Run_Time, Area / Run (s): - / -
+		Gui, IBM_Home:Add, Text, x+4 w188 vIBM_Stats_Current_Briv, SB / Haste stacks: - / -
 		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h206 vIBM_Stats_Group, Run Rewards
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h190 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
 		LVBGColour:=GUIFunctions.GetThemeListViewBackgroundColor()
 		;>Highlights (BPH/GPH)
@@ -99,20 +100,17 @@
 		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
 		GUIFunctions.UseThemeTextColor()
 		;>Gems
-		Gui, IBM_Home:Add, Text, xs+10 y+10, Total Gems:
-		Gui, IBM_Home:Add, Text, x+3 w80 vIBM_Stats_TotalGems,
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem Hunter:
-		Gui, IBM_Home:Add, Text, x+3 vIBM_Stats_Gem_Hunter, % IC_IriBrivMaster_GUI.IBM_SYMBOL_CONTROL_ACTIVE
-		GUIFunctions.AddToolTip("IBM_Stats_Gem_Hunter", "Gem Hunter potion status for the recorded runs. Green means it was active for all runs, amber for some runs and red for none")
-		Gui, IBM_Home:Add, Text, xs+10 y+3, GPB:
-		Gui, IBM_Home:Add, Text, x+3 w30 vIBM_Stats_GPB, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bonus:
-		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Gem_Bonus, -
+		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_TotalGems,
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
+		Gui, IBM_Home:Add, Text, x+3 vIBM_Stats_Gem_Hunter,-
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem bonus:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Gem_Bonus, -.-`% (-.- GPB)
 		;>Reward summary
 		Gui, IBM_Home:Add, Text, xs+10 y+5 w75, BSC iLevels/h:
-		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_BSC_Reward, -
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_BSC_Reward, -
 		Gui, IBM_Home:Add, Text, xs+10 y+3 w75, Total iLevels/h:
-		Gui, IBM_Home:Add, Text, x+3 w320 vIBM_Stats_Total_Reward, -
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Reward, -
 		;>Chests
 		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Chests_LV
@@ -127,7 +125,7 @@
 		GuiControl, +Redraw, IBM_Stats_Chests_LV
 		;Stats - Timing
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h180, Run Timings
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h180, Run Timings
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
@@ -144,22 +142,22 @@
 		GuiControl, +Redraw, IBM_Stats_Run_LV
 		;GuiControlGet, statsLVEndPos, IBM_Home:Pos, IBM_Stats_Run_LV
 		;highlightY:=statsLVEndPosY+statsLVEndPosH+15
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Total Runs:
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Total runs:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed Runs:
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed runs:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Boss Levels Hit (Run / Total):
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bosses hit (Run / Total):
 		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
 		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad Autoprogressions:
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad autoprogressions:
 		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
 				
 		;Chests
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h50 vIBM_Chest_Group, Chests && Daily Platinum
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w358 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status
@@ -171,7 +169,7 @@
 		Gui, IBM_ChestSnatcher_Log:Margin, 0,0
 		Gui, IBM_ChestSnatcher_Log:-Resize -MaximizeBox -Caption +HwndLog_Hwnd
 		this.IBM_ChestSnatcher_Log_Hwnd:=Log_Hwnd ;Save handle to the log window
-		Gui, IBM_ChestSnatcher_Log:Add, ListView, +Background%LVBGColour% w358 0x2000 LV0x10000 vIBM_ChestsSnatcher_Status_Expanded Count20 R20, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_ChestSnatcher_Log:Add, ListView, +Background%LVBGColour% w380 0x2000 LV0x10000 vIBM_ChestsSnatcher_Status_Expanded Count20 R20, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, vIBM_ChestsSnatcher_Status_Expanded
 		Gui, IBM_ChestSnatcher_Log:Default
 		Gui, ListView, vIBM_ChestsSnatcher_Status_Expanded
@@ -180,8 +178,8 @@
 		GuiControl, +Redraw, vIBM_ChestsSnatcher_Status_Expanded
 		Gui, IBM_Home:Default
 		;>Chest buttons
-		Gui, IBM_Home:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Status_Resize gIBM_ChestsSnatcher_Status_Resize, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_DOWN
-		Gui, IBM_Home:Add, Button, x+5 w20 vIBM_ChestsSnatcher_Options gIBM_ChestsSnatcher_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
+		Gui, IBM_Home:Add, Button, x+5 w18 h18 vIBM_ChestsSnatcher_Status_Resize gIBM_ChestsSnatcher_Status_Resize, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_DOWN
+		Gui, IBM_Home:Add, Button, x+5 w18 h18 vIBM_ChestsSnatcher_Options gIBM_ChestsSnatcher_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Chest options
 		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an Accept button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy 12 chests whilst you were typing 123 into the box)
 		Gui, IBM_ChestSnatcher_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
@@ -204,14 +202,13 @@
 		gui, IBM_ChestSnatcher_Options:Add, Button, xm+100 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
 		;Game Settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+11 w%groupWidth% h56 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+12 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, xs+10 ys+22 h18 0x200, Profile:
-		Gui, IBM_Home:Add, Radio, x+5 yp-7 h18 w75 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile ;TODO: Disable wrapping on these, as it seems that can happen here?
-		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w75 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
-		Gui, IBM_Home:Add, Text, x+5 yp-12 h18 w215 r2 0x200 vIBM_Game_Settings_Status, Not checked
-		Gui, IBM_Home:Add, Button, xs+346 yp+0 w47 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
-		Gui, IBM_Home:Add, Button, x+5 w20 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
+		Gui, IBM_Home:Add, Radio, xs+10 ys+15 h18 w90 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile
+		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w90 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
+		Gui, IBM_Home:Add, Text, x+3 yp-15 h18 w212 r2 vIBM_Game_Settings_Status, Not checked
+		Gui, IBM_Home:Add, Button, xs+317 yp+0 w47 h18 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
+		Gui, IBM_Home:Add, Button, x+5 w20 h18 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Game Settings Options Window
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Game_Settings_Options:New , , Game Settings
@@ -277,15 +274,15 @@
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_Swap25100_2 gIBM_Game_Settings_Option_Change
 		;Ellywick non-gemfarming Tool
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+16 w%groupWidth% h75, % "Ellywick Non-Gemfarm Re-roll Tool"
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+19 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w36 xs+58 ys+20 Center, Knight
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Moon
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Gem
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Fates
 		Gui, IBM_Home:Add, Text,  w36 x+3 Center, Flames
-		Gui, IBM_Home:Add, Button, x+20 yp-3 w50 vIBM_NonGemFarm_Elly_Start gIBM_NonGemFarm_Elly_Start, Start
-		Gui, IBM_Home:Add, Button, x+5 w50 vIBM_NonGemFarm_Elly_Stop gIBM_NonGemFarm_Elly_Stop, Stop
+		Gui, IBM_Home:Add, Button, x+20 yp-3 w55 h18 vIBM_NonGemFarm_Elly_Start gIBM_NonGemFarm_Elly_Start, Start
+		Gui, IBM_Home:Add, Button, x+7 w55 h18 vIBM_NonGemFarm_Elly_Stop gIBM_NonGemFarm_Elly_Stop, Stop
 		Gui, IBM_Home:Add, Text, w40 xs+10 y+5 h18 0x200, Min:Max
 		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_1
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
@@ -302,25 +299,25 @@
 		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_5
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
 		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5
-		Gui, IBM_Home:Add, Text, x+25 w130 vIBM_NonGemFarm_Elly_Status,
+		Gui, IBM_Home:Add, Text, x+25 w117 r2 vIBM_NonGemFarm_Elly_Status
 
-		;GAME TAB
+		;++++++++++++++++++GAME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Game
 		;Game location
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h127, Game Location
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 w170 vIBM_Game_Exe gIBM_Game_Location_Settings
+		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 w140 vIBM_Game_Exe gIBM_Game_Location_Settings
 		GUIFunctions.AddToolTip("IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
 		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
 		GUIFunctions.AddToolTip("IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to see the window it creates. Do not use when launching the game directly")
-		Gui, IBM_Home:Add, Button, xs+349 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
+		Gui, IBM_Home:Add, Button, xs+318 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
 		Gui, IBM_Home:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 w352 r2 vIBM_Game_Path gIBM_Game_Location_Settings
+		Gui, IBM_Home:Add, Edit, +cBlack w40 x+5 w322 r2 vIBM_Game_Path gIBM_Game_Location_Settings
 		GUIFunctions.AddToolTip("IBM_Game_Path", "The game install location")
 		Gui, IBM_Home:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 w352 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
+		Gui, IBM_Home:Add, Edit, +cBlack w40 x+5 w322 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		GUIFunctions.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
 		;Script Window
 		Gui, IBM_Home:Font, w700
@@ -341,26 +338,28 @@
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int, Log zone progression
 		GUIFunctions.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
 		;Offsets
+		sideBarWidth:=94 ;Sidebar split used for both offsets and versions
+		mainWidth:=groupWidth-sideBarWidth-8
+		sideBarOffset:=mainWidth+10
+		offsetsHeight:=132
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+13 w%groupWidth% h106, Offsets
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+13 w%mainWidth% h%offsetsHeight%, Offsets
 		Gui, IBM_Home:Font, w400
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		Gui, IBM_Home:Add, Text, w200 xs+5 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
-		Gui, IBM_Home:Add, Text, w200 xs+220 yp+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		Gui, IBM_Home:Add, Text, w200 xs+10 y+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Pointers"
+		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Pointers"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w150 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
-		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
-		Gui, IBM_Home:Add, Button, xs+350 yp+0 w70 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now, Check now
+		Gui, IBM_Home:Add, Text, w120 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
 
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Text, w45 xs+5 y+2 h18 0x200, % "Imports"
+		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Imports"
 		Gui, IBM_Home:Font, w400
-
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=g_IriBrivMaster.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
@@ -368,41 +367,49 @@
 		else
 			colour:=g_IriBrivMaster.GetThemeTextColour()
 		Gui, IBM_Home:Add, Text, w150 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
-		Gui, IBM_Home:Add, Text, w120 x+10 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
-		Gui, IBM_Home:Add, Button, xs+350 yp+0 w70 vIBM_Offsets_Download gIBM_Offsets_Download, Download
-		Gui, IBM_Home:Add, CheckBox, xs+10 yp+25 w120 h18 0x200 Center vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int, Check automatically
+		Gui, IBM_Home:Add, Text, w120 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
+		GuiControlGet, mainEnd, IBM_Home:Pos, IBM_Offsets_Text_Imports_GitHub ;Used for setting the next box
+		;Offsets - check sidebar
+		Gui, IBM_Home:Font, w700
+		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h%offsetsHeight%,Offset Check
+		Gui, IBM_Home:Font, w400
+		Gui, IBM_Home:Add, Button, xs+10 yp+18 w74 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now,Check now
+		Gui, IBM_Home:Add, Button, xs+10 y+4 w74 vIBM_Offsets_Download gIBM_Offsets_Download, Download
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int
+		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, On load
 		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
-		Gui, IBM_Home:Add, CheckBox, x+10 w120 h18 0x200 Center vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int, Update imports only
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int
+		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, Imports only
 		GUIFunctions.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
+		serverStartY:=mainEndY+mainEndH+7
 		;Server
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+7 w%groupWidth% h43, Server
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%serverStartY% w%groupWidth% h43, Server
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w355 xs+5 ys+15 h18 0x200 vIBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
-		Gui, IBM_Home:Add, Button, xs+364 yp+0 w55 vIBM_Server_Check gIBM_Server_Check, Refresh
+		Gui, IBM_Home:Add, Button, xs+338 yp+0 w50 vIBM_Server_Check gIBM_Server_Check, Refresh
+		
 		;Versions - core, static
 		Gui, IBM_Home:Font, w700
-		sideBarWidth:=90
-		mainWidth:=groupWidth-sideBarWidth-5
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%mainWidth% h63, Core Versions
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
-		Gui, IBM_Home:Add, Text, x+5 w250 h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
+		Gui, IBM_Home:Add, Text, x+5 w218 h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
 		readMeLocation:=A_ScriptDir . "\ReadMe.md"
 		if(FileExist(readMeLocation))
-			Gui, IBM_Home:Add, Link, xs+280 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
+			Gui, IBM_Home:Add, Link, xs+245 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
 		Gui, IBM_Home:Add, Text, w200 xs+25 yp+20 h18 0x200, % "AHK Version: " . A_AhkVersion
 
-		;Versions - check options sidebar
-		sideBarOffset:=mainWidth+10
+		;Versions - check sidebar
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, CheckBox, xs+12 yp+15 w65 h18 0x200 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int, On load
+		Gui, IBM_Home:Add, Button, xs+10 ys+18 w74 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int
+		Gui, IBM_Home:Add, Text, x+-12 h18 0x200, On load
 		GUIFunctions.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
-		Gui, IBM_Home:Add, Button, xs+10 yp+20 w70 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 
-		;ROUTE TAB
+		;++++++++++++++++++ROUTE TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Route
 		;Combine
 		Gui, IBM_Home:Font, w700
@@ -414,9 +421,9 @@
 		GUIFunctions.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead. If using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
 		;Route settings for jump/stacking zones
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h276 vIBM_Route_Group, Route
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h270 vIBM_Route_Group, Route
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, xs+12 ys+15 h18 0x200, % "Select zones to jump with the Q formation ("
+		Gui, IBM_Home:Add, Text, xs+10 ys+15 h18 0x200, % "Select zones to jump with the Q formation ("
 		textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200 %textColour%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200, % ") and to perform online stacking ("
@@ -437,21 +444,21 @@
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_Q", "The number of additional zones Briv jumps using the Q formation")
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_E", "The number of additional zones Briv jumps using the E formation when feat swapping. Ignored if Briv is not saved in E")
 		GUIFunctions.AddToolTip("IBM_Route_BrivJump_M", "The number of additional zones Briv jumps using the M (Modron) formation when feat swapping. Used when combining to determine the initial jump.")
-		Gui, IBM_Home:Add, Button, w80 xs+244 yp+0 h22 vIBM_Route_Import_Button gIBM_Route_Import_Button, Import
-		Gui, IBM_Home:Add, Button, w80 x+10 h22 vIBM_Route_Export_Button gIBM_Route_Export_Button, Export
+		Gui, IBM_Home:Add, Button, w60 xs+256 yp+0 h22 vIBM_Route_Import_Button gIBM_Route_Import_Button, Import
+		Gui, IBM_Home:Add, Button, w60 x+10 h22 vIBM_Route_Export_Button gIBM_Route_Export_Button, Export
 
 		;Stacking zones
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+11 w%groupWidth% h102, Stacking Zones
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Offline:
-		Gui, IBM_Home:Add, Edit, +cBlack w35 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +cBlack w31 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min recovery stack zone:
-		Gui, IBM_Home:Add, Edit, +cBlack w35 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +cBlack w31 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min online stack zone:
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +cBlack  w31 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf
 		GUIFunctions.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
@@ -501,7 +508,7 @@
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Minimum cards:
 		Gui, IBM_Home:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Generic_Setting_Int
 
-		;LEVELS TAB
+		;++++++++++++++++++LEVELS TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Levels
 		;Levelling Options
 		Gui, IBM_Home:Font, w700
@@ -536,14 +543,14 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h70 vIBM_LevelManager, Level Manager
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Button, w409 xs+8 ys+15 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
-		Gui, IBM_Home:Add, Text, xs+10 y+1 h20 w15 Left 0x200, S
-		Gui, IBM_Home:Add, Text, x+1 h20 w90 Left 0x200, Champion
-		Gui, IBM_Home:Add, Text, w40 h20 x+1 0x200 vIBM_LevelRow_H_Start, Start
+		Gui, IBM_Home:Add, Button, w380 xs+8 ys+15 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
+		Gui, IBM_Home:Add, Text, xs+8 y+1 h20 w10 Right 0x200, S
+		Gui, IBM_Home:Add, Text, x+5 h20 w85 Left 0x200, Champion
+		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200 vIBM_LevelRow_H_Start, Start
 		GUIFunctions.AddToolTip("IBM_LevelRow_H_Start", "Levels used for the first zone")
-		Gui, IBM_Home:Add, Text, w55 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
+		Gui, IBM_Home:Add, Text, w50 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
 		GUIFunctions.AddToolTip("IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
-		Gui, IBM_Home:Add, Text, w40 h20 x+1 0x200, Normal
+		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200, Normal
 		Gui, IBM_Home:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
 		Gui, IBM_Home:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
 
@@ -579,13 +586,13 @@
 	CreateRouteBoxes(sectionOffsetY) ;sectionOffsetY is the number of pixels from the top of the current section to start the grid
 	{
 		global
-		rowSpacing:=41
+		rowSpacing:=39
 		counter:=1
 		loop, 5
 		{
 			rowOffset:=rowSpacing*(A_Index-1)+sectionOffsetY
 			Gui, IBM_Home:Font, s9
-			Gui, IBM_Home:Add, Text, w35 xs+12 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
+			Gui, IBM_Home:Add, Text, w35 xs+7 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 			Gui, IBM_Home:Font, s16
 			textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
 			Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
@@ -594,7 +601,7 @@
 			loop, 9
 			{
 				Gui, IBM_Home:Font, s9
-				Gui, IBM_Home:Add, Text, w35 x+8 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
+				Gui, IBM_Home:Add, Text, w35 x+6 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 				Gui, IBM_Home:Font, s16
 				textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
 				Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
@@ -710,14 +717,14 @@
 	CreateLevelRow(index)
 	{
 		global
-		Gui, IBM_Home:Add, Text, xs+10 y+5 h20 w15 Left 0x200 Hidden vIBM_LevelRow_%index%_Seat
-		Gui, IBM_Home:Add, Text, x+1 h20 w90 Left 0x200 Hidden vIBM_LevelRow_%index%_Name
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_z1
-		Gui, IBM_Home:Add, DropDownList, w55 x+1 Hidden AltSubmit hwndIBM_LevelRow_DLL_%index% vIBM_LevelRow_%index%_Priority, 5|4|3|2|1|0||-1|-2|-3|-4|-5|5↓100|4↓100|3↓100|2↓100|1↓100|5↓200|4↓200|3↓200|2↓200|1↓200
+		Gui, IBM_Home:Add, Text, xs+8 y+6 h20 0x200 w10 Right Hidden vIBM_LevelRow_%index%_Seat
+		Gui, IBM_Home:Add, Text, x+5 yp+0 h20 0x200 w85 Left Hidden vIBM_LevelRow_%index%_Name
+		Gui, IBM_Home:Add, Edit, +cBlack w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_z1
+		Gui, IBM_Home:Add, DropDownList, w50 x+1 Hidden AltSubmit hwndIBM_LevelRow_DLL_%index% vIBM_LevelRow_%index%_Priority, 5|4|3|2|1|0||-1|-2|-3|-4|-5|5↓100|4↓100|3↓100|2↓100|1↓100|5↓200|4↓200|3↓200|2↓200|1↓200
 		DDLindex:=IBM_LevelRow_DLL_%index%
 		DDLHeight:=17.5*this.GetDPIScale()
 		PostMessage, 0x0153, -1, %DDLHeight%,, ahk_id %DDLindex% ;Set height (since H200 or R4 is setting height of dropdown list)
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_min
+		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_min
 		Gui, IBM_Home:Font, Bold
 		Gui, IBM_Home:Add, Text, w20 x+5 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_Q, Q
 		Gui, IBM_Home:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_W, W

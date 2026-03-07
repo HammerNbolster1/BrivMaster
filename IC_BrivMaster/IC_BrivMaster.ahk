@@ -13,9 +13,9 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=755
+global g_TabControlHeight:=730
 global g_TabControlStartHeight
-global g_TabControlWidth:=440 ;Targetting 440, maybe slightly less
+global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
 global g_GlobalFontSize:=8
 
 
@@ -495,17 +495,15 @@ Class IC_IriBrivMaster_Component
 		LV_ModifyCol(3,"AutoHdr")
 		LV_ModifyCol(4,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Chests_LV
-		GuiControl, IBM_Home:, IBM_Stats_Total_Runs, 0 0s (0h)
-		GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, 0 0s
+		GuiControl, IBM_Home:, IBM_Stats_Total_Runs, 0 in 0s (0h)
+		GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, 0 for 0s
 		GuiControl, IBM_Home:, IBM_Stats_BPH, BPH: --.--
 		GuiControl, IBM_Home:, IBM_Stats_GPH, GPH: --.--
 		GuiControl, IBM_Home:, IBM_Stats_TotalGems, 0
-		GuiControl, IBM_Home:, IBM_Stats_GPB, -.-
-		GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, -.-`%
+		GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,-
+		GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, -.-`% (-.- GPB)
 		GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, --.--
 		GuiControl, IBM_Home:, IBM_Stats_Total_Reward, --.--
-		GuiControl, IBM_Home:+cBlack, IBM_Stats_Gem_Hunter
-		GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
 
 		GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time,Area / Run (s): - / -
 		GuiControl, IBM_Home:, IBM_Stats_Loop, Stage: -
@@ -616,8 +614,8 @@ Class IC_IriBrivMaster_Component
 						this.Stats.StartTime:=LogData.Start
 					}
 					totalTime:=LogData.End - this.Stats.StartTime
-					GuiControl, IBM_Home:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns . " " . ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
-					GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns . " " . ROUND(this.Stats.FailTotalTime/1000,2) . "s"
+					GuiControl, IBM_Home:, IBM_Stats_Total_Runs, % this.Stats.TotalRuns . " in " . ROUND(totalTime/1000,2) . "s (" . ROUND(totalTime/3600000,2) . "h)"
+					GuiControl, IBM_Home:, IBM_Stats_Fail_Runs, % this.Stats.FailRuns . " for " . ROUND(this.Stats.FailTotalTime/1000,2) . "s"
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 						this.Chests.CurrentSilver:=silvers
@@ -665,9 +663,8 @@ Class IC_IriBrivMaster_Component
 					}
 					gemMulti:=this.Stats.GHActive>0 ? 1.5 : 1 ;Mixed is processed as active TODO: Is it worth dealing with it dropping off? Doesn't seem like something we need to track
 					rawGPB:=gph/bph
-					GuiControl, IBM_Home:, IBM_Stats_GPB, % ROUND(rawGPB/gemMulti,1)
 					gemBonus:=(rawGPB/CONSTANT_baseGPB)/gemMulti
-					GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, % ROUND((gemBonus-1)*100,1) . "%" ;Best expressed as a percentage
+					GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, % ROUND((gemBonus-1)*100,1) . "% (" . ROUND(rawGPB/gemMulti,1) . " GPB)" ;Bonus best expressed as a percentage
 					silverChestIncome:=bph*CONSTANT_silversPerBoss
 					goldChestIncomeDrops:=bph*CONSTANT_goldPerBoss
 					goldChestIncomeGems:=gph/this.CONSTANT_goldCost
@@ -680,15 +677,13 @@ Class IC_IriBrivMaster_Component
 					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1)
 					GUIFunctions.AddToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
 					if (this.Stats.GHActive==0)
-						GH_colour:="cRed"
+						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,No
 					else if (this.Stats.GHActive==1)
-						GH_colour:="cGreen"
+						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Yes
 					else if (this.Stats.GHActive==2)
-						GH_colour:="cFFC000" ;Amber
+						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Mixed
 					else
-						GH_colour:="c000000"
-					GuiControl, IBM_Home:+%GH_colour%, IBM_Stats_Gem_Hunter
-					GuiControl, IBM_Home:MoveDraw,IBM_Stats_Gem_Hunter ;Required to update the colour as we don't change the text
+						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,-
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (" . formattedDateTime . ")"
 				}
@@ -1237,7 +1232,7 @@ Class IC_IriBrivMaster_Component
 		}
 		else
         {
-			versionString.=details[1] . " - Server version " . comparison.TestVersion
+			versionString.=details[1] . " - Server has " . comparison.TestVersion
 			colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
 		}
 		GuiControl, IBM_Home:, IBM_Version_Text_SH, %versionString% ;Update UI

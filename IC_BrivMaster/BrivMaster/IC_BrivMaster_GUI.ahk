@@ -95,9 +95,12 @@
 		;>Highlights (BPH/GPH)
 		highlightWidth:=FLOOR((groupWidth-21)/2)
 		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
+		Gui, IBM_Home:Font, s10, Cascadia Code
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highlightWidth% Center vIBM_Stats_BPH, BPH
 		GUIFunctions.UseThemeTextColor("SpecialTextColor2", 700)
+		Gui, IBM_Home:Font, s10, Cascadia Code
 		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
+		Gui, IBM_Home:Font
 		GUIFunctions.UseThemeTextColor()
 		;>Gems
 		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:

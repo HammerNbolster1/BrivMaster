@@ -168,7 +168,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (this.currentZone>1)
 					this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
-				if(this.currentZone > this.previousZone) ;Things to be done every new zone
+				if(this.currentZone>this.previousZone) ;Things to be done every new zone
 				{
 					this.Logger.UpdateZone(this.currentZone)
 					this.previousZone:=this.currentZone
@@ -429,10 +429,9 @@ class IC_BrivMaster_GemFarm_Class
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				this.offramp:=false ;Reset offramp
 		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
-		this.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+		this.previousZone:=1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
-
 	}
 
 	;START PRE-FLIGHT CHECK
@@ -642,7 +641,7 @@ class IC_BrivMaster_GemFarm_Class
 		global
 		try
 		{
-			if (g_IBM_Settings["IBM_Window_Dark_Icon"])
+			if (g_IBM_Settings["IBM_Window_Dark_Icon"]) ;TODO: Swap to theme
 				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_D.ico
 			else
 				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico

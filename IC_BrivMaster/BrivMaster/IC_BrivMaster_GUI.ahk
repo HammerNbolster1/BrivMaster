@@ -89,7 +89,7 @@
 		Gui, IBM_Home:Add, Text, x+4 w188 vIBM_Stats_Current_Briv, SB / Haste stacks: - / -
 		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h190 vIBM_Stats_Group, Run Rewards
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h193 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
 		LVBGColour:=GUIFunctions.GetThemeListViewBackgroundColor()
 		;>Highlights (BPH/GPH)
@@ -103,7 +103,7 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_TotalGems,
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
-		Gui, IBM_Home:Add, Text, x+3 vIBM_Stats_Gem_Hunter,-
+		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Gem_Hunter,-
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem bonus:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Gem_Bonus, -.-`% (-.- GPB)
 		;>Reward summary
@@ -112,7 +112,7 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+3 w75, Total iLevels/h:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Reward, -
 		;>Chests
-		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Chests_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Chests_LV
@@ -125,9 +125,9 @@
 		GuiControl, +Redraw, IBM_Stats_Chests_LV
 		;Stats - Timing
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h180, Run Timings
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h183, Run Timings
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
@@ -157,7 +157,7 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status

@@ -8,6 +8,8 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 
 	__Get(heroID) ;TODO: Add a wrapper for the .InM etc functions that can check if the hero actually exists at all first, to avoid creating hero objects needlessly, i.e. you'd call g_Heroes.InM(59) which would return this[59].InM if this.HasKey(59), else false
 	{
+		if(!this.Init())
+			return
 		if heroID is integer
 		{
 			switch heroID ;Create extended objects for heroes that need extra functionality
@@ -372,16 +374,16 @@ class IC_BrivMaster_Briv_Class extends IC_BrivMaster_Hero_Class
 		base.Reset()
 		this.MEMORY_SB_ADDRESS:="" ;Stops rubbish being read if InitFastSB() has not been called
 	}
-	
+
 	;--------------------------------------------------------------------------------------
 	;---Hero related memory reads
 	;--------------------------------------------------------------------------------------
-	
+
 	ReadSBStacks()
 	{
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.Read()
     }
-	
+
 	FastReadSBStacks() ;InitFastSB() must have been called prior to using this call
 	{
 		return _IBM_MM.instance.read(this.MEMORY_SB_ADDRESS,this.MEMORY_SB_TYPE)
@@ -391,11 +393,11 @@ class IC_BrivMaster_Briv_Class extends IC_BrivMaster_Hero_Class
 	{
         return g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSprintStacks.Read()
     }
-	
+
 	;------------------------------------------------------------------------------------
 	;---General functions
 	;------------------------------------------------------------------------------------
-	
+
 	InitFastSB() ;Resolves the pointers to the current Steelbones stat for direct reads, this is intended for online stacking where we spam-read SB stacks. ;TODO: Since this is part of the statHandler is should really only change when the game restarts - can we make use of these reads all the time?
 	{
 		this.MEMORY_SB_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.FullOffsets*)
@@ -530,7 +532,7 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		else
 			return ""
 	}
-	
+
 	InitCotFUltActive() ;Tries to initialise this.MEMORY_COTF_ULT_ACTIVE_ADDRESS, returns true if already set up or if setup is successful
 	{
 		if(this.MEMORY_COTF_ULT_ACTIVE_ADDRESS)
@@ -559,13 +561,13 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 		}
 		return numCards
 	}
-	
+
 	ReadNumCards()
 	{
 		size:=this.EFFECT_HANDLER_CARDS.cardsInHand.size.Read()
 		return size=="" ? 0 : size
 	}
-	
+
 	UseUltimate(maxRetries:=50,exitOnceQueued:=false) ;Use ultimate, retrying up to the given number of times if the cooldown doesn't change. If exitOnceQueued is true the function will return as soon as the ultimate is queued - which may mean it never activates if something changes in the game state (area change most likely). Returns the number of attempts made. This is an override to make use of Elly's IsUltimateActive read, done because the ultimates bar method is not accurate enough when we need to follow with a DM reset
 	{
 		;TODO: Not sure this function should be hard coded offsets in a specific file like this - constants in a main file might be better? Applies later in this function as well. Maybe some wrapper somewhere?

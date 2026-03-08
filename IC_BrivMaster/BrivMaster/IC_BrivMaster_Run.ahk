@@ -641,10 +641,7 @@ class IC_BrivMaster_GemFarm_Class
 		global
 		try
 		{
-			if (g_IBM_Settings["IBM_Theme_Current","DarkMode"])
-				Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_D.ico
-			else
-				Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_L.ico
+			Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_Farm.ico
 		}
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
 		Gui, IBM_GemFarm:Color, % Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","Window"])

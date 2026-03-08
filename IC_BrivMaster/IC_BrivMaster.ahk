@@ -1336,13 +1336,21 @@ Class IC_IriBrivMaster_Component
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
-			if(RegExMatch(webRoot,"ps\d+[^/]+",match))
+			if(match:=this.ExtractPlayServerFromURL(webRoot))
 				return match
 			else
-				return "Invalid URL. Servercall fallback: " . g_ServerCall.webRoot
+				return "Invalid URL. Servercall fallback: " . this.ExtractPlayServerFromURL(g_ServerCall.webRoot, "Invalid")
 		}
 		else
-			return "Invalid memory read. Servercall fallback: " . g_ServerCall.webRoot
+			return "Invalid memory read. Servercall fallback: " . this.ExtractPlayServerFromURL(g_ServerCall.webRoot, "Invalid")
+	}
+	
+	ExtractPlayServerFromURL(webRoot, failReturn:="")
+	{
+		if(RegExMatch(webRoot,"ps\d+[^/]+",match))
+			return match
+		else
+			return failReturn
 	}
 
 	CheckOffsetVersions()

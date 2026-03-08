@@ -641,13 +641,14 @@ class IC_BrivMaster_GemFarm_Class
 		global
 		try
 		{
-			if (g_IBM_Settings["IBM_Window_Dark_Icon"]) ;TODO: Swap to theme
-				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_D.ico
+			if (g_IBM_Settings["IBM_Theme_Current","DarkMode"])
+				Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_D.ico
 			else
-				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico
+				Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_L.ico
 		}
-
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
+		Gui, IBM_GemFarm:Color, % Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","Window"])
+        Gui, IBM_GemFarm:Font, % "c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"]) . " w400 s8"
 		FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
@@ -657,9 +658,19 @@ class IC_BrivMaster_GemFarm_Class
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
-
 		if(!g_IBM_Settings["IBM_Window_Hide"])
 		{
+			if(g_IBM_Settings["IBM_Theme_Current","DarkMode"])
+			{
+				if (A_OSVersion>="10.0.17763" AND SubStr(A_OSVersion, 1, 3)="10.")
+				{
+					attr:=19
+					if (A_OSVersion>="10.0.18985")
+						attr:=20
+					Gui, IBM_GemFarm: +hwndGuiID
+					DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)
+				}
+			}
 			Gui, IBM_GemFarm:Show,% "x" . g_IBM_Settings["IBM_Window_X"] . " y" . g_IBM_Settings["IBM_Window_Y"], Briv Master
 		}
 	}
@@ -676,13 +687,13 @@ class IC_BrivMaster_GemFarm_Class
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		importsMajor:=g_SF.Memory.Versions.Import_Version_Major
 		importsMinor:=g_SF.Memory.Versions.Import_Version_Minor
-		colour:="cRed" ;Default
+		colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","TrafficLightBad"])
 		if (gameMajor!="" AND importsMajor!="") ;If both major versions are populated
 		{
 			if (gameMajor==importsMajor AND gameMinor==importsMinor) ;Full matching
-				colour:="cBlack"
+				colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"])
 			else if (gameMajor==importsMajor) ;In this case the minor versions necessarily do not match
-				colour:="cFFA000" ;"cFFC000" Amber had insuffient contrast so darkened a bit
+				colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","TrafficLightNeutral"])
 		}
 		gameString:=gameMajor ? (gameMajor . (gameMinor ? gameMinor : "")) : "Unable to detect"
 		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "") . " " . g_SF.Memory.Versions.Import_Revision) : "Unable to detect"
@@ -690,8 +701,6 @@ class IC_BrivMaster_GemFarm_Class
 		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
 		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString
 		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Imports, % importString
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Game
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
 	}
 	;END GEM FARM WINDOW
 }

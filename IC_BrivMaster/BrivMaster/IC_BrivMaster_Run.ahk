@@ -66,11 +66,11 @@ ComObjectRevoke()
 
 IBM_GemFarmGuiClose()
 {
-    MsgBox, 35, Close, Really close the gem farm script? `n`nWarning: This script is required for gem farming. `n"Yes" will close the gem farm script. `n"No" will miniize the script to the tray.`nYou can open it again by pressing the play button in Script Hub.
+    MsgBox, 35, Close, Really close the gem farm script? `n`nWarning: This script is required for gem farming. `n"Yes" will close the gem farm script. `n"No" will minimise the script to the tray.`nYou can open it again by pressing the play button at the top of Briv Master Home.
     IfMsgBox, Yes
         ExitApp
     IfMsgBox, No
-        Gui, BrivPerformanceGemFarm:hide
+        Gui, IBM_GemFarm:Hide
     IfMsgBox, Cancel
         return true
 }

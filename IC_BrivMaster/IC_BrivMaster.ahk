@@ -16,8 +16,6 @@ g_MouseTooltips.ByHandle:={}
 global g_TabControlHeight:=730
 global g_TabControlStartHeight
 global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
-global g_GlobalFontSize:=8
-
 
 try
 {
@@ -66,18 +64,14 @@ IBM_HomeGuiClose()
 
 CheckControlForTooltip() ;Shows a tooltip if the control with mouseover has a tooltip associated with it
 {
-	MouseGetPos,,,VarWin, VarControl
-	varTTLoc:=VarWin . VarControl
-	if(varTTLoc)
+	MouseGetPos,,,,hControl,2 ;Get the Hwnd
+	if(g_MouseToolTips.ByHandle.HasKey(hControl))
 	{
-		if(g_MouseToolTips.ByHandle.HasKey(varTTLoc))
-		{
-			ToolTip % g_MouseToolTips.ByHandle[varTTLoc].Tip
-			SetTimer, HideToolTip, -3000
-		}
-		else
-			ToolTip
+		ToolTip % g_MouseToolTips.ByHandle[hControl].Tip
+		SetTimer, HideToolTip, -3000
+		return
 	}
+	ToolTip
 }
 
 HideToolTip()
@@ -108,8 +102,6 @@ global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
 global g_ServerCall:={} ;This is instantiated by g_SF.ResetServerCall()
 
-OnMessage(0x200, "CheckControlForTooltip") ;ToolTip Test
-
 g_IriBrivMaster.Init()
 g_IriBrivMaster.ResetModFile()
 
@@ -120,6 +112,8 @@ if(g_IBM_Settings.HUB.IBM_Offsets_Check)
 
 GuiControl, IBM_Home:MoveDraw, ModronTabControl, % "w" . g_TabControlWidth . " h" . g_TabControlHeight
 Gui, IBM_Home:Show, % "w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
+g_IriBrivMaster_GUI.ApplyTooltips()
+OnMessage(0x200, "CheckControlForTooltip") ;WM_MOUSEMOVE for toolTip tracking
 
 ClearButtonStatusMessage()
 {
@@ -318,7 +312,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Window_Y["_DEFAULT"]:=900 ;To keep the window on-screen at 1080
 		settings.IBM_Window_Hide["_DEFAULT"]:=false
 		settings.IBM_Level_Diana_Cheese["_DEFAULT"]:=false
-		settings.IBM_Window_Dark_Icon["_DEFAULT"]:=false
 		settings.IBM_Allow_Modron_Buff_Off["_DEFAULT"]:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
@@ -673,19 +666,19 @@ Class IC_IriBrivMaster_Component
 					BountyIncomeDrops:=((goldChestIncomeDrops * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					BountyIncomeGems:=((goldChestIncomeGems * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1)
-					g_IriBrivMaster_GUI.AddToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
+					g_IriBrivMaster_GUI.UpdateToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
 					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1)
-					g_IriBrivMaster_GUI.AddToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
-					if (this.Stats.GHActive==0)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,No
-					else if (this.Stats.GHActive==1)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Yes
-					else if (this.Stats.GHActive==2)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Mixed
-					else
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,-
+					g_IriBrivMaster_GUI.UpdateToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
+					switch this.Stats.GHActive
+					{
+						case 0: ghStatus:="No"
+						case 1: ghStatus:="Yes"
+						case 2: ghStatus:="Mixed"
+						Default: ghStatus:="-"
+					}
+					GuiControl, IBM_Home:,IBM_Stats_Gem_Hunter, % ghStatus
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (" . formattedDateTime . ")"
+					GuiControl, IBM_Home:, IBM_Stats_Group,% "Run Stats (" . formattedDateTime . ")"
 				}
 			}
 		}

@@ -61,7 +61,7 @@
 		Gui, IBM_Home:Tab, Home
 		;Run control
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h152, Run Control ;Note: Group boxes are placed on the y axis explicitly for this tab to mitigate compounding spacing errors caused by AHK v1's lack of DPI awareness
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h152, Run Control ;Note: Group boxes are placed on the y axis explicitly for this tab to mitigate compounding spacing errors caused by AHK v1's lack of DPI awareness. We should possibly calculate the end of each the previous box instead...
 		Gui, IBM_Home:Font, w400
 		;>Group for offline control options
 		Gui, IBM_Home:Add, Groupbox, xs+7 ys+9 w280 h38
@@ -338,10 +338,10 @@
 		Gui, IBM_Theme_Manager:Add, Button, xm+150 y+3 w70 vIBM_Theme_Manager_TEMP2, Accept
 		
 		Gui, IBM_Theme_Manager:Font, w700
-		Gui, IBM_Theme_Manager:Add, Groupbox, Section xm+0 y+3 w220 h300, Theme Configuration
+		Gui, IBM_Theme_Manager:Add, Groupbox, Section xm+0 y+3 w220 h305, Theme Configuration
 		Gui, IBM_Theme_Manager:Font, w400
 		
-		Gui, IBM_Theme_Manager:Add, Text, xs+5 ys+15 w100 h18 0x200 Right,Default text
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 ys+18 w100 h18 0x200 Right,Default text
 		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_DefaultText
 		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 vIBM_Theme_Manager_DefaultText_Example,Example
 		
@@ -385,7 +385,7 @@
 		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_WindowBackground
 		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200
 				
-		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar and icons
+		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+10 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar and icons
 		
 		;Log
 		Gui, IBM_Home:Font, w700
@@ -1055,11 +1055,11 @@
 		}
 	}
 
-	GameSettings_Status(statusText, colour,changeString)
+	GameSettings_Status(statusText,colour,changeString)
 	{
 		GuiControl, IBM_Home: +%colour%, IBM_Game_Settings_Status
 		GuiControl, IBM_Home:Text, IBM_Game_Settings_Status, %statusText%
-		this.AddToolTip("IBM_Game_Settings_Status", changeString)
+		this.UpdateToolTip("IBM_Game_Settings_Status", changeString)
 	}
 
 	GetDPIScale()
@@ -1095,31 +1095,46 @@
 		}
 	}
 	
-    AddToolTip(controlVariableName, tipMessage) ;Note this never removes tips - it's assumed if we've added one to a control we'll probably keep something there
+    AddToolTip(controlVariableName, tipMessage) ;Used to pre-add tooltips before the GUI is shown
     {
-        global
         if(g_MouseToolTips.ByName.HasKey(controlVariableName))
 			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
-		else if(toolTipTarget:=this.GetToolTipTarget(controlVariableName))
+		else 
 		{
 			newTip:={}
 			newTip.Tip:=tipMessage
 			g_MouseToolTips.ByName[controlVariableName]:=newTip
-			g_MouseToolTips.ByHandle[toolTipTarget]:=newTip
 		}
     }
 
-    GetToolTipTarget(controlVariableName) ;Finds a control ID based on its variable name.
-    {
-        global
-        GuiControl IBM_Home:Focus, %controlVariableName%
-        WinGet IBM_Home_ID, ID, A
-        ControlGetFocus toolTipTarget, ahk_id %IBM_Home_ID%
-        if(IBM_Home_ID AND toolTipTarget)
-			return IBM_Home_ID . toolTipTarget
-		else
-			return ""
-    }
+	UpdateToolTip(controlVariableName, tipMessage) ;Used to update a tooltip once the GUI has been shown. Will add if needed
+	{
+		if(g_MouseToolTips.ByName.HasKey(controlVariableName)) ;Was already set up, and should have had the control handle acquired by ApplyTooltips()
+			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
+		else 
+		{
+			GuiControlGet, hControl, Hwnd, %controlVariableName%
+			if(hControl)
+			{
+				newTip:={}
+				newTip.Tip:=tipMessage
+				g_MouseToolTips.ByName[controlVariableName]:=newTip
+				g_MouseToolTips.ByHandle[hControl]:=newTip
+			}
+		}
+	}
+
+	ApplyTooltips() ;Requires that all GUI controls with tooltips have been created, probably by a Gui Show
+	{
+		for controlName,tipObj in g_MouseToolTips.ByName
+		{
+			GuiControlGet, hControl, Hwnd, %controlName%
+			if(hControl)
+			{
+				g_MouseToolTips.ByHandle[hControl]:=tipObj
+			}
+		}
+	}
 
     AddTab(Tabname)
 	{

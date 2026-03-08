@@ -48,8 +48,8 @@
 		g_TabControlStartHeight:=buttonWidth+7
 		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
 		this.AddTab("Home|Game|Route|Levels")
-		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
 		this.Theme.UseThemeTitleBar("IBM_Home")
+		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
 
 		;++++++++++++++++++HOME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Home
@@ -390,7 +390,7 @@
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, CheckBox, xs+10 ys+20 h18 0x200 vIBM_Logger_MiniLog gIBM_Generic_Setting_Int, Output mini log
 		this.AddToolTip("IBM_Logger_MiniLog", "Select this option to output a small log (MiniLog.json) containing just details of the previous run, for use with monitoring tools etc")
-		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int, Log zone progression
+		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int,Log zone progression
 		this.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
 		;Offsets
 		sideBarWidth:=94 ;Sidebar split used for both offsets and versions
@@ -430,11 +430,9 @@
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 yp+18 w74 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now,Check now
 		Gui, IBM_Home:Add, Button, xs+10 y+4 w74 vIBM_Offsets_Download gIBM_Offsets_Download, Download
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, On load
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int,On load
 		this.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, Imports only
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int,Imports only
 		this.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
 		serverStartY:=mainEndY+mainEndH+7
 		;Server
@@ -460,8 +458,7 @@
 		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w74 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-12 h18 0x200, On load
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load
 		this.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 
 		;++++++++++++++++++ROUTE TAB++++++++++++++++++
@@ -1775,7 +1772,7 @@ class IBM_Theme
 		return Format("{:#x}", this.Theme["TableBackground"]) ;No 'c' prefix here
     }
 
-    UseThemeTitleBar(guiName,refresh:=true) ;Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
+    UseThemeTitleBar(guiName) ;Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
     {
         if(this.Theme.DarkMode)
         {
@@ -1786,11 +1783,6 @@ class IBM_Theme
                     attr:=20
                 Gui, %guiName%: +hwndGuiID
                 DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)             
-                if(refresh)
-				{
-					Gui, %guiName%:Hide
-					Gui, %guiName%:Show
-				}
             }
         }
     }

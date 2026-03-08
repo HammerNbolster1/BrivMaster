@@ -1217,17 +1217,17 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 		{
             versionString.=details[1] . " - New version " . comparison.TestVersion . " available"
-			colour:="cFFC000" ;Amber
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("TrafficLightNeutral")
 		}
         else if(comparison.E)
         {
 			versionString.=details[1]
-			colour:="cGreen"
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("TrafficLightGood")
 		}
 		else
         {
 			versionString.=details[1] . " - Server has " . comparison.TestVersion
-			colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("SpecialText1") ;Not TrafficLightBad as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
 		}
 		GuiControl, IBM_Home:, IBM_Version_Text_SH, %versionString% ;Update UI
 		GuiControl, IBM_Home:+%colour%, IBM_Version_Status_SH
@@ -1623,7 +1623,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for now
 				this.AddMessage("Claim", messageString)
 			}
 		}

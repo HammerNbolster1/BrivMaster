@@ -80,14 +80,17 @@
 		Gui, IBM_Home:Add, Text, x+4 w188 vIBM_Stats_Current_Briv, SB / Haste stacks: - / -
 		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+200 w%groupWidth% h190 vIBM_Stats_Group, Run Rewards
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+200 w%groupWidth% h200 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
 		;>Highlights (BPH/GPH)
 		highlightWidth:=FLOOR((groupWidth-21)/2)
 		this.Theme.UseThemeTextColour("IBM_Home","SpecialText1", 700)
+		Gui, IBM_Home:Font, s10, Cascadia Code
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highlightWidth% Center vIBM_Stats_BPH, BPH
 		this.Theme.UseThemeTextColour("IBM_Home","SpecialText2", 700)
+		Gui, IBM_Home:Font, s10, Cascadia Code
 		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
+		Gui, IBM_Home:Font
 		this.Theme.UseThemeTextColour("IBM_Home")
 		;>Gems
 		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
@@ -117,7 +120,7 @@
 		this.Theme.UseThemeTextColour("IBM_Home")
 		;Stats - Timing
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+390 w%groupWidth% h178, Run Timings
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+400 w%groupWidth% h183, Run Timings
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+18 w60, Total runs:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
@@ -146,7 +149,7 @@
 		this.Theme.UseThemeTextColour("IBM_Home")		
 		;Chests
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+568 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+580 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
@@ -195,7 +198,7 @@
 		this.Theme.UseThemeTitleBar("IBM_ChestSnatcher_Options",false)
 		;Game Settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+618 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the options
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+630 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Radio, xs+10 ys+15 h18 w90 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile
 		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w90 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
@@ -266,7 +269,7 @@
 		this.Theme.UseThemeTitleBar("IBM_Game_Settings_Options",false)
 		;Ellywick non-gemfarming Tool
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+673 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+690 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w36 xs+58 ys+20 Center, Knight
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Moon

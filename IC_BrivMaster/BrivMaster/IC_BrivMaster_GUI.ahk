@@ -327,7 +327,7 @@
 		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		
 		Gui, IBM_Theme_Manager:Add, Button, xm+5 ym+0 w120 gIBM_Theme_Manager_Load_Light, Load light theme
-		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Refresh, Update Examples
+		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Refresh, Update examples
 		
 		Gui, IBM_Theme_Manager:Add, Button, xm+5 y+5 w120 gIBM_Theme_Manager_Load_Dark, Load dark theme
 		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Accept, Accept
@@ -1265,6 +1265,7 @@ IBM_Theme_Manager_Accept()
 	g_IBM_Settings["IBM_Theme_Current","DarkMode"]:=darkModeSelection
 	g_IriBrivMaster_GUI.RefreshThemeManagerExamples()
 	Msgbox 64,Theme Manager,Theme accepted. To fully apply save settings and restart Briv Master home.
+	Gui, IBM_Theme_Manager:Hide
 }
 
 IBM_Theme_Manager_Refresh() ;Refreshes the examples so the user can see the results of their changes

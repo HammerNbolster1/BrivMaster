@@ -119,10 +119,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
 	}
 
-	GetStrategyString() ;Separated to allow it to be placed into the log
+	GetStrategyString() ;Separated to allow it to be placed into the log TODO: This could be further separated to make the log entry more suitable for CSV. Pass the targetStacks to avoid duplicate calls there?
 	{
 		targetStacks:=this.GetTargetStacks(true)
-		return "Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " then using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
+		return (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " then using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
 	}
 
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone

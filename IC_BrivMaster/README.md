@@ -178,7 +178,29 @@ Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem fa
 
 Hide: If selected the farm window will not be displayed.
 
-Dark Icon: Select to use a window icon with a black background instead of the default transparent one. It looks pretty bad at the moment.
+Theme: Opens the theme manager.
+
+> Author's Note: This window is not itself themed, to prevent it becoming unusable if poor choices are made.
+- Load light theme: Loads the standard light theme into the configuration table.
+- Load dark theme: Loads the standard dark theme into the configuration table.
+- Update examples: Updates the colour examples with the entered values.
+- Accept: Accepts the current colour entries.
+
+> Author's Note: Accept loads the colours into current settings, but does not save them. As with all settings, the main save button at the top of the window should be used to save. This also allows you to reload without saving to return to the previous settings.
+
+- Colour Entries: Enter the 8-bit RGB colour for the element in question in hex, e.g. FF0000 for red. Any passable image editor will let you view the hex values of colours in their pallets. Be aware that some elements cannot be themed: edit box background, drop down list text and background, button text and background. This is a limitation of AHK v1.
+    - Default text: Used for most text.
+	- Warning text: Used for warnings, such as being unable to read the game version.
+	- Special text 1: Used for specific highlights, in this case BPH and having a newer version that the server in the version check.
+	- Special text 2: Used for specific highlights, in this case GPH.
+	- Edit box text: As edit box backgrounds cannot be themed, this allows appropriate contrast to be maintained for those controls when using lighter text elsewhere.
+	- Status good: Used as a 'green' traffic light, for okay checks, active functions etc.
+	- Status neutral: Used as a 'amber' traffic light, for non-critical issues etc.
+	- Status evil: Used as a 'red' traffic light, for failed checks, inactive functions etc.
+	- Table text: The text used in tables (list views), as those can be configured separately this allows contrast to be maintained.
+	- Table background: The background colour of tables (list views).
+	- Window background: The background colour of the windows.
+- Use dark mode title bar and icons: Self-descriptive.
 
 ### Log Options
 These options relate to the logs that Briv Master produces.

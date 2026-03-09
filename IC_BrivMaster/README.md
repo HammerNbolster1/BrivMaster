@@ -2,7 +2,7 @@
 
 Briv Master is a consolidated Idle Champions gem farming script. It aims to provide comprehensive Briv-based gem farming without needing multiple separate elements.
 
-Based on ScriptHub by MikeBaldi and Antilectual (the latter being the current author), which can be found at https://github.com/antilectual/Idle-Champions, which also hosts the BrivGemFarm addon from which much of BrivMaster is derived.  This was formerly hosted at https://github.com/mikebaldi/Idle-Champions. This addon replaces the functionality of 3 of ImpEGamer's addons from https://github.com/imp444/IC_Addons: HybridTurboStacking, LevelUp and RNGWaitingRoom.
+Based on Script Hub by MikeBaldi and Antilectual (the latter being the current author), which can be found at https://github.com/antilectual/Idle-Champions, which also hosts the BrivGemFarm addon from which much of BrivMaster is derived.  This was formerly hosted at https://github.com/mikebaldi/Idle-Champions. This addon replaces the functionality of 3 of ImpEGamer's addons from https://github.com/imp444/IC_Addons: HybridTurboStacking, LevelUp and RNGWaitingRoom.
 
 This script would not have been possible without the work of those who came before.
 
@@ -225,9 +225,9 @@ Download: Download the latest Offsets (or only imports, per Update imports only 
 
 > Author's Note: The Briv Master respository does not include Offsets, for ease of updating, as one platform would constantly have to switch back. As a result new installs will need to manually pick their platform. Those on the CNE client can use the Steam option.
 
-Check Automatically: When this option is selected the Offset versions will be checked when Script Hub starts, equivallent to pressing Check Now above
+On Load: When this option is selected the Offset versions will be checked when Briv Master Home starts, equivalent to pressing Check Now above.
 
-Update imports only: When selected pointer data will be presevered when using the Download button above. This is useful for those who've found that they needed to make tweaks to the pointer data.
+Imports only: When selected pointer data will be preserved when using the Download button above. This is useful for those who've found that they needed to make tweaks to the pointer data.
 
 ### Server
 
@@ -250,7 +250,7 @@ A link to the Readme is also provided.
 
 This group controls checking of versions.
 
-On Load: When this option is selected the Script Hub and Addon versions will be checked against GitHub when Script Hub starts.
+On Load: When this option is selected the Briv Master version will be checked against GitHub when Briv Master Home starts.
 
 Check now: Use to manually perform a version check.
 	

@@ -13,11 +13,9 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=750
+global g_TabControlHeight:=728
 global g_TabControlStartHeight
 global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
-global g_GlobalFontSize:=8
-
 
 try
 {
@@ -63,21 +61,16 @@ IBM_HomeGuiClose()
         return True
 }
 
-
 CheckControlForTooltip() ;Shows a tooltip if the control with mouseover has a tooltip associated with it
 {
-	MouseGetPos,,,VarWin, VarControl
-	varTTLoc:=VarWin . VarControl
-	if(varTTLoc)
+	MouseGetPos,,,,hControl,2 ;Get the Hwnd
+	if(g_MouseToolTips.ByHandle.HasKey(hControl))
 	{
-		if(g_MouseToolTips.ByHandle.HasKey(varTTLoc))
-		{
-			ToolTip % g_MouseToolTips.ByHandle[varTTLoc].Tip
-			SetTimer, HideToolTip, -3000
-		}
-		else
-			ToolTip
+		ToolTip % g_MouseToolTips.ByHandle[hControl].Tip
+		SetTimer, HideToolTip, -3000
+		return
 	}
+	ToolTip
 }
 
 HideToolTip()
@@ -108,8 +101,6 @@ global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
 global g_ServerCall:={} ;This is instantiated by g_SF.ResetServerCall()
 
-OnMessage(0x200, "CheckControlForTooltip") ;ToolTip Test
-
 g_IriBrivMaster.Init()
 g_IriBrivMaster.ResetModFile()
 
@@ -120,6 +111,8 @@ if(g_IBM_Settings.HUB.IBM_Offsets_Check)
 
 GuiControl, IBM_Home:MoveDraw, ModronTabControl, % "w" . g_TabControlWidth . " h" . g_TabControlHeight
 Gui, IBM_Home:Show, % "w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
+g_IriBrivMaster_GUI.ApplyTooltips()
+OnMessage(0x200, "CheckControlForTooltip") ;WM_MOUSEMOVE for toolTip tracking
 
 ClearButtonStatusMessage()
 {
@@ -318,7 +311,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Window_Y["_DEFAULT"]:=900 ;To keep the window on-screen at 1080
 		settings.IBM_Window_Hide["_DEFAULT"]:=false
 		settings.IBM_Level_Diana_Cheese["_DEFAULT"]:=false
-		settings.IBM_Window_Dark_Icon["_DEFAULT"]:=false
 		settings.IBM_Allow_Modron_Buff_Off["_DEFAULT"]:=false ;Hidden setting - allows the script to be started without the modron core buff enabled, for those who want to use potions via saved familiars
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
@@ -356,6 +348,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Scan_Codes[9,"_DEFAULT"]:=10
 		settings.IBM_Scan_Codes[0,"_DEFAULT"]:=11
 		settings.IBM_OffLine_Blank_Stop["_DEFAULT"]:=false
+		settings.IBM_Theme_Current["_DEFAULT"]:={"DefaultText":0xC0C0C0,"WarningText":0xF18500,"SpecialText1":0x8888FF,"SpecialText2":0x88FF88,"TableText":0xE0E0E0,"EditText":0x333333,"TableBackground":0x555555,"WindowBackground":0x333333,"TrafficLightBad":0xF00000,"TrafficLightGood":0x00F000,"TrafficLightNeutral":0xFFC000,"DarkMode":true}
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
@@ -635,14 +628,14 @@ Class IC_IriBrivMaster_Component
 										
 					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . this.AddThousandsSeperator(ROUND(bph,2)) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
 					if(gems!="")
 						this.CurrentGems:=gems
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . this.AddThousandsSeperator(ROUND(gph,2)) ;Includes the prefix so it can be properly centered
-					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % this.AddThousandsSeperator(gemsTotal)
+					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % gemsTotal
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states
 					{
@@ -672,20 +665,20 @@ Class IC_IriBrivMaster_Component
 					BSCIncomeGems:=goldChestIncomeGems * CONSTANT_BSCPerGold
 					BountyIncomeDrops:=((goldChestIncomeDrops * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
 					BountyIncomeGems:=((goldChestIncomeGems * CONSTANT_BountiesPerGold)/CONSTANT_BountiesPerEventPack)*CONSTANT_TotalRewardPerEventPack
-					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % this.AddThousandsSeperator(ROUND(BSCIncomeDrops+BSCIncomeGems,1))
-					GUIFunctions.AddToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
-					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % this.AddThousandsSeperator(ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1))
-					GUIFunctions.AddToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
-					if (this.Stats.GHActive==0)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,No
-					else if (this.Stats.GHActive==1)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Yes
-					else if (this.Stats.GHActive==2)
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,Mixed
-					else
-						GuiControl, IBM_Home:, IBM_Stats_Gem_Hunter,-
+					GuiControl, IBM_Home:, IBM_Stats_BSC_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems,1)
+					g_IriBrivMaster_GUI.UpdateToolTip("IBM_Stats_BSC_Reward", "Bosses: " . ROUND(BSCIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems,1))
+					GuiControl, IBM_Home:, IBM_Stats_Total_Reward, % ROUND(BSCIncomeDrops+BSCIncomeGems+BountyIncomeDrops+BountyIncomeGems,1)
+					g_IriBrivMaster_GUI.UpdateToolTip("IBM_Stats_Total_Reward", "Bosses: " . ROUND(BSCIncomeDrops+BountyIncomeDrops,1) . ", Gems: " . Round(BSCIncomeGems+BountyIncomeGems,1))
+					switch this.Stats.GHActive
+					{
+						case 0: ghStatus:="No"
+						case 1: ghStatus:="Yes"
+						case 2: ghStatus:="Mixed"
+						Default: ghStatus:="-"
+					}
+					GuiControl, IBM_Home:,IBM_Stats_Gem_Hunter, % ghStatus
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (" . formattedDateTime . ")"
+					GuiControl, IBM_Home:, IBM_Stats_Group,% "Run Stats (" . formattedDateTime . ")"
 				}
 			}
 		}
@@ -764,14 +757,6 @@ Class IC_IriBrivMaster_Component
         GuiControl, IBM_Home:, IBM_Stats_Bad_Auto, % this.SharedRunData.BadAutoProgress
 	}
 
-	    ; Helper function to add commas every 3 digits for display purposes.
-    AddThousandsSeperator(val)
-    {
-        if (!(val is number) || Abs(val) < 1000)
-            return val
-        return RegExReplace(val, "(\G|[^\d,.])\d{1,3}(?=(\d{3})+(\D|$))", "$0,")
-    }
-	
 	StatsUpdateFastSlow(Stat,statTime) ;Helper for the slow/fast/total stat for each category
 	{
 		if (!Stat.Slow OR statTime > Stat.Slow)
@@ -790,7 +775,7 @@ Class IC_IriBrivMaster_Component
 		{
 			this.GetSettingsFileLocation(checkTime)
 			if (!this.GameSettingFileLocation) ;We tried and we failed
-				return
+				return ;TODO: Update the status text here?
 		}
 		profile:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile
 		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
@@ -815,23 +800,23 @@ Class IC_IriBrivMaster_Component
 				if (this.IsGameClosed())
 				{
 					g_SF.WriteObjectToAHKJSON(this.GameSettingFileLocation,gameSettings,true)
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"cGreen",changeString)
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " aligned with " . (changeCount==1 ? "1 change" : changeCount . " changes"),"TrafficLightGood",changeString)
 				}
 				else
 				{
 					MsgBox,48,Briv Master,Game settings cannot be changed whilst Idle Champions is running
-					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000",changeString)
+					g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"TrafficLightNeutral",changeString)
 				}
 
 			}
 			else
 			{
-				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"cFFC000",changeString)
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " have " . changeCount . (changeCount==1 ? " difference" : " differences"),"TrafficLightNeutral",changeString)
 			}
 		}
 		else
 		{
-			g_IriBrivMaster_GUI.GameSettings_Status(g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile, "Name"] .  " WE BE MATCHING!! " . checkTime,"cGreen",changeString)
+			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","DefaultText",changeString)
 		}
 	}
 
@@ -1231,17 +1216,17 @@ Class IC_IriBrivMaster_Component
 		if(comparison.GT)
 		{
             versionString.=details[1] . " - New version " . comparison.TestVersion . " available"
-			colour:="cFFC000" ;Amber
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("TrafficLightNeutral")
 		}
         else if(comparison.E)
         {
 			versionString.=details[1]
-			colour:="cGreen"
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("TrafficLightGood")
 		}
 		else
         {
 			versionString.=details[1] . " - Server has " . comparison.TestVersion
-			colour:="cBlue" ;Not red as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("SpecialText1") ;Not TrafficLightBad as this isn't necessarily a problem - it's probably me, or you dear reader, working on updates
 		}
 		GuiControl, IBM_Home:, IBM_Version_Text_SH, %versionString% ;Update UI
 		GuiControl, IBM_Home:+%colour%, IBM_Version_Status_SH
@@ -1350,13 +1335,21 @@ Class IC_IriBrivMaster_Component
 		webRoot:=g_SF.Memory.ReadWebRoot()
 		if(webRoot)
 		{
-			if(RegExMatch(webRoot,"ps\d+[^/]+",match))
+			if(match:=this.ExtractPlayServerFromURL(webRoot))
 				return match
 			else
-				return "Invalid URL. Servercall fallback: " . g_ServerCall.webRoot
+				return "Invalid URL. Servercall fallback: " . this.ExtractPlayServerFromURL(g_ServerCall.webRoot, "Invalid")
 		}
 		else
-			return "Invalid memory read. Servercall fallback: " . g_ServerCall.webRoot
+			return "Invalid memory read. Servercall fallback: " . this.ExtractPlayServerFromURL(g_ServerCall.webRoot, "Invalid")
+	}
+	
+	ExtractPlayServerFromURL(webRoot, failReturn:="")
+	{
+		if(RegExMatch(webRoot,"ps\d+[^/]+",match))
+			return match
+		else
+			return failReturn
 	}
 
 	CheckOffsetVersions()
@@ -1365,7 +1358,17 @@ Class IC_IriBrivMaster_Component
 			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
-		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
+		if(gameMajor)
+		{
+			gameVersion:=gameMajor . gameMinor
+			colour:=this.Theme.GetThemeTextColour()
+		}
+		else
+		{
+			gameVersion:="<Not found>"
+			colour:=this.Theme.GetThemeTextColour("WarningText")
+		}
+		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Game
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		currentPointers:=this.GetPointersVersion()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers
@@ -1629,7 +1632,7 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for mow
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for now
 				this.AddMessage("Claim", messageString)
 			}
 		}

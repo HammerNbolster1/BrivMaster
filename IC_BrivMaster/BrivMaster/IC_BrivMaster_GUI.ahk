@@ -1,10 +1,5 @@
 ﻿class IC_IriBrivMaster_GUI
 {
-	static IBM_COLOUR_FORMATION_IN:="c00B050"
-	static IBM_COLOUR_FORMATION_OUT:="cE0E0E0"
-	static IBM_COLOUR_ROUTE_NO:="cD5D5D5"
-	static IBM_COLOUR_ROUTE_YES_JUMP:="c00F000"
-	static IBM_COLOUR_ROUTE_YES_STACK:="cF00000"
 	static IBM_SYMBOL_ROUTE_JUMP:="▲" ;This file (only) has to be saved as a UTF-8-BOM file to make these symbols work
 	static IBM_SYMBOL_ROUTE_STACK:="≡"
 	static IBM_SYMBOL_CONTROL_ACTIVE:="●"
@@ -20,51 +15,47 @@
 	Init()
 	{
 		global ;Required for GUI control variables
+		this.Theme:=new IBM_Theme()
 		this.controlLock:=true
-
-		GUIFunctions.LoadTheme()
-		winBGColour:=GUIFunctions.GetThemeBackgroundColor()
+		winBGColour:=this.Theme.GetThemeBackgroundColour()
+		LVBGColour:=this.Theme.GetThemeListViewBackgroundColour()
+		editTextColour:=this.Theme.GetThemeTextColour("EditText") ;Avoid excess UseTheme calls as we swap for edit boxes and surrounding text
 		Gui, IBM_Home:New
-		Gui, IBM_Home:+Resize -MaximizeBox +HwndGUIIBM_Home
+		Gui, IBM_Home:+Resize -MaximizeBox
 		Gui, IBM_Home:Color, %winBGColour%
-		GUIFunctions.UseThemeTextColor()
+		this.Theme.UseThemeTextColour("IBM_Home")
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control
 		;Buttons for starting, saving etc
 		buttonWidth:=25
 		buttonSpacing:=15
 		Gui, IBM_Home:Add, Picture, xm+5 y+3 h-1 w%buttonWidth% gLaunch_Clicked vLaunchClickButton, %A_LineFile%\..\..\Resources\idledragons-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gReload_Clicked vReloadClickButton, %A_LineFile%\..\..\Resources\refresh-100x100.png
+		this.AddToolTip("LaunchClickButton", "Launch Idle Champions")
+		this.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
 		firstButtonOffset:=groupWidth-buttonWidth*5-buttonSpacing*4-5
 		Gui, IBM_Home:Add, Text, x+10 w125 r2 vIBM_MainButtons_Status
 		Gui, IBM_Home:Add, Picture, xm+%firstButtonOffset% yp+0 h-1 w%buttonWidth% gIBM_MainButtons_Start vIBM_MainButtons_Start, %A_LineFile%\..\..\Resources\play-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Stop vIBM_MainButtons_Stop, %A_LineFile%\..\..\Resources\stop-100x100.png
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\connect-100x100.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\connect-100x100.png ;TODO: Combine with play button per current BGF
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Save vIBM_MainButtons_Save, %A_LineFile%\..\..\Resources\save-100x100.png
 		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Reset vIBM_MainButtons_Reset, %A_LineFile%\..\..\Resources\Reset-100x100.png
+		this.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm")
+        this.AddToolTip("IBM_MainButtons_Stop", "Stop Gem Farm")
+        this.AddToolTip("IBM_MainButtons_Connect", "Reconnect to Gem Farm script")
+        this.AddToolTip("IBM_MainButtons_Save", "Save Briv Master settings from all tabs")
+		this.AddToolTip("IBM_MainButtons_Reset", "Reset stats")
 		;Tab control
 		g_TabControlStartHeight:=buttonWidth+7
 		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
-		GUIFunctions.UseThemeTextColor()
-		GUIFunctions.AddTab("Home")
-		GUIFunctions.AddTab("Game")
-		GUIFunctions.AddTab("Route")
-		GUIFunctions.AddTab("Levels")
+		this.AddTab("Home|Game|Route|Levels")
+		this.Theme.UseThemeTitleBar("IBM_Home")
 		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
-		GUIFunctions.UseThemeTitleBar("IBM_Home")
-		;Tooltips must come after the first GUI:Show so the controls are created
-		GUIFunctions.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm")
-        GUIFunctions.AddToolTip("IBM_MainButtons_Stop", "Stop Gem Farm")
-        GUIFunctions.AddToolTip("IBM_MainButtons_Connect", "Reconnect to Gem Farm script")
-        GUIFunctions.AddToolTip("IBM_MainButtons_Save", "Save Briv Master settings from all tabs")
-		GUIFunctions.AddToolTip("IBM_MainButtons_Reset", "Reset stats")
-		GUIFunctions.AddToolTip("LaunchClickButton", "Launch Idle Champions")
-		GUIFunctions.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
-	
+
 		;++++++++++++++++++HOME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Home
 		;Run control
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h152, Run Control
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h152, Run Control ;Note: Group boxes are placed on the y axis explicitly for this tab to mitigate compounding spacing errors caused by AHK v1's lack of DPI awareness. We should possibly calculate the end of each the previous box instead...
 		Gui, IBM_Home:Font, w400
 		;>Group for offline control options
 		Gui, IBM_Home:Add, Groupbox, xs+7 ys+9 w280 h38
@@ -89,24 +80,20 @@
 		Gui, IBM_Home:Add, Text, x+4 w188 vIBM_Stats_Current_Briv, SB / Haste stacks: - / -
 		;Stats - Rewards
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h200 vIBM_Stats_Group, Run Rewards
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+200 w%groupWidth% h190 vIBM_Stats_Group, Run Rewards
 		Gui, IBM_Home:Font, w400
-		LVBGColour:=GUIFunctions.GetThemeListViewBackgroundColor()
 		;>Highlights (BPH/GPH)
 		highlightWidth:=FLOOR((groupWidth-21)/2)
-		GUIFunctions.UseThemeTextColor("SpecialTextColor1", 700)
-		Gui, IBM_Home:Font, s10, Cascadia Code
+		this.Theme.UseThemeTextColour("IBM_Home","SpecialText1", 700)
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highlightWidth% Center vIBM_Stats_BPH, BPH
-		GUIFunctions.UseThemeTextColor("SpecialTextColor2", 700)
-		Gui, IBM_Home:Font, s10, Cascadia Code
+		this.Theme.UseThemeTextColour("IBM_Home","SpecialText2", 700)
 		Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
-		Gui, IBM_Home:Font
-		GUIFunctions.UseThemeTextColor()
+		this.Theme.UseThemeTextColour("IBM_Home")
 		;>Gems
 		Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_TotalGems,
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
-		Gui, IBM_Home:Add, Text, x+3 w120 vIBM_Stats_Gem_Hunter,-
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Gem_Hunter,-
 		Gui, IBM_Home:Add, Text, xs+10 y+3, Gem bonus:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Gem_Bonus, -.-`% (-.- GPB)
 		;>Reward summary
@@ -115,7 +102,8 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+3 w75, Total iLevels/h:
 		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Reward, -
 		;>Chests
-		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		this.Theme.UseThemeTextColour("IBM_Home","TableText")
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Chests_LV Count3 R2 LV0x10 NoSort NoSortHdr, Chest|Dropped|Bought|Opened ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Chests_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Chests_LV
@@ -126,12 +114,23 @@
 		LV_ModifyCol(3,"AutoHdr")
 		LV_ModifyCol(4,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Chests_LV
+		this.Theme.UseThemeTextColour("IBM_Home")
 		;Stats - Timing
-		GUIFunctions.UseThemeTextColor()
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h183, Run Timings
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+390 w%groupWidth% h178, Run Timings
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		Gui, IBM_Home:Add, Text, xs+10 ys+18 w60, Total runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bosses hit (Run / Total):
+		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
+		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad autoprogressions:
+		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
+		this.Theme.UseThemeTextColour("IBM_Home","TableText")
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
@@ -144,24 +143,12 @@
 		LV_ModifyCol(4,"AutoHdr")
 		LV_ModifyCol(5,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Run_LV
-		;GuiControlGet, statsLVEndPos, IBM_Home:Pos, IBM_Stats_Run_LV
-		;highlightY:=statsLVEndPosY+statsLVEndPosH+15
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Total runs:
-		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed runs:
-		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bosses hit (Run / Total):
-		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
-		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad autoprogressions:
-		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
-				
+		this.Theme.UseThemeTextColour("IBM_Home")		
 		;Chests
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+568 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, ListView, +cBlack%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_ChestsSnatcher_Status
@@ -173,6 +160,7 @@
 		Gui, IBM_ChestSnatcher_Log:Margin, 0,0
 		Gui, IBM_ChestSnatcher_Log:-Resize -MaximizeBox -Caption +HwndLog_Hwnd
 		this.IBM_ChestSnatcher_Log_Hwnd:=Log_Hwnd ;Save handle to the log window
+		this.Theme.UseThemeTextColour("IBM_ChestSnatcher_Log","TableText") ;No need to reset this to normal text as it only contains the LV
 		Gui, IBM_ChestSnatcher_Log:Add, ListView, +Background%LVBGColour% w380 0x2000 LV0x10000 vIBM_ChestsSnatcher_Status_Expanded Count20 R20, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, vIBM_ChestsSnatcher_Status_Expanded
 		Gui, IBM_ChestSnatcher_Log:Default
@@ -188,25 +176,26 @@
 		Gui, IBM_ChestSnatcher_Options:New , , Chest Options ;Note this window uses an Accept button to accept changes, so that the script does not execute based on partial entry (e.g. with poor timing it could buy 12 chests whilst you were typing 123 into the box)
 		Gui, IBM_ChestSnatcher_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
 		Gui, IBM_ChestSnatcher_Options:Color, %winBGColour%
-		GUIFunctions.UseThemeTextColor(,,"IBM_ChestSnatcher_Options")
+		this.Theme.UseThemeTextColour("IBM_ChestSnatcher_Options")
 		this.IBM_ChestSnatcher_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to buy per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Silver to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gems
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gold
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +cBlack Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Silver
 		Gui, IBM_ChestSnatcher_Options:Add, CheckBox, xm+10 h18 0x200 vIBM_ChestSnatcher_Options_Claim, Claim Daily Rewards
 		gui, IBM_ChestSnatcher_Options:Add, Button, xm+100 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
+		this.Theme.UseThemeTitleBar("IBM_ChestSnatcher_Options",false)
 		;Game Settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+12 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+618 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Radio, xs+10 ys+15 h18 w90 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile
 		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w90 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
@@ -214,36 +203,34 @@
 		Gui, IBM_Home:Add, Button, xs+317 yp+0 w47 h18 vIBM_Game_Settings_Fix gIBM_Game_Settings_Fix, Set Now
 		Gui, IBM_Home:Add, Button, x+5 w20 h18 vIBM_Game_Settings_Options gIBM_Game_Settings_Options, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CONFIG
 		;>Game Settings Options Window
-		Gui, IBM_Home:Font, w700
 		Gui, IBM_Game_Settings_Options:New , , Game Settings
-		Gui, IBM_Home:Font, w400
 		Gui, IBM_Game_Settings_Options:Color, %winBGColour%
 		Gui, IBM_Game_Settings_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_Game_Settings_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
-		GUIFunctions.UseThemeTextColor(,700,"IBM_Game_Settings_Options")
+		this.Theme.UseThemeTextColour("IBM_Game_Settings_Options",,700)
 		Gui, IBM_Game_Settings_Options:Add, Text, xm+0 w80 h18 0x200 Center, Profile 1
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Option
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Profile 2
-		GUIFunctions.UseThemeTextColor(,400,"IBM_Game_Settings_Options")
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit12 +cBlack vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
+		this.Theme.UseThemeTextColour("IBM_Game_Settings_Options",,400)
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 Limit12 +%editTextColour% vIBM_Game_Settings_Option_Name_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Name
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit12 +cBlack vIBM_Game_Settings_Option_Name_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 Limit12 +%editTextColour% vIBM_Game_Settings_Option_Name_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack vIBM_Game_Settings_Option_Framerate_1 Limit4 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +%editTextColour% vIBM_Game_Settings_Option_Framerate_1 Limit4 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, Framerate
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_Framerate_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +%editTextColour% Limit4 vIBM_Game_Settings_Option_Framerate_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit3 vIBM_Game_Settings_Option_Particles_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +%editTextColour% Limit3 vIBM_Game_Settings_Option_Particles_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, % "% Particles"
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit3 vIBM_Game_Settings_Option_Particles_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +%editTextColour% Limit3 vIBM_Game_Settings_Option_Particles_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit4 vIBM_Game_Settings_Option_HRes_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +%editTextColour% Limit4 vIBM_Game_Settings_Option_HRes_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, H. Resolution
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_HRes_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +%editTextColour% Limit4 vIBM_Game_Settings_Option_HRes_2 gIBM_Game_Settings_Option_Change
 
-		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +cBlack Limit4 vIBM_Game_Settings_Option_VRes_1 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, xm+0 w80 +%editTextColour% Limit4 vIBM_Game_Settings_Option_VRes_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w80 h18 0x200 Center, V. Resolution
-		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +cBlack Limit4 vIBM_Game_Settings_Option_VRes_2 gIBM_Game_Settings_Option_Change
+		Gui, IBM_Game_Settings_Options:Add, Edit, x+3 w80 +%editTextColour% Limit4 vIBM_Game_Settings_Option_VRes_2 gIBM_Game_Settings_Option_Change
 
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_Fullscreen_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Fullscreen
@@ -276,9 +263,10 @@
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, xm+32 w28 vIBM_Game_Settings_Option_Swap25100_1 gIBM_Game_Settings_Option_Change
 		Gui, IBM_Game_Settings_Options:Add, Text, x+3 w120 h18 0x200 Center, Swap x25 and x100
 		Gui, IBM_Game_Settings_Options:Add, CheckBox, x+16 w28 vIBM_Game_Settings_Option_Swap25100_2 gIBM_Game_Settings_Option_Change
+		this.Theme.UseThemeTitleBar("IBM_Game_Settings_Options",false)
 		;Ellywick non-gemfarming Tool
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+19 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+673 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w36 xs+58 ys+20 Center, Knight
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Moon
@@ -288,59 +276,125 @@
 		Gui, IBM_Home:Add, Button, x+20 yp-3 w55 h18 vIBM_NonGemFarm_Elly_Start gIBM_NonGemFarm_Elly_Start, Start
 		Gui, IBM_Home:Add, Button, x+7 w55 h18 vIBM_NonGemFarm_Elly_Stop gIBM_NonGemFarm_Elly_Stop, Stop
 		Gui, IBM_Home:Add, Text, w40 xs+10 y+5 h18 0x200, Min:Max
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_1
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_1
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_1
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_2
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_1
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_2
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_2
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_3
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_2
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_3
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_3
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_4
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_3
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_4
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_4
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_5
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_4
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+10 Number Limit1 vIBM_NonGemFarm_Elly_Min_5
 		Gui, IBM_Home:Add, Text, w5 x+0 h18 0x200 Center, :
-		Gui, IBM_Home:Add, Edit, +cBlack  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w12 x+0 Number Limit1 vIBM_NonGemFarm_Elly_Max_5
 		Gui, IBM_Home:Add, Text, x+25 w117 r2 vIBM_NonGemFarm_Elly_Status
 
 		;++++++++++++++++++GAME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Game
 		;Game location
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h127, Game Location
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h127, Game Location
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 w140 vIBM_Game_Exe gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip("IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w40 x+5 w140 vIBM_Game_Exe gIBM_Game_Location_Settings
+		this.AddToolTip("IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
 		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
-		GUIFunctions.AddToolTip("IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to see the window it creates. Do not use when launching the game directly")
+		this.AddToolTip("IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to see the window it creates. Do not use when launching the game directly")
 		Gui, IBM_Home:Add, Button, xs+318 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
 		Gui, IBM_Home:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
-		Gui, IBM_Home:Add, Edit, +cBlack w40 x+5 w322 r2 vIBM_Game_Path gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip("IBM_Game_Path", "The game install location")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w322 r2 vIBM_Game_Path gIBM_Game_Location_Settings
+		this.AddToolTip("IBM_Game_Path", "The game install location")
 		Gui, IBM_Home:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
-		Gui, IBM_Home:Add, Edit, +cBlack w40 x+5 w322 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
-		GUIFunctions.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
-		;Script Window
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w322 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
+		this.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
+		;Window settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h50, % "Window Options"
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%groupWidth% h50 vIBM_Window_Settings_Group, Window Options
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Screen Position (x,y):
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_X gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Farm script screen position (x,y):
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w35 x+2 Number Limit4 vIBM_Window_X gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+2 h18 0x200, ,
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Generic_Setting_Int, Hide
-		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Dark_Icon gIBM_Generic_Setting_Int, Dark Icon
+		Gui, IBM_Home:Add, Button, xs+314 yp+0 w74 vIBM_Theme_Manager_Open gIBM_Theme_Manager_Open,Theme
+		;Theme manager window. Note this is NOT themed, to prevent situations where it is made unusable (e.g. white text on white exit boxes)
+		Gui, IBM_Theme_Manager:New,,Theme
+		Gui, IBM_Theme_Manager:-Resize -MaximizeBox +HwndOpt_Hwnd
+		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
+		
+		Gui, IBM_Theme_Manager:Add, Button, xm+5 ym+0 w120 gIBM_Theme_Manager_Load_Light, Load light theme
+		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Refresh, Update examples
+		
+		Gui, IBM_Theme_Manager:Add, Button, xm+5 y+5 w120 gIBM_Theme_Manager_Load_Dark, Load dark theme
+		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Accept, Accept
+		
+		Gui, IBM_Theme_Manager:Font, w700
+		Gui, IBM_Theme_Manager:Add, Groupbox, Section xm+0 y+3 w265 h305, Theme Configuration
+		Gui, IBM_Theme_Manager:Font, w400
+		
+		Gui, IBM_Theme_Manager:Add, Progress, xs+168 ys+15 w45 h255 Disabled BackgroundWhite, 0 ;This exists just to provide a white box for contrast in the examples
+		Gui, IBM_Theme_Manager:Add, Progress, xs+214 ys+15 w45 h255 Disabled BackgroundBlack, 0 ;And for black (as text will necessarily be visible against one of the two)
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 ys+18 w100 h18 0x200 Right,Default text
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_DefaultText,% this.Theme.GetThemeHexString("DefaultText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_DefaultText_Example,Example  Example ;Note the double-space here
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Warning text
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_WarningText,% this.Theme.GetThemeHexString("WarningText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_WarningText_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Special text 1
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_SpecialText1,% this.Theme.GetThemeHexString("SpecialText1")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_SpecialText1_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Special text 2
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_SpecialText2,% this.Theme.GetThemeHexString("SpecialText2")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_SpecialText2_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Edit box text
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_EditText,% this.Theme.GetThemeHexString("EditText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_EditText_Example,Example  Example
+
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status good
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightGood,% this.Theme.GetThemeHexString("TrafficLightGood")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightGood_Example,Example  Example
+
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status neutral
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightNeutral,% this.Theme.GetThemeHexString("TrafficLightNeutral")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightNeutral_Example,Example  Example
+
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status evil
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightBad,% this.Theme.GetThemeHexString("TrafficLightBad")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightBad_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Table text
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TableText,% this.Theme.GetThemeHexString("TableText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TableText_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Table background
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TableBackground,% this.Theme.GetThemeHexString("TableBackground")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TableBackground_Example,Example  Example
+		
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Window background
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_WindowBackground,% this.Theme.GetThemeHexString("WindowBackground")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_WindowBackground_Example,Example  Example
+				
+		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+10 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar and icons
+		GuiControl,IBM_Theme_Manager:, IBM_Theme_Manager_DarkMode,% this.Theme.Theme.DarkMode
+		this.RefreshThemeManagerExamples()
+		this.Theme.UseThemeTitleBar("IBM_Theme_Manager",false) ;This is themed since it's simple light/dark
 		;Log
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+13 w%groupWidth% h49, % "Log Options"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, CheckBox, xs+10 ys+20 h18 0x200 vIBM_Logger_MiniLog gIBM_Generic_Setting_Int, Output mini log
-		GUIFunctions.AddToolTip("IBM_Logger_MiniLog", "Select this option to output a small log (MiniLog.json) containing just details of the previous run, for use with monitoring tools etc")
-		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int, Log zone progression
-		GUIFunctions.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
+		this.AddToolTip("IBM_Logger_MiniLog", "Select this option to output a small log (MiniLog.json) containing just details of the previous run, for use with monitoring tools etc")
+		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Logger_ZoneLog gIBM_Generic_Setting_Int,Log zone progression
+		this.AddToolTip("IBM_Logger_ZoneLog", "Select this option to include zone progression details in the main log. This massively increases the log size and makes it much less human readable, so should only be turned on when debugging your setup")
 		;Offsets
 		sideBarWidth:=94 ;Sidebar split used for both offsets and versions
 		mainWidth:=groupWidth-sideBarWidth-8
@@ -351,15 +405,25 @@
 		Gui, IBM_Home:Font, w400
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		if(gameMajor)
+		{
+			gameVersion:=gameMajor . gameMinor
+			colour:=this.Theme.GetThemeTextColour()
+		}
+		else
+		{
+			gameVersion:="<Not found>"
+			colour:=this.Theme.GetThemeTextColour("WarningText")
+		}
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 %colour% vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		Gui, IBM_Home:Add, Text, w200 xs+10 y+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Pointers"
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, w150 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
-		Gui, IBM_Home:Add, Text, w120 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
+		Gui, IBM_Home:Add, Text, w180 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
+		Gui, IBM_Home:Add, Text, w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
 
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Imports"
@@ -367,11 +431,11 @@
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=g_IriBrivMaster.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=g_IriBrivMaster.GetThemeTextColour("WarningTextColor")
+			colour:=this.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=g_IriBrivMaster.GetThemeTextColour()
-		Gui, IBM_Home:Add, Text, w150 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
-		Gui, IBM_Home:Add, Text, w120 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
+			colour:=this.Theme.GetThemeTextColour()
+		Gui, IBM_Home:Add, Text, w180 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
+		Gui, IBM_Home:Add, Text, w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
 		GuiControlGet, mainEnd, IBM_Home:Pos, IBM_Offsets_Text_Imports_GitHub ;Used for setting the next box
 		;Offsets - check sidebar
 		Gui, IBM_Home:Font, w700
@@ -379,12 +443,10 @@
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 yp+18 w74 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now,Check now
 		Gui, IBM_Home:Add, Button, xs+10 y+4 w74 vIBM_Offsets_Download gIBM_Offsets_Download, Download
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, On load
-		GUIFunctions.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-13 h18 0x200, Imports only
-		GUIFunctions.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int,On load
+		this.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int,Imports only
+		this.AddToolTip("IBM_Offsets_Lock_Pointers", "Check this option to only apply new imports when downloading. Use this if you have tweaked the pointers yourself")
 		serverStartY:=mainEndY+mainEndH+7
 		;Server
 		Gui, IBM_Home:Font, w700
@@ -395,7 +457,7 @@
 		
 		;Versions - core, static
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%mainWidth% h70, Core Versions
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+9 w%mainWidth% h63, Core Version
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
 		Gui, IBM_Home:Add, Text, x+5 w218 h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
@@ -406,48 +468,47 @@
 
 		;Versions - check sidebar
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h70, Version Check
+		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w74 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int
-		Gui, IBM_Home:Add, Text, x+-12 h19 0x200, On load
-		GUIFunctions.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load
+		this.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 
 		;++++++++++++++++++ROUTE TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Route
 		;Combine
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h42, Starting Strategy
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h42, Starting Strategy
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, CheckBox, xs+10 ys+15 h18 vIBM_Route_Combine gIBM_Route_Combine, Combine Thellora and Briv
-		GUIFunctions.AddToolTip("IBM_Route_Combine","Combining Thellora and Briv causes them to jump together from zone 1, otherwise only Thellora will jump from zone 1")
+		this.AddToolTip("IBM_Route_Combine","Combining Thellora and Briv causes them to jump together from zone 1, otherwise only Thellora will jump from zone 1")
 		Gui, IBM_Home:Add, CheckBox, x+20 h18 vIBM_Route_Combine_Boss_Avoidance gIBM_Generic_Setting_Int, Avoid Bosses
-		GUIFunctions.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead. If using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
+		this.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead.`nIf using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
 		;Route settings for jump/stacking zones
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h270 vIBM_Route_Group, Route
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 h18 0x200, % "Select zones to jump with the Q formation ("
-		textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP
+		textColour:=this.Theme.GetThemeTextColour("TrafficLightGood")
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200 %textColour%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200, % ") and to perform online stacking ("
-		textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_STACK
+		textColour:=this.Theme.GetThemeTextColour("TrafficLightBad")
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200 %textColour%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 		Gui, IBM_Home:Add, Text, x+0 h18 0x200, % ")"
 		this.CreateRouteBoxes(36)
 		this.RefreshRouteJumpBoxes()
 		this.RefreshRouteStackBoxes()
-		GUIFunctions.UseThemeTextColor() ;The route grid appears to mess with themes (due to the use of GUI Font?), so reset here
+		this.Theme.UseThemeTextColour("IBM_Home")
 		Gui, IBM_Home:Add, Text, xs+11 y+5 h18 0x200, Briv Jumps
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Q:
-		Gui, IBM_Home:Add, Edit, +cBlack w20 x+3 Number Limit2 vIBM_Route_BrivJump_Q gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w20 x+3 Number Limit2 vIBM_Route_BrivJump_Q gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, E:
-		Gui, IBM_Home:Add, Edit, +cBlack w20 x+3 Number Limit2 vIBM_Route_BrivJump_E gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w20 x+3 Number Limit2 vIBM_Route_BrivJump_E gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, M:
-		Gui, IBM_Home:Add, Edit, +cBlack w20 x+3 Number Limit2 vIBM_Route_BrivJump_M gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_Route_BrivJump_Q", "The number of additional zones Briv jumps using the Q formation")
-		GUIFunctions.AddToolTip("IBM_Route_BrivJump_E", "The number of additional zones Briv jumps using the E formation when feat swapping. Ignored if Briv is not saved in E")
-		GUIFunctions.AddToolTip("IBM_Route_BrivJump_M", "The number of additional zones Briv jumps using the M (Modron) formation when feat swapping. Used when combining to determine the initial jump.")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w20 x+3 Number Limit2 vIBM_Route_BrivJump_M gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_Route_BrivJump_Q", "The number of additional zones Briv jumps using the Q formation")
+		this.AddToolTip("IBM_Route_BrivJump_E", "The number of additional zones Briv jumps using the E formation when feat swapping. Ignored if Briv is not saved in E")
+		this.AddToolTip("IBM_Route_BrivJump_M", "The number of additional zones Briv jumps using the M (Modron) formation when feat swapping. Used when combining to determine the initial jump.")
 		Gui, IBM_Home:Add, Button, w60 xs+256 yp+0 h22 vIBM_Route_Import_Button gIBM_Route_Import_Button, Import
 		Gui, IBM_Home:Add, Button, w60 x+10 h22 vIBM_Route_Export_Button gIBM_Route_Export_Button, Export
 
@@ -456,92 +517,92 @@
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+11 w%groupWidth% h102, Stacking Zones
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Offline:
-		Gui, IBM_Home:Add, Edit, +cBlack w31 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min recovery stack zone:
-		Gui, IBM_Home:Add, Edit, +cBlack w31 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min online stack zone:
-		Gui, IBM_Home:Add, Edit, +cBlack  w31 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf
-		GUIFunctions.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
+		this.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Max
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
 		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, % "Use Farideh's ultimate at:"
-		Gui, IBM_Home:Add, Edit, +cBlack  w25 x+3 Number Limit3 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit3 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+3 h18 0x200, enemies
-		GUIFunctions.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
+		this.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
 		;Offline Settings
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+12 w%groupWidth% h100, Offline Settings
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Platform login:
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+3 Number Limit5 vIBM_OffLine_Delay_Time gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+3 Number Limit5 vIBM_OffLine_Delay_Time gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+3 h18 0x200, ms
-		GUIFunctions.AddToolTip("IBM_OffLine_Delay_Time", "The time to wait during an offline restart between the previous instance of the game saving, and the new one completing platform login. Set this high enough to consistently trigger stacking, but no higher")
+		this.AddToolTip("IBM_OffLine_Delay_Time", "The time to wait during an offline restart between the previous instance of the game saving, and the new one completing platform login. Set this high enough to consistently trigger stacking, but no higher")
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Restart sleep:
-		Gui, IBM_Home:Add, Edit, +cBlack  w30 x+3 Number Limit4 vIBM_OffLine_Sleep_Time gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w30 x+3 Number Limit4 vIBM_OffLine_Sleep_Time gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+3 h18 0x200, ms
-		GUIFunctions.AddToolTip("IBM_OffLine_Sleep_Time", "The time to wait between the game closing and launching a new copy. This should only be increased from 0 if the lack of delay causes platform issues")
+		this.AddToolTip("IBM_OffLine_Sleep_Time", "The time to wait between the game closing and launching a new copy. This should only be increased from 0 if the lack of delay causes platform issues")
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Timeout factor:
-		Gui, IBM_Home:Add, Edit, +cBlack  w20 x+3 Number Limit2 vIBM_OffLine_Timeout gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_OffLine_Timeout", "Controls the time allowed for the game to start and close. The start time is 10s times this value, and the initial close time is 2s times this value")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w20 x+3 Number Limit2 vIBM_OffLine_Timeout gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_OffLine_Timeout", "Controls the time allowed for the game to start and close. The start time is 10s times this value, and the initial close time is 2s times this value")
 		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, Offline every:
-		Gui, IBM_Home:Add, Edit, +cBlack  w25 x+3 Number Limit3 vIBM_OffLine_Freq_Edit gIBM_OffLine_Freq_Edit
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit3 vIBM_OffLine_Freq_Edit gIBM_OffLine_Freq_Edit
 		Gui, IBM_Home:Add, Text, x+5 h18 0x200, runs
-		GUIFunctions.AddToolTip("IBM_OffLine_Freq_Edit", "Often referred to as FORT (Force Offline Run Threshold)")
+		this.AddToolTip("IBM_OffLine_Freq_Edit", "Often referred to as FORT (Force Offline Run Threshold)")
 		Gui, IBM_Home:Add, CheckBox, x+15 h20 0x200 vIBM_Route_Offline_Restore_Window gIBM_Generic_Setting_Int, Restore window
-		GUIFunctions.AddToolTip("IBM_Route_Offline_Restore_Window", "Sets the default Restore Window option to be used when the script starts")
+		this.AddToolTip("IBM_Route_Offline_Restore_Window", "Sets the default Restore Window option to be used when the script starts")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Blank gIBM_OffLine_Blank, Blank restarts
-		GUIFunctions.AddToolTip("IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
+		this.AddToolTip("IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
 		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
-		GUIFunctions.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
+		this.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start offset:
-		Gui, IBM_Home:Add, Edit, +cBlack  w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
-		GUIFunctions.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
+		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone")
 		;Ellywick Casino
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+8 w%groupWidth% h50, % "Ellywick's Casino"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Target Gem cards:
-		Gui, IBM_Home:Add, Edit, +cBlack  w15 x+2 Number Limit1 vIBM_Casino_Target_Base gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w15 x+2 Number Limit1 vIBM_Casino_Target_Base gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Maximum redraws:
-		Gui, IBM_Home:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_Redraws_Base gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w15 x+3 Number Limit1 vIBM_Casino_Redraws_Base gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Minimum cards:
-		Gui, IBM_Home:Add, Edit, +cBlack  w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w15 x+3 Number Limit1 vIBM_Casino_MinCards_Base gIBM_Generic_Setting_Int
 
 		;++++++++++++++++++LEVELS TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Levels
 		;Levelling Options
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+3 w%groupWidth% h119, Levelling Options
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h119, Levelling Options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 h18 0x200, Max sequential keys
-		Gui, IBM_Home:Add, Edit, +cBlack  w40 x+5 Number w20 Limit2 vIBM_LevelManager_Input_Max gIBM_LevelManager_Input_Max
-		GUIFunctions.AddToolTip("IBM_LevelManager_Input_Max", "The maximum number of key presses to be send to the game in a batch during levelling. Minimum of 2.  Note that during initial levelling all priority champions will be levelled regardless of this setting")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 Number w20 Limit2 vIBM_LevelManager_Input_Max gIBM_LevelManager_Input_Max
+		this.AddToolTip("IBM_LevelManager_Input_Max", "The maximum number of key presses to be send to the game in a batch during levelling. Minimum of 2.  Note that during initial levelling all priority champions will be levelled regardless of this setting")
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Modifier key
 		Gui, IBM_Home:Add, DropDownList, x+5 w45 vIBM_Level_Options_Mod_Key gIBM_Generic_Setting_String, Shift|Ctrl|Alt
-		GUIFunctions.AddToolTip("IBM_Level_Options_Mod_Key", "The modifier keybind to use for levelling less than 100 levels at a time. Set all champions to multiples of 100 levels if you do not wish to use this feature")
+		this.AddToolTip("IBM_Level_Options_Mod_Key", "The modifier keybind to use for levelling less than 100 levels at a time. Set all champions to multiples of 100 levels if you do not wish to use this feature")
 		Gui, IBM_Home:Add, Text, x+5 h18 0x200, for x
 		Gui, IBM_Home:Add, DropDownList, x+1 w35 vIBM_Level_Options_Mod_Value gIBM_Generic_Setting_Int, 10|25
-		GUIFunctions.AddToolTip("IBM_Level_Options_Mod_Value", "The levelling amount associated with the key selected. This must match the in-game keybind")
+		this.AddToolTip("IBM_Level_Options_Mod_Value", "The levelling amount associated with the key selected. This must match the in-game keybind")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_Suppress_Front gIBM_Generic_Setting_Int, Surpress Front Row
-		GUIFunctions.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front row. Used to maximise Briv's stack gain in the Casino")
+		this.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front row. Used to maximise Briv's stack gain in the Casino")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Ghost gIBM_Generic_Setting_Int, Ghost Level
-		GUIFunctions.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining")
+		this.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Limit_Tatyana gIBM_Generic_Setting_Int, Smart Tatyana in Casino
-		GUIFunctions.AddToolTip("IBM_Level_Options_Limit_Tatyana", "Only level Tatyana at the start of a run if Melf's Spawn More effect is not active in the Casino zone. To use this option her Start level should be set to 0")
+		this.AddToolTip("IBM_Level_Options_Limit_Tatyana", "Only level Tatyana at the start of a run if Melf's Spawn More effect is not active in the Casino zone. To use this option her Start level should be set to 0")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_BrivBoost_Use gIBM_Level_Options_BrivBoost_Use, Briv Level Boost
-		GUIFunctions.AddToolTip("IBM_Level_Options_BrivBoost_Use", "When enabled will increase Briv's level during online stacking. Use when Briv's normal level is insufficent for later stack zones")
+		this.AddToolTip("IBM_Level_Options_BrivBoost_Use", "When enabled will increase Briv's level during online stacking. Use when Briv's normal level is insufficent for later stack zones")
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Safety Factor
-		Gui, IBM_Home:Add, Edit, +cBlack  w20 x+1 Number Limit2 vIBM_LevelManager_Boost_Multi gIBM_Generic_Setting_Int
-		GUIFunctions.AddToolTip("IBM_LevelManager_Boost_Multi", "This is how many times greater Briv's HP should be than the incoming damage of 100 enemies. Useful range 8 (fast stacking) to 12 (slower stacking)")
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w20 x+1 Number Limit2 vIBM_LevelManager_Boost_Multi gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_LevelManager_Boost_Multi", "This is how many times greater Briv's HP should be than the incoming damage of 100 enemies. Useful range 8 (fast stacking) to 12 (slower stacking)")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Recovery_Softcap gIBM_Generic_Setting_Int, Recovery Levelling
-		GUIFunctions.AddToolTip("IBM_Level_Recovery_Softcap", "With this option selected, champions will be levelled to their last update when reaching a boss zone in stack conversion recovery, that is when Briv has no stacks and the minimum stack zone has yet to be reached. This can aid killing armoured bosses, but will raise the minimum zone required to gain online stacks")
+		this.AddToolTip("IBM_Level_Recovery_Softcap", "With this option selected, champions will be levelled to their last update when reaching a boss zone in stack conversion recovery, that is when Briv has no stacks and the minimum stack zone has yet to be reached. This can aid killing armoured bosses, but will raise the minimum zone required to gain online stacks")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Diana_Cheese gIBM_Generic_Setting_Int, Dynamic Diana
-		GUIFunctions.AddToolTip("IBM_Level_Diana_Cheese", "Diana can give excess chests after the daily reset. This option will raise her level to 200 for Electrum Chest Scavenger from 3 minutes before the daily reset to 30 minutes after. Her level in the main options should be left at 100")
+		this.AddToolTip("IBM_Level_Diana_Cheese", "Diana can give excess chests after the daily reset. This option will raise her level to 200 for Electrum Chest Scavenger from 3 minutes before the daily reset to 30 minutes after. Her level in the main options should be left at 100")
 
 		;Level manager - headings
 		Gui, IBM_Home:Font, w700
@@ -551,9 +612,9 @@
 		Gui, IBM_Home:Add, Text, xs+8 y+1 h20 w10 Right 0x200, S
 		Gui, IBM_Home:Add, Text, x+5 h20 w85 Left 0x200, Champion
 		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200 vIBM_LevelRow_H_Start, Start
-		GUIFunctions.AddToolTip("IBM_LevelRow_H_Start", "Levels used for the first zone")
+		this.AddToolTip("IBM_LevelRow_H_Start", "Levels used for the first zone")
 		Gui, IBM_Home:Add, Text, w50 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
-		GUIFunctions.AddToolTip("IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
+		this.AddToolTip("IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
 		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200, Normal
 		Gui, IBM_Home:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
 		Gui, IBM_Home:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
@@ -569,9 +630,11 @@
 
 	RefreshRouteJumpBoxes()
 	{
+		colourJump:=this.Theme.GetThemeTextColour("TrafficLightGood")
+		colourWalk:=this.Theme.GetThemeTextColour("DefaultText")
 		loop, 50
 		{
-			textColour:=g_IBM_Settings["IBM_Route_Zones_Jump",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_JUMP : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
+			textColour:=g_IBM_Settings["IBM_Route_Zones_Jump",A_Index] ? colourJump : colourWalk
 			GuiControl, IBM_Home: +%textColour%, IBM_Route_J_%A_Index%
 			GuiControl, , IBM_Route_J_%A_Index%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
 		}
@@ -579,9 +642,11 @@
 
 	RefreshRouteStackBoxes()
 	{
+		colourStack:=this.Theme.GetThemeTextColour("TrafficLightBad")
+		colourNoStack:=this.Theme.GetThemeTextColour("DefaultText")
 		loop, 50
 		{
-			textColour:=g_IBM_Settings["IBM_Route_Zones_Stack",A_Index] ? IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_YES_STACK : IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO
+			textColour:=g_IBM_Settings["IBM_Route_Zones_Stack",A_Index] ? colourStack : colourNoStack
 			GuiControl, IBM_Home: +%textColour%, IBM_Route_S_%A_Index%
 			GuiControl, , IBM_Route_S_%A_Index%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 		}
@@ -723,12 +788,12 @@
 		global
 		Gui, IBM_Home:Add, Text, xs+8 y+6 h20 0x200 w10 Right Hidden vIBM_LevelRow_%index%_Seat
 		Gui, IBM_Home:Add, Text, x+5 yp+0 h20 0x200 w85 Left Hidden vIBM_LevelRow_%index%_Name
-		Gui, IBM_Home:Add, Edit, +cBlack w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_z1
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_z1
 		Gui, IBM_Home:Add, DropDownList, w50 x+1 Hidden AltSubmit hwndIBM_LevelRow_DLL_%index% vIBM_LevelRow_%index%_Priority, 5|4|3|2|1|0||-1|-2|-3|-4|-5|5↓100|4↓100|3↓100|2↓100|1↓100|5↓200|4↓200|3↓200|2↓200|1↓200
 		DDLindex:=IBM_LevelRow_DLL_%index%
 		DDLHeight:=17.5*this.GetDPIScale()
 		PostMessage, 0x0153, -1, %DDLHeight%,, ahk_id %DDLindex% ;Set height (since H200 or R4 is setting height of dropdown list)
-		Gui, IBM_Home:Add, Edit, +cBlack  w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_min
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_min
 		Gui, IBM_Home:Font, Bold
 		Gui, IBM_Home:Add, Text, w20 x+5 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_Q, Q
 		Gui, IBM_Home:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_W, W
@@ -798,7 +863,7 @@
 		featCount:=data["Feat_List"] ? data["Feat_List"].Count() : 0
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_Feats_Selected, % featCount . (data["Feat_Exclusive"] ? "" : "+")
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Feats_Selected
-		GUIFunctions.AddToolTip("IBM_LevelRow_" . index . "_Feats_Selected", this.GetFeatTooltip(data))
+		this.UpdateToolTip("IBM_LevelRow_" . index . "_Feats_Selected", this.GetFeatTooltip(data))
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Feats_Set
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Feats_Clear
 		GuiControlGet, placement, IBM_Home:Pos, IBM_LevelRow_%index%_z1
@@ -842,7 +907,7 @@
 		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_M
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_M
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_Feats_Selected, ""
-		g_MouseToolTips.Remove(GUIFunctions.GetToolTipTarget("IBM_LevelRow_" . index . "_Feats_Selected")) ;Remove tooltip
+		this.UpdateToolTip("IBM_LevelRow_" . index . "_Feats_Selected","") ;Remove tooltip
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_Feats_Selected
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_Feats_Set
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_Feats_Clear
@@ -909,8 +974,11 @@
 
 	ResetStatusText()
 	{
-		GuiControl, IBM_Home: +cBlack, IBM_RunControl_Offline_StatusPause
-		GuiControl, IBM_Home: +cBlack, IBM_RunControl_Offline_StatusQueue
+		colour:=this.Theme.GetThemeTextColour()
+		GuiControl, IBM_Home: +%colour%, IBM_RunControl_Offline_StatusPause
+		GuiControl, IBM_Home: +%colour%, IBM_RunControl_Offline_StatusQueue
+		GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusPause
+		GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusQueue
 		GuiControl, IBM_Home:Text, IBM_RunControl_Status, Unable to read data from main script
 	}
 
@@ -918,12 +986,14 @@
 	{
 		If (disableOffline)
 		{
-			GuiControl, IBM_Home:+cRed, IBM_RunControl_Offline_StatusPause ;Note disabled is 'red' here because offline stacking is normally switched on
+			colour:=this.Theme.GetThemeTextColour("TrafficLightBad")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusPause ;Note disabled is 'red' here because offline stacking is normally switched on
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Toggle, Resume
 		}
 		else
 		{
-			GuiControl, IBM_Home:+cGreen, IBM_RunControl_Offline_StatusPause
+			colour:=this.Theme.GetThemeTextColour("TrafficLightGood")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusPause
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Toggle, Pause
 		}
 		GuiControl, IBM_Home:Enable, IBM_RunControl_Offline_Toggle
@@ -935,12 +1005,14 @@
 	{
 		If (queueOffline)
 		{
-			GuiControl, IBM_Home:+cGreen, IBM_RunControl_Offline_StatusQueue
+			colour:=this.Theme.GetThemeTextColour("TrafficLightGood")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusQueue
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Queue_Toggle, Cancel
 		}
 		else
 		{
-			GuiControl, IBM_Home:+cRed, IBM_RunControl_Offline_StatusQueue
+			colour:=this.Theme.GetThemeTextColour("TrafficLightBad")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusQueue
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Queue_Toggle, Queue
 		}
 		GuiControl, IBM_Home:Enable, IBM_RunControl_Offline_Queue_Toggle
@@ -1001,11 +1073,12 @@
 		}
 	}
 
-	GameSettings_Status(statusText, colour,changeString)
+	GameSettings_Status(statusText,themeColour,changeString)
 	{
+		colour:=this.Theme.GetThemeTextColour(themeColour)
 		GuiControl, IBM_Home: +%colour%, IBM_Game_Settings_Status
 		GuiControl, IBM_Home:Text, IBM_Game_Settings_Status, %statusText%
-		GUIFunctions.AddToolTip("IBM_Game_Settings_Status", changeString) ;TODO: Is it better to delete the tooltip entry if changeString is empty?
+		this.UpdateToolTip("IBM_Game_Settings_Status", changeString)
 	}
 
 	GetDPIScale()
@@ -1039,6 +1112,93 @@
 			GuiControl, IBM_Home:, IBM_NonGemFarm_Elly_Max_%A_Index%, % g_IBM_Settings.HUB.IBM_Ellywick_NonGemFarm_Cards[index]
 			index++
 		}
+	}
+	
+    AddToolTip(controlVariableName, tipMessage) ;Used to pre-add tooltips before the GUI is shown. Will not be displayed until ApplyTooltips() is called
+    {
+        if(g_MouseToolTips.ByName.HasKey(controlVariableName))
+			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
+		else 
+		{
+			newTip:={}
+			newTip.Tip:=tipMessage
+			g_MouseToolTips.ByName[controlVariableName]:=newTip
+		}
+    }
+
+	UpdateToolTip(controlVariableName, tipMessage) ;Used to update a tooltip once the GUI has been shown. Will add if needed
+	{
+		if(g_MouseToolTips.ByName.HasKey(controlVariableName)) ;Was already set up, and should have had the control handle acquired by ApplyTooltips()
+			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
+		else 
+		{
+			GuiControlGet, hControl, Hwnd, %controlVariableName%
+			if(hControl)
+			{
+				newTip:={}
+				newTip.Tip:=tipMessage
+				g_MouseToolTips.ByName[controlVariableName]:=newTip
+				g_MouseToolTips.ByHandle[hControl]:=newTip
+			}
+		}
+	}
+
+	ApplyTooltips() ;Requires that all GUI controls with tooltips have been created, probably by a Gui Show
+	{
+		for controlName,tipObj in g_MouseToolTips.ByName
+		{
+			GuiControlGet, hControl, Hwnd, %controlName%
+			if(hControl)
+			{
+				g_MouseToolTips.ByHandle[hControl]:=tipObj
+			}
+		}
+	}
+
+    AddTab(Tabname)
+	{
+        addedTabs:=Tabname . "|"
+        GuiControl,IBM_Home:,ModronTabControl,% addedTabs
+        g_TabList.=addedTabs
+    }
+	
+	GetThemeColourEntries()
+	{
+		colourList:={} ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+		for _,name in this.Theme.ThemeList
+		{
+			GuiControlGet, valueHex, ,IBM_Theme_Manager_%name%
+			valueDec:="0x" . valueHex
+			if valueDec is not integer
+			{
+				Msgbox 16,Theme Manager,Colours must be entered as a hexidecimal RGB value
+				return ""
+			}
+			colourList[name]:=valueHex
+		}
+		return colourList
+	}
+	
+	
+	RefreshThemeManagerExamples()
+	{
+		for _,name in this.Theme.ThemeList
+		{
+			colour:=this.Theme.GetThemeTextColour(name)
+			GuiControl, IBM_Theme_Manager: +%colour%,IBM_Theme_Manager_%name%_Example
+		}
+	}
+	
+	LoadStockTheme(themeName)
+	{
+		for name,value in this.Theme.Stock[themeName]
+		{
+			if(name=="DarkMode") ;Handle boolean value
+				GuiControl, IBM_Theme_Manager:,IBM_Theme_Manager_DarkMode,%value%
+			else
+				GuiControl, IBM_Theme_Manager:,IBM_Theme_Manager_%name%,%value%
+		}
+		IBM_Theme_Manager_Refresh() ;TODO: Bit messy going out of the object here - should bring the update code in and just call it from the g-label
 	}
 }
 
@@ -1079,6 +1239,66 @@ IBM_Generic_Hub_Setting_String() ;Hub version - not currently in use as all stri
 */
 
 ;Specific g-label handlers
+
+IBM_Theme_Manager_Load_Light()
+{
+	g_IriBrivMaster_GUI.LoadStockTheme("Light")
+}
+
+IBM_Theme_Manager_Load_Dark()
+{
+	g_IriBrivMaster_GUI.LoadStockTheme("Dark")
+}
+
+IBM_Theme_Manager_Accept()
+{
+	tempList:=g_IriBrivMaster_GUI.GetThemeColourEntries() ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+	if(!IsObject(tempList))
+		return
+	for name,valueHex in tempList
+	{
+		valueToSave:="0x" . valueHex
+		valueToSave+=0 ;Force to int
+		g_IBM_Settings["IBM_Theme_Current",name]:=valueToSave
+	}
+	GuiControlGet, darkModeSelection,, IBM_Theme_Manager_DarkMode
+	g_IBM_Settings["IBM_Theme_Current","DarkMode"]:=darkModeSelection
+	g_IriBrivMaster_GUI.RefreshThemeManagerExamples()
+	Msgbox 64,Theme Manager,Theme accepted. To fully apply save settings and restart Briv Master home.
+	Gui, IBM_Theme_Manager:Hide
+}
+
+IBM_Theme_Manager_Refresh() ;Refreshes the examples so the user can see the results of their changes
+{
+	tempList:=g_IriBrivMaster_GUI.GetThemeColourEntries() ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+	if(!IsObject(tempList))
+		return
+	for name,valueHex in tempList
+	{
+		GuiControl, IBM_Theme_Manager: +c%valueHex%,IBM_Theme_Manager_%name%_Example
+		GuiControl, IBM_Theme_Manager:MoveDraw,IBM_Theme_Manager_%name%_Example
+	}
+}
+
+IBM_Theme_Manager_Open()
+{
+	if WinExist("ahk_id " . g_IriBrivMaster_GUI.IBM_Theme_Manager_Hwnd)
+	{
+		Gui, IBM_Theme_Manager:Hide
+	}
+	else
+	{
+		GuiControlGet, GameSettings, Hwnd, IBM_Window_Settings_Group
+		WinGetPos, GameOptX, GameOptY,GameOptW,GameOptH, % "ahk_id " . GameSettings
+		Gui, IBM_Theme_Manager:Show, Hide ;Creates the window so we can read the size
+		DetectHiddenWindows, On
+		WinGetPos, OptionsX,OptionsY,OptionsW,OptionsH, % "ahk_id " . g_IriBrivMaster_GUI.IBM_Theme_Manager_Hwnd
+		DetectHiddenWindows, Off
+		targetX:=GameOptX + (GameOptW - OptionsW)//2
+		targetY:=GameOptY + GameOptH + 1
+		Gui, IBM_Theme_Manager:Show, X%targetX% Y%targetY%
+	}
+}
 
 IBM_LevelRow_Feats_Set()
 {
@@ -1266,7 +1486,7 @@ IBM_MainButtons_Save()
 	GuiControl, IBM_Home: Enable, IBM_MainButtons_Save
 }
 
-IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The game launch routine should probably not be in the GUI file. Also duplication with farm script side
+IBM_Launch_Override() ;TODO: The game launch routine should probably not be in the GUI file
 {
 	programLoc:=g_IBM_Settings.IBM_Game_Launch
     try
@@ -1615,159 +1835,59 @@ IBM_Combine_Enable(enableControl)
 		GuiControl, IBM_Home:Disable, IBM_Route_Combine_Boss_Avoidance
 }
 
-class GUIFunctions ;From SH, dumped in here for now
+class IBM_Theme
 {
-    isDarkMode:=false
-    CurrentTheme:=""
-    FileOverride:=""
-
-    ; Adds a tab to Script Hub's tab control
-    AddTab(Tabname)
+    __new(themeSettings:="")
 	{
-        addedTabs:=Tabname . "|"
-        GuiControl,IBM_Home:,ModronTabControl,% addedTabs
-        g_TabList.=addedTabs
-    }
-
-    ; Add a tooltip message to a control in a specific window.
-    AddToolTip(controlVariableName, tipMessage) ;Note this never removes tips - it's assumed if we've added one to a control we'll probably keep something there
-    {
-        global
-        if(g_MouseToolTips.ByName.HasKey(controlVariableName))
-			g_MouseToolTips.ByName[controlVariableName].Tip:=tipMessage
-		else if(toolTipTarget:=this.GetToolTipTarget(controlVariableName))
-		{
-			newTip:={}
-			newTip.Tip:=tipMessage
-			OutputDebug % "Adding controlVariableName=" . controlVariableName . " toolTipTarget=" . toolTipTarget . " tipMessage=" . tipMessage . "`n"
-			g_MouseToolTips.ByName[controlVariableName]:=newTip
-			g_MouseToolTips.ByHandle[toolTipTarget]:=newTip
-		}
-    }
-
-    ; Finds a control ID based on its variable name.
-    GetToolTipTarget(controlVariableName)
-    {
-        global
-        GuiControl IBM_Home:Focus, %controlVariableName%
-        WinGet IBM_Home_ID, ID, A
-        ControlGetFocus toolTipTarget, ahk_id %IBM_Home_ID%
-        if(IBM_Home_ID AND toolTipTarget)
-			return IBM_Home_ID . toolTipTarget
+		this.defaultFontSize:=8
+		if(themeSettings)
+			this.Theme:=themeSettings
 		else
-			return ""
-    }
-
-    ;=================================
-    ; Script Theme Functions
-    ;=================================
-
-    ; Gets the current theme from a file and sets it for use when using other theme functions.
-    LoadTheme(guiName := "IBM_Home", fileOverride := "")
+			this.Theme:=g_IBM_Settings["IBM_Theme_Current"] ;TODO: Create colour strings for these up front? E.g. turn 255 into c0000FF? Need to consider backgrounds, although those are only needed once per window anyway
+		this.ThemeList:=["DefaultText","WarningText","SpecialText1","SpecialText2","EditText","TrafficLightBad","TrafficLightNeutral","TrafficLightGood","TableText","TableBackground","WindowBackground"]
+		this.Stock:={}
+		this.Stock["Light"]:={"DefaultText":"000000","WarningText":"F18500","SpecialText1":"0000FF","SpecialText2":"008000","TableText":"000000","EditText":"000000","TableBackground":"FFFFFF","WindowBackground":"F0F0F0","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":false}
+		this.Stock["Dark"]:={"DefaultText":"C0C0C0","WarningText":"F18500","SpecialText1":"8888FF","SpecialText2":"88FF88","TableText":"E0E0E0","EditText":"333333","TableBackground":"555555","WindowBackground":"333333","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":true}
+	}
+	
+    UseThemeTextColour(guiName, textType:="DefaultText", weight:=400) ;Sets the colour/weight for subsequent text based on the theme
     {
-        this.GUIName := guiName
-        objData := ""
-        if(this.CurrentTheme != "" AND fileOverride == "" AND this.FileOverride == "")
-            return
-        FileName := ""
-        if (fileOverride != "")
-        {
-            FileName := fileOverride
-            this.FileOverride := fileOverride
-        }
-        if (FileName == "" )
-        {
-            FileName := A_LineFile . "\..\..\Themes\CurrentTheme.json"
-            this.FileOverride := ""
-        }
-        if(FileExist(FileName))
-        {
-            FileRead, objData, %FileName%
-        }
-        else
-        {
-            FileName := A_LineFile . "\..\..\Themes\DefaultTheme.json"
-            FileRead, objData, %FileName%
-        }
-
-        this.CurrentTheme := AHK_JSON.Load(objData)
-        this.isDarkMode:=this.currentTheme["UseDarkThemeGraphics"]
-    }
-
-    ; Sets the color/weight for subsequent text based on the theme.
-    UseThemeTextColor(textType:="default", weight:=400, guiName:="")
-    {
-        global g_GlobalFontSize
-        if(!guiName)
-			guiName:=this.GUIName
-        if(textType=="default")
-            textType := "DefaultTextColor"
-        ; if number, convert to hex
-        textColor := (this.CurrentTheme[textType] * 1 == "") ? this.CurrentTheme[textType] : Format("{:#x}", this.CurrentTheme[textType])
-        if(g_GlobalFontSize != "")
-            Gui, %guiName%:Font, c%textColor% w%weight% s%g_GlobalFontSize%
-        else
-            Gui, %guiName%:Font, c%textColor% w%weight%
+        textColor:=Format("{:#x}", this.Theme[textType])
+        Gui, %guiName%:Font, % "c" . textColor . " w" . weight . " s" . this.defaultFontSize
     }
 	
-	GetThemeTextColour(textType:="default") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
+	GetThemeTextColour(textType:="DefaultText") ;Returns the colour value, including the 'c' prefix, for a theme colour. Needed when changing text colour dynamically
     {
-        if(textType=="default") ;This conversion is odd, but it's per GUIFunctions.UseThemeTextColor()
-            textType:="DefaultTextColor"
-        textColour:=(GUIFunctions.CurrentTheme[textType]*1=="") ? GUIFunctions.CurrentTheme[textType] : Format("{:#x}", GUIFunctions.CurrentTheme[textType]) ;If number, convert to hex
-		return "c" . textColour
+        return "c" . Format("{:#x}", this.Theme[textType])
     }
 
-    ; Sets the script GUI background color based on the theme.
-    UseThemeBackgroundColor()
+	GetThemeBackgroundColour()
     {
-        guiName := this.GUIName
-        ; if number, convert to hex
-        windowColor := (this.CurrentTheme[ "WindowColor" ] * 1 == "") ? this.CurrentTheme[ "WindowColor" ] : Format("{:#x}", this.CurrentTheme[ "WindowColor" ])
-        Gui, %guiName%:Color, % windowColor
-    }
-	
-	GetThemeBackgroundColor()
-    {
-        windowColor:=(this.CurrentTheme[ "WindowColor" ] * 1 == "") ? this.CurrentTheme[ "WindowColor" ] : Format("{:#x}", this.CurrentTheme[ "WindowColor" ]) ;If number, convert to hex
-        return windowColor
+        return Format("{:#x}", this.Theme["WindowBackground"]) ;No 'c' prefix here
     }
 
-    ; Sets a listview background color based on the theme.
-    UseThemeListViewBackgroundColor(controlID := "")
+	GetThemeListViewBackgroundColour()
     {
-        guiName := this.GUIName
-        ; if number, convert to hex
-        bgColor := (this.CurrentTheme[ "TableBackgroundColor" ] * 1 == "") ? this.CurrentTheme[ "TableBackgroundColor" ] : Format("{:#x}", this.CurrentTheme[ "TableBackgroundColor" ])
-        GuiControl, %guiName%: +Background%bgColor%, %controlID%
-    }
-	
-	GetThemeListViewBackgroundColor()
-    {
-        bgColor:=(this.CurrentTheme[ "TableBackgroundColor" ] * 1 == "") ? this.CurrentTheme[ "TableBackgroundColor" ] : Format("{:#x}", this.CurrentTheme[ "TableBackgroundColor" ])  ;If number, convert to hex
-        return bgColor ;No "c" for background colours for some reason
+		return Format("{:#x}", this.Theme["TableBackground"]) ;No 'c' prefix here
     }
 
-    ; Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
-    UseThemeTitleBar(guiName,refresh:=true)
+    UseThemeTitleBar(guiName) ;Sets the window title bar to dark if theme is a dark theme. GUI must be shown before calling.
     {
-        if(this.isDarkMode AND guiName != "")
+        if(this.Theme.DarkMode)
         {
-            if (A_OSVersion >= "10.0.17763" && SubStr(A_OSVersion, 1, 3) = "10.")
+            if (A_OSVersion>="10.0.17763" AND SubStr(A_OSVersion, 1, 3)="10.")
             {
-                attr := 19
-                if (A_OSVersion >= "10.0.18985") {
-                    attr := 20
-                }
+                attr:=19
+                if (A_OSVersion>="10.0.18985")
+                    attr:=20
                 Gui, %guiName%: +hwndGuiID
-                DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)
-                ; refresh window
-                if(refresh)
-                {
-                    Gui, %guiName%:Hide
-                    Gui, %guiName%:Show
-                }
+                DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)             
             }
         }
     }
+	
+	GetThemeHexString(colourName:="DefaultText") ;Returns the actual hex, without a c prefix or 0x prefix, e.g. pure red would give "FF0000"
+	{
+		return Format("{:06X}", this.Theme[colourName]) ;Uppercase X so we get uppercase letters
+	}
 }

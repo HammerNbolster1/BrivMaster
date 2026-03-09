@@ -66,11 +66,11 @@ ComObjectRevoke()
 
 IBM_GemFarmGuiClose()
 {
-    MsgBox, 35, Close, Really close the gem farm script? `n`nWarning: This script is required for gem farming. `n"Yes" will close the gem farm script. `n"No" will miniize the script to the tray.`nYou can open it again by pressing the play button in Script Hub.
+    MsgBox, 35, Close, Really close the gem farm script? `n`nWarning: This script is required for gem farming. `n"Yes" will close the gem farm script. `n"No" will minimise the script to the tray.`nYou can open it again by pressing the play button at the top of Briv Master Home.
     IfMsgBox, Yes
         ExitApp
     IfMsgBox, No
-        Gui, BrivPerformanceGemFarm:hide
+        Gui, IBM_GemFarm:Hide
     IfMsgBox, Cancel
         return true
 }
@@ -168,7 +168,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (this.currentZone>1)
 					this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
-				if(this.currentZone > this.previousZone) ;Things to be done every new zone
+				if(this.currentZone>this.previousZone) ;Things to be done every new zone
 				{
 					this.Logger.UpdateZone(this.currentZone)
 					this.previousZone:=this.currentZone
@@ -429,10 +429,9 @@ class IC_BrivMaster_GemFarm_Class
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				this.offramp:=false ;Reset offramp
 		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
-		this.previousZone:=returnZone-1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
+		this.previousZone:=1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
-
 	}
 
 	;START PRE-FLIGHT CHECK
@@ -642,13 +641,11 @@ class IC_BrivMaster_GemFarm_Class
 		global
 		try
 		{
-			if (g_IBM_Settings["IBM_Window_Dark_Icon"])
-				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_D.ico
-			else
-				Menu Tray, Icon, %A_LineFile%\..\Resources\IBM_L.ico
+			Menu Tray, Icon, %A_LineFile%\..\..\Resources\IBM_Farm.ico
 		}
-
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
+		Gui, IBM_GemFarm:Color, % Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","WindowBackground"])
+        Gui, IBM_GemFarm:Font, % "c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"]) . " w400 s8"
 		FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
@@ -658,9 +655,19 @@ class IC_BrivMaster_GemFarm_Class
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
 		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
-
 		if(!g_IBM_Settings["IBM_Window_Hide"])
 		{
+			if(g_IBM_Settings["IBM_Theme_Current","DarkMode"])
+			{
+				if (A_OSVersion>="10.0.17763" AND SubStr(A_OSVersion, 1, 3)="10.")
+				{
+					attr:=19
+					if (A_OSVersion>="10.0.18985")
+						attr:=20
+					Gui, IBM_GemFarm: +hwndGuiID
+					DllCall("dwmapi\DwmSetWindowAttribute", "ptr", GuiID, "int", attr, "int*", true, "int", 4)
+				}
+			}
 			Gui, IBM_GemFarm:Show,% "x" . g_IBM_Settings["IBM_Window_X"] . " y" . g_IBM_Settings["IBM_Window_Y"], Briv Master
 		}
 	}
@@ -677,13 +684,13 @@ class IC_BrivMaster_GemFarm_Class
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
 		importsMajor:=g_SF.Memory.Versions.Import_Version_Major
 		importsMinor:=g_SF.Memory.Versions.Import_Version_Minor
-		colour:="cRed" ;Default
+		colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","TrafficLightBad"])
 		if (gameMajor!="" AND importsMajor!="") ;If both major versions are populated
 		{
 			if (gameMajor==importsMajor AND gameMinor==importsMinor) ;Full matching
-				colour:="cBlack"
+				colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"])
 			else if (gameMajor==importsMajor) ;In this case the minor versions necessarily do not match
-				colour:="cFFA000" ;"cFFC000" Amber had insuffient contrast so darkened a bit
+				colour:="c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","TrafficLightNeutral"])
 		}
 		gameString:=gameMajor ? (gameMajor . (gameMinor ? gameMinor : "")) : "Unable to detect"
 		importString:=importsMajor ? (importsMajor . (importsMinor ? importsMinor : "") . " " . g_SF.Memory.Versions.Import_Revision) : "Unable to detect"
@@ -691,8 +698,6 @@ class IC_BrivMaster_GemFarm_Class
 		GuiControl, IBM_GemFarm:+%colour%, IBM_GemFarm_Version_Imports
 		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Game, % gameString
 		GuiControl, IBM_GemFarm:, IBM_GemFarm_Version_Imports, % importString
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Game
-		GuiControl, IBM_GemFarm:MoveDraw,IBM_GemFarm_Version_Imports
 	}
 	;END GEM FARM WINDOW
 }

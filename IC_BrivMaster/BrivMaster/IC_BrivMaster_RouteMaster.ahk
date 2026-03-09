@@ -119,10 +119,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
 	}
 
-	GetStrategyString() ;Separated to allow it to be placed into the log
+	GetStrategyString() ;Separated to allow it to be placed into the log TODO: This could be further separated to make the log entry more suitable for CSV. Pass the targetStacks to avoid duplicate calls there?
 	{
 		targetStacks:=this.GetTargetStacks(true)
-		return "Strategy: " . (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " then using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
+		return (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " then using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
 	}
 
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone
@@ -408,7 +408,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
 			this.ToggleAutoProgress(1,false,true)
 		g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Restarted at z" . returnZone . " in " . Round(totalTime/ 1000,2) . "s")
-		g_IBM.PreviousZoneStartTime:= A_TickCount
+		g_IBM.PreviousZoneStartTime:=A_TickCount
     }
 
 	TestForSteelBonesStackFarming() ;Returns true if we have a failure, namely the out of stacks and need to force restart case. TODO: Are we covering needing to stack at the recovery minimum when only offline stacking?

@@ -13,7 +13,7 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=730
+global g_TabControlHeight:=728
 global g_TabControlStartHeight
 global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
 
@@ -60,7 +60,6 @@ IBM_HomeGuiClose()
     IfMsgBox No
         return True
 }
-
 
 CheckControlForTooltip() ;Shows a tooltip if the control with mouseover has a tooltip associated with it
 {
@@ -349,7 +348,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Scan_Codes[9,"_DEFAULT"]:=10
 		settings.IBM_Scan_Codes[0,"_DEFAULT"]:=11
 		settings.IBM_OffLine_Blank_Stop["_DEFAULT"]:=false
-		settings.IBM_Theme_Current["_DEFAULT"]:={"DefaultText":0xC0C0C0,"WarningText":0xF18500,"SpecialText1":0x8888FF,"SpecialText2":0x88FF88,"TableText":0xE0E0E0,"EditText":0x333333,"TableBackground":0x555555,"Window":0x333333,"TrafficLightBad":0xF00000,"TrafficLightGood":0x00F000,"TrafficLightNeutral":0xFFC000,"DarkMode":true}
+		settings.IBM_Theme_Current["_DEFAULT"]:={"DefaultText":0xC0C0C0,"WarningText":0xF18500,"SpecialText1":0x8888FF,"SpecialText2":0x88FF88,"TableText":0xE0E0E0,"EditText":0x333333,"TableBackground":0x555555,"WindowBackground":0x333333,"TrafficLightBad":0xF00000,"TrafficLightGood":0x00F000,"TrafficLightNeutral":0xFFC000,"DarkMode":true}
 		settings.HUB:={} ;Separate hub-only settings
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gem["_DEFAULT"]:=500000
 		settings.HUB.IBM_ChestSnatcher_Options_Min_Gold["_DEFAULT"]:=500
@@ -817,7 +816,7 @@ Class IC_IriBrivMaster_Component
 		}
 		else
 		{
-			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","TrafficLightGood",changeString)
+			g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " IC and " . g_IBM_Settings.HUB.IBM_Game_Settings_Option_Set[profile,"Name"] . " match","DefaultText",changeString)
 		}
 	}
 
@@ -1359,7 +1358,17 @@ Class IC_IriBrivMaster_Component
 			this.RefreshUserData()
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
-		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
+		if(gameMajor)
+		{
+			gameVersion:=gameMajor . gameMinor
+			colour:=this.Theme.GetThemeTextColour()
+		}
+		else
+		{
+			gameVersion:="<Not found>"
+			colour:=this.Theme.GetThemeTextColour("WarningText")
+		}
+		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Game
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		currentPointers:=this.GetPointersVersion()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_Current,% "Current: " . currentPointers

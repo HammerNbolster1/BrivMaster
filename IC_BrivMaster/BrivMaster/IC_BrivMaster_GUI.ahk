@@ -117,10 +117,20 @@
 		this.Theme.UseThemeTextColour("IBM_Home")
 		;Stats - Timing
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+390 w%groupWidth% h180, Run Timings
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+390 w%groupWidth% h178, Run Timings
 		Gui, IBM_Home:Font, w400
+		Gui, IBM_Home:Add, Text, xs+10 ys+18 w60, Total runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed runs:
+		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bosses hit (Run / Total):
+		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
+		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
+		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad autoprogressions:
+		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
 		this.Theme.UseThemeTextColour("IBM_Home","TableText")
-		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
+		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 y+3 w220 0x2000 LV0x10000 vIBM_Stats_Run_LV Count3 R3 LV0x10 NoSort NoSortHdr, Time|Last|Mean|Fast|Slow ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
@@ -133,21 +143,10 @@
 		LV_ModifyCol(4,"AutoHdr")
 		LV_ModifyCol(5,"AutoHdr")
 		GuiControl, +Redraw, IBM_Stats_Run_LV
-		this.Theme.UseThemeTextColour("IBM_Home")
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Total runs:
-		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Total_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3 w60, Failed runs:
-		Gui, IBM_Home:Add, Text, x+3 w200 vIBM_Stats_Fail_Runs, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bosses hit (Run / Total):
-		Gui, IBM_Home:Add, Text, x+3 w50 vIBM_Stats_Boss_Hits, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Rollbacks:
-		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Rollbacks, -
-		Gui, IBM_Home:Add, Text, xs+10 y+3, Bad autoprogressions:
-		Gui, IBM_Home:Add, Text, x+3 w20 vIBM_Stats_Bad_Auto, -
-				
+		this.Theme.UseThemeTextColour("IBM_Home")		
 		;Chests
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+570 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+568 w%groupWidth% h50 vIBM_Chest_Group, Chests and Daily Platinum
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, ListView, +Background%LVBGColour% xs+10 ys+20 w333 0x2000 LV0x10000 LV0x10 vIBM_ChestsSnatcher_Status Count10 -Hdr R1, Time|Action|Result ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering
 		GuiControl, -Redraw, IBM_ChestsSnatcher_Status
@@ -196,7 +195,7 @@
 		this.Theme.UseThemeTitleBar("IBM_ChestSnatcher_Options",false)
 		;Game Settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+620 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the options
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+618 w%groupWidth% h55 vIBM_Game_Settings_Group, % "Game Settings" ;Group has a variable so we can check its location for the options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Radio, xs+10 ys+15 h18 w90 vIBM_Game_Settings_Profile_1 gIBM_Game_Settings_Profile
 		Gui, IBM_Home:Add, Radio, xp+0 y+0 h18 w90 vIBM_Game_Settings_Profile_2 gIBM_Game_Settings_Profile
@@ -267,7 +266,7 @@
 		this.Theme.UseThemeTitleBar("IBM_Game_Settings_Options",false)
 		;Ellywick non-gemfarming Tool
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+675 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+673 w%groupWidth% h72, % "Ellywick Non-Gemfarm Re-roll Tool"
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w36 xs+58 ys+20 Center, Knight
 		Gui, IBM_Home:Add, Text, w36 x+3 Center, Moon
@@ -327,62 +326,66 @@
 		Gui, IBM_Theme_Manager:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		
-		Gui, IBM_Theme_Manager:Add, Radio, xm+10 ym+0 h18 w80 vIBM_Theme_Manager_Light, Light
-		Gui, IBM_Theme_Manager:Add, Radio, xm+10 y+0 h18 w80 vIBM_Theme_Manager_Dark, Dark
-		Gui, IBM_Theme_Manager:Add, Radio, xm+10 y+0 h18 w80 vIBM_Theme_Manager_Custom, Custom
-			
-		Gui, IBM_Theme_Manager:Add, Button, xm+150 ym+0 w70 vIBM_Theme_Manager_TEMP1, Refresh`nExamples
-		Gui, IBM_Theme_Manager:Add, Button, xm+150 y+3 w70 vIBM_Theme_Manager_TEMP2, Accept
+		Gui, IBM_Theme_Manager:Add, Button, xm+5 ym+0 w120 gIBM_Theme_Manager_Load_Light, Load light theme
+		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Refresh, Update Examples
+		
+		Gui, IBM_Theme_Manager:Add, Button, xm+5 y+5 w120 gIBM_Theme_Manager_Load_Dark, Load dark theme
+		Gui, IBM_Theme_Manager:Add, Button, x+15 w120 gIBM_Theme_Manager_Accept, Accept
 		
 		Gui, IBM_Theme_Manager:Font, w700
-		Gui, IBM_Theme_Manager:Add, Groupbox, Section xm+0 y+3 w220 h305, Theme Configuration
+		Gui, IBM_Theme_Manager:Add, Groupbox, Section xm+0 y+3 w265 h305, Theme Configuration
 		Gui, IBM_Theme_Manager:Font, w400
 		
+		Gui, IBM_Theme_Manager:Add, Progress, xs+168 ys+15 w45 h255 Disabled BackgroundWhite, 0 ;This exists just to provide a white box for contrast in the examples
+		Gui, IBM_Theme_Manager:Add, Progress, xs+214 ys+15 w45 h255 Disabled BackgroundBlack, 0 ;And for black (as text will necessarily be visible against one of the two)
+		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 ys+18 w100 h18 0x200 Right,Default text
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_DefaultText
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 vIBM_Theme_Manager_DefaultText_Example,Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_DefaultText,% this.Theme.GetThemeHexString("DefaultText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_DefaultText_Example,Example  Example ;Note the double-space here
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Warning text
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_WarningText
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 vIBM_Theme_Manager_WarningText_Example,Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_WarningText,% this.Theme.GetThemeHexString("WarningText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_WarningText_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Special text 1
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_SpecialText1
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 vIBM_Theme_Manager_SpecialText1_Example,Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_SpecialText1,% this.Theme.GetThemeHexString("SpecialText1")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_SpecialText1_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Special text 2
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_SpecialText2
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 vIBM_Theme_Manager_SpecialText2_Example,Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_SpecialText2,% this.Theme.GetThemeHexString("SpecialText2")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_SpecialText2_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Edit box text
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_EditText
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200 backgroundcWhite, Example
-		
-		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status evil
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_TrafficBad
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200, Example
-		
-		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status neutral
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_TrafficNeutral
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200, Example
-		
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_EditText,% this.Theme.GetThemeHexString("EditText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_EditText_Example,Example  Example
+
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status good
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_TrafficGood
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200, Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightGood,% this.Theme.GetThemeHexString("TrafficLightGood")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightGood_Example,Example  Example
+
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status neutral
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightNeutral,% this.Theme.GetThemeHexString("TrafficLightNeutral")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightNeutral_Example,Example  Example
+
+		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Status evil
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TrafficLightBad,% this.Theme.GetThemeHexString("TrafficLightBad")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TrafficLightBad_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Table text
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_TableText
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200, Example
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TableText,% this.Theme.GetThemeHexString("TableText")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TableText_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Table background
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_TableBackground
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_TableBackground,% this.Theme.GetThemeHexString("TableBackground")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_TableBackground_Example,Example  Example
 		
 		Gui, IBM_Theme_Manager:Add, Text, xs+5 y+5 w100 h18 0x200 Right,Window background
-		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 Limit6 vIBM_Theme_Manager_WindowBackground
-		Gui, IBM_Theme_Manager:Add, Text, x+10 w45 h18 0x200
+		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_WindowBackground,% this.Theme.GetThemeHexString("WindowBackground")
+		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_WindowBackground_Example,Example  Example
 				
 		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+10 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar and icons
+		GuiControl,IBM_Theme_Manager:, IBM_Theme_Manager_DarkMode,% this.Theme.Theme.DarkMode
+		this.RefreshThemeManagerExamples()
 		this.Theme.UseThemeTitleBar("IBM_Theme_Manager",false) ;This is themed since it's simple light/dark
 		;Log
 		Gui, IBM_Home:Font, w700
@@ -402,8 +405,18 @@
 		Gui, IBM_Home:Font, w400
 		gameMajor:=g_SF.Memory.ReadBaseGameVersion() ;Major version, e.g. 636.3 will return 636
 		gameMinor:=g_SF.Memory.IBM_ReadGameVersionMinor() ;If the game is 636.3, return .3, 637 will return empty as it has no minor version
+		if(gameMajor)
+		{
+			gameVersion:=gameMajor . gameMinor
+			colour:=this.Theme.GetThemeTextColour()
+		}
+		else
+		{
+			gameVersion:="<Not found>"
+			colour:=this.Theme.GetThemeTextColour("WarningText")
+		}
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
-		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
+		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 %colour% vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
 		Gui, IBM_Home:Add, Text, w200 xs+10 y+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 
 		Gui, IBM_Home:Font, w700
@@ -418,9 +431,9 @@
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=g_IriBrivMaster.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=g_IriBrivMaster.GetThemeTextColour("WarningTextColor")
+			colour:=this.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=g_IriBrivMaster.GetThemeTextColour()
+			colour:=this.Theme.GetThemeTextColour()
 		Gui, IBM_Home:Add, Text, w180 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
 		Gui, IBM_Home:Add, Text, w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
 		GuiControlGet, mainEnd, IBM_Home:Pos, IBM_Offsets_Text_Imports_GitHub ;Used for setting the next box
@@ -470,7 +483,7 @@
 		Gui, IBM_Home:Add, CheckBox, xs+10 ys+15 h18 vIBM_Route_Combine gIBM_Route_Combine, Combine Thellora and Briv
 		this.AddToolTip("IBM_Route_Combine","Combining Thellora and Briv causes them to jump together from zone 1, otherwise only Thellora will jump from zone 1")
 		Gui, IBM_Home:Add, CheckBox, x+20 h18 vIBM_Route_Combine_Boss_Avoidance gIBM_Generic_Setting_Int, Avoid Bosses
-		this.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead. If using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
+		this.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead.`nIf using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
 		;Route settings for jump/stacking zones
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y+10 w%groupWidth% h270 vIBM_Route_Group, Route
@@ -1148,6 +1161,45 @@
         GuiControl,IBM_Home:,ModronTabControl,% addedTabs
         g_TabList.=addedTabs
     }
+	
+	GetThemeColourEntries()
+	{
+		colourList:={} ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+		for _,name in this.Theme.ThemeList
+		{
+			GuiControlGet, valueHex, ,IBM_Theme_Manager_%name%
+			valueDec:="0x" . valueHex
+			if valueDec is not integer
+			{
+				Msgbox 16,Theme Manager,Colours must be entered as a hexidecimal RGB value
+				return ""
+			}
+			colourList[name]:=valueHex
+		}
+		return colourList
+	}
+	
+	
+	RefreshThemeManagerExamples()
+	{
+		for _,name in this.Theme.ThemeList
+		{
+			colour:=this.Theme.GetThemeTextColour(name)
+			GuiControl, IBM_Theme_Manager: +%colour%,IBM_Theme_Manager_%name%_Example
+		}
+	}
+	
+	LoadStockTheme(themeName)
+	{
+		for name,value in this.Theme.Stock[themeName]
+		{
+			if(name=="DarkMode") ;Handle boolean value
+				GuiControl, IBM_Theme_Manager:,IBM_Theme_Manager_DarkMode,%value%
+			else
+				GuiControl, IBM_Theme_Manager:,IBM_Theme_Manager_%name%,%value%
+		}
+		IBM_Theme_Manager_Refresh() ;TODO: Bit messy going out of the object here - should bring the update code in and just call it from the g-label
+	}
 }
 
 ;Generic g-label handlers
@@ -1187,6 +1239,45 @@ IBM_Generic_Hub_Setting_String() ;Hub version - not currently in use as all stri
 */
 
 ;Specific g-label handlers
+
+IBM_Theme_Manager_Load_Light()
+{
+	g_IriBrivMaster_GUI.LoadStockTheme("Light")
+}
+
+IBM_Theme_Manager_Load_Dark()
+{
+	g_IriBrivMaster_GUI.LoadStockTheme("Dark")
+}
+
+IBM_Theme_Manager_Accept()
+{
+	tempList:=g_IriBrivMaster_GUI.GetThemeColourEntries() ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+	if(!IsObject(tempList))
+		return
+	for name,valueHex in tempList
+	{
+		valueToSave:="0x" . valueHex
+		valueToSave+=0 ;Force to int
+		g_IBM_Settings["IBM_Theme_Current",name]:=valueToSave
+	}
+	GuiControlGet, darkModeSelection,, IBM_Theme_Manager_DarkMode
+	g_IBM_Settings["IBM_Theme_Current","DarkMode"]:=darkModeSelection
+	g_IriBrivMaster_GUI.RefreshThemeManagerExamples()
+	Msgbox 64,Theme Manager,Theme accepted. To fully apply save settings and restart Briv Master home.
+}
+
+IBM_Theme_Manager_Refresh() ;Refreshes the examples so the user can see the results of their changes
+{
+	tempList:=g_IriBrivMaster_GUI.GetThemeColourEntries() ;Create a temporary list of values so we only change the actual settings once we've confirmed all are valid
+	if(!IsObject(tempList))
+		return
+	for name,valueHex in tempList
+	{
+		GuiControl, IBM_Theme_Manager: +c%valueHex%,IBM_Theme_Manager_%name%_Example
+		GuiControl, IBM_Theme_Manager:MoveDraw,IBM_Theme_Manager_%name%_Example
+	}
+}
 
 IBM_Theme_Manager_Open()
 {
@@ -1394,7 +1485,7 @@ IBM_MainButtons_Save()
 	GuiControl, IBM_Home: Enable, IBM_MainButtons_Save
 }
 
-IBM_Launch_Override() ;To allow us to use IBM game location settings TODO: The game launch routine should probably not be in the GUI file. Also duplication with farm script side
+IBM_Launch_Override() ;TODO: The game launch routine should probably not be in the GUI file
 {
 	programLoc:=g_IBM_Settings.IBM_Game_Launch
     try
@@ -1745,10 +1836,17 @@ IBM_Combine_Enable(enableControl)
 
 class IBM_Theme
 {
-    __new()
+    __new(themeSettings:="")
 	{
 		this.defaultFontSize:=8
-		this.Theme:=g_IBM_Settings["IBM_Theme_Current"]
+		if(themeSettings)
+			this.Theme:=themeSettings
+		else
+			this.Theme:=g_IBM_Settings["IBM_Theme_Current"] ;TODO: Create colour strings for these up front? E.g. turn 255 into c0000FF? Need to consider backgrounds, although those are only needed once per window anyway
+		this.ThemeList:=["DefaultText","WarningText","SpecialText1","SpecialText2","EditText","TrafficLightBad","TrafficLightNeutral","TrafficLightGood","TableText","TableBackground","WindowBackground"]
+		this.Stock:={}
+		this.Stock["Light"]:={"DefaultText":"000000","WarningText":"F18500","SpecialText1":"0000FF","SpecialText2":"008000","TableText":"000000","EditText":"000000","TableBackground":"FFFFFF","WindowBackground":"F0F0F0","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":false}
+		this.Stock["Dark"]:={"DefaultText":"C0C0C0","WarningText":"F18500","SpecialText1":"8888FF","SpecialText2":"88FF88","TableText":"E0E0E0","EditText":"333333","TableBackground":"555555","WindowBackground":"333333","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":true}
 	}
 	
     UseThemeTextColour(guiName, textType:="DefaultText", weight:=400) ;Sets the colour/weight for subsequent text based on the theme
@@ -1764,7 +1862,7 @@ class IBM_Theme
 
 	GetThemeBackgroundColour()
     {
-        return Format("{:#x}", this.Theme["Window"]) ;No 'c' prefix here
+        return Format("{:#x}", this.Theme["WindowBackground"]) ;No 'c' prefix here
     }
 
 	GetThemeListViewBackgroundColour()
@@ -1786,4 +1884,9 @@ class IBM_Theme
             }
         }
     }
+	
+	GetThemeHexString(colourName:="DefaultText") ;Returns the actual hex, without a c prefix or 0x prefix, e.g. pure red would give "FF0000"
+	{
+		return Format("{:06X}", this.Theme[colourName]) ;Uppercase X so we get uppercase letters
+	}
 }

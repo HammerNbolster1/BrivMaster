@@ -316,7 +316,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 			mk:=this.mappedKey
 			lU:=this.lparamUp
 			ControlFocus,, ahk_id %hwnd% ;As above
-			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,3000
 		}
 
 		KeyPress() ;Press then release a key
@@ -329,7 +329,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 			lU:=this.lparamUp
 			ControlFocus,, ahk_id %hwnd% ;As above
 			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,3000
 			if (!startCritical) ;Only turn critical off if wasn't on when we entered this function
 				Critical, Off
 		}
@@ -347,7 +347,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 			hwnd:=g_IBM.GameMaster.Hwnd
 			mk:=this.mappedKey
 			lU:=this.lparamUp
-			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,3000
 		}
 
 		KeyPress_Bulk() ;Press then release a key
@@ -357,7 +357,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 			lD:=this.lparamDown
 			lU:=this.lparamUp
 			SendMessage, 0x0100, %mk%, %lD%,, ahk_id %hwnd%,,,,1000
-			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,2000
+			SendMessage, 0x0101, %mk%, %lU%,, ahk_id %hwnd%,,,,3000
 		}
 	}
 }

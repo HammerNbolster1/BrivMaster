@@ -13,9 +13,9 @@ global g_TabList:=""
 global g_MouseTooltips:={}
 g_MouseTooltips.ByName:={}
 g_MouseTooltips.ByHandle:={}
-global g_TabControlHeight:=728
+global g_TabControlHeight
 global g_TabControlStartHeight
-global g_TabControlWidth:=410 ;Targetting 410, limited by the route grid
+global g_TabControlWidth
 
 try
 {
@@ -467,7 +467,7 @@ Class IC_IriBrivMaster_Component
 			this.SharedRunData.ResetRunStats()
 		}
 
-		GuiControl, IBM_Home:, IBM_Stats_Group,Run Rewards
+		GuiControl, IBM_Home:, IBM_Group_Stats_Timing,Run Timings
 		GuiControl, -Redraw, IBM_Stats_Run_LV
 		Gui, IBM_Home:Default
 		Gui, ListView, IBM_Stats_Run_LV
@@ -500,8 +500,8 @@ Class IC_IriBrivMaster_Component
 
 		GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time,Area / Run (s): - / -
 		GuiControl, IBM_Home:, IBM_Stats_Loop, Stage: -
-		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, SB / Haste Stacks: - / -
-		GuiControl, IBM_Home:, IBM_Stats_Last_Close, Last Close: -
+		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, SB / Haste stacks: - / -
+		GuiControl, IBM_Home:, IBM_Stats_Last_Close, Last close: -
 		GuiControl, IBM_Home:, IBM_Stats_Boss_Hits, - / -
         GuiControl, IBM_Home:, IBM_Stats_Rollbacks, 0
         GuiControl, IBM_Home:, IBM_Stats_Bad_Auto, 0
@@ -527,7 +527,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=1
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (Waiting for first full run to start)"
+					GuiControl, IBM_Home:, IBM_Group_Stats_Timing, Run Timings (Waiting for run start)
 					LogData:=AHK_JSON.Load(this.SharedRunData.RunLog)
 					this.Stats.PreviousRunEndTime:=LogData.End ;Include this so it is available for run timing
 				}
@@ -535,7 +535,7 @@ Class IC_IriBrivMaster_Component
 				{
 					this.Stats.LastRun:=this.SharedRunData.RunLogResetNumber
 					this.Stats.StartUpStage:=2
-					GuiControl, IBM_Home:, IBM_Stats_Group, % "Run Rewards (Waiting for first full run to complete)"
+					GuiControl, IBM_Home:, IBM_Group_Stats_Timing, Run Timings (Waiting for run end)
 					silvers:=g_SF.Memory.ReadChestCountByID(1)
 					if(silvers!="")
 					{
@@ -678,7 +678,7 @@ Class IC_IriBrivMaster_Component
 					}
 					GuiControl, IBM_Home:,IBM_Stats_Gem_Hunter, % ghStatus
 					FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-					GuiControl, IBM_Home:, IBM_Stats_Group,% "Run Stats (" . formattedDateTime . ")"
+					GuiControl, IBM_Home:, IBM_Group_Stats_Timing,% "Run Timings (" . formattedDateTime . ")"
 				}
 			}
 		}
@@ -749,8 +749,8 @@ Class IC_IriBrivMaster_Component
         }
         GuiControl, IBM_Home:, IBM_Stats_Current_Area_Run_Time, % "Area / Run (s): " . ROUND(areaTime/1000,1) . " / " . Round(runTime/1000,1)
 		GuiControl, IBM_Home:, IBM_Stats_Loop, % "Stage: " . this.SharedRunData.LoopString
-		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, % "SB / Haste Stacks: " . message_SB . " / " . message_Haste
-		GuiControl, IBM_Home:, IBM_Stats_Last_Close, % "Last Close: " . this.SharedRunData.LastCloseReason
+		GuiControl, IBM_Home:, IBM_Stats_Current_Briv, % "SB / Haste stacks: " . message_SB . " / " . message_Haste
+		GuiControl, IBM_Home:, IBM_Stats_Last_Close, % "Last close: " . this.SharedRunData.LastCloseReason
 		;Gem farm stats
 		GuiControl, IBM_Home:, IBM_Stats_Boss_Hits, % this.SharedRunData.BossesHitThisRun . " / " . this.SharedRunData.TotalBossesHit
         GuiControl, IBM_Home:, IBM_Stats_Rollbacks, % this.SharedRunData.TotalRollBacks
@@ -1167,7 +1167,7 @@ Class IC_IriBrivMaster_Component
 	IBM_Elly_StartNonGemFarm()
 	{
 		g_IBM.GameMaster:={}
-		g_SF.PID:=g_IBM.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
+		g_IBM.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"])
 		exeName:=g_IBM_Settings["IBM_Game_Exe"]
 		Process, Exist, %exeName%
 		g_SF.PID := ErrorLevel

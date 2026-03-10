@@ -202,7 +202,7 @@ Theme manager: Opens the theme manager.
 	- Table text: The text used in tables (list views), as those can be configured separately this allows contrast to be maintained.
 	- Table background: The background colour of tables (list views).
 	- Window background: The background colour of the windows.
-- Use dark mode title bar and icons: Self-descriptive.
+- Use dark mode title bar: Uses Windows dark theme for the window title bars in Briv Master.
 
 ### Log Options
 These options relate to the logs that Briv Master produces.

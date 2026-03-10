@@ -1237,12 +1237,12 @@ Class IC_IriBrivMaster_Component
 		if(gameMajor)
 		{
 			gameVersion:=gameMajor . gameMinor
-			colour:=this.Theme.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		}
 		else
 		{
 			gameVersion:="<Not found>"
-			colour:=this.Theme.GetThemeTextColour("WarningText")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		}
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Game
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
@@ -1251,9 +1251,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=GUIFunctions.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1278,16 +1278,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
@@ -1310,9 +1310,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=GUIFunctions.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1337,16 +1337,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"

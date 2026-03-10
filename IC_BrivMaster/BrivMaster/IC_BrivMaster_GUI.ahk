@@ -16,7 +16,7 @@
 	{
 		global ;Required for GUI control variables
 		this.Theme:=new IBM_Theme()
-		this.Wide:=true
+		this.Wide:=g_IBM_Settings.HUB.IBM_Window_Wide
 		if(this.Wide)
 		{
 			g_TabControlHeight:=566
@@ -426,30 +426,35 @@
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h127 vIBM_Group_Game_Location, Game Location
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, w55 xs+5 ys+20 h18 0x200, Executable:
-		Gui, IBM_Home:Add, Edit, +%editTextColour%  w40 x+5 w140 vIBM_Game_Exe gIBM_Game_Location_Settings
+		editWidth:=groupWidth-255
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w%editWidth% x+5 vIBM_Game_Exe gIBM_Game_Location_Settings
 		this.AddToolTip("IBM_Game_Exe", "The game executable file name, normally IdleDragons.exe")
 		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_Game_Hide_Launcher gIBM_Game_Location_Settings, Hide launcher
 		this.AddToolTip("IBM_Game_Hide_Launcher", "Select this option to hide the window created by the launch command. Useful when using an alternative launcher and do not want to see the window it creates. Do not use when launching the game directly")
-		Gui, IBM_Home:Add, Button, xs+318 yp+0 w70 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
+		buttonX:=groupWidth-83
+		Gui, IBM_Home:Add, Button, xs+%buttonX% yp+0 w75 vIBM_Game_Copy_From_Game gIBM_Game_Copy_From_Game, Copy from IC
+		editWidth:=groupWidth-74
 		Gui, IBM_Home:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
-		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w322 r2 vIBM_Game_Path gIBM_Game_Location_Settings
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Path gIBM_Game_Location_Settings
 		this.AddToolTip("IBM_Game_Path", "The game install location")
 		Gui, IBM_Home:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
-		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w322 r2 vIBM_Game_Launch gIBM_Game_Location_Settings
+		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		this.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Game_Location ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Window settings
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h50 vIBM_Group_Window_Settings, Window Options
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h70 vIBM_Group_Window_Settings, Window Options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Farm script screen position (x,y):
-		Gui, IBM_Home:Add, Edit, +%editTextColour%  w35 x+2 Number Limit4 vIBM_Window_X gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w32 x+2 Number Limit4 vIBM_Window_X gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, Text, x+2 h18 0x200, ,
-		Gui, IBM_Home:Add, Edit, +%editTextColour%  w35 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
+		Gui, IBM_Home:Add, Edit, +%editTextColour%  w32 x+2 Number Limit4 vIBM_Window_Y gIBM_Generic_Setting_Int
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Window_Hide gIBM_Generic_Setting_Int, Hide
-		Gui, IBM_Home:Add, Button, xs+314 yp+0 w74 vIBM_Theme_Manager_Open gIBM_Theme_Manager_Open,Theme
-		;Theme manager window. Note this is NOT themed, to prevent situations where it is made unusable (e.g. white text on white exit boxes)
+		buttonX:=groupWidth-85
+		Gui, IBM_Home:Add, Button, xs+%buttonX% yp+0 w75 r2 vIBM_Theme_Manager_Open gIBM_Theme_Manager_Open,Theme manager
+		Gui, IBM_Home:Add, CheckBox, xs+10 ys+44 h18 0x200 vIBM_Window_Wide gIBM_Generic_Hub_Setting_Int, Wide Home layout
+		;Theme manager window. Note this is NOT themed, to prevent situations where it is made unusable (e.g. white text in white edit boxes)
 		Gui, IBM_Theme_Manager:New,,Theme
 		Gui, IBM_Theme_Manager:-Resize -MaximizeBox +HwndOpt_Hwnd
 		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
@@ -572,8 +577,8 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h%offsetsHeight%,Offset Check
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Button, xs+10 yp+18 w74 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now,Check now
-		Gui, IBM_Home:Add, Button, xs+10 y+4 w74 vIBM_Offsets_Download gIBM_Offsets_Download, Download
+		Gui, IBM_Home:Add, Button, xs+10 yp+18 w75 vIBM_Offsets_Check_Now gIBM_Offsets_Check_Now,Check now
+		Gui, IBM_Home:Add, Button, xs+10 y+4 w75 vIBM_Offsets_Download gIBM_Offsets_Download, Download
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Check gIBM_Generic_Hub_Setting_Int,On load
 		this.AddToolTip("IBM_Offsets_Check", "Check this option to automatically check for updates to Briv Master when the Home is started")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Offsets_Lock_Pointers gIBM_Generic_Hub_Setting_Int,Imports only
@@ -584,26 +589,32 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h50 vIBM_Group_Server, Server
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, w355 xs+10 ys+15 r2 vIBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
-		Gui, IBM_Home:Add, Button, xs+338 yp+3 w50 vIBM_Server_Check gIBM_Server_Check, Refresh
+		textWidth:=groupWidth-50
+		Gui, IBM_Home:Add, Text, w%textWidth% xs+10 ys+15 r2 vIBM_Server_Text_PS, % "Play Server: " . g_IriBrivMaster.GetPlayServerFriendly()
+		buttonX:=groupWidth-62
+		Gui, IBM_Home:Add, Button, xs+%buttonX% yp+3 w50 vIBM_Server_Check gIBM_Server_Check, Refresh
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Server ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Versions - core, static
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%mainWidth% h63, Core Version
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%mainWidth% h65, Core Version
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
-		Gui, IBM_Home:Add, Text, x+5 w218 h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
+		textWidth:=mainWidth-85
+		Gui, IBM_Home:Add, Text, x+5 w%textWidth% h18 0x200 vIBM_Version_Text_SH, % "Briv Master: " . g_IriBrivMaster.GetCurrentBMDetails()[1]
 		readMeLocation:=A_ScriptDir . "\ReadMe.md"
 		if(FileExist(readMeLocation))
-			Gui, IBM_Home:Add, Link, xs+245 yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
+		{
+			textX:=mainWidth-55
+			Gui, IBM_Home:Add, Link, xs+%textX% yp+0 w45 h18 0x200 vIBM_Version_Readme_SH, % "<a href=""" . readMeLocation . """>Readme</a>"
+		}
 		Gui, IBM_Home:Add, Text, w200 xs+25 yp+20 h18 0x200, % "AHK Version: " . A_AhkVersion
 
 		;Versions - check sidebar
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h63, Version Check
+		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h65, Version Check
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Button, xs+10 ys+18 w74 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
+		Gui, IBM_Home:Add, Button, xs+10 ys+18 w75 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load
 		this.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
 
@@ -767,16 +778,26 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h70 vIBM_LevelManager, Level Manager
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Button, w380 xs+8 ys+15 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
-		Gui, IBM_Home:Add, Text, xs+8 y+1 h20 w10 Right 0x200, S
+		if(this.Wide) ;The refresh button will be placed to the right
+		{
+			Gui, IBM_Home:Add, Text, xs+7 ys+15 h20 w10 Right 0x200, S
+		}
+		else
+		{
+			buttonWidth:=groupWidth-20
+			Gui, IBM_Home:Add, Button, w%buttonWidth% xs+10 ys+15 h18 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
+			Gui, IBM_Home:Add, Text, xs+7 y+1 h20 w10 Right 0x200, S
+		}
 		Gui, IBM_Home:Add, Text, x+5 h20 w85 Left 0x200, Champion
 		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200 vIBM_LevelRow_H_Start, Start
 		this.AddToolTip("IBM_LevelRow_H_Start", "Levels used for the first zone")
-		Gui, IBM_Home:Add, Text, w50 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
+		Gui, IBM_Home:Add, Text, w52 h20 x+1 0x200 vIBM_LevelRow_H_Priority, Priority
 		this.AddToolTip("IBM_LevelRow_H_Priority", "Levelling priority for the first zone. Options with levels beside them will use the selected priority only until that level is reached, at which point it will be treated as 0")
 		Gui, IBM_Home:Add, Text, w35 h20 x+1 0x200, Normal
-		Gui, IBM_Home:Add, Text, w83 x+5 0x200 h20 Center 0x200, Formations
-		Gui, IBM_Home:Add, Text, w62 x+5 0x200 h20 Center 0x200, Feats
+		Gui, IBM_Home:Add, Text, w83 x+4 0x200 h20 Center 0x200, Formations
+		Gui, IBM_Home:Add, Text, w61 x+5 0x200 h20 Center 0x200, Feats
+		if(this.Wide)
+			Gui, IBM_Home:Add, Button, w45 x+8 h18 vIBM_LevelManager_Refresh gIBM_LevelManager_Refresh, Refresh
 
 		;Level manager - create the maximum of 40 rows (4 formations x 10 champions), we will hide what we don't need when populating TODO: Decide if we really need 40 here, it's a complete solution...but also pointlessly overkill. 12 is relatively high (as of 23Aug25)
 		this.LevelRow_Priority_Value:=[5,4,3,2,1,0,-1,-2,-3,-4,-5,5,4,3,2,1,5,4,3,2,1]
@@ -822,18 +843,16 @@
 			Gui, IBM_Home:Font, s9
 			Gui, IBM_Home:Add, Text, w35 xs+7 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 			Gui, IBM_Home:Font, s16
-			textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
-			Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
-			Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
+			Gui, IBM_Home:Add, Text, xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
+			Gui, IBM_Home:Add, Text, xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 			counter++
 			loop, 9
 			{
 				Gui, IBM_Home:Font, s9
 				Gui, IBM_Home:Add, Text, w35 x+6 ys+%rowOffset% h35 Center 0x1000 vIBM_Route_%counter%_Zone, %counter%
 				Gui, IBM_Home:Font, s16
-				textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_ROUTE_NO ;Default colour
-				Gui, IBM_Home:Add, Text, %textColour% xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
-				Gui, IBM_Home:Add, Text, %textColour% xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
+				Gui, IBM_Home:Add, Text, xp+2 yp+13 Center BackgroundTrans gIBM_Route_J_Click vIBM_Route_J_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_JUMP
+				Gui, IBM_Home:Add, Text, xp+18 yp+1 Center BackgroundTrans gIBM_Route_S_Click vIBM_Route_S_%counter%, % IC_IriBrivMaster_GUI.IBM_SYMBOL_ROUTE_STACK
 				counter++
 			}
 		}
@@ -865,7 +884,7 @@
 		GuiControl, IBM_Home:, IBM_Window_X, % g_IBM_Settings.IBM_Window_X
 		GuiControl, IBM_Home:, IBM_Window_Y, % g_IBM_Settings.IBM_Window_Y
 		GuiControl, IBM_Home:, IBM_Window_Hide, % g_IBM_Settings.IBM_Window_Hide
-		GuiControl, IBM_Home:, IBM_Window_Dark_Icon, % g_IBM_Settings.IBM_Window_Dark_Icon
+		GuiControl, IBM_Home:, IBM_Window_Wide, % g_IBM_Settings.HUB.IBM_Window_Wide
 		;Logs
 		GuiControl, IBM_Home:, IBM_Logger_Minilog, % g_IBM_Settings.IBM_Logger_Minilog
 		GuiControl, IBM_Home:, IBM_Logger_ZoneLog, % g_IBM_Settings.IBM_Logger_ZoneLog
@@ -945,21 +964,22 @@
 	CreateLevelRow(index)
 	{
 		global
-		Gui, IBM_Home:Add, Text, xs+8 y+6 h20 0x200 w10 Right Hidden vIBM_LevelRow_%index%_Seat
+		rowSpacing:=this.Wide ? 5 : 6
+		Gui, IBM_Home:Add, Text, xs+7 y+%rowSpacing% h20 0x200 w10 Right Hidden vIBM_LevelRow_%index%_Seat
 		Gui, IBM_Home:Add, Text, x+5 yp+0 h20 0x200 w85 Left Hidden vIBM_LevelRow_%index%_Name
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_z1
-		Gui, IBM_Home:Add, DropDownList, w50 x+1 Hidden AltSubmit hwndIBM_LevelRow_DLL_%index% vIBM_LevelRow_%index%_Priority, 5|4|3|2|1|0||-1|-2|-3|-4|-5|5↓100|4↓100|3↓100|2↓100|1↓100|5↓200|4↓200|3↓200|2↓200|1↓200
+		Gui, IBM_Home:Add, DropDownList, w52 x+1 Hidden AltSubmit hwndIBM_LevelRow_DLL_%index% vIBM_LevelRow_%index%_Priority, 5|4|3|2|1|0||-1|-2|-3|-4|-5|5↓100|4↓100|3↓100|2↓100|1↓100|5↓200|4↓200|3↓200|2↓200|1↓200
 		DDLindex:=IBM_LevelRow_DLL_%index%
 		DDLHeight:=17.5*this.GetDPIScale()
 		PostMessage, 0x0153, -1, %DDLHeight%,, ahk_id %DDLindex% ;Set height (since H200 or R4 is setting height of dropdown list)
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+1 Number Limit4 Hidden vIBM_LevelRow_%index%_min
 		Gui, IBM_Home:Font, Bold
-		Gui, IBM_Home:Add, Text, w20 x+5 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_Q, Q
+		Gui, IBM_Home:Add, Text, w20 x+4 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_Q, Q
 		Gui, IBM_Home:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_W, W
 		Gui, IBM_Home:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_E, E
 		Gui, IBM_Home:Add, Text, w20 x+1 h20 Center Hidden 0x200 0x1000 vIBM_LevelRow_%index%_M, M
 		Gui, IBM_Home:Font, Normal
-		Gui, IBM_Home:Add, Text, x+5 w20 h20 0x200 CENTER Hidden vIBM_LevelRow_%index%_Feats_Selected
+		Gui, IBM_Home:Add, Text, x+4 w20 h20 0x200 CENTER Hidden vIBM_LevelRow_%index%_Feats_Selected
 		Gui, IBM_Home:Add, Button, x+1 w20 h20 Hidden vIBM_LevelRow_%index%_Feats_Set gIBM_LevelRow_Feats_Set, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LEFT
 		Gui, IBM_Home:Add, Button, x+1 w20 h20 Hidden vIBM_LevelRow_%index%_Feats_Clear gIBM_LevelRow_Feats_Clear, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_CLEAR
 	}
@@ -969,32 +989,34 @@
 		this.levelDataSet:=g_IriBrivMaster.IBM_GetGUIFormationData() ;Gets formation data, without levels
 		If IsObject(this.levelDataSet)
 		{
+			colourIn:=this.Theme.GetThemeTextColour("TrafficLightGood")
+			colourOut:=this.Theme.GetThemeTextColour("DefaultText")
 			this.LoadCurrentLevels()
 			index:=1
 			for seat, seatMembers in this.levelDataSet
 			{
 				for champID, champData in seatMembers
 				{
-					lastY:=this.RefreshLevelRow(index,seat,champData)
+					lastY:=this.RefreshLevelRow(index,seat,champData,colourIn,colourOut)
 					index++
 				}
 			}
 			while (index<=40) ;Hide remaining rows
 			{
-				this.HideLevelRow(index)
+				this.HideLevelRow(index,colourOut)
 				index++
 			}
 			;Resize group
 			if (lastY) ;If the game isn't running this will not be set
 			{
 				GuiControlGet, initialSize, IBM_Home:Pos, IBM_LevelManager
-				updatedHeight:=lastY-initialSizeY+10
+				updatedHeight:=lastY-initialSizeY+8
 				GuiControl, IBM_Home:Move, IBM_LevelManager, h%updatedHeight%
 			}
 		}
 	}
 
-	RefreshLevelRow(index,seat,data) ;Single row
+	RefreshLevelRow(index,seat,data,inColour,outColour) ;Single row
 	{
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_Seat, %seat%
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Seat ;TODO: Why are all these Show commands here?
@@ -1007,16 +1029,16 @@
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Priority
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_min, % data["min"]
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_min
-		textColour:=data["Q"] ? IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_IN : IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
+		textColour:=data["Q"] ? inColour : outColour
 		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_Q
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_Q
-		textColour:=data["W"] ? IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_IN : IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
+		textColour:=data["W"] ? inColour : outColour
 		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_W
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_W
-		textColour:=data["E"] ? IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_IN : IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
+		textColour:=data["E"] ? inColour : outColour
 		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_E
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_E
-		textColour:=data["M"] ? IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_IN : IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
+		textColour:=data["M"] ? inColour : outColour
 		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_M
 		GuiControl, IBM_Home:Show, IBM_LevelRow_%index%_M
 		featCount:=data["Feat_List"] ? data["Feat_List"].Count() : 0
@@ -1042,7 +1064,7 @@
 		return featTooltip
 	}
 
-	HideLevelRow(index) ;Single row
+	HideLevelRow(index,colourOut) ;Single row
 	{
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_Seat, ""
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_Seat
@@ -1056,14 +1078,13 @@
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_min
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_max, 0
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_max
-		textColour:=IC_IriBrivMaster_GUI.IBM_COLOUR_FORMATION_OUT
-		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_Q
+		GuiControl, IBM_Home: +%colourOut%, IBM_LevelRow_%index%_Q
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_Q
-		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_W
+		GuiControl, IBM_Home: +%colourOut%, IBM_LevelRow_%index%_W
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_W
-		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_E
+		GuiControl, IBM_Home: +%colourOut%, IBM_LevelRow_%index%_E
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_E
-		GuiControl, IBM_Home: +%textColour%, IBM_LevelRow_%index%_M
+		GuiControl, IBM_Home: +%colourOut%, IBM_LevelRow_%index%_M
 		GuiControl, IBM_Home:Hide, IBM_LevelRow_%index%_M
 		GuiControl, IBM_Home:, IBM_LevelRow_%index%_Feats_Selected, ""
 		this.UpdateToolTip("IBM_LevelRow_" . index . "_Feats_Selected","") ;Remove tooltip

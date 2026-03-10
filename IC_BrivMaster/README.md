@@ -178,7 +178,9 @@ Screen Position (x,y): the x (horizonal) and y (vertical) location of the gem fa
 
 Hide: If selected the farm window will not be displayed.
 
-Theme: Opens the theme manager.
+Wide Home layout: The default Home layout is a tall, narrow window. With this option selected it becomes shorter and wider, placing the two Stats blocks on the Home tab side-by-side.
+
+Theme manager: Opens the theme manager.
 
 > Author's Note: This window is not itself themed, to prevent it becoming unusable if poor choices are made.
 - Load light theme: Loads the standard light theme into the configuration table.

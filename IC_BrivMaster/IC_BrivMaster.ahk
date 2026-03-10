@@ -365,7 +365,8 @@ Class IC_IriBrivMaster_Component
 		settings.HUB.IBM_Offsets_Check["_DEFAULT"]:=false
 		settings.HUB.IBM_Offsets_Lock_Pointers["_DEFAULT"]:=false
 		settings.HUB.IBM_Offsets_URL["_DEFAULT"]:="https://raw.githubusercontent.com/RLee-EN/BrivMaster-Imports/refs/heads/main/" ;Hidden setting to allow a different offset source to be used if wanted
-        return settings
+        settings.HUB.IBM_Window_Wide["_DEFAULT"]:=false
+		return settings
     }
 
 	SaveSettings()

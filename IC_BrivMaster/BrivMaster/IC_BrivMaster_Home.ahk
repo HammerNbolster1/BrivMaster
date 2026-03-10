@@ -1119,7 +1119,7 @@ Class IC_IriBrivMaster_Component
 	{
 		found:=RegExMatch(url,"O)^https://github.com/(.+)/tree/(.+)$",Matches)
 		if(found)
-			return "https://raw.githubusercontent.com/" . Matches[1] . "/refs/heads/" . Matches[2] . "/Addon.json"
+			return "https://raw.githubusercontent.com/" . Matches[1] . "/refs/heads/" . Matches[2] . "/IC_BrivMaster.json"
 		else
 			return ""
 	}

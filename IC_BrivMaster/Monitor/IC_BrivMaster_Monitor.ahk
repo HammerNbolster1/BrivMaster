@@ -25,7 +25,7 @@ else
     FileAppend, %newSettings%, %g_settingFile%
 }
 
-ICON_STANDARD:=A_LineFile . "\..\..\Resources\IBM_L.ico"
+ICON_STANDARD:=A_LineFile . "\..\..\Resources\IBM_Farm.ico"
 try
 {
     Menu Tray, Icon, %ICON_STANDARD%

@@ -188,7 +188,7 @@ Theme: Opens the theme manager.
 
 > Author's Note: Accept loads the colours into current settings, but does not save them. As with all settings, the main save button at the top of the window should be used to save. This also allows you to reload without saving to return to the previous settings.
 
-- Colour Entries: Enter the 8-bit RGB colour for the element in question in hex, e.g. FF0000 for red. Any passable image editor will let you view the hex values of colours in their pallets. Be aware that some elements cannot be themed: edit box background, drop down list text and background, button text and background. This is a limitation of AHK v1.
+- Colour Entries: Enter the 8-bit RGB colour for the element in question in hex, e.g. FF0000 for red. Any passable image editor will let you view the hex values of colours in their pallets. Be aware that some elements cannot be themed: edit box background, drop down list text & background, button text & background, Readme hyperlink. This is a limitation of AHK v1.
     - Default text: Used for most text.
 	- Warning text: Used for warnings, such as being unable to read the game version.
 	- Special text 1: Used for specific highlights, in this case BPH and having a newer version that the server in the version check.

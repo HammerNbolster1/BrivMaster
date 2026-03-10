@@ -908,6 +908,7 @@ Class IC_IriBrivMaster_Component
 		g_IBM_Settings:=IC_BrivMaster_SharedFunctions_Class.LoadObjectFromAHKJSON(IC_BrivMaster_SharedData_Class.SettingsPath) ;Cannot use the instance as it might not be set up yet - it needs the exe name from these settings to set up .Memory
         if (!IsObject(g_IBM_Settings)) ;If no settings are read in create a new default set
         {
+			Msgbox 64, Briv Master Update, Welcome to Briv Master 0.5.`nBriv Master is now a standalone script, and would be best placed separate from Script Hub.`nYou can copy your IC_BrivMaster_Settings.json file from \Idle-Champions\AddOns\IC_BrivMaster_Extra\ to \IC_BrivMaster\BrivMaster\ if you wish to preserve your settings, otherwise feel free to continue from the defaults.
 			g_IBM_Settings:=this.CreateDefaultSettingsFromTemplate(template)
             needSave:=true
         }

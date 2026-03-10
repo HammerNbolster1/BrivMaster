@@ -779,4 +779,3 @@ class IBM_ServerCall_Class ;Simple generic servercall class, this is SH_ServerCa
 		return data
     }
 }
-

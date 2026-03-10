@@ -503,14 +503,14 @@ Class IC_IriBrivMaster_Component
 										
 					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . this.AddThousandsSeperator(ROUND(bph,2)) ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
 					if(gems!="")
 						this.CurrentGems:=gems
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
-					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % gemsTotal
+					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . this.AddThousandsSeperator(ROUND(gph,2)) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % this.AddThousandsSeperator(gemsTotal)
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states
 					{
@@ -631,6 +631,14 @@ Class IC_IriBrivMaster_Component
         GuiControl, IBM_Home:, IBM_Stats_Rollbacks, % this.SharedRunData.TotalRollBacks
         GuiControl, IBM_Home:, IBM_Stats_Bad_Auto, % this.SharedRunData.BadAutoProgress
 	}
+	
+			; Helper function to add commas every 3 digits for display purposes.
+    AddThousandsSeperator(val)
+    {
+        if (!(val is number) || Abs(val) < 1000)
+            return val
+        return RegExReplace(val, "(\G|[^\d,.])\d{1,3}(?=(\d{3})+(\D|$))", "$0,")
+    }
 
 	StatsUpdateFastSlow(Stat,statTime) ;Helper for the slow/fast/total stat for each category
 	{

@@ -112,15 +112,17 @@
 		if(this.Wide)
 		{
 			statPanelWidth:=groupWidth*0.5-4
-			statPanelHeight:=203
+			statPanelHeight:=211
 			;Stats - Timing
 			Gui, IBM_Home:Font, w700
 			Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%statPanelWidth% h%statPanelHeight% vIBM_Group_Stats_Timing, Run Timings
 			Gui, IBM_Home:Font, w400
 			;>Highlights (BPH)
-			highLightWidth:=statPanelWidth-10
+			highLightWidth:=statPanelWidth-12
 			this.Theme.UseThemeTextColour("IBM_Home","SpecialText1", 700)
-			Gui, IBM_Home:Add, Text, xs+5 ys+20 w%highLightWidth% Center vIBM_Stats_BPH, BPH
+			Gui, IBM_Home:Font, s10, Cascadia Code
+			Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highLightWidth% Left vIBM_Stats_BPH, BPH
+			Gui, IBM_Home:Font
 			this.Theme.UseThemeTextColour("IBM_Home")
 			Gui, IBM_Home:Add, Text, xs+10 y+10 w60, Total runs:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_Total_Runs, -
@@ -155,7 +157,9 @@
 			Gui, IBM_Home:Font, w400
 			;>Highlights (GPH)
 			this.Theme.UseThemeTextColour("IBM_Home","SpecialText2", 700)
-			Gui, IBM_Home:Add, Text, xs+5 ys+20 w100 w%highLightWidth% Center vIBM_Stats_GPH, GPH
+			Gui, IBM_Home:Font, s10, Cascadia Code
+			Gui, IBM_Home:Add, Text, xs+10 ys+20 w100 w%highLightWidth% Left vIBM_Stats_GPH, GPH
+			Gui, IBM_Home:Font
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
 			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
@@ -190,7 +194,7 @@
 		{
 			;Stats - Rewards
 			Gui, IBM_Home:Font, w700
-			Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h188 vIBM_Group_Stats_Reward, Run Rewards
+			Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h190 vIBM_Group_Stats_Reward, Run Rewards
 			Gui, IBM_Home:Font, w400
 			;>Highlights (BPH/GPH)
 			highlightWidth:=FLOOR((groupWidth-21)/2)
@@ -597,7 +601,7 @@
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Versions - core, static
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%mainWidth% h65, Core Version
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%mainWidth% h70, Core Version
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 w10 h18 0x200 vIBM_Version_Status_SH, % IC_IriBrivMaster_GUI.IBM_SYMBOL_UI_LIGHT
 		textWidth:=mainWidth-85
@@ -612,7 +616,7 @@
 
 		;Versions - check sidebar
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h65, Version Check
+		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h70, Version Check
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w75 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load

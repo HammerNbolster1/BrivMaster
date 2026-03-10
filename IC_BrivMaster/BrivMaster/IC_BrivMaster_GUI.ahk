@@ -39,18 +39,18 @@
 		;Buttons for starting, saving etc
 		buttonWidth:=25
 		buttonSpacing:=15
-		Gui, IBM_Home:Add, Picture, xm+5 y+3 h-1 w%buttonWidth% gLaunch_Clicked vLaunchClickButton, %A_LineFile%\..\..\Resources\idledragons-100x100.png
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gReload_Clicked vReloadClickButton, %A_LineFile%\..\..\Resources\refresh-100x100.png
+		Gui, IBM_Home:Add, Picture, xm+5 y+3 h-1 w%buttonWidth% gLaunch_Clicked vLaunchClickButton, %A_LineFile%\..\..\Resources\IC.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gReload_Clicked vReloadClickButton, %A_LineFile%\..\..\Resources\Refresh.png
 		this.AddToolTip("LaunchClickButton", "Launch Idle Champions")
 		this.AddToolTip("ReloadClickButton", "Reload Briv Master Home")
 		firstButtonOffset:=groupWidth-buttonWidth*5-buttonSpacing*4-5
 		textWidth:=firstButtonOffset-buttonWidth*2-buttonSpacing-25 ;10px each side
 		Gui, IBM_Home:Add, Text, x+10 w%textWidth% r2 vIBM_MainButtons_Status
-		Gui, IBM_Home:Add, Picture, xm+%firstButtonOffset% yp+0 h-1 w%buttonWidth% gIBM_MainButtons_Start vIBM_MainButtons_Start, %A_LineFile%\..\..\Resources\play-100x100.png
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Stop vIBM_MainButtons_Stop, %A_LineFile%\..\..\Resources\stop-100x100.png
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\connect-100x100.png ;TODO: Combine with play button per current BGF
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Save vIBM_MainButtons_Save, %A_LineFile%\..\..\Resources\save-100x100.png
-		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Reset vIBM_MainButtons_Reset, %A_LineFile%\..\..\Resources\Reset-100x100.png
+		Gui, IBM_Home:Add, Picture, xm+%firstButtonOffset% yp+0 h-1 w%buttonWidth% gIBM_MainButtons_Start vIBM_MainButtons_Start, %A_LineFile%\..\..\Resources\Play.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Stop vIBM_MainButtons_Stop, %A_LineFile%\..\..\Resources\Stop.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Connect vIBM_MainButtons_Connect, %A_LineFile%\..\..\Resources\Connect.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Save vIBM_MainButtons_Save, %A_LineFile%\..\..\Resources\Save.png
+		Gui, IBM_Home:Add, Picture, x+%buttonSpacing% h-1 w%buttonWidth% gIBM_MainButtons_Reset vIBM_MainButtons_Reset, %A_LineFile%\..\..\Resources\Reset.png
 		this.AddToolTip("IBM_MainButtons_Start", "Start Gem Farm")
         this.AddToolTip("IBM_MainButtons_Stop", "Stop Gem Farm")
         this.AddToolTip("IBM_MainButtons_Connect", "Reconnect to Gem Farm script")
@@ -516,7 +516,7 @@
 		Gui, IBM_Theme_Manager:Add, Edit, x+10 w45 r1 Limit6 vIBM_Theme_Manager_WindowBackground,% this.Theme.GetThemeHexString("WindowBackground")
 		Gui, IBM_Theme_Manager:Add, Text, x+10 h18 0x200 BackgroundTrans vIBM_Theme_Manager_WindowBackground_Example,Example  Example
 				
-		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+10 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar and icons
+		Gui, IBM_Theme_Manager:Add, CheckBox, xs+10 y+10 h18 0x200 vIBM_Theme_Manager_DarkMode, Use dark mode title bar
 		GuiControl,IBM_Theme_Manager:, IBM_Theme_Manager_DarkMode,% this.Theme.Theme.DarkMode
 		this.RefreshThemeManagerExamples()
 		this.Theme.UseThemeTitleBar("IBM_Theme_Manager",false) ;This is themed since it's simple light/dark

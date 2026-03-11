@@ -24,7 +24,7 @@
 		}
 		else
 		{
-			g_TabControlHeight:=750
+			g_TabControlHeight:=760
 			g_TabControlWidth:=410
 		}
 		this.controlLock:=true
@@ -194,14 +194,17 @@
 		{
 			;Stats - Rewards
 			Gui, IBM_Home:Font, w700
-			Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h190 vIBM_Group_Stats_Reward, Run Rewards
+			Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h200 vIBM_Group_Stats_Reward, Run Rewards
 			Gui, IBM_Home:Font, w400
 			;>Highlights (BPH/GPH)
 			highlightWidth:=FLOOR((groupWidth-21)/2)
 			this.Theme.UseThemeTextColour("IBM_Home","SpecialText1", 700)
+			Gui, IBM_Home:Font, s10, Cascadia Code
 			Gui, IBM_Home:Add, Text, xs+10 ys+20 w%highlightWidth% Center vIBM_Stats_BPH, BPH
 			this.Theme.UseThemeTextColour("IBM_Home","SpecialText2", 700)
+			Gui, IBM_Home:Font, s10, Cascadia Code
 			Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
+			Gui, IBM_Home:Font
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
 			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
@@ -563,8 +566,8 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Pointers"
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, Text, w180 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
-		Gui, IBM_Home:Add, Text, w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
+		Gui, IBM_Home:Add, Text, +c88d8c0 w180 x+10 h18 0x200 vIBM_Offsets_Text_Pointers_Current, % "Current: " . g_IriBrivMaster.GetPointersVersion()
+		Gui, IBM_Home:Add, Text, +cc67970 w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Pointers_GitHub, % "GitHub: <Not checked>"
 
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Imports"
@@ -575,8 +578,8 @@
 			colour:=this.Theme.GetThemeTextColour("WarningText")
 		else
 			colour:=this.Theme.GetThemeTextColour()
-		Gui, IBM_Home:Add, Text, w180 x+10 %colour% h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
-		Gui, IBM_Home:Add, Text, w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
+		Gui, IBM_Home:Add, Text, +c88d8c0 w180 x+10 h18 0x200 vIBM_Offsets_Text_Imports_Current, % "Current: " . currentImports
+		Gui, IBM_Home:Add, Text, +cc67970 w180 xp+0 y+0 h18 0x200 vIBM_Offsets_Text_Imports_GitHub, % "GitHub: <Not checked>"
 		;Offsets - check sidebar
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+%sideBarOffset% ys+0 w%sideBarWidth% h%offsetsHeight%,Offset Check

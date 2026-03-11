@@ -886,14 +886,9 @@ Class IC_IriBrivMaster_Component
 				{
 					GuiControlGet, activeTab, IBM_Home:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each function checking it
 					brivMasterTabActive:=activeTab=="Home"
-					this.STATUS_RunControlOffline:=this.SharedRunData.IBM_RunControl_DisableOffline
-					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.STATUS_RunControlOffline,brivMasterTabActive)
-					this.STATUS_RunControlForce:=this.SharedRunData.IBM_RunControl_ForceOffline
-					g_IriBrivMaster_GUI.UpdateRunControlForce(this.STATUS_RunControlForce,brivMasterTabActive)
-					this.CYCLE_Message_String:=this.SharedRunData.IBM_RunControl_CycleString
-					this.STATUS_Message_String:=this.SharedRunData.IBM_RunControl_StatusString
-					this.STATUS_Stack_String:=this.SharedRunData.IBM_RunControl_StackString
-					g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
+					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.SharedRunData.IBM_RunControl_DisableOffline,brivMasterTabActive)
+					g_IriBrivMaster_GUI.UpdateRunControlForce(this.SharedRunData.IBM_RunControl_ForceOffline,brivMasterTabActive)
+					g_IriBrivMaster_GUI.UpdateRunStatus(this.SharedRunData.IBM_RunControl_CycleString,this.SharedRunData.IBM_RunControl_StatusString,this.SharedRunData.IBM_RunControl_StackString)
 				}
 				this.UpdateStats(dirty)
 				this.ChestSnatcher.Snatch() ;After stats as Stats reads the gem/chest counts on new run start
@@ -1127,7 +1122,7 @@ Class IC_IriBrivMaster_Component
 	{
 		found:=RegExMatch(url,"O)^https://github.com/(.+)/tree/(.+)$",Matches)
 		if(found)
-			return "https://raw.githubusercontent.com/" . Matches[1] . "/refs/heads/" . Matches[2] . "/Addon.json"
+			return "https://raw.githubusercontent.com/" . Matches[1] . "/refs/heads/" . Matches[2] . "/IC_BrivMaster.json"
 		else
 			return ""
 	}
@@ -1245,12 +1240,12 @@ Class IC_IriBrivMaster_Component
 		if(gameMajor)
 		{
 			gameVersion:=gameMajor . gameMinor
-			colour:=this.Theme.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		}
 		else
 		{
 			gameVersion:="<Not found>"
-			colour:=this.Theme.GetThemeTextColour("WarningText")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		}
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Game
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Game, % "Game Version: " . gameVersion
@@ -1259,9 +1254,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=GUIFunctions.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1286,16 +1281,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
@@ -1318,9 +1313,9 @@ Class IC_IriBrivMaster_Component
 		currentImports:=g_SF.Memory.GetImportsVersion()
 		comparison:=this.VersionComparison(gameVersion,currentImports)
 		if(comparison.GT)
-			colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 		else
-			colour:=GUIFunctions.GetThemeTextColour()
+			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
 		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
@@ -1345,16 +1340,16 @@ Class IC_IriBrivMaster_Component
 		{
 			comparison:=this.VersionComparison(splitCSV[3],currentPointers)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
-				colour:=GUIFunctions.GetThemeTextColour("WarningTextColor")
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
-				colour:=GUIFunctions.GetThemeTextColour()
+				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
 			prompt:="Confirm download of the following:"

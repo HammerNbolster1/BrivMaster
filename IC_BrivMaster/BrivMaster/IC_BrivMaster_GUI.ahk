@@ -1159,24 +1159,32 @@
 	ResetStatusText()
 	{
 		colour:=this.Theme.GetThemeTextColour()
-		GuiControl, IBM_Home: +%colour%, IBM_RunControl_Offline_StatusPause
-		GuiControl, IBM_Home: +%colour%, IBM_RunControl_Offline_StatusQueue
-		GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusPause
-		GuiControl, IBM_Home:MoveDraw,IBM_RunControl_Offline_StatusQueue
+		this.UpdateRunControlDisable("",true) ;"" resets. Not bothering to check if the Home tab is active here as it's not happening automatically
+		this.UpdateRunControlForce("",true)
 		GuiControl, IBM_Home:Text, IBM_RunControl_Status, Unable to read data from main script
 	}
 
 	UpdateRunControlDisable(disableOffline,allowMoveDraw:=true) ;Offline stacking Pause/Resume
 	{
-		If (disableOffline)
+		static lastState:=""
+		if(lastState==disableOffline)
+			return
+		lastState:=disableOffline
+		if(lastState==1)
 		{
 			colour:=this.Theme.GetThemeTextColour("TrafficLightBad")
 			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusPause ;Note disabled is 'red' here because offline stacking is normally switched on
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Toggle, Resume
 		}
-		else
+		else if(lastState==0)
 		{
 			colour:=this.Theme.GetThemeTextColour("TrafficLightGood")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusPause
+			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Toggle, Pause
+		}
+		else
+		{
+			colour:=this.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusPause
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Toggle, Pause
 		}
@@ -1187,15 +1195,25 @@
 
 	UpdateRunControlForce(queueOffline,allowMoveDraw:=true) ;Force Queue
 	{
-		If (queueOffline)
+		static lastState:=""
+		if(lastState==queueOffline)
+			return
+		lastState:=queueOffline
+		if(lastState==1)
 		{
 			colour:=this.Theme.GetThemeTextColour("TrafficLightGood")
 			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusQueue
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Queue_Toggle, Cancel
 		}
-		else
+		else if (lastState==0)
 		{
 			colour:=this.Theme.GetThemeTextColour("TrafficLightBad")
+			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusQueue
+			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Queue_Toggle, Queue
+		}
+		else
+		{
+			colour:=this.Theme.GetThemeTextColour()
 			GuiControl, IBM_Home:+%colour%, IBM_RunControl_Offline_StatusQueue
 			GuiControl, IBM_Home:Text, IBM_RunControl_Offline_Queue_Toggle, Queue
 		}

@@ -833,8 +833,8 @@ class IC_BrivMaster_MemoryFunctions_Class
         FileRead, offsetData, %fileLoc%
         if(offsetData=="")
         {
-            MsgBox 16, Briv Master, % "Pointer data not found. Please review the BM Game tab of the settings."
-            if(ObjGetBase(g_IBM).__Class:="IC_BrivMaster_GemFarm_Class") ;Exit from the gem farm, but not the hub - or we won't be able to select any pointers!
+            MsgBox 16, Briv Master, % "Offset data not found. Please review the BM Game tab of the settings."
+            if(ObjGetBase(g_IBM).__Class:="IC_BrivMaster_GemFarm_Class") ;Exit from the gem farm, but not the hub - or we won't be able to select any offsets!
 				ExitApp
         }
         currentPointers:=AHK_JSON.Load(offsetData)

@@ -1258,7 +1258,7 @@ Class IC_IriBrivMaster_Component
 		else
 			colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
 		GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_Current,% "Current: " . currentImports
-		GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_Current%index%
+		GuiControl, IBM_Home:+c88d8c0, IBM_Offsets_Text_Imports_Current%index%
 		platformID:=g_SF.Memory.ReadPlatform()
 		if(!platformID)
 		{
@@ -1284,14 +1284,14 @@ Class IC_IriBrivMaster_Component
 				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
 				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
-			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Pointers_GitHub%index%
+			GuiControl, IBM_Home:+cc67970, IBM_Offsets_Text_Pointers_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Pointers_GitHub, % "GitHub: " . splitCSV[3] . " " . splitCSV[4]
 			comparison:=this.VersionComparison(splitCSV[1],currentImports)
 			if(comparison.GT)
 				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour("WarningText")
 			else
 				colour:=g_IriBrivMaster_GUI.Theme.GetThemeTextColour()
-			GuiControl, IBM_Home:+%colour%, IBM_Offsets_Text_Imports_GitHub%index%
+			GuiControl, IBM_Home:+cc67970, IBM_Offsets_Text_Imports_GitHub%index%
 			GuiControl, IBM_Home:, IBM_Offsets_Text_Imports_GitHub, % "GitHub: " . splitCSV[1] . " " . splitCSV[2]
 
 		}

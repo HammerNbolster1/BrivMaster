@@ -148,8 +148,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	{
 		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
 		;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() entry:"
-		if (g_SF.Memory.ReadTransitioning()) ;Do not try using the ults during a transition - possible source of Weird Stuff
-			return
 		if (g_Heroes[83].CanUseUltimate())
 		{
 			this.UsedUlt:=true ;Assumed

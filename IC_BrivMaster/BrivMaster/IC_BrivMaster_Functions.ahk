@@ -53,9 +53,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			lastLoopEndTime:=startTime ;Set for the first loop
 			while (lastLoopEndTime<timeOut)
             {
-				;Start Casino card logic
-				if (g_SF.Memory.ReadResetting() OR g_SF.Memory.ReadCurrentZone()=="") ;Abort the loop if we hit a reset or the memory reads fail
-					break
 				if(this.DeferredDMUlt AND lastLoopEndTime > this.DeferredDMUlt)
 				{
 					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
@@ -71,6 +68,8 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					this.UsedUlt:=false
 				}
 				if (this.ShouldDrawMoreCards())
+				if(numCards=="") ;Abort if the memory reads are not available
+					break
 				{
 					if (this.MaxRedraws-this.Redraws > 0) ;Use ultimate if it's not on cooldown and there are redraws left
 					{

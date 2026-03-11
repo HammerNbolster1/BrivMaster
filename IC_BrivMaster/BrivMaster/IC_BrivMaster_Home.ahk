@@ -878,14 +878,9 @@ Class IC_IriBrivMaster_Component
 				{
 					GuiControlGet, activeTab, IBM_Home:, ModronTabControl ;Only MoveDraw if the Briv Master tab is active, to avoid weird bleed-through. Read here once to avoid each function checking it
 					brivMasterTabActive:=activeTab=="Home"
-					this.STATUS_RunControlOffline:=this.SharedRunData.IBM_RunControl_DisableOffline
-					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.STATUS_RunControlOffline,brivMasterTabActive)
-					this.STATUS_RunControlForce:=this.SharedRunData.IBM_RunControl_ForceOffline
-					g_IriBrivMaster_GUI.UpdateRunControlForce(this.STATUS_RunControlForce,brivMasterTabActive)
-					this.CYCLE_Message_String:=this.SharedRunData.IBM_RunControl_CycleString
-					this.STATUS_Message_String:=this.SharedRunData.IBM_RunControl_StatusString
-					this.STATUS_Stack_String:=this.SharedRunData.IBM_RunControl_StackString
-					g_IriBrivMaster_GUI.UpdateRunStatus(this.CYCLE_Message_String,this.STATUS_Message_String,this.STATUS_Stack_String)
+					g_IriBrivMaster_GUI.UpdateRunControlDisable(this.SharedRunData.IBM_RunControl_DisableOffline,brivMasterTabActive)
+					g_IriBrivMaster_GUI.UpdateRunControlForce(this.SharedRunData.IBM_RunControl_ForceOffline,brivMasterTabActive)
+					g_IriBrivMaster_GUI.UpdateRunStatus(this.SharedRunData.IBM_RunControl_CycleString,this.SharedRunData.IBM_RunControl_StatusString,this.SharedRunData.IBM_RunControl_StackString)
 				}
 				this.UpdateStats(dirty)
 				this.ChestSnatcher.Snatch() ;After stats as Stats reads the gem/chest counts on new run start

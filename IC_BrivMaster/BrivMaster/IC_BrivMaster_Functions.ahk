@@ -61,28 +61,30 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
 					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() deferred DM post DM call:"
 				}
-				if (this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
+				if(this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
 				{
 					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
 					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() Elly ult expired:"
 					this.UsedUlt:=false
 				}
-				if (this.ShouldDrawMoreCards())
+				numCards:=g_Heroes[83].ReadNumCards()
+				numGemCards:=g_Heroes[83].GetNumGemCards()
 				if(numCards=="") ;Abort if the memory reads are not available
 					break
+				if(numCards<this.MinCards OR numGemCards<this.GemCardsNeeded) ;Less than minimum, or short on gem
 				{
 					if (this.MaxRedraws-this.Redraws > 0) ;Use ultimate if it's not on cooldown and there are redraws left
 					{
-						 if (!this.UsedUlt AND this.ShouldRedraw())
+						 if (!this.UsedUlt AND this.ShouldRedraw(numCards,numGemCards))
 							this.UseEllywickUlt()
 					}
-					else if (this.MinCards==0 OR (!this.UsedUlt AND g_Heroes[83].ReadNumCards()>=this.MinCards)) ;If we want to release at a certain number of cards we need to wait for the ult to resolve to be able to count correctly
+					else if (this.MinCards==0 OR (!this.UsedUlt AND numCards>=this.MinCards)) ;If we want to release at a certain number of cards we need to wait for the ult to resolve to be able to count correctly
 						break
 				}
 				else
 					break
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
-				if (!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
+				if(!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
 					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
@@ -90,7 +92,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 						frontColumnLevellingAllowed:=true
 					}
 				}
-				if (!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or don't care about the front row), or the formation is full so we can level away
+				if(!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or don't care about the front row), or the formation is full so we can level away
 				{
 					g_IBM.levelManager.LevelFormation("A",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
 					ghostLevellingAllowed:=true
@@ -100,7 +102,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					g_IBM.levelManager.LevelWorklist()
 					g_IBM.levelManager.LevelClickDamage()
 				}
-				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Dynamic sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
+				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Offset-based sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
@@ -127,21 +129,13 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		}
 	}
 	
-	ShouldDrawMoreCards()
+	ShouldRedraw(numCards,numGemCards)
 	{
-		if (g_Heroes[83].ReadNumCards()<this.MinCards)
-			return true
-		return g_Heroes[83].GetNumGemCards() < this.GemCardsNeeded
-	}
-	
-	ShouldRedraw()
-	{
-		numCards:=g_Heroes[83].ReadNumCards()
 		if (numCards==5)
 			return true
 		else if (numCards==0)
 			return false
-		return (5-numCards) < (this.GemCardsNeeded - g_Heroes[83].GetNumGemCards())
+		return (5-numCards) < (this.GemCardsNeeded - numGemCards)
 	}
 	
 	UseEllywickUlt()

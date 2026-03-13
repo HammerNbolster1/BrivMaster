@@ -132,7 +132,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				if (melfRange)
 					stackString:="Stacking: Expecting online with Melf in range z" . melfRange[1] . " to z" . melfRange[2]
 				else
-					stackString:="Stacking: Expecting online with Melf at z" . g_IBM_Settings[ "IBM_Online_Melf_Min" ] . " (no spawn more segment available)"
+					stackString:="Stacking: Expecting online with Melf at z" . g_IBM_Settings[ "IBM_Online_Melf_Min" ] . " (no spawn more available)"
 			}
 			else
 			{

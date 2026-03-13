@@ -248,18 +248,6 @@ class IC_BrivMaster_Relay_Class
 		}
 	}
 
-	SuspendProcess(PID,doSuspend:=True)
-	{
-		h:=DllCall("OpenProcess","uInt",0x1F0FFF,"Int",0,"Int",PID)
-		If (!h)
-			Return -1
-		If (doSuspend)
-			DllCall("ntdll.dll\NtSuspendProcess","Int",h)
-		Else
-			DllCall("ntdll.dll\NtResumeProcess","Int",h)
-		DllCall("CloseHandle","Int",h)
-	}
-
 	OpenProcessReader(timeout)
     {
         static MaxTime:=""

@@ -515,9 +515,9 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         }
         else if (valueType=="Array")
         {
-            valueType := IBM_GOS.SystemTypes[this._CollectionValType]
+            valueType:=IBM_GOS.SystemTypes[this._CollectionValType]
             if (this._ArrayDimensions > 0)
-                valueType := "Int64"
+                valueType:="Int64"
             var := _IBM_MM.instance.read(baseAddress, , (this.GetOffsets())*)
         }
         else if (valueType == "Quad") ; custom ValueTypes not in classMemory.ahk
@@ -790,7 +790,7 @@ class _IBM_MM ;A class to manage and make available instances of _IC_BrivMaster_
         }
     } 
 
-    isAttached ;TODO: Update this to some form of IsAttached
+    isAttached
     {
         get
         {
@@ -810,7 +810,7 @@ class _IBM_MM ;A class to manage and make available instances of _IC_BrivMaster_
 			processLookup:="AHK_PID " . pid
 		else
 			processLookup:="AHK_EXE " . this._exeName
-		this.instance:=New _IC_BrivMaster_Memory_Reader_Class(processLookup, "", handle)
+		this.instance:=New _IC_BrivMaster_Memory_Reader_Class(processLookup, handle)
         this.handle:=handle
         if IsObject(this.instance)
         {

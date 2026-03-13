@@ -136,6 +136,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				if(processName="rare.exe" or processName="legendary.exe") ;Note these are = not == by design. This is to kill launchers that might be queued up trying to launch the game, e.g. due to a connection outage. This is explicitly using these launchers as for normal EGS, OpenPID will be explorer, and we don't want to go killing that
 				{
 					this.TerminateProcess(openPID)
+					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() attempted to terminate launcher [" . processName . "] PID=[" . openPID . "]")
 				}
 			}
         }

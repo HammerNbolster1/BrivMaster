@@ -91,7 +91,8 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
                 ExitApp
             }
 			g_IBM.IBM_Sleep(15)
-			if (g_SF.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+			processName:=g_SF.GetProcessName(openPID)
+			if (processName==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
 			{
 				this.PID:=openPID
 				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
@@ -131,6 +132,10 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 					}
 					else
 						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
+				}
+				if(processName="rare.exe" or processName="legendary.exe") ;Note these are = not == by design. This is to kill launchers that might be queued up trying to launch the game, e.g. due to a connection outage. This is explicitly using these launchers as for normal EGS, OpenPID will be explorer, and we don't want to go killing that
+				{
+					this.TerminateProcess(openPID)
 				}
 			}
         }

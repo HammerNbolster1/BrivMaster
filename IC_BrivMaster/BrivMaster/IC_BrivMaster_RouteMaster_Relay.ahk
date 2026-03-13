@@ -30,14 +30,14 @@ class IC_BrivMaster_Relay_Class
 {
 	__New(GUID)
 	{
-		this.LogString.=A_TickCount . " Creating Relay`n"
+		this.LogString:=A_Tickcount . ",Creating Relay`n"
 		if (GUID)
 		{
 			this.GUID:=GUID
-			this.LogString.=A_TickCount . " Called with GUI=[" . GUID . "]`n"
+			this.LogString.=A_Tickcount . ",Called with GUI=[" . GUID . "]`n"
 			try
 			{
-				this.RelayData := ComObjActive(this.GUID)
+				this.RelayData:=ComObjActive(this.GUID)
 				this.MainPID:=this.RelayData.MainPID ;TODO: passing one-off items as Args on launch might be better than COM - particularly the offsets array
 				this.MainHwnd:=this.RelayData.MainHwnd
 				this.MEMORY_baseAddress:=this.RelayData.MEMORY_baseAddress ;TODO: Actually the module offset now. Change this name...
@@ -74,7 +74,7 @@ class IC_BrivMaster_Relay_Class
 
 	RunRelay()
 	{
-		this.LogString.=A_TickCount . " Starting Game(Relay)`n"
+		this.LogString.=A_Tickcount . ",Starting Game(Relay)`n"
 		WinGet, savedActive,, A ;Why is this here? It's taken later - I guess it's just incase we pick up the HWnd instantly
 		this.SavedActiveWindow := savedActive
 		this.PID:=0
@@ -108,7 +108,7 @@ class IC_BrivMaster_Relay_Class
 				Case 5: this.OpenProcessReader(5000)
 				Case 6: this.WaitForUserLogin(30000) ;Waits for platform login. TODO: Timeout factor should apply here
 				Default:
-						this.LogString.=A_TickCount . " RunRelay() invalid Stage:[" . this.Stage . "]`n"
+						this.LogString.=A_Tickcount . ",RunRelay() invalid Stage:[" . this.Stage . "]`n"
 			}
 			if (this.Stage<6) ;Modest sleeps whilst working through initial stages, but waiting for user login requires us to sample as fast as possible
 				sleep 60
@@ -117,7 +117,7 @@ class IC_BrivMaster_Relay_Class
 		}
 		if (this.Stage<=lastStage)
 		{
-			this.LogString.=A_TickCount . " RunRelay() timed out whilst still at stage=[" . this.Stage . "]`n"
+			this.LogString.=A_Tickcount . ",RunRelay() timed out whilst still at stage=[" . this.Stage . "]`n"
 			if (this.Stage>lastStartStage)
 			{
 				this.UpdateState(-2)
@@ -134,7 +134,7 @@ class IC_BrivMaster_Relay_Class
 	
 	ExitRelay(comment:="Standard")
 	{
-		this.LogString.=A_TickCount . " Relay Exit: " . comment . "`n"
+		this.LogString.=A_Tickcount . ",Relay Exit: " . comment . "`n"
 		FileAppend, % this.LogString . "`n", % this.LogFile ;Save the log
 		ExitApp 
 	}
@@ -147,13 +147,13 @@ class IC_BrivMaster_Relay_Class
 		}
 		catch
 		{
-			this.LogString.=A_TickCount . " UpdateState() failed to update script status to [" . state . "]`n"
+			this.LogString.=A_Tickcount . ",UpdateState() failed to update script status to [" . state . "]`n"
 		}
 	}
 
 	CleanUpOverlap()
 	{
-		this.LogString.=A_TickCount . " CleanUpOverlap() called`n"
+		this.LogString.=A_Tickcount . ",CleanUpOverlap() called`n"
 		this.UpdateState(-2)
 		this.RelayData.RelayCloseMain()
 		this.Stage:=-3
@@ -162,7 +162,7 @@ class IC_BrivMaster_Relay_Class
 
 	CleanUpOnFailedStart() ;Do what we can to clean up if the Relay start-up fails
 	{
-		this.LogString.=A_TickCount . " CleanUpOnFailedStart() called`n"
+		this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() called`n"
 		if(this.PID) ;If we have a PID, try to kill that window. This goes straight for the nuke, as we shouldn't normally end up in this scenario
 		{
 			if WinExist( "ahk_pid " . this.PID )
@@ -172,14 +172,14 @@ class IC_BrivMaster_Relay_Class
 				{
 					DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
 					DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-					this.LogString.=A_TickCount . " CleanUpOnFailedStart() known PID - sending TerminateProcess`n"
+					this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() known PID - sending TerminateProcess`n"
 				} else
-					this.LogString.=A_TickCount . " CleanUpOnFailedStart() known PID - failed to get process handle for TerminateProcess`n"
+					this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() known PID - failed to get process handle for TerminateProcess`n"
 			}
 		}
 		else ;Kill any copies of the game other than the main one
 		{
-			this.LogString.=A_TickCount . " CleanUpOnFailedStart() no PID - closing non-main IC processes`n"
+			this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() no PID - closing non-main IC processes`n"
 			WinGet, IDList, List, % "ahk_exe " . this.ExeName
 			Loop % IDList
 			{
@@ -191,9 +191,9 @@ class IC_BrivMaster_Relay_Class
 					{
 						DllCall("Kernel32.dll\TerminateProcess", "Ptr", hProcess, "UInt", 0)
 						DllCall("Kernel32.dll\CloseHandle", "Ptr", hProcess)
-						this.LogString.=A_TickCount . " CleanUpOnFailedStart() no PID - sending TerminateProcess`n"
+						this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() no PID - sending TerminateProcess`n"
 					} else
-						this.LogString.=A_TickCount . " CleanUpOnFailedStart() no PID failed to get process handle for TerminateProcess`n"
+						this.LogString.=A_Tickcount . ",CleanUpOnFailedStart() no PID failed to get process handle for TerminateProcess`n"
 				}
 			}
 		}
@@ -209,7 +209,7 @@ class IC_BrivMaster_Relay_Class
 			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.gameBaseAddress, this.MEMORY_LOADED_Offsets*)
 			if (this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type)==1) ;If the initial call was made after login we're not playing the state machine game here
 			{
-				this.LogString.=A_TickCount . " WaitForUserLogin() was called after platform login`n"
+				this.LogString.=A_Tickcount . ",WaitForUserLogin() was called after platform login`n"
 				this.Stage:=-2
 				return
 			}
@@ -222,14 +222,14 @@ class IC_BrivMaster_Relay_Class
 		if (this.ForceRelease) ;If we're forced out (by the main thread being ready to go) or run out of time
 		{
 			this.Stage++ ;This is not a fail, as the main instance will be closed and the script will pick the new game instance up when ready
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via ForceRelease in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
+			this.LogString.=A_Tickcount . ",WaitForUserLogin() exit via ForceRelease in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(4)
 			return
 		}
 		else if (A_TickCount > MaxTime)
 		{
 			this.Stage++ ;This is not a fail, as the main instance will be closed and the script will pick the new game instance up when ready
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Timeout in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
+			this.LogString.=A_Tickcount . ",WaitForUserLogin() exit via Timeout in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(4)
 			return
 		}
@@ -237,8 +237,8 @@ class IC_BrivMaster_Relay_Class
 			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.gameBaseAddress, this.MEMORY_LOADED_Offsets*)
 		if (this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type)==1) ;If the user has loaded
 		{
-			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Suspend in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.MemoryManager.suspend()
+			this.LogString.=A_Tickcount . ",WaitForUserLogin() exit via Suspend in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
 			this.UpdateState(5)
 			try
 			{
@@ -259,13 +259,13 @@ class IC_BrivMaster_Relay_Class
 			;this.MemoryManager.exeName := this.ExeName ;What is the purpose of this?
 			if(isExeRead AND this.handle!="")
 			{
-				this.LogString.=A_TickCount . " OpenProcessReader() with PID=[" . this.MemoryManager.PID . "]`n"
+				this.LogString.=A_Tickcount . ",OpenProcessReader() with PID=[" . this.MemoryManager.PID . "]`n"
 				this.Stage++
 			}
 		}
 		else
 		{
-			this.LogString.=A_TickCount . " OpenProcessReader() timed out`n"
+			this.LogString.=A_Tickcount . ",OpenProcessReader() timed out`n"
 			this.Stage:=-1
 		}
     }
@@ -273,12 +273,12 @@ class IC_BrivMaster_Relay_Class
 	MemoryManagerRefresh() ;Replacing part of _MemoryManager so we don't need a full instance of everything memory
     {
         moduleName:="mono-2.0-bdwgc.dll"
-		this.MemoryManager:=New _IC_BrivMaster_Memory_Reader_Class("AHK_PID " . this.PID, "", handle) ;Must use PID
+		this.MemoryManager:=New _IC_BrivMaster_Memory_Reader_Class("AHK_PID " . this.PID, handle) ;Must use PID
         this.handle:=handle
         if(!IsObject(this.MemoryManager))
             return false
 		this.gameBaseAddress:=this.MemoryManager.getModuleBaseAddress(moduleName) + this.MEMORY_baseAddress
-		this.LogString.=A_TickCount . " MemoryManagerRefresh() complete with gameBaseAddress=[" . this.gameBaseAddress . "]`n"
+		this.LogString.=A_Tickcount . ",MemoryManagerRefresh() complete with gameBaseAddress=[" . this.gameBaseAddress . "]`n"
 		return true
     }
 
@@ -322,21 +322,21 @@ class IC_BrivMaster_Relay_Class
 			}
 			else
 			{
-				this.LogString.=A_TickCount . " Relay SetLastActiveWindowWhileWaitingForGameExe() success Hwnd=[" . this.Hwnd . "] after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
+				this.LogString.=A_Tickcount . ",Relay SetLastActiveWindowWhileWaitingForGameExe() success Hwnd=[" . this.Hwnd . "] after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
 				try
 				{
 					this.RelayData.RelayHwnd:=this.Hwnd
 				}
 				catch
 				{
-					this.LogString.=A_TickCount . " SetLastActiveWindowWhileWaitingForGameExe() failed to pass Hwnd=[" . this.Hwnd . "] to main script`n"
+					this.LogString.=A_Tickcount . ",SetLastActiveWindowWhileWaitingForGameExe() failed to pass Hwnd=[" . this.Hwnd . "] to main script`n"
 				}
 				this.Stage++
 			}
         }
 		else
 		{
-			this.LogString.=A_TickCount . " Relay SetLastActiveWindowWhileWaitingForGameExe() timed out after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
+			this.LogString.=A_Tickcount . ",Relay SetLastActiveWindowWhileWaitingForGameExe() timed out after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
 			this.Stage:=-1
 		}
     }
@@ -349,7 +349,7 @@ class IC_BrivMaster_Relay_Class
 		}
 		catch
 		{
-			this.LogString.=A_TickCount . " SetProcessToRealTime() failed to pass PID=[" . this.PID . "] to main script`n"
+			this.LogString.=A_Tickcount . ",SetProcessToRealTime() failed to pass PID=[" . this.PID . "] to main script`n"
 		}
 		Process, Priority, % this.PID, Realtime
 		this.Stage++
@@ -365,7 +365,7 @@ class IC_BrivMaster_Relay_Class
 			this.PID := this.GetNewPID() ;We need to get a PID that is NOT the same as the one in the main script
 			if (this.PID) ;If we pick up a PID just exit
 			{
-				this.LogString.=A_TickCount . " SetPID()=[" . this.PID . "] success after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
+				this.LogString.=A_Tickcount . ",SetPID()=[" . this.PID . "] success after [" . A_TickCount - (MaxTime-timeout) . "]ms`n"
 				this.Stage++
 			}
 		}
@@ -401,17 +401,17 @@ class IC_BrivMaster_Relay_Class
 			{
 				this.PID:=openPID
 				this.Stage+=2 ;Skip finding the PID via window
-				this.LogString.=A_TickCount . " OpenProcess() opened with PID=[" . openPID . "]`n"
+				this.LogString.=A_Tickcount . ",OpenProcess() opened with PID=[" . openPID . "]`n"
 			}
 			else
 			{
 				this.Stage++
-				this.LogString.=A_TickCount . " OpenProcess() opened without PID`n"
+				this.LogString.=A_Tickcount . ",OpenProcess() opened without PID`n"
 			}
 		}
 		catch ;Failed to start
 		{
-			this.LogString.=A_TickCount . " OpenProcess() failed to launch game`n"
+			this.LogString.=A_Tickcount . ",OpenProcess() failed to launch game`n"
 			this.Stage:=-1
 		}
     }

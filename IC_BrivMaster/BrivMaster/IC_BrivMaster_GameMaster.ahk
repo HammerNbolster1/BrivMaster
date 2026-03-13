@@ -92,7 +92,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
             }
 			g_IBM.IBM_Sleep(15)
 			processName:=g_SF.GetProcessName(openPID)
-			if (processName==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+			if (processName=g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
 			{
 				this.PID:=openPID
 				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")

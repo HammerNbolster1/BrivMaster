@@ -522,6 +522,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[g_Heroes[33].HeroIndex].effects.effectKeysByHashedKeyName
 		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
 		DEBUG_FARI_READ:=""
+		DEBUG_FARI_READ_DEBUFFS:=""
 		loop, %EK_HANDLER_SIZE%
 		{
 			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
@@ -529,6 +530,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				DEBUG_FARI_READ:=PARENT_HANDLER.activeEffectHandlers[0].QuickClone()
 				DEBUG_FARI_READ.FullOffsets.Push(192)
+				DEBUG_FARI_READ_DEBUFFS:=PARENT_HANDLER.activeEffectHandlers[0].QuickClone()
+				DEBUG_FARI_READ_DEBUFFS.FullOffsets.Push(184,64) ;184 for dictionary, 64 for size property
 				Break
 			}
 		}
@@ -591,7 +594,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				;END FARI DEBUG BLOCK
 				;++++++++++++++++++++
 			}
-			DllCall("QueryPerformanceCounter", "Int64*", loopTime)
 			ElapsedTime:=loopTime - startTime
 			stacks:=g_Heroes[58].FastReadSBStacks()
 			;++++++++++++++++++++++
@@ -604,15 +606,17 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			DEBUG_FARI_ULT_NOW:=DEBUG_FARI_READ.Read("Char")
 			if(DEBUG_FARI_ULT_NOW!=DEBUG_FARI_ALT_ACTIVE)
 			{
+				;debuffCount:=DEBUG_FARI_READ_DEBUFFS.Read("Int")
 				if(DEBUG_FARI_ULT_NOW)
-					DEBUG_FARI_LOG.="Fari Ult Start," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ","
+					DEBUG_FARI_LOG.="Fari Ult Start," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ",Debuffs," . debuffCount . ","
 				else
-					DEBUG_FARI_LOG.="Fari Ult End," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ","
+					DEBUG_FARI_LOG.="Fari Ult End," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ",Debuffs," . debuffCount . ","
 				DEBUG_FARI_ALT_ACTIVE:=DEBUG_FARI_ULT_NOW
 			}
 			if(!DEBUG_FARI_ZONE_FULL AND _IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGED_ADDRESS,MEMORY_RANGED_TYPE)>=100)
 			{
-				DEBUG_FARI_LOG.="Fari 100 Atk," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ","
+				debuffCount:=DEBUG_FARI_READ_DEBUFFS.Read("Int")
+				DEBUG_FARI_LOG.="Fari 100 Atk," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ",Debuffs," . debuffCount . ","
 				DEBUG_FARI_ZONE_FULL:=true
 			}
 			*/
@@ -622,7 +626,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		;++++++++++++++++++++++
 		;START FARI DEBUG BLOCK
 		;DllCall("QueryPerformanceCounter", "Int64*", loopTime)
-		;DEBUG_FARI_LOG.="Fari Stacked," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks
+		;debuffCount:=DEBUG_FARI_READ_DEBUFFS.Read("Int")
+		;DEBUG_FARI_LOG.="Fari Stacked," . Round(loopTime/g_IBM.CounterFrequency,3) . ",S," . stacks . ",Debuffs," . debuffCount . ","
 		;END FARI DEBUG BLOCK
 		;++++++++++++++++++++
 		this.KEY_autoProgress.KeyPress_Bulk() ;Enable autoprogress as fast as we can. If we're stuck the following will handle it. Using _Bulk for this reason-game focus is set when precision is turned on

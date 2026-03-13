@@ -88,7 +88,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			this.RelayData.Reset()
 		}
-		this.UpdateStatusString()
+		g_SharedData.UpdateOutbound("IBM_RunControl_CycleString","Cycle " . this.cycleCount . "/" . this.cycleMax . (this.cycleForceOffline ? " FO" : ""))
+		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
 		this.SetInitialStackString()
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false)
 	}
@@ -111,12 +112,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if(this.RelayBlankOffline)
 			this.RelayData.PreRelease()
-	}
-
-	UpdateStatusString()
-	{
-		g_SharedData.UpdateOutbound("IBM_RunControl_CycleString","Cycle " . this.cycleCount . "/" . this.cycleMax . (this.cycleForceOffline ? " FO" : ""))
-		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
 	}
 
 	GetStrategyString() ;Separated to allow it to be placed into the log TODO: This could be further separated to make the log entry more suitable for CSV. Pass the targetStacks to avoid duplicate calls there?

@@ -237,8 +237,8 @@ class IC_BrivMaster_Relay_Class
 			this.MEMORY_LOADED_finalAddress:=this.MemoryManager.getAddressFromOffsets(this.gameBaseAddress, this.MEMORY_LOADED_Offsets*)
 		if (this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type)==1) ;If the user has loaded
 		{
-			this.SuspendProcess(this.PID,True)
 			this.LogString.=A_TickCount . " WaitForUserLogin() exit via Suspend in [" . A_TickCount-(MaxTime-timeout) . "]ms FinalAddress=[" . this.MEMORY_LOADED_finalAddress . "] Loaded read=[" . this.MemoryManager.read(this.MEMORY_LOADED_finalAddress, this.MEMORY_LOADED_Type) . "]`n"
+			this.MemoryManager.suspend()
 			this.UpdateState(5)
 			try
 			{

@@ -266,16 +266,16 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			}
 			Critical Off
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
-			if (ElapsedTime >= targetTime) ;Don't suspend if we ran out of time waiting
+			if (ElapsedTime>=targetTime) ;Don't suspend if we ran out of time waiting
 				return
-			this.SuspendProcess(this.PID,True) 
+			_IBM_MM.instance.suspend()
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
-			While (ElapsedTime < targetTime)
+			While (ElapsedTime<targetTime)
 			{
 				g_IBM.IBM_Sleep(15)
 				ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			}
-			this.SuspendProcess(this.PID,False)
+			_IBM_MM.instance.resume()
 		}
 	}
 	

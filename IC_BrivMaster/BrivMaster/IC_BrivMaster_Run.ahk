@@ -1,12 +1,5 @@
 #Requires AutoHotkey 1.1.37+ <1.2
 #SingleInstance Force
-;Based on BrivGemFarm Performance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the Readme.
-
-;=======================
-;Script Optimization
-;=======================
-#HotkeyInterval 1000  ; The default value is 2000 (milliseconds).
-#MaxHotkeysPerInterval 70 ; The default value is 70
 #NoEnv ; Avoids checking empty variables to see if they are environment variables (recommended for all new scripts). Default behavior for AutoHotkey v2.
 SetWorkingDir %A_ScriptDir%
 SetWinDelay, 33 ; Sets the delay that will occur after each windowing command, such as WinActivate. (Default is 100)
@@ -16,6 +9,8 @@ SetBatchLines, -1 ; How fast a script will run (affects CPU utilization).(Defaul
 ListLines Off
 Process, Priority,, High
 CoordMode, Mouse, Client
+
+;Based on BrivGemFarm Performance by MikeBaldi and Antilectual, and on various addons created by ImpEGamer. Refer to the Readme.
 
 #include %A_LineFile%\..\IC_BrivMaster_SharedFunctions.ahk ;Indirectly #includes IC_BrivMaster_Memory.ahk
 #include %A_LineFile%\..\IC_BrivMaster_Functions.ahk

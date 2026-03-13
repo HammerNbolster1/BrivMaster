@@ -31,8 +31,6 @@ global g_Heroes:={} ;Has to be instantiated after memory reads are available
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()
 global g_SharedData:=New IC_BrivMaster_SharedData_Class
 
-#include *i %A_LineFile%\..\IC_BrivMaster_Mods.ahk
-
 g_SharedData.Init() ;Loads settings so must be prior to the icon set and Window:Show in CreateWindow()
 g_IBM.CreateWindow()
 

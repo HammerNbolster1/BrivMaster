@@ -25,15 +25,11 @@ class _IC_BrivMaster_Memory_Reader_Class
                 ,   "PROCESS_VM_WRITE": 0x0020
                 ,   "SYNCHRONIZE": 0x00100000}
 
-    __new(program, dwDesiredAccess:="", byRef handle:="", windowMatchMode:=3) ;TODO: Change this to only work with a PID, and find the PID if needed elsewhere?
+    __new(program, byRef handle:="") ;TODO: Change this to only work with a PID, and find the PID if needed elsewhere?
     {         
-        if(this.PID:=handle:=this.findPID(program, windowMatchMode)) ; set handle to 0 if program not found
+        if(this.PID:=handle:=this.findPID(program)) ; set handle to 0 if program not found
         {
-            ;This default access level is sufficient to read and write memory addresses, and to perform pattern scans. If the program is run using admin privileges, then this script will also need admin privileges
-            if dwDesiredAccess is not integer       
-                dwDesiredAccess:=this.aRights.PROCESS_QUERY_INFORMATION | this.aRights.PROCESS_VM_OPERATION | this.aRights.PROCESS_VM_READ | this.aRights.PROCESS_VM_WRITE
-            dwDesiredAccess|=this.aRights.SYNCHRONIZE ; add SYNCHRONIZE to all handles to allow isHandleValid() to work TODO: We're not actually using that; either do so, or remove this
-
+			dwDesiredAccess:=this.aRights.PROCESS_QUERY_INFORMATION | this.aRights.PROCESS_VM_OPERATION | this.aRights.PROCESS_VM_READ | this.aRights.SYNCHRONIZE | this.aRights.PROCESS_SUSPEND_RESUME ;SYNCHRONIZE is for use with isHandleValid(), which we are not currently using - but possibly should be
             if this.hProcess:=handle:=this.OpenProcess(this.PID, dwDesiredAccess) ; NULL/Blank if failed to open process for some reason
             {
                 this.pNumberOfBytesRead:=DllCall("GlobalAlloc", "UInt", 0x0040, "Ptr", A_PtrSize, "Ptr") ; 0x0040 initialise to 0
@@ -54,21 +50,14 @@ class _IC_BrivMaster_Memory_Reader_Class
         return
     }
 
-    findPID(program, windowMatchMode := "3")
+    findPID(program) ;Irisiri - removed WindowMatchMode parameter handling as we always use 3
     {
         if RegExMatch(program, "i)\s*AHK_PID\s+(0x[[:xdigit:]]+|\d+)", pid) ;If user passes an AHK_PID, don't bother searching. There are cases where searching windows for PIDs wont work - console apps
             return pid1
-        if windowMatchMode
-        {
-            ; This is a string and will not contain the 0x prefix
-            mode := A_TitleMatchMode
-            ; remove hex prefix as SetTitleMatchMode will throw a run time error. This will occur if integer mode is set to hex and user passed an int (unquoted)
-            StringReplace, windowMatchMode, windowMatchMode, 0x 
-            SetTitleMatchMode, %windowMatchMode%
-        }
+		mode:=A_TitleMatchMode
+		SetTitleMatchMode, 3
         WinGet, pid, pid, %program%
-        if windowMatchMode
-            SetTitleMatchMode, %mode%    ; In case executed in autoexec
+        SetTitleMatchMode, %mode%    ; In case executed in autoexec
 
         ; If use 'ahk_exe test.exe' and winget fails (which can happen when setSeDebugPrivilege is required),
         ; try using the process command. When it fails due to setSeDebugPrivilege, setSeDebugPrivilege will still be required to openProcess

@@ -315,7 +315,7 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 		ControlFocus,, ahk_id %hwnd%
 	}
 	
-	class IC_BrivMaster_InputManager_Key_Class ;Represents a single key. Used by IC_BrivMaster_InputManager_Class
+	class IC_BrivMaster_InputManager_Key_Class ;Represents a single key
 	{
 		__new(key)
 		{
@@ -420,7 +420,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 
 	CallPreventStackFail(sprint, steelbones, message,launchScript:=false) ;This function should be called after checking sprint & steelbones are valid - i.e. move 0 if no value is present. TODO: Can maybe bring this in too?
     {
-        stacks:=sprint + FLOOR(steelbones * g_IBM.RouteMaster.stackConversionRate)
+        stacks:=sprint + Floor(steelbones * g_IBM.RouteMaster.stackConversionRate)
 		g_IBM.Logger.AddMessage("Servercall Save via: "  . message . " Converted Haste=[" . stacks . "] from Haste=[" . sprint . "] and Steelbones=[" . steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 		jsonString:="{""stats"":{""briv_steelbones_stacks"":0,""briv_sprint_stacks"":" . stacks . "}}"
 		boundaryHeader:=this.GetBoundryHeader()

@@ -1689,30 +1689,6 @@ IBM_MainButtons_Save()
 	GuiControl, IBM_Home: Enable, IBM_MainButtons_Save
 }
 
-IBM_Launch_Override() ;TODO: The game launch routine should probably not be in the GUI file
-{
-	programLoc:=g_IBM_Settings.IBM_Game_Launch
-    try
-    {
-		if (g_IBM_Settings.IBM_Game_Hide_Launcher)
-			Run, %programLoc%,,Hide, openPID
-		else
-			Run, %programLoc%,,,openPID
-    }
-    catch
-    {
-        MsgBox, 48, % "Unable to launch game, `nVerify the game location is set properly in the Briv Master settings. If you do not wish to use Briv Master's location settings please disable the addon"
-    }
-	if (g_SF.GetProcessName(openPID)==g_IBM_Settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
-		g_SF.PID:=openPID
-    else
-	{
-		Process, Exist, % g_IBM_Settings.IBM_Game_Exe
-		g_SF.PID:=ErrorLevel
-	}
-	Process, Priority, % g_SF.PID, Realtime ;Raises IC's priority
-}
-
 IBM_Game_Copy_From_Game() ;Copy game location settings from the running game. Note that using WinGet ProcessPath will return odd values for some mounted devices
 {
 	GuiControlGet, currentExe,, vIBM_Game_Exe

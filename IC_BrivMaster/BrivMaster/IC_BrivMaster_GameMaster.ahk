@@ -91,7 +91,8 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
                 ExitApp
             }
 			g_IBM.IBM_Sleep(15)
-			if (g_SF.GetProcessName(openPID)==g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
+			processName:=g_SF.GetProcessName(openPID)
+			if (processName=g_IBM_Settings["IBM_Game_Exe"]) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
 			{
 				this.PID:=openPID
 				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
@@ -131,6 +132,11 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 					}
 					else
 						g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup ignoring PID=[" . gameProcess.ProcessId . "]")
+				}
+				if(processName="rare.exe" or processName="legendary.exe") ;Note these are = not == by design. This is to kill launchers that might be queued up trying to launch the game, e.g. due to a connection outage. This is explicitly using these launchers as for normal EGS, OpenPID will be explorer, and we don't want to go killing that
+				{
+					this.TerminateProcess(openPID)
+					g_IBM.Logger.AddMessage("OpenProcessAndSetPID() attempted to terminate launcher [" . processName . "] PID=[" . openPID . "]")
 				}
 			}
         }
@@ -261,24 +267,24 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			}
 			Critical Off
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
-			if (ElapsedTime >= targetTime) ;Don't suspend if we ran out of time waiting
+			if (ElapsedTime>=targetTime) ;Don't suspend if we ran out of time waiting
 				return
-			this.SuspendProcess(this.PID,True) 
+			_IBM_MM.instance.suspend()
 			ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
-			While (ElapsedTime < targetTime)
+			While (ElapsedTime<targetTime)
 			{
 				g_IBM.IBM_Sleep(15)
 				ElapsedTime:=A_TickCount - g_IBM.routeMaster.offlineSaveTime
 			}
-			this.SuspendProcess(this.PID,False)
+			_IBM_MM.instance.resume()
 		}
 	}
 	
-	SuspendProcess(PID,doSuspend:=True) ;TODO: Class memory appears to offer these calls, could save us opening/closing the process if we can use them? Appears to require addional access on the process than default, though
+	SuspendProcess(PID,doSuspend:=True) ;Used where we may need to suspend/resume a different process, namely for the relay, memory manager suspend() and resume() can be used otherwise TODO: Which makes placing it in the GameMaster a bit odd - might make more sense as part of the relay class now?
 	{
-		h:=DllCall("OpenProcess","uInt",0x1F0FFF,"Int",0,"Int",PID)
+		h:=DllCall("OpenProcess","uInt",0x0800,"Int",0,"Int",PID)
 		if (!h)
-			return -1 ;TODO: I don't think we really do much with this, and don't return anything for sucess either?
+			return
 		if (doSuspend)
 			DllCall("ntdll.dll\NtSuspendProcess","Int",h)
 		else
@@ -381,7 +387,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		if (saveCompleteTime==-1) ;Failed to detect, going to have to go with current time
 		{
 			saveCompleteTime:=A_TickCount
-			g_IBM.Logger.AddMessage("CloseIC() fully timed out without detecting a save")
+			g_IBM.Logger.AddMessage("CloseIC() fully timed out without detecting a save") ;TODO: This isn't very clear that it could be the window disappearing
 		}
         return saveCompleteTime
     }

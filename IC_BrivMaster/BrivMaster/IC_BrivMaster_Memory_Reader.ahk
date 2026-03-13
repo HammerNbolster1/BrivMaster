@@ -50,21 +50,14 @@ class _IC_BrivMaster_Memory_Reader_Class
         return
     }
 
-    findPID(program, windowMatchMode := "3")
+    findPID(program) ;Irisiri - removed WindowMatchMode parameter handling as we always use 3
     {
         if RegExMatch(program, "i)\s*AHK_PID\s+(0x[[:xdigit:]]+|\d+)", pid) ;If user passes an AHK_PID, don't bother searching. There are cases where searching windows for PIDs wont work - console apps
             return pid1
-        if windowMatchMode
-        {
-            ; This is a string and will not contain the 0x prefix
-            mode := A_TitleMatchMode
-            ; remove hex prefix as SetTitleMatchMode will throw a run time error. This will occur if integer mode is set to hex and user passed an int (unquoted)
-            StringReplace, windowMatchMode, windowMatchMode, 0x 
-            SetTitleMatchMode, %windowMatchMode%
-        }
+		mode:=A_TitleMatchMode
+		SetTitleMatchMode, 3
         WinGet, pid, pid, %program%
-        if windowMatchMode
-            SetTitleMatchMode, %mode%    ; In case executed in autoexec
+        SetTitleMatchMode, %mode%    ; In case executed in autoexec
 
         ; If use 'ahk_exe test.exe' and winget fails (which can happen when setSeDebugPrivilege is required),
         ; try using the process command. When it fails due to setSeDebugPrivilege, setSeDebugPrivilege will still be required to openProcess

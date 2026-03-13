@@ -94,7 +94,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false)
 	}
 
-	RelaySetup(logbase) ;One-time relay setup
+	RelaySetup(logBase) ;One-time relay setup
 	{
 		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class()
 		GuidCreate := ComObjCreate("Scriptlet.TypeLib")
@@ -318,15 +318,15 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         if (this.HybridBlankOffline) ;This logic is not used if we are doing blank offlines
 			return false
 		else if (this.cycleForceOffline) ;Force offline takes priority, as it will often be used with offline disabled below
-			return True
+			return true
 		else if (this.cycleDisableOffline)
-			return False
+			return false
 		else if (this.cycleMax==1) ;Hybrid disabled
-            return True
-        else if (this.cycleCount>=this.cycleMax) ;Hybrid Offline
-			return True
+            return true
+        else if (this.cycleCount>=this.cycleMax) ;Hybrid offline
+			return true
 		else ;Stack online
-			return False
+			return false
     }
 
 	ExpectingGameRestart()
@@ -336,7 +336,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	ShouldBlankRestart() ;This is run-based intent, other conditions (per TestForBlankOffline()) may cause a different result
 	{
-		return this.HybridBlankOffline AND (this.cycleCount >= this.cycleMax OR this.cycleForceOffline) AND (!this.cycleDisableOffline OR this.cycleForceOffline)
+		return this.HybridBlankOffline AND (this.cycleCount>=this.cycleMax OR this.cycleForceOffline) AND (!this.cycleDisableOffline OR this.cycleForceOffline)
 	}
 
 	TestForBlankOffline(currentZone)
@@ -368,7 +368,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		startZone:=g_SF.Memory.ReadCurrentZone() ; record current zone before saving for bad progression checks
 		g_IBM.Logger.AddMessage("BlankRestart Entry:z" . startZone)
 		g_IBM.GameMaster.CloseIC("BlankRestart",this.RelayBlankOffline) ;2nd arg is to use PID only, so we don't close the relay copy of the game when in that mode
-		if (this.RelayBlankOffline)
+		if(this.RelayBlankOffline)
 		{
 			g_IBM.Logger.AddMessage("BlankRestart() returning game in Relay mode")
 			this.RelayData.Release()
@@ -380,12 +380,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (g_IBM_Settings["IBM_OffLine_Sleep_Time"])
 			{
 				g_SharedData.UpdateOutbound("LoopString","BlankRestart: Sleep")
-				ElapsedTime := 0
+				ElapsedTime:=0
 				while (ElapsedTime < g_IBM_Settings["IBM_OffLine_Sleep_Time"])
 				{
 					g_SharedData.UpdateOutbound("LoopString","BlankRestart Sleep: " . g_IBM_Settings["IBM_OffLine_Sleep_Time"] - ElapsedTime)
 					g_IBM.IBM_Sleep(15)
-					ElapsedTime := A_TickCount
+					ElapsedTime:=A_TickCount
 				}
 			}
 		}
@@ -393,7 +393,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		totalTime:=A_TickCount-offlineStartTime
 		generatedStacks:=g_Heroes[58].ReadSBStacks() - startStacks
 		returnZone:=g_SF.Memory.ReadCurrentZone()
-		if (returnZone<startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
+		if(returnZone<startZone) ;We've gone backwards, this is expected as we don't stop autoprogress, although it can also happen if the exit save fails
 		{
 			g_IBM.RollBackAction(returnZone)
 			g_IBM.Logger.AddMessage("BlankRestart() Exit Rollback Detected,Start@z" . startZone . ",End@z" . returnZone . "," . generatedStacks . ",Time:" . totalTime . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
@@ -431,7 +431,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
         ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early. Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
-        if (g_Heroes[58].ReadHasteStacks() < 50 AND stacks>=targetStacks AND g_SF.Memory.ReadHighestZone()>this.thelloraTarget AND (g_SF.Memory.ReadHighestZone()<=this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...) Even more TODO: Should we check ReadAreaActive() here as well?
+        if (g_Heroes[58].ReadHasteStacks()<50 AND stacks>=targetStacks AND g_SF.Memory.ReadHighestZone()>this.thelloraTarget AND (g_SF.Memory.ReadHighestZone()<=this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...) Even more TODO: Should we check ReadAreaActive() here as well?
         {
             if (this.RelayBlankOffline AND this.RelayData.IsActive()) ;TODO: Something smart here
 			{
@@ -495,7 +495,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Avoid levelling Farideh in recovery - as a decent DPS she massively increases the stack zone, forcing us to walk much further
 			{
-				g_IBM.LevelManager.OverrideLevelByIDLowerToMax(33, "min", 0)
+				g_IBM.LevelManager.OverrideLevelByIDLowerToMax(33,"min",0)
 				activateFariUlt:=false
 			}
 			else
@@ -594,6 +594,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				;END FARI DEBUG BLOCK
 				;++++++++++++++++++++
 			}
+			DllCall("QueryPerformanceCounter","Int64*",loopTime)
 			ElapsedTime:=loopTime - startTime
 			stacks:=g_Heroes[58].FastReadSBStacks()
 			;++++++++++++++++++++++
@@ -734,9 +735,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
         if(currentZone<g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Never attempt to stack below minimum recovery stack zone
 			return true
-		if (g_Heroes[58].ReadHasteStacks()<50) ;Stack immediately if Briv can't jump anymore.
+		if (g_Heroes[58].ReadHasteStacks()<50) ;Stack immediately if Briv can't jump
             return false
-		if (currentZone>this.LastSafeStackZone) ; Stack immediately to prevent resetting before stacking.
+		if (currentZone>this.LastSafeStackZone) ;Stack immediately to avoid resetting before stacking
 			return false
 		if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Below target minimum online zone (for Melf or otherwise, bad name). Here as this will be called once we pass the recovery minimum
 			return true
@@ -828,8 +829,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
                 g_SharedData.UpdateOutbound("LoopString","Stack Sleep: Failed (zone < min)")
                 Break  ; "Bad Save? Loaded below stack zone, see value."
             }
-            ;g_SharedData.PreviousStacksFromOffline := stacks - lastStacks ;Doesn't appear to be used for anything
-            lastStacks := stacks
+            lastStacks:=stacks
 			g_IBM.Logger.AddMessage("Offline:" . g_SF.Memory.ReadCurrentZone() . "," . stacks . ",Time:" . A_TickCount - this.offlineSaveTime . ",Attempt:" . retryAttempt . ",OfflineTime:" . g_SF.Memory.ReadOfflineTime() . ",Server:" . g_SF.Memory.IBM_GetWebRootFriendly())
 			this.offlineSaveTime:=-1 ;Flags as not active
         }
@@ -1188,7 +1188,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return (thunderInQ OR thunderInE)
 		}
 		else if (g_SF.Memory.HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetActiveModronFormationSaveSlot())) ;Briv has feats in M
-			return g_SF.Memory.HeroHasFeatSavedInFormation(58, 2131 , g_SF.Memory.GetActiveModronFormationSaveSlot())
+			return g_SF.Memory.HeroHasFeatSavedInFormation(58, 2131 ,g_SF.Memory.GetActiveModronFormationSaveSlot())
 		else ;Non-feat swap might not have feats saved in formations at all
 		{
 			feats:=g_SF.Memory.GetHeroFeats(58)

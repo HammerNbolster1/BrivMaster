@@ -386,7 +386,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		if (saveCompleteTime==-1) ;Failed to detect, going to have to go with current time
 		{
 			saveCompleteTime:=A_TickCount
-			g_IBM.Logger.AddMessage("CloseIC() fully timed out without detecting a save")
+			g_IBM.Logger.AddMessage("CloseIC() fully timed out without detecting a save") ;TODO: This isn't very clear that it could be the window disappearing
 		}
         return saveCompleteTime
     }

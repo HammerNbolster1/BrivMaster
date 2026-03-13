@@ -42,7 +42,7 @@ if(A_Args[1])
 else
 {
     GuidCreate:=ComObjCreate("Scriptlet.TypeLib")
-    guid:=GuidCreate.Guid ;TODO: Would it be useful to store this somewhere?
+    guid:=GuidCreate.Guid
     ObjRegisterActive(g_SharedData, guid)
     g_SF.WriteObjectToAHKJSON(A_LineFile . "\..\LastGUID_IBM_GemFarm.json", guid)
 }
@@ -717,7 +717,7 @@ class IC_BrivMaster_GemFarm_Class
         http://goo.gl/no6XAS - ProgID
         http://goo.gl/obfmDc - CreateGUID()
 */
-ObjRegisterActive(Object, CLSID, Flags:=0)
+ObjRegisterActive(Object, CLSID, Flags:=0) ;TODO: This should not be floating around at the end of this file
 {
     static cookieJar := {}
     if (!CLSID)

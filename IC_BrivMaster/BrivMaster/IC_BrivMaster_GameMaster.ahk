@@ -279,11 +279,11 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		}
 	}
 	
-	SuspendProcess(PID,doSuspend:=True) ;TODO: Class memory appears to offer these calls, could save us opening/closing the process if we can use them? Appears to require addional access on the process than default, though
+	SuspendProcess(PID,doSuspend:=True) ;Used where we may need to suspend/resume a different process, namely for the relay, memory manager suspend() and resume() can be used otherwise TODO: Which makes placing it in the GameMaster a bit odd - might make more sense as part of the relay class now?
 	{
-		h:=DllCall("OpenProcess","uInt",0x1F0FFF,"Int",0,"Int",PID)
+		h:=DllCall("OpenProcess","uInt",0x0800,"Int",0,"Int",PID)
 		if (!h)
-			return -1 ;TODO: I don't think we really do much with this, and don't return anything for sucess either?
+			return
 		if (doSuspend)
 			DllCall("ntdll.dll\NtSuspendProcess","Int",h)
 		else

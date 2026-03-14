@@ -400,7 +400,7 @@ class IC_BrivMaster_Briv_Class extends IC_BrivMaster_Hero_Class
 
 	InitFastSB() ;Resolves the pointers to the current Steelbones stat for direct reads, this is intended for online stacking where we spam-read SB stacks. ;TODO: Since this is part of the statHandler is should really only change when the game restarts - can we make use of these reads all the time?
 	{
-		this.MEMORY_SB_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.FullOffsets*)
+		this.MEMORY_SB_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks)
 	}
 }
 

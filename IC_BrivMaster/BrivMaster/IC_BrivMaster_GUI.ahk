@@ -695,10 +695,11 @@
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Max
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
 		this.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
-		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, % "Use Farideh's ultimate at:"
-		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit3 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
-		Gui, IBM_Home:Add, Text, x+3 h18 0x200, enemies
-		this.AddToolTip("IBM_Online_Farideh_Threshold","The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applied expires just as stacking completes")
+		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, % "Farideh's ultimate trigger:"
+		Gui, IBM_Home:Add, DropDownList, cRed w110 x+3 AltSubmit vIBM_Online_Farideh_Condition gIBM_Generic_Setting_Int, Active enemies|Attacking enemies|Tatyana return
+		Gui, IBM_Home:Add, Text, x+3 h18 0x200, with threshold:
+		Gui, IBM_Home:Add, Edit, +%editTextColour% x+3 w32 Number Limit4 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
+		this.AddToolTip("IBM_Online_Farideh_Threshold","For Active enemies and Attacking enemies, this is the number of active enemies at which Farideh's ultimate will be used when stacking.`nFor Tatyana return the number of game milliseconds remaining on her return timer after which the ultimate should be used, e.g. 1250ms at x12.5 will result in the ultimate being used 100ms real time before she returns.`nUse these options to tune Farideh's ultimate usage")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Stacking ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Offline Settings
@@ -915,6 +916,7 @@
 		GuiControl, IBM_Home:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
 		IBM_Online_Melf_Enable(g_IBM_Settings.IBM_Online_Use_Melf)
 		GuiControl, IBM_Home:, IBM_Online_Farideh_Threshold, % g_IBM_Settings.IBM_Online_Farideh_Threshold
+		GuiControl, IBM_Home:Choose,IBM_Online_Farideh_Condition, % g_IBM_Settings.IBM_Online_Farideh_Condition
 		;Offline settings
 		GuiControl, IBM_Home:, IBM_OffLine_Delay_Time, % g_IBM_Settings.IBM_OffLine_Delay_Time
 		GuiControl, IBM_Home:, IBM_OffLine_Sleep_Time, % g_IBM_Settings.IBM_OffLine_Sleep_Time

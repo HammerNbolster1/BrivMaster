@@ -640,13 +640,13 @@ class IC_BrivMaster_GemFarm_Class
 		Gui, IBM_GemFarm:Color, % Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","WindowBackground"])
         Gui, IBM_GemFarm:Font, % "c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"]) . " w400 s8"
 		FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
-		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Gem Farm Started:"
+		Gui IBM_GemFarm:Add, Text, w95 xm+1, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime
-		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Settings Updated:"
+		Gui IBM_GemFarm:Add, Text, w95 xm+1, % "Settings Updated:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Settings_Update_Time, % formattedDateTime
-		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Game Version:"
+		Gui IBM_GemFarm:Add, Text, w95 xm+1, % "Game Version:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Game, % "Checking..."
-		Gui IBM_GemFarm:Add, Text, w95 xm+5, % "Imports Version:"
+		Gui IBM_GemFarm:Add, Text, w95 xm+1, % "Imports Version:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3 vIBM_GemFarm_Version_Imports, % "Checking..."
 		if(!g_IBM_Settings["IBM_Window_Hide"])
 		{

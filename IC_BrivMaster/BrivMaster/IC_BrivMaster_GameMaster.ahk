@@ -280,18 +280,6 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		}
 	}
 	
-	SuspendProcess(PID,doSuspend:=True) ;Used where we may need to suspend/resume a different process, namely for the relay, memory manager suspend() and resume() can be used otherwise TODO: Which makes placing it in the GameMaster a bit odd - might make more sense as part of the relay class now?
-	{
-		h:=DllCall("OpenProcess","uInt",0x0800,"Int",0,"Int",PID)
-		if (!h)
-			return
-		if (doSuspend)
-			DllCall("ntdll.dll\NtSuspendProcess","Int",h)
-		else
-			DllCall("ntdll.dll\NtResumeProcess","Int",h)
-		DllCall("CloseHandle","Int",h)
-	}
-	
 	WaitForFinalStatUpdates() ;Waits until stats are finished updating from offline progress calculations
     {
 		g_SharedData.UpdateOutbound("LoopString","Waiting for offline progress (Area Active)...")

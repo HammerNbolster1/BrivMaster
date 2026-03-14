@@ -16,6 +16,7 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 			{
 				case 58: this[heroID]:=new IC_BrivMaster_Briv_Class(heroID,this.IDToIndexMap[heroID]) ;Briv
 				case 83: this[heroID]:=new IC_BrivMaster_Elly_Class(heroID,this.IDToIndexMap[heroID]) ;Elly
+				case 97: this[heroID]:=new IC_BrivMaster_Tatyana_Class(heroID,this.IDToIndexMap[heroID]) ;Tatyana
 				case 139: this[heroID]:=new IC_BrivMaster_Thellora_Class(heroID,this.IDToIndexMap[heroID]) ;Thellora
 				default: this[heroID]:=new IC_BrivMaster_Hero_Class(heroID,this.IDToIndexMap[heroID])
 			}
@@ -400,7 +401,7 @@ class IC_BrivMaster_Briv_Class extends IC_BrivMaster_Hero_Class
 
 	InitFastSB() ;Resolves the pointers to the current Steelbones stat for direct reads, this is intended for online stacking where we spam-read SB stacks. ;TODO: Since this is part of the statHandler is should really only change when the game restarts - can we make use of these reads all the time?
 	{
-		this.MEMORY_SB_ADDRESS:=_IBM_MM.instance.getAddressFromOffsets(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.BasePtr.BaseAddress,g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks.FullOffsets*)
+		this.MEMORY_SB_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.BrivSteelbonesStacks)
 	}
 }
 
@@ -636,5 +637,31 @@ class IC_BrivMaster_Elly_Class extends IC_BrivMaster_Hero_Class
 	GetNumFlamesCards()
 	{
 		return this.GetNumCardsOfType(5)
+	}
+}
+
+class IC_BrivMaster_Tatyana_Class extends IC_BrivMaster_Hero_Class
+{
+	__new(heroID,heroIndex)
+	{
+		base.__new(heroID,heroIndex)
+		this.MEMORY_FAF_RETURN_TIMER_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName.List[0].parentEffectKeyHandler.activeEffectHandlers[0].awaitReturnTimer.t.ValueType ;This is a rather long way of writing "Double"
+		this.EFFECT_KEY_FAF:="tatyana_find_a_feast"
+	}
+	
+	GetFindAFeastReturnTimerAddress() ;Returns the address of the Find a Feast Handler's await return timer; the read itself is not encapsulated since it's part of the stack loop
+	{
+		EK_HANDLER:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.HeroHandler.heroes[this.heroIndex].effects.effectKeysByHashedKeyName
+		EK_HANDLER_SIZE:=EK_HANDLER.size.Read()
+		loop, %EK_HANDLER_SIZE%
+		{
+			PARENT_HANDLER:=EK_HANDLER["value", A_Index - 1].List[0].parentEffectKeyHandler
+			if (this.EFFECT_KEY_FAF==PARENT_HANDLER.def.Key.Read())
+			{
+				return g_SF.Memory.ResolvePointers(PARENT_HANDLER.activeEffectHandlers[0].awaitReturnTimer.t)
+			}
+		}
+		g_IBM.Logger.AddMessage("Tatyana: unable to find Find a Feast handler")
+		return ""
 	}
 }

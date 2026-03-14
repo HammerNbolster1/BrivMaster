@@ -189,6 +189,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_Logger_MiniLog["_DEFAULT"]:=false
 		settings.IBM_Logger_ZoneLog["_DEFAULT"]:=false
 		settings.IBM_Online_Farideh_Threshold["_DEFAULT"]:=90
+		settings.IBM_Online_Farideh_Condition["_DEFAULT"]:=1
 		settings.IBM_Scan_Codes["Esc","_DEFAULT"]:=1 ;Escape for skipping splash screen
 		settings.IBM_Scan_Codes["F1","_DEFAULT"]:=59 ;F-keys for levelling
 		settings.IBM_Scan_Codes["F2","_DEFAULT"]:=60

@@ -258,7 +258,7 @@ Check now: Use to manually perform a version check.
 	
 ## BM Route
 
-This tab focuses mostly on routing of the run
+This tab focuses mostly on routing of the run.
 
 ### Starting Strategy
 Combine Thellora and Briv: There are two primary ways for a run to start.
@@ -307,7 +307,7 @@ Min recovery stack zone: The minimum zone Briv can farm stacks on; that is the l
 
 Min online stack zone: The full W formation must not be able to kill enemies in this zone.
 - If Online Stack with Melf (see below) is disabled, the farm will stack at the first stack zone greater than or equal to this.
-- If Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. It will also be the zone used if a spawn more buff cannot be found
+- If Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. It will also be the zone used if a spawn more buff is not available.
 	
 Online Stack with Melf: When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified. Melf has 3 different buffs that are 'randomly' active, but being a computer program it is only psuedo-random and is possible to predict.
 	
@@ -317,7 +317,14 @@ Max: This, rounded up to the next 50, is the highest zone that Briv Master will 
 
 > Author's Note: This means that if you have a reset of say z1200, setting z1020 here will allow stacking up to and including z1049. Disabling the later zones in the route grid would allow you to prevent stacking from z1021 to z1049, but will have consequences for the start of the run.
 
-Use Farideh's Ultimate at: The number of active enemies at which Farideh's ultimate will be used when stacking. For a capped Tatyana and / or Melf this should be 80+, but for lower levels testing will be required. Ideally the debuff applies once enemies are all attacking (so melee enemies have reached Briv), but runs out as stacking finished.
+Farideh's ultiamte trigger and threshold: The condition used to determine when Farideh's ultimate should be used during online stacking. Three options are provided:
+- Number of active enemies (i.e. enemies on-screen).
+- Number of attacking enemies (the primary difference from the above being that melee enemies have reached the formation).
+- A number of game-time milliseconds before Tatyana returns from off screen with her Find a Feast spawns. The timer starts at 2000ms so values above that are not useful.
+Ideally the debuff applies once enemies are all attacking (so melee enemies have reached Briv), but runs out as stacking finishes.
+
+> Author's Note 1: The community has not reached a strong concensus on the use of Farideh yet. It's likely that if you need a large number of stacks (probably >5s stack time) waiting for 100 attacking enemies makes sense. If needing a low number and using only a capped Tatyana for spawns (no Melf), then using a pre-cast on her return in the region of 1250ms will likely be best.
+> Author's Note 2: During testing of the Tatyana return option, increasing the pre-cast to unreasonable levels did not cause Farideh's ult to be used before the spawns arrived as might be expected; instead the game seemed to get janky and it fired just after Tatyana returned anyway. The jank caused a FPS dip which is determintal to performance, so take care to avoid this. That is, don't just set it to 2000ms because it appears to work.
 	
 ### Offline Settings 
 Platform Login: When a stacking restart is needed BrivMaster will restart the game early and hold it after platform login, in order to be as consistent as possible. IC requires 15s to elapse between the save when closing and the game login when restarting to trigger offline progress, therefore the upper bound for this value is 15000ms. As some time elapses between platform login and game login it should be possible to reduce this somewhat; slower PCs will be able to reduce it further to compensate.

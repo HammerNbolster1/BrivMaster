@@ -1319,12 +1319,12 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	{
 		if (this.State==5) ;Expected state, just resume process and move on
 		{
-			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
+			this.SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 5 - resuming")
 		}
 		else if (this.State==6) ;DEBUG: Relay is in a complete state. This might be possible during relay run recovery? TODO: This can be called when a second CloseIC() is called after the relay handover, e.g. because the run gets stuck
 		{
-			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
+			this.SuspendProcess(this.RelayPID,False)
 			g_IBM.Logger.AddMessage("Relay PreRelease() state 6 - resuming - DEBUG")
 		}
 		else if (this.State>0) ;Request release
@@ -1338,7 +1338,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 	{
 		if (this.State==5) ;Expected state, just resume process and move on
 		{
-			g_IBM.GameMaster.SuspendProcess(this.RelayPID,False)
+			this.SuspendProcess(this.RelayPID,False)
 			this.ProcessSwap()
 			g_IBM.Logger.AddMessage("Relay Release() state 5")
 			this.State:=6 ;Complete
@@ -1387,6 +1387,18 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_IBM.Logger.AddMessage("Relay Release() with invalid state [" . this.State . "]")
 		this.State:=6 ;Complete
 	}
+	
+	SuspendProcess(PID,doSuspend:=True) ;Only used for the relay, as memory manager .suspend() / .resume() can be used for attached processes
+	{
+		h:=DllCall("OpenProcess","uInt",0x0800,"Int",0,"Int",PID)
+		if (!h)
+			return
+		if (doSuspend)
+			DllCall("ntdll.dll\NtSuspendProcess","Int",h)
+		else
+			DllCall("ntdll.dll\NtResumeProcess","Int",h)
+		DllCall("CloseHandle","Int",h)
+	}
 
 	LogZone(message) ;DEBUG - remove later?
 	{
@@ -1406,7 +1418,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		{
 			g_IBM.Logger.AddMessage("CleanUpOnFail() recovery PID found=[" . recoveryPID . "]")
 			g_IBM.GameMaster.PID:=recoveryPID
-			g_IBM.GameMaster.SuspendProcess(g_IBM.GameMaster.PID,False) ;Ensure the process is not stuck suspended
+			this.SuspendProcess(g_IBM.GameMaster.PID,False) ;Ensure the process is not stuck suspended
 			g_IBM.GameMaster.Hwnd:=WinExist("ahk_pid " . recoveryPID)
 			g_SF.Memory.OpenProcessReader(recoveryPID) ;Open this PID specifically
 			g_SF.ResetServerCall()

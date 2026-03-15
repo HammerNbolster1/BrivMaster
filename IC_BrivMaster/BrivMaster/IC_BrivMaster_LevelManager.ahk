@@ -196,7 +196,6 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			g_Heroes[heroID].RaisePriorityForFrontRow()
 	}
 
-
 	Reset()
 	{
 		this.ResetLevellingDone()

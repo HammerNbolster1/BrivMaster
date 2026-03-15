@@ -76,9 +76,9 @@ class IC_BrivMaster_GemFarm_Class
     {
         static lastResetCount:=0
         this.TriggerStart:=true
-        DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once TODO: I think the frequency can be changed, so this might not be safe?
-		this.CounterFrequency:=PerformanceCounterFrequency//1000 ;Convert from seconds to milliseconds as that is our main interest
-		this.GameMaster:=New IC_BrivMaster_GameMaster_Class()
+        DllCall("QueryPerformanceFrequency", "Int64*", PerformanceCounterFrequency) ;Get the performance counter frequency once as it cannot change
+		this.CounterFrequency:=PerformanceCounterFrequency/1000 ;Convert from seconds to milliseconds as that is our main interest
+		this.GameMaster:=New IC_BrivMaster_GameMaster_Class() ;This does the initial OpenProcessReader() call
 		this.RefreshImportCheck() ;Does the initial population of the import check
         g_ServerCall.UpdatePlayServer() ;TODO: Does doing this before ResetServerCall() make any sense? It won't have an instance yet?
         g_SF.ResetServerCall()
@@ -90,7 +90,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.Logger.OutputHeader() ;After the RouteMaster is created so that the strategy string can be included in the header
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
-		this.offRamp:=false ;Limit the code that runs at the end of a run
+		this.offRamp:=false ;Flag when approaching the end of a run for missed-reset detection
 		this.EllywickCasino:=New IC_BrivMaster_EllywickCasino_Class(this.RouteMaster.combining)
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
@@ -111,7 +111,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.TriggerStart:=true
 					this.Logger.AddMessage("Missed Reset: Core reset count=[" . g_SF.Memory.ReadResetsCount() . "] lastResetCount=[" . lastResetCount . "]")
 				}
-				else if (lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one TODO: Should we also store and check the total resets count (currently in the logger partly) to check here? As whilst a background party can increase it, if it has not changed then we can conclude there has been no reset on any party. More thoughts: We should check the memory read is not >0 here, as this has the potential to intercept normal reset 0 to reset 1 progression? Possibly the modron reset code should reset the offramp (or possibly the offramp should just go...)
+				else if(lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one
 				{
 					this.TriggerStart:=true
 					this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
@@ -428,7 +428,6 @@ class IC_BrivMaster_GemFarm_Class
 	}
 
 	;START PRE-FLIGHT CHECK
-
     PreFlightCheck() ;TODO: Pack some of this into functions - it's getting a bit large
     {
 		;Check for active adventure
@@ -611,7 +610,6 @@ class IC_BrivMaster_GemFarm_Class
 		title:="Briv Master Startup: " . failingStep
 		Msgbox, % options, %title%, %message%
 	}
-
 	;END PRE-FLIGHT CHECK
 
     ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.

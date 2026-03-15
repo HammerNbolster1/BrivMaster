@@ -1240,7 +1240,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 					inZone.stacksToFinish:=this.jumpCosts[jumpsDone] ;Currently assuming Metalborn always
 				}
 			}
-			;OutputDebug % inZone.z . ","
 			this.JumpsRecurse(inZone, jumpsDone)
 		}
 	}

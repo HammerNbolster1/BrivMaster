@@ -1391,8 +1391,8 @@ class IC_BrivMaster_MemoryFunctions_Class
 
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {
-        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
-        if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible TODO: If 12 is max why is this 14? (was based on g_SF.Memory.GetCurrentFormation() )
+        size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
+        if(size<=0 OR size>12) ;Sanity check
             return true ;Assumed that an invalid read means the formation is empty
         loop, %size%
         {
@@ -1460,7 +1460,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	IBM_GetCurrentFormationChampions() ;Returns the champions in the formation, without positioning data, eg data[58]==true
     {
         size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
-        if(size<=0 OR size>14) ; sanity check, 12 is the max number of concurrent champions possible.
+        if(size<=0 OR size>12) ;Sanity check
             return ""
         champList:=[]
         loop, %size%

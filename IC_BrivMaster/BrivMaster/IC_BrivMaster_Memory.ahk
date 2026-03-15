@@ -235,7 +235,9 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             return returnObj:=this.ReturnGameObject(this.CreateHeadObject())
         else if (key=="__version")
             return returnObj:=this.ReturnGameObject(this.CreateVersionObject())
-        if(this.ValueType=="Dict" OR this.ValueType=="SortedDict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys.
+        ;if(this.ValueType=="Dict" OR this.ValueType=="SortedDict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys.
+        ;    return returnObj:=this.ReturnGameObject(this.GetDictionaryObject(key, index))
+		if(this.ValueType=="Dict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys. Irisiri - version without SortedDict as it is not used
             return returnObj:=this.ReturnGameObject(this.GetDictionaryObject(key, index))
         else if(this.ValueType=="List" OR this.ValueType=="Stack" OR this.ValueType=="Queue") ;Special case for List/Stack/Queue collections in a gameobject.
 		{
@@ -274,7 +276,6 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         else if(this.ValueType == "Dict")
             sizeObject.FullOffsets.Push(0x40)
         else if(this.ValueType == "SortedDict")
-            sizeObject.FullOffsets.Push(0x20,0x30)
         else if(this.ValueType == "HashSet")
             sizeObject.FullOffsets.Push(0x30)
         else
@@ -305,8 +306,8 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             versionObject.FullOffsets.Push(0x28)
         else if(this.ValueType == "Dict")
             versionObject.FullOffsets.Push(0x4C)
-        else if(this.ValueType == "SortedDict")
-            sizeObject.FullOffsets.Push(0x20,0x30) ;This was 0x20,0x3, which seems unlikely as not 4-byte aligned? We don't actually use any of these to test with
+        ;else if(this.ValueType == "SortedDict") ;Irisiri - SortedDict not used
+        ;    sizeObject.FullOffsets.Push(0x20,0x30) ;This was 0x20,0x3, which seems unlikely as not 4-byte aligned? We don't actually use any of these to test with
         else if(this.ValueType == "HashSet")
             versionObject.FullOffsets.Push(0x104)
         else ; Unsupported ValueType
@@ -509,7 +510,11 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             offsets.Push(0x14)
             var:=_IBM_MM.instance.readstring(baseAddress, bytes:=0, valueType, offsets*) ;TODO: Why the assignment to 'bytes' here?
         }
-        else if (valueType=="List" OR valueType=="Dict" OR valueType=="SortedDict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk
+        ;else if (valueType=="List" OR valueType=="Dict" OR valueType=="SortedDict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk
+        ;{
+        ;    var:=_IBM_MM.instance.read(baseAddress, "Int", (this.GetOffsets())*)
+        ;}
+		else if (valueType=="List" OR valueType=="Dict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk Irisiri - version of above with SortedDict removed as not used
         {
             var:=_IBM_MM.instance.read(baseAddress, "Int", (this.GetOffsets())*)
         }

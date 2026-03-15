@@ -651,7 +651,10 @@ Class IC_IriBrivMaster_Component
 		{
 			this.GetSettingsFileLocation(checkTime)
 			if (!this.GameSettingFileLocation) ;We tried and we failed
-				return ;TODO: Update the status text here?
+			{
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " unable to open game settings","TrafficLightBad","")
+				return
+			}
 		}
 		profile:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile
 		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)

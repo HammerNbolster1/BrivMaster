@@ -564,15 +564,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         return response
     }
 
-	/* Only used by IsOnWorldMap which we've commented out
-    CallUserDetails() ; Pulls user details from the server and returns it in a json parsed object
-    {
-        getUserParams := this.dummyData . "&include_free_play_objectives=true&instance_key=1&user_id=" . this.userID . "&hash=" . this.userHash
-        userDetails := this.ServerCall( "getuserdetails", getUserParams )
-        return userDetails
-    }
-	*/
-
     CallLoadAdventure(adventureToLoad) ;Starts a new adventure and returns the response
     {
         patronTier:=this.activePatronID ? 1 : 0
@@ -637,29 +628,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
             . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests
         return this.ServerCall("opengenericchest",chestParams,60000)
     }
-
-	/* ;Not actually used, we just seem to assume LoadAdventure will work after sending the end adventure call
-    ;A method to check if the party is on the world map. Necessary state to use callLoadAdventure()
-    IsOnWorldMap()
-    {
-        currentAdventure := 0
-        userDetails := this.CallUserDetails()
-        if ( !IsObject( userDetails ) )
-            return "Failed to fetch or build user details."
-        for k, v in userDetails.details.game_instances
-        {
-            if (v.game_instance_id == this.activeInstanceID) 
-            {
-                currentAdventure := v.current_adventure_id
-            }
-        }
-        if ( currentAdventure == -1 )
-            return 1
-        else
-            return 0
-    }
-	*/
-    
     CallGetPlayServer() ;Get the loadbalanced Play Server
     {
         return this.ServerCall("getPlayServerForDefinitions", this.dummyData)

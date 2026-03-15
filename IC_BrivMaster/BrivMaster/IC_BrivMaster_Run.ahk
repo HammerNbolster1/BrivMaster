@@ -426,6 +426,45 @@ class IC_BrivMaster_GemFarm_Class
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
 	}
+	
+	ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
+    {
+        if(this.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
+			this.TriggerStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
+		else
+        {
+            this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down
+            this.GameMaster.SafetyCheck()
+            this.CheckifStuck_lastCheck:=0 ;This used to be done by passing a 'force' option to CheckifStuck(), which seemed clunky - but we still need to reset these as we are no longer stuck. Or at least we hope not. TODO: Make a stuck-checker object to contain this stuff?
+            this.CheckifStuck_fallBackTries:=0
+		}
+		this.PreviousZoneStartTime:=A_TickCount
+    }
+	
+	WaitForModronReset(timeout:=60000)
+    {
+        StartTime:=A_TickCount
+        ElapsedTime:=0
+        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
+        g_ServerCall.UpdateStackData()
+		if(g_serverCall.ShouldCallPreventStackFail()) ;Only try and manually save if it hasn't already happened
+			g_serverCall.CallPreventStackFail("WaitForModronReset()",true)
+        while (g_SF.Memory.ReadResetting() AND ElapsedTime < timeout)
+        {
+            g_IBM.IBM_Sleep(20)
+            ElapsedTime:=A_TickCount - StartTime
+        }
+        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
+		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
+        while(!g_SF.Memory.ReadUserIsInited() AND g_SF.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
+        {
+            g_IBM.IBM_Sleep(20)
+            ElapsedTime:=A_TickCount - StartTime
+        }
+        if (ElapsedTime>=timeout)
+			return false
+        return true
+    }
 
 	;START PRE-FLIGHT CHECK
     PreFlightCheck() ;TODO: Pack some of this into functions - it's getting a bit large
@@ -611,20 +650,6 @@ class IC_BrivMaster_GemFarm_Class
 		Msgbox, % options, %title%, %message%
 	}
 	;END PRE-FLIGHT CHECK
-
-    ModronResetCheck() 	;Waits for modron to reset. Closes IC if it fails.
-    {
-        if(g_SF.WaitForModronReset(45000)) ;Don't use timeout factor here as this isn't related to host performance
-			this.TriggerStart:=true ;For some users the modron core reset count doesn't always increase post reset, despite my PC and tablet both working reliably. It might be a connectivity issue as it appears to be done by the server
-		else
-        {
-            this.GameMaster.RestartAdventure("Modron reset timed out z[" . g_SF.Memory.ReadCurrentZone() . "]",true) ;true flags this as a modron reset restart, where we should try and return to the adventure we're in if the server appears to be down
-            this.GameMaster.SafetyCheck()
-            this.CheckifStuck_lastCheck:=0 ;This used to be done by passing a 'force' option to CheckifStuck(), which seemed clunky - but we still need to reset these as we are no longer stuck. Or at least we hope not. TODO: Make a stuck-checker object to contain this stuff?
-            this.CheckifStuck_fallBackTries:=0
-		}
-		this.PreviousZoneStartTime:=A_TickCount
-    }
 
 	;GEM FARM WINDOW
 	CreateWindow()

@@ -127,30 +127,6 @@ class IC_BrivMaster_SharedFunctions_Class
         g_ServerCall.UpdateDummyData()
     }
 
-	WaitForModronReset(timeout:=60000)
-    {
-        StartTime:=A_TickCount
-        ElapsedTime:=0
-        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
-        this.SetUserCredentials()
-		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="") ;Only try and manually save if it hasn't already happened - (steelbones > 0)
-			g_serverCall.CallPreventStackFail(this.sprint,this.steelbones,"WaitForModronReset()",true)
-        while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
-        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        if (ElapsedTime>=timeout)
-			return false
-        return true
-    }
 
 	GetWebRoot()
     {

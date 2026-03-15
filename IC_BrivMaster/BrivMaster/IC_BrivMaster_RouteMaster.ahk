@@ -197,7 +197,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
 	{
-		assumeStandardRush ? rushNext:=0 : rushNext:=g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call TODO: Why this weird use of separate assignments?
+		rushNext:=assumeStandardRush ? 0 : g_Heroes[139].rushNext ;This is set by the prior UpdateLeftoverHaste() call
 		if(rushNext)
 			thelloraTarget:=this.GetThelloraTarget(rushNext,this.combining)
 		else

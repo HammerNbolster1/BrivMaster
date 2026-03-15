@@ -460,9 +460,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
     {
 		userData:=g_zlib.Deflate(jsonString)
 		checksum:=this.MD5Save(jsonString)
-		Random, r1, 0, 65535
-		Random, r2, 0, 65535
-		boundrySuffix:=Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
         mimicSave:="--" . boundaryHeader . "`r`n"
         mimicSave.="Content-Disposition: form-data; name=""call""`r`n"
         mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"

@@ -304,8 +304,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		this.activeModronID:=1
 		this.activePatronID:=0
 		this.webRoot:="http://ps22.idlechampions.com/~idledragons/" ;Default
-		this.Update()
-		this.UpdatePlayServer() ;After the Update() call so if the webroot is read properly from the game we'll be calling the correct server here
 		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
     }
 	

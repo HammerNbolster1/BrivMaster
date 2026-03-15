@@ -56,7 +56,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
 		g_SharedData.UpdateOutbound("IBM_RunControl_ForceOffline",false) ;Default to off
 		this.LastSafeStackZone:=this.GetLastSafeStackZone() ;No reason to re-calcuate this every zone
-		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false) ;Allows the hub to detect process changes on restarts promptly TODO: What does this have to do with the RouteMaster?
+		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false) ;Allows the hub to detect process changes on restarts promptly
 		this.LoadRoute()
 	}
 
@@ -275,7 +275,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		calcResult:={}
 		calcResult.haste:=g_Heroes[58].ReadHasteStacks()
-		if (!g_SF.Memory.ReadTransitioning()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking) - TODO: Needs to go in a function, as it's used in EnoughHasteForCurrentRun() too. Also TODO: The transition override was removing from this as the memory read is no longer available as of v637 (Nov25) - can we use one of the other transition reads to keep this robust?
+		if (!g_SF.Memory.ReadTransitioning()) ;If we're not in a transition at all, we need to use the current zone as the next zone may be unlocked (eg if stacking) - TODO: Needs to go in a function, as it's used in EnoughHasteForCurrentRun() too
 			calcResult.zone:=g_SF.Memory.ReadCurrentZone()
 		else ;Use the highest zone, as we should have spent the stacks as we left the previous one
 			calcResult.zone:=g_SF.Memory.ReadHighestZone()
@@ -717,7 +717,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if(ElapsedTime>=maxOnlineStackTime)
 			{
 				Critical Off
-				g_IBM.GameMaster.RestartAdventure("Online stack took too long (" . ROUND(ElapsedTime/(g_IBM.CounterFrequency*1000),1) . "s)") ;TODO: This seems a bit extreme?
+				g_IBM.GameMaster.RestartAdventure("Online stack took too long (" . ROUND(ElapsedTime/(g_IBM.CounterFrequency*1000),1) . "s)")
 				g_IBM.GameMaster.SafetyCheck()
 				g_IBM.PreviousZoneStartTime:=A_TickCount
 				return
@@ -738,7 +738,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (!runComplete)
 			{
 				this.RM.SetFormation(,true) ;Use the high zone, as the current zone is complete
-				this.RM.WaitForTransition() ;Wait for the zone transition so that a normal SetFormation() doesn't overwrite the highzone call TODO: Can we just wait for the jump-off part?
+				this.RM.WaitForTransition() ;Wait for the zone transition so that a normal SetFormation() doesn't overwrite the highzone call
 			}
 		}
 				
@@ -1261,7 +1261,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if (this.zones.hasKey(nextZoneNumber)) ;Already processed, just link
 			{
 				currentZone.nextZone:=this.zones[nextZoneNumber] ;Set the next zone
-				this.zones[nextZoneNumber].incomingZones[currentZone.z]:=currentZone ;Add to the incoming zones - TODO: Decide if this should be a simple or k,v Array
+				this.zones[nextZoneNumber].incomingZones[currentZone.z]:=currentZone ;Add to the incoming zones
 				break ;We've joined an existing route, so no further calculation required
 			}
 			else
@@ -1276,7 +1276,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	BrivHasThunderStep() ;Thunder step 'Gain 20% More Sprint Stacks When Converted from Steelbones', feat 2131. TODO: This requires that the feat is saved, which you don't really want for non-featswap
+	BrivHasThunderStep() ;Thunder step 'Gain 20% More Sprint Stacks When Converted from Steelbones', feat 2131
 	{
 		If (g_SF.Memory.HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetSavedFormationSlotByFavorite(1)) or g_SF.Memory.IBM_HeroHasAnyFeatsSavedInFormation(58, g_SF.Memory.GetSavedFormationSlotByFavorite(3))) ;If there are feats saved in Q or E (which would overwrite any others in M)
 		{
@@ -1356,7 +1356,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 
 	__New()
 	{
-		this.RelayZones:=g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start TODO: Option for this
+		this.RelayZones:=g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
 		this.MEMORY_baseAddress:=g_SF.Memory.GameManager.game.gameUser.Loaded.basePtr.ModuleOffset + 0 ;Memory structure data for the reads we need TODO: This has been changed from the whole address to the module offset, since if the module moves in a new process the base address for the old one is worthless... Maybe rename throughout
 		this.MEMORY_LOADED_Type:=g_SF.Memory.GameManager.game.gameUser.Loaded.valueType
 		offSets:=g_SF.Memory.GameManager.game.gameUser.Loaded.GetOffsets() ;We need to turn this into a SafeArray for access via COM
@@ -1554,7 +1554,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		relayZone:=restartZone - this.RelayZones
 		if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf - try to avoid starting the game as we're online stacking
 		{
-			melfRange:=routeMaster.MelfManager.GetFirstMelfSpawnMoreRange() ;TODO: Fix 'this' to a levelmanager reference
+			melfRange:=routeMaster.MelfManager.GetFirstMelfSpawnMoreRange()
 			if (melfRange AND melfRange[1] > relayZone AND melfRange[1] < relayZone + this.RelayZones) ;If the target online stack zone is at the start of the blank range
 				relayZone:=melfRange[1] - this.RelayZones ;Move the relay zone ahead
 		}

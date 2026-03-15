@@ -9,8 +9,11 @@
 	static IBM_SYMBOL_UI_CLEAR:="○"
 	static IBM_SYMBOL_UI_LIGHT:="⬤"
 
-	levelDataSet:={}
-	controlLock:=false ;TODO: Why default this to false? We don't want random labels running until we're done with set up
+	__New()
+	{
+		this.levelDataSet:={}
+		this.controlLock:=true
+	}
 
 	Init()
 	{
@@ -1098,7 +1101,7 @@
 	GetLevelRowData() ;Extracts set levels
 	{
 		currentLevels:=[]
-		If IsObject(this.levelDataSet) ;Do not refresh here, as the values entered will be based on the data displayed from the last refresh
+		if(IsObject(this.levelDataSet)) ;Do not refresh here, as the values entered will be based on the data displayed from the last refresh
 		{
 			index:=1 ;TODO: Switch this to using champData["ListIndex"]
 			for seat, seatMembers in this.levelDataSet

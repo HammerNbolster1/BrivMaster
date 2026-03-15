@@ -275,7 +275,8 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             sizeObject.FullOffsets.Push(0x28)
         else if(this.ValueType == "Dict")
             sizeObject.FullOffsets.Push(0x40)
-        else if(this.ValueType == "SortedDict")
+        ;else if(this.ValueType == "SortedDict") ;Irisiri - SortedDict not used
+        ;    sizeObject.FullOffsets.Push(0x20,0x30)
         else if(this.ValueType == "HashSet")
             sizeObject.FullOffsets.Push(0x30)
         else

@@ -1497,12 +1497,15 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 			{
 				if (response.daily_login_details.premium_active)
 				{
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed")
+					this.AddMessage("Claim", "Claiming...")
 					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for now
-				this.AddMessage("Claim", messageString)
+				{
+					this.AddMessage("Claim", "Standard reward unclaimed and premium reward not active")
+					this.AddMessage("Claim", "Claiming...")
+				}
 			}
 		}
 		else ;Check failed

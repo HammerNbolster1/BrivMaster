@@ -26,6 +26,7 @@ Class IC_IriBrivMaster_Component
         {
             g_SF.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
             g_SF.Memory.OpenProcessReader()
+			g_ServerCall.Update()
             scriptLocation:=A_LineFile . "\..\IC_BrivMaster_Run.ahk"
             GuiControl, IBM_Home:Choose, ModronTabControl, Stats
             for k,v in g_IriBrivMaster_StartFunctions
@@ -81,6 +82,7 @@ Class IC_IriBrivMaster_Component
         }
         g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
         g_SF.Memory.OpenProcessReader()
+		g_ServerCall.Update()
         for k,v in g_IriBrivMaster_StartFunctions
         {
             v.Call()
@@ -268,8 +270,8 @@ Class IC_IriBrivMaster_Component
 
 	Start()
     {
-        g_SF.ResetServerCall()
-		fncToCallOnTimer := this.TimerFunction
+        g_ServerCall.Update()
+		fncToCallOnTimer:=this.TimerFunction
         SetTimer, %fncToCallOnTimer%, 600, 0
 		this.SharedRunData:="" ;Reset this on start
 		if (this.RefreshComObject())
@@ -765,10 +767,10 @@ Class IC_IriBrivMaster_Component
 
 	RefreshUserData()
     {
-        if(WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)) ; only update server when the game is open
+        if(WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)) ;Only update server when the game is open
         {
             g_SF.Memory.OpenProcessReader()
-            g_SF.ResetServerCall()
+            g_ServerCall.Update()
 			this.ServerCallFailCount:=0 ;Reset
 			this.MemoryReadFailCount:=0
 			if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())

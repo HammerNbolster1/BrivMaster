@@ -48,7 +48,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
             if(ElapsedTime < timeoutVal)
                 loadingZone:=this.WaitForGameReady(waitForReadyTimeout) ;NOTE: WaitForGameReady will turn Critical On via WaitForFinalStatUpdates
             if(loadingZone)
-                g_SF.ResetServerCall()
+                g_ServerCall.Update()
 			else
 				g_IBM.IBM_Sleep(15) ;Moved this to an Else, otherwise it delays code progression when loading is sucessful
             ElapsedTime:=A_TickCount - StartTime
@@ -318,7 +318,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
     {
 		g_SharedData.UpdateOutbound("LastCloseReason",string)
 		g_IBM.Logger.AddMessage("Closing Game" . (string ? " " . string : ""))
-		g_SF.ResetServerCall() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function, should just be saving stacks?
+		g_ServerCall.Update() ;Check that server call object is updated before closing IC in case any server calls need to be made by the script before the game restarts TODO: Consider the scenarios where this matters that might follow from this function, should just be saving stacks?
         if (string!="")
             string:=": " . string
         g_SharedData.UpdateOutbound("LoopString","Closing IC" . string)
@@ -446,7 +446,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
             Process, Exist, %gameExe% ;TODO: These could potentially return the PID and HWnd of 2 seperate IC processes - need to read one and use that to get the other?
             this.PID := ErrorLevel
             g_SF.Memory.OpenProcessReader()
-            g_SF.ResetServerCall()
+            g_ServerCall.Update()
 			g_IBM.Logger.AddMessage("SafetyCheck() Reset process reader - new PID=[" . g_SF.PID . "] and Hwnd=[" . g_SF.Hwnd . "]")
         }
         return true
@@ -491,9 +491,9 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		g_IBM.Logger.AddMessage("Forced Restart (Reason:" . reason . " at:z" . g_SF.Memory.ReadCurrentZone() . " with haste:" . g_Heroes[58].ReadHasteStacks() . ")")
 		this.CloseIC(reason)
 		g_SharedData.UpdateOutbound("LoopString","ServerCall: Checking stack conversion") ;This message would ideally be shown only momentarily, but if the server is having issues the servercall will run to timeout and this allows us to see that it is that holding the script up
-		if (g_SF.sprint!="" AND g_SF.steelbones!="")
+		if (g_serverCall.ShouldCallPreventStackFail(true)) ;Servercall has been updated by CloseIC()
 		{
-			response:=g_serverCall.CallPreventStackFail(g_SF.sprint,g_SF.steelbones,"RestartAdventure()")
+			response:=g_serverCall.CallPreventStackFail("RestartAdventure()")
 			if(response) ;response is an object parsed from the response JSON, which means for debug output we have to turn it back into a string...
 				g_IBM.Logger.AddMessage("Stack save response: success=[" . response.success . "] okay=[" . response.okay . "]" . (response.failure_reason ? " failure Reason=[" . response.failure_reason . "]" : ""))
 			else if(modronFail) ;If the call return was empty the modron reset probably failed due to server or connection issues. In this case it's quite likely that earlier saves also failed, and if we reconnect without restarting the adventure we'll be able to continue
@@ -508,7 +508,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 		}
 		else
 		{
-			g_IBM.Logger.AddMessage("Servercall Save Not Required (Haste:" . g_SF.sprint . " raw Steelbones:" . g_SF.steelbones . ")")
+			g_IBM.Logger.AddMessage("ServerCall Save not required (Haste:" . g_serverCall.sprint . " raw Steelbones:" . g_serverCall.steelbones . ")")
 			g_SharedData.UpdateOutbound("LoopString","ServerCall: Restarting adventure (no manual stack conversion)")
 		}
 		response:=g_ServerCall.CallEndAdventure() ;Note the response to this call does not have an 'okay' property

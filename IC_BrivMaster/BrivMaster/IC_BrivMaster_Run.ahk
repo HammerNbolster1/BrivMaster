@@ -80,9 +80,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.CounterFrequency:=PerformanceCounterFrequency/1000 ;Convert from seconds to milliseconds as that is our main interest
 		this.GameMaster:=New IC_BrivMaster_GameMaster_Class() ;This does the initial OpenProcessReader() call
 		this.RefreshImportCheck() ;Does the initial population of the import check
-        g_ServerCall.UpdatePlayServer() ;TODO: Does doing this before ResetServerCall() make any sense? It won't have an instance yet?
-        g_SF.ResetServerCall()
-        g_SF.PatronID:=g_SF.Memory.ReadPatronID() ;TODO: Move to GameMaster
+        g_ServerCall.Update()
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
@@ -398,7 +396,7 @@ class IC_BrivMaster_GemFarm_Class
 			; reset memory values in case they missed an update.
             this.GameMaster.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["IBM_Game_Exe"]) ;TODO: This can screw things up if the there is more than one process open. At least align with .PID?
             g_SF.Memory.OpenProcessReader()
-            g_SF.ResetServerCall()
+            g_ServerCall.Update()
             this.RouteMaster.FallBackFromZone() ;Try a fall back
             this.RouteMaster.SetFormation() ;In the base script this just goes to Q, which might not be ideal, especially for feat swap
             this.RouteMaster.ToggleAutoProgress(1, true)

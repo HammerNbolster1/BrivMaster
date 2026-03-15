@@ -1517,7 +1517,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			this.SuspendProcess(g_IBM.GameMaster.PID,False) ;Ensure the process is not stuck suspended
 			g_IBM.GameMaster.Hwnd:=WinExist("ahk_pid " . recoveryPID)
 			g_SF.Memory.OpenProcessReader(recoveryPID) ;Open this PID specifically
-			g_SF.ResetServerCall()
+			g_ServerCall.Update()
 		}
 		else ;Otherwise open as normal
 		{
@@ -1536,7 +1536,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")
-		g_SF.ResetServerCall()
+		g_ServerCall.Update()
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",true) ;Allows the hub to react
 	}
 

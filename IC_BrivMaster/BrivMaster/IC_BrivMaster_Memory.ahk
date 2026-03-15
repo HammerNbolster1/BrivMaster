@@ -746,7 +746,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         }
     }
 
-	IBM_ReBase(baseItem:="") ;Propogate a new base address through all child objects. Call without argument for base item TODO: Remove from overrides when using this class
+	IBM_ReBase(baseItem:="") ;Propogate a new base address through all child objects. Call without argument for base item
 	{
 		if (IsObject(baseItem)) ;Child object
 		{

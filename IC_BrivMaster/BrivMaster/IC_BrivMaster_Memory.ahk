@@ -60,8 +60,6 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress
-            ; Note: Using example Offsets 0xCB0,0 from CE, 0 is a mod (+) and disappears leaving just 0xCB0
-            ; this.StructureOffsets[1] += 0x10
             if (this.IdleGameManager=="")
             {
                 this.IdleGameManager:=New IBM_GOS(this.StructureOffsets)
@@ -69,8 +67,7 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
                 #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk
                 return
             }
-            ; Objects exist, update memory addresses only
-            ; Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
+            ;Objects exist, update memory addresses only. Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
             this.IdleGameManager.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
             this.ResetBasePtr(this.IdleGameManager)
         }
@@ -266,7 +263,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
 
     CreateSizeObject()
     {
-        ; TODO: Check HashSet<T> variations that appear to have 0x20, 0x30 for "count"
+        ; TODO: (from Anti) Check HashSet<T> variations that appear to have 0x20, 0x30 for "count"
         sizeObject := this.QuickClone()
         sizeObject.ValueType := "Int"
         if(this.ValueType == "Stack")
@@ -369,7 +366,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         }
         else
         {
-            ; TODO: Look into feasibility of using same dictionary hash function to look up keys. (Requires DLL call?) Current method is O(n) instead of O(1)
+            ; TODO: (from Anti) Look into feasibility of using same dictionary hash function to look up keys. (Requires DLL call?) Current method is O(n) instead of O(1)
             if(this.LastDictVersionByKey[key]!="" AND this.__version.Read()==this.LastDictVersionByKey[key])                    ; Use previously created object if it is still being used.
                 return returnObj:=this.ReturnGameObject(this.DictionaryObject[key])
             keyIndex:=this.GetDictIndexOfKeyQuick(key)                                    	; Look up what index has the key entry equal to the key passed in.
@@ -593,8 +590,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
 		type2Bytes:=hasType2 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionValType]] : 0x8
 		itemSize:=(hasType1 AND hasType2 AND type1Bytes == 0x4 and type2Bytes == 0x4) ? 0x4 : 0x8
 		; ---
-		; 64-bit dictionary entries start at 0x28
-		baseOffset:=0x28
+		baseOffset:=0x28 ;64-bit dictionary entries start at 0x28
 		; Default entry sizes (e.g. int/int dict entries will be 0x10 bytes apart)
 		offsetInterval:=itemSize==0x4 ? 0x10 : 0x18
 		; Special case for Quads as values
@@ -1172,7 +1168,7 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].FormationSaveHandler.mostRecentFormation.Favorite.Read()
     }
 
-    GetFormationByFavorite(favorite:=0)  ;Returns the formation stored at the favorite value passed in.
+    GetFormationByFavorite(favorite:=0) ;Returns the formation stored at the favorite value passed in
 	{
         version:= this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2.__version.Read()
         if(this.FavoriteFormations[favorite] != "" AND version == this.LastFormationSavesVersion[favorite])
@@ -1395,7 +1391,7 @@ class IC_BrivMaster_MemoryFunctions_Class
             return true ;Assumed that an invalid read means the formation is empty
         loop, %size%
         {
-            heroID := this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+            heroID:=this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
 			if (heroID>0)
 				return false
         }

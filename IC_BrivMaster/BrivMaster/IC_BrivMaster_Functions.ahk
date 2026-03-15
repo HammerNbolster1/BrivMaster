@@ -29,7 +29,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"] ;Target gem cards
 		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"] ;Minimum cards before exiting, used to try and avoid saving with a partial hand when hitting a boss shortly after the Casino
 		this.lockedFrontColumnChamps:={}
-		;this.DEBUG_STRING:=""
 		this.DeferredDMUlt:=0
 	}
 
@@ -54,19 +53,9 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			while (lastLoopEndTime<timeOut)
             {
 				if(this.DeferredDMUlt AND lastLoopEndTime > this.DeferredDMUlt)
-				{
-					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() deferred DM pre DM call:"
 					this.UseDMUlt()
-					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() deferred DM post DM call:"
-				}
 				if(this.UsedUlt AND !g_Heroes[83].ReadEllywickUltimateActive()) ;Check for completed ultimate
-				{
-					;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-					;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " Casino() Elly ult expired:"
 					this.UsedUlt:=false
-				}
 				numCards:=g_Heroes[83].ReadNumCards()
 				numGemCards:=g_Heroes[83].GetNumGemCards()
 				if(numCards=="") ;Abort if the memory reads are not available
@@ -106,7 +95,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
-			;g_IBM.Logger.AddMessage("DEBUG:" . this.DEBUG_STRING)
 			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else
@@ -140,8 +128,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	
 	UseEllywickUlt()
 	{
-		;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-		;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() entry:"
 		if (g_Heroes[83].CanUseUltimate())
 		{
 			this.UsedUlt:=true ;Assumed
@@ -149,15 +135,12 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
 				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
-				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Fail retries=[" . retryCount . "]:"
 				this.UsedUlt:=false
 			}
 			else
 			{
 				DllCall("QueryPerformanceCounter", "Int64*", delayStart)
 				this.DeferredDMUlt:=delayStart+this.DMUltDelay ;This adds 3750ms game time, 300ms at x12.5
-				;this.DEBUG_STRING.=ROUND(delayStart/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Success retries=[" . retryCount . "] DeferredDMUlt=[" . ROUND(this.DeferredDMUlt/g_IBM.CounterFrequency,3) . "]:"
 				this.Redraws++
 			}
 		}
@@ -165,16 +148,11 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		{
 			if (g_Heroes[99].CanUseUltimate()) ;Somehow Elly's ult isn't ready by DM's is - try using it
 			{
-				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Elly ult not available using DM:"
 				this.UseDMUlt()
-				;g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available but DM Ult available")
 			}
 			else ;Lower max re-rolls so we move on; this Casino is busted
 			{
 				g_IBM.Logger.AddMessage("Casino Elly (Level=[" . g_Heroes[83].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available and DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[83].ReadBenched() . "]) Ult not available - lowered max rerolls to [" . this.Redraws . "]")
-				;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-				;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " UseEllywickUlt() Elly ult and DM ult both not available - screwed:"
 				;Sleep 250 ;To get some context in the recording
 				;Send !{f10} ;Alt+F10 for Nvidia overlay instant replay
 				this.MaxRedraws:=this.Redraws 
@@ -186,15 +164,11 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	{
 		if (g_Heroes[99].CanUseUltimate())
 		{
-			;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-			;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " DM Ult pre-use:"
 			retryCount:=g_Heroes[99].UseUltimate(50)
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
 			{
 				g_IBM.Logger.AddMessage("Casino DM (Level=[" . g_Heroes[99].ReadLevel() . "] Benched=[" . g_Heroes[99].ReadBenched() . "]) failed to activate with retryCount=[" . retryCount . "]")
 			}
-			;DllCall("QueryPerformanceCounter", "Int64*", DEBUG_TIME)
-			;this.DEBUG_STRING.=ROUND(DEBUG_TIME/g_IBM.CounterFrequency,3) . " DM Ult post-use retryCount=[" . retryCount . "]:"
 		}
 		this.DeferredDMUlt:=0 ;Reset in all cases
 	}
@@ -208,7 +182,7 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		if (!FileExist(logDir)) ;Create the log subdirectory if not present
 			FileCreateDir, %logDir%
 		this.logBase:=logDir . "\RunLog_" . formattedDateTime ;A separate variable so other logs can use a matching start time, e.g. RunLog_20250101T000000.csv from this class and RunLog_20250101T000000_Relay.csv
-		this.miniLogPath:=logDir . "\MiniLog.json" ;Needs to be set in all cases as the minilog can be turned on whilst running TODO: Should we allow this?
+		this.miniLogPath:=logDir . "\MiniLog.json" ;Needs to be set in all cases as the minilog can be turned on whilst running
 		this.logPath:=this.logBase . ".csv" ;The path and name for the main log specifically
 		reset:=g_SF.Memory.ReadResetsTotal()
 		if (reset!="") ;If we can read the current reset use that, otherwise set to -1 for invalid
@@ -477,4 +451,3 @@ class IC_BrivMaster_DianaCheese_Class ;A class for cheesing Diana's Electrum dro
 		return hex + 0
 	}
 }
-

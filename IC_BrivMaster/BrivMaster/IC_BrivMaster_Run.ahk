@@ -21,11 +21,11 @@ CoordMode, Mouse, Client
 #include %A_LineFile%\..\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\..\Lib\IC_BrivMaster_Zlib.ahk
 
+global g_ServerCall:={} ;Populated by the creation of g_SF below
 global g_SF:=New IC_BrivMaster_SharedFunctions_Class ;Includes IBM MemoryFunctions in g_SF.Memory
 global g_IBM_Settings:={}
 global g_IBM:=New IC_BrivMaster_GemFarm_Class
 global g_zlib:=New IC_BrivMaster_Budget_Zlib_Class() ;Created global as it has a lot of one-time setup and we want to avoid re-creating it
-global g_ServerCall ;This is instantiated by g_SF.ResetServerCall()
 global g_IBM_Settings_Addons:={}
 global g_Heroes:={} ;Has to be instantiated after memory reads are available
 global g_InputManager:=New IC_BrivMaster_InputManager_Class()

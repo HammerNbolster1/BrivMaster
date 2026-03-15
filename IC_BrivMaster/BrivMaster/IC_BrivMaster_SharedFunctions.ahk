@@ -598,16 +598,13 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
             . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests
         return this.ServerCall("opengenericchest",chestParams,60000)
     }
-    CallGetPlayServer() ;Get the loadbalanced Play Server
-    {
-        return this.ServerCall("getPlayServerForDefinitions", this.dummyData)
-    }
 
     UpdatePlayServer() ;TODO: Consider how this interacts with the webroot memory read
     {
 		oldWebRoot:=this.webRoot
 		this.webRoot:="http://ps23.idlechampions.com/~idledragons/" ;Assume ps23 will always be available (avoiding using master) TODO: Why do we call ps23 and not the current server to check this?
 		response:=this.CallGetPlayServer()
+		response:=this.ServerCall("getPlayServerForDefinitions", this.dummyData)
 		if (response!="" AND response.play_server!="")
 			this.webRoot:=response.play_server
 		else

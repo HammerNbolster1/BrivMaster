@@ -97,7 +97,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 				this.PID:=openPID
 				g_IBM.Logger.AddMessage("OpenProcessAndSetPID() set PID=[" . this.PID . "] via Run return")
 			}
-			else ;TODO: In this case might want to consider what happens when the launcher doesn't actually launch the game for a while - we could end up spawning a lot of them that eventually all spring to life. Note it might also be the EGS URN so need to factor that in too, although the EGS client won't allow multiple copies. Might need to kill the launcher.
+			else
 			{
 				StartTimePID:=A_TickCount
 				ElapsedTimePID:=0

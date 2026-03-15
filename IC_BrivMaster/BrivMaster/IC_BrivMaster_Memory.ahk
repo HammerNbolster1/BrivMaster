@@ -851,8 +851,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.Versions.Pointer_Revision:=currentPointers["Pointer_Revision"]
 		this.Versions.Pointer_Version_Major:=currentPointers["Pointer_Version_Major"]
 		this.Versions.Pointer_Version_Minor:=currentPointers["Pointer_Version_Minor"]
-        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this. Setting won't be available here so what is this actually acheveing?
-        _IBM_MM.Refresh()
         this.GameManager:=new IC_BrivMaster_IdleGameManager_Class(currentPointers.IdleGameManager.moduleAddress, currentPointers.IdleGameManager.moduleOffset)
         this.GameSettings:=new IC_BrivMaster_GameSettings_Class(currentPointers.GameSettings.moduleAddress, currentPointers.GameSettings.staticOffset, currentPointers.GameSettings.moduleOffset)
         this.EngineSettings:=new IC_BrivMaster_EngineSettings_Class(currentPointers.EngineSettings.moduleAddress, currentPointers.EngineSettings.staticOffset, currentPointers.EngineSettings.moduleOffset)

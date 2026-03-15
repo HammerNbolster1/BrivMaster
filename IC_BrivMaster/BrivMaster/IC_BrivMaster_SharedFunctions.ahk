@@ -309,32 +309,40 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 	
 	UpdateStackData()
     {
-		this.UpdateIfValid(this.InstanceID,g_SF.Memory.ReadInstanceID())
+		newRead:=g_SF.Memory.ReadInstanceID()
+        if(newRead)
+            this.InstanceID:=newRead
         this.sprint:=g_Heroes[58].ReadHasteStacks() ;Note: the reason for this naming is that the stat in the game is called 'BrivSprintStacks'
         this.steelbones:=g_Heroes[58].ReadSBStacks()
     }
 
     Update()
     {
-        this.UpdateIfValid(this.UserID,g_SF.Memory.ReadUserID())
-		this.UpdateIfValid(this.UserHash,g_SF.Memory.ReadUserHash())
+        newRead:=g_SF.Memory.ReadUserID()
+        if(newRead)
+            this.UserID:=newRead
+        newRead:=g_SF.Memory.ReadUserHash()
+        if(newRead)
+            this.UserHash:=newRead
 		this.UpdateStackData()
-        this.UpdateIfValid(this.clientVersion,g_SF.Memory.ReadBaseGameVersion())
-		webRootFromMemory:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
-		if(RegExMatch(webRootFromMemory,"^https?://.+"))
-			this.webRoot:=webRootFromMemory		
-        this.UpdateIfValid(this.networkID,g_SF.Memory.ReadPlatform())
-		this.UpdateIfValid(this.activeModronID,g_SF.Memory.ReadActiveGameInstance())
-		this.UpdateIfValid(this.activePatronID,g_SF.Memory.ReadPatronID())
+        newRead:=g_SF.Memory.ReadBaseGameVersion()
+        if(newRead)
+            this.clientVersion:=newRead
+		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
+		if(RegExMatch(newRead,"^https?://.+"))
+			this.webRoot:=newRead		
+        newRead:=g_SF.Memory.ReadPlatform()
+        if(newRead)
+            this.networkID:=newRead
+        newRead:=g_SF.Memory.ReadActiveGameInstance()
+        if(newRead)
+            this.activeModronID:=newRead
+        newRead:=g_SF.Memory.ReadPatronID()
+        if(newRead)
+            this.activePatronID:=newRead
         this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
     }
-	
-	UpdateIfValid(ByRef variable, newRead)
-	{
-		if(newRead!="")
-			variable:=newRead
-	}
-	
+
 	ShouldCallPreventStackFail(forceSave:=false) 
 	{
 		if (this.steelbones=="" OR this.sprint=="") ;If either value is missing, we can't put the conversion together

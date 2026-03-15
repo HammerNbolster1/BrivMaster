@@ -578,44 +578,14 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         return this.ServerCall("softreset",advParams)
     }
 
-    CallBuyChests(chestID,chests,chestType:="") ;Buys <chests> number of <chestID> chests. Automatically uses Patron purchase call for patron chests. TODO: Either add Elminster patron, or strip this back to just basic chests
+    CallBuyChests(chestID,chests,chestType:="") ;Buys <chests> number of <chestID> chests. Only works with basic non-patron non-event chests
     {
-        if (chests>250)
+        if(chests>250)
             chests:=250
-        else if (chests<1)
+        else if(chests<1)
             return
-        if(chestType=="eventV2")
-        {
-            chestParams := this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests "&spend_event_v2_tokens=1"
-            return this.ServerCall("buysoftcurrencychest",chestParams)
-        }
-        else if(chestID!=152 AND chestID!=153 AND chestID!=219  AND chestID!=311)
-        {
-            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests
-            return this.ServerCall("buysoftcurrencychest",chestParams)
-        }
-        else
-        {
-            switch chestID
-            {
-                case 152:
-                    itemID := 1
-                    patronID := 1
-                case 153:
-                    itemID := 23
-                    patronID := 2
-                case 219:
-                    itemID := 45
-                    patronID := 3
-                case 311:
-                    itemID := 76
-                    patronID := 4
-                Default:
-                    return ""
-            }
-            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&patron_id=" patronID "&shop_item_id=" itemID
-            return this.ServerCall( "purchasepatronshopitem", chestParams )
-        }
+        chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests
+        return this.ServerCall("buysoftcurrencychest",chestParams)
     }
 
     CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest.

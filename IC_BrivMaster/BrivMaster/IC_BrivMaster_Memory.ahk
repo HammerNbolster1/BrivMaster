@@ -54,9 +54,9 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
 {
     Refresh()
     {
-        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (!_IBM_MM.IsAttached) ;Don't build offsets if no client is available to check variable types
             return
+        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress

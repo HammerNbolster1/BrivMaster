@@ -112,7 +112,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			}
 			if(!this.PID) ;We launched a process (or at least we think we did) but never found it via window. Terminate any IC process not in the existingPIDs list to clean up 
 			{
-				for gameProcess in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where Name='" . g_IBM_Settings["IBM_Game_Exe"] . "'") ;This seemed to have quite variable performance, but since this is a failure mode anyway being thorough is the older of the day (otherwise we'd be relying on Windows, which might nor might not have spawned)
+				for gameProcess in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_Process where Name='" . g_IBM_Settings["IBM_Game_Exe"] . "'") ;This seemed to have quite variable performance, but since this is a failure mode anyway being thorough is the older of the day (otherwise we'd be relying on Windows, which might nor might not have been created)
 				{
 					isNew:=true
 					loop % existingPIDs.Count() ;Check each saved PID
@@ -123,7 +123,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 							break
 						}
 					}
-					if(isNew) ;TODO: This only makes one attempt per process, add a loop perhaps
+					if(isNew)
 					{
 						if(this.TerminateProcess(gameProcess.ProcessId))
 							g_IBM.Logger.AddMessage("OpenProcessAndSetPID() start fail cleanup killing PID=[" . gameProcess.ProcessId . "]")

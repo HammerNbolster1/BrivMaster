@@ -588,11 +588,11 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         return this.ServerCall("buysoftcurrencychest",chestParams)
     }
 
-    CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest.
+    CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest
     {
-        if (chests>1000)
+        if(chests>1000)
             chests:=1000
-        else if (chests<1)
+        else if(chests<1)
             return
         chestParams:="&gold_per_second=0&checksum=4c5f019b6fc6eefa4d47d21cfaf1bc68&user_id=" this.userID "&hash=" this.userHash 
             . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests

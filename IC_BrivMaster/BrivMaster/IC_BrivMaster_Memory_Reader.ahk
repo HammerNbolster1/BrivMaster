@@ -113,7 +113,7 @@ class _IC_BrivMaster_Memory_Reader_Class
         return        
     }
 
-    readString(address, sizeBytes := 0, encoding := "UTF-8", aOffsets*)
+    readString(address, sizeBytes := 0, encoding:="UTF-8", aOffsets*)
     {
         bufferSize := VarSetCapacity(buffer, sizeBytes ? sizeBytes : 100, 0)
         this.ReadStringLastError := False
@@ -166,18 +166,6 @@ class _IC_BrivMaster_Memory_Reader_Class
         return aModules.HasKey(moduleName) ? aModules[moduleName].lpBaseOfDll : -1
         ; no longer returns -5 for failed to get module info
     }  
-     
-    ; Method: suspend() / resume() TODO: Comment left as a reminder to try these out instead of re-opening the process
-    ; Notes:
-    ;   These are undocumented Windows functions which suspend and resume the process. Here be dragons.
-    ;   The process handle must have PROCESS_SUSPEND_RESUME access rights. 
-    ;   That is, you must specify this when using the new operator, as it is not included. 
-    ;   Some people say it requires more rights and just use PROCESS_ALL_ACCESS, however PROCESS_SUSPEND_RESUME has worked for me.
-    ;   Suspending a process manually can be quite helpful when reversing memory addresses and pointers, although it's not at all required. 
-    ;   As an unorthodox example, memory addresses holding pointers are often stored in a slightly obfuscated manner i.e. they require bit operations to calculate their
-    ;   true stored value (address). This obfuscation can prevent Cheat Engine from finding the true origin of a pointer or links to other memory regions. If there 
-    ;   are no static addresses between the obfuscated address and the final destination address then CE wont find anything (there are ways around this in CE). One way around this is to
-    ;   suspend the process, write the true/deobfuscated value to the address and then perform your scans. Afterwards write back the original values and resume the process.
 
     suspend()
     {
@@ -189,7 +177,7 @@ class _IC_BrivMaster_Memory_Reader_Class
         return DllCall("ntdll\NtResumeProcess", "Ptr", this.hProcess)
     } 
 
-    getModules(byRef aModules, useFileNameAsKey := False)
+    getModules(byRef aModules, useFileNameAsKey:=False)
     {
         aModules:=[]
         if !moduleCount:=this.EnumProcessModulesEx(lphModule)
@@ -224,7 +212,7 @@ class _IC_BrivMaster_Memory_Reader_Class
         return lpFilename
     }
 
-    EnumProcessModulesEx(byRef lphModule, dwFilterFlag := 0x03)
+    EnumProcessModulesEx(byRef lphModule, dwFilterFlag:=0x03)
     {
         reqSize := ""
         lastError := A_LastError

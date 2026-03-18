@@ -9,8 +9,11 @@
 	static IBM_SYMBOL_UI_CLEAR:="○"
 	static IBM_SYMBOL_UI_LIGHT:="⬤"
 
-	levelDataSet:={}
-	controlLock:=false ;TODO: Why default this to false? We don't want random labels running until we're done with set up
+	__New()
+	{
+		this.levelDataSet:={}
+		this.controlLock:=true
+	}
 
 	Init()
 	{
@@ -631,10 +634,10 @@
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h42 vIBM_Group_Start_Strat, Starting Strategy
 		Gui, IBM_Home:Font, w400
-		Gui, IBM_Home:Add, CheckBox, xs+10 ys+15 h18 vIBM_Route_Combine gIBM_Route_Combine, Combine Thellora and Briv
+		Gui, IBM_Home:Add, CheckBox, xs+10 ys+15 h18 vIBM_Route_Combine gIBM_Generic_Setting_Int, Combine Thellora and Briv
 		this.AddToolTip("IBM_Route_Combine","Combining Thellora and Briv causes them to jump together from zone 1, otherwise only Thellora will jump from zone 1")
 		Gui, IBM_Home:Add, CheckBox, x+20 h18 vIBM_Route_Combine_Boss_Avoidance gIBM_Generic_Setting_Int, Avoid Bosses
-		this.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected the script will check if Thellora will combine onto a boss, and break the combine if doing so will cause her to land on a non-boss zone instead.`nIf using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible")
+		this.AddToolTip("IBM_Route_Combine_Boss_Avoidance","When this option is selected and Thellora in present in M, Briv Master will check if Thellora will rush into a boss and attempt to adjust from combine to non-combine or vice versa if doing so will cause her to land on a non-boss zone instead.`nIf using this mode with Feat Swapping and an M jump greater than the E jump, an additional jump's worth of stacks are generated in the prior run if possible") ;TODO: Review 2nd part of this tooltip
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Start_Strat ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Route settings for jump/stacking zones
@@ -906,7 +909,6 @@
 
 		;Combine options
 		GuiControl, IBM_Home:, IBM_Route_Combine, % g_IBM_Settings.IBM_Route_Combine
-		IBM_Combine_Enable(g_IBM_Settings.IBM_Route_Combine)
 		GuiControl, IBM_Home:, IBM_Route_Combine_Boss_Avoidance, % g_IBM_Settings.IBM_Route_Combine_Boss_Avoidance
 		;Route
 		this.RefreshRouteJumpBoxes()
@@ -1105,7 +1107,7 @@
 	GetLevelRowData() ;Extracts set levels
 	{
 		currentLevels:=[]
-		If IsObject(this.levelDataSet) ;Do not refresh here, as the values entered will be based on the data displayed from the last refresh
+		if(IsObject(this.levelDataSet)) ;Do not refresh here, as the values entered will be based on the data displayed from the last refresh
 		{
 			index:=1 ;TODO: Switch this to using champData["ListIndex"]
 			for seat, seatMembers in this.levelDataSet
@@ -1999,21 +2001,6 @@ IBM_RunControl_Offline_Queue_Toggle()
 IBM_LevelManager_Refresh() ;UI refresh button
 {
 	g_IriBrivMaster_GUI.RefreshLevelRows()
-}
-
-IBM_Route_Combine()
-{
-	GuiControlGet, value,, IBM_Route_Combine
-	g_IriBrivMaster.UpdateSetting("IBM_Route_Combine",value)
-	IBM_Combine_Enable(value)
-}
-
-IBM_Combine_Enable(enableControl)
-{
-	if (enableControl)
-		GuiControl, IBM_Home:Enable, IBM_Route_Combine_Boss_Avoidance
-	else
-		GuiControl, IBM_Home:Disable, IBM_Route_Combine_Boss_Avoidance
 }
 
 class IBM_Theme

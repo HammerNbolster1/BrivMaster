@@ -54,14 +54,12 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
 {
     Refresh()
     {
-        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (!_IBM_MM.IsAttached) ;Don't build offsets if no client is available to check variable types
             return
+        baseAddress:=_IBM_MM.baseAddress["mono-2.0-bdwgc.dll"]+this.ModuleOffset
         if (this.BasePtr.BaseAddress!=baseAddress)
         {
             this.BasePtr.BaseAddress:=baseAddress
-            ; Note: Using example Offsets 0xCB0,0 from CE, 0 is a mod (+) and disappears leaving just 0xCB0
-            ; this.StructureOffsets[1] += 0x10
             if (this.IdleGameManager=="")
             {
                 this.IdleGameManager:=New IBM_GOS(this.StructureOffsets)
@@ -69,8 +67,7 @@ class IC_BrivMaster_IdleGameManager_Class extends IC_BrivMaster_Memory_Pointer_C
                 #include *i %A_LineFile%\..\Offsets\IC_IdleGameManager_Import.ahk
                 return
             }
-            ; Objects exist, update memory addresses only
-            ; Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
+            ;Objects exist, update memory addresses only. Note: Once imports have been built, IdleGameManager is no longer used for GameObjects. Structure builds from this -> this.game, NOT this.IdleGameManager.game
             this.IdleGameManager.BasePtr:=new IC_BrivMaster_Memory_Base_Pointer_Class(this.BasePtr.BaseAddress, this.ModuleOffset, this.StructureOffsets)
             this.ResetBasePtr(this.IdleGameManager)
         }
@@ -235,7 +232,9 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             return returnObj:=this.ReturnGameObject(this.CreateHeadObject())
         else if (key=="__version")
             return returnObj:=this.ReturnGameObject(this.CreateVersionObject())
-        if(this.ValueType=="Dict" OR this.ValueType=="SortedDict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys.
+        ;if(this.ValueType=="Dict" OR this.ValueType=="SortedDict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys.
+        ;    return returnObj:=this.ReturnGameObject(this.GetDictionaryObject(key, index))
+		if(this.ValueType=="Dict")  ;Special case for Dictionary collections in a gameobject. Store dictionary items with keys that have a system type to speed up future lookups. Do not store unstable keys. Irisiri - version without SortedDict as it is not used
             return returnObj:=this.ReturnGameObject(this.GetDictionaryObject(key, index))
         else if(this.ValueType=="List" OR this.ValueType=="Stack" OR this.ValueType=="Queue") ;Special case for List/Stack/Queue collections in a gameobject.
 		{
@@ -264,7 +263,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
 
     CreateSizeObject()
     {
-        ; TODO: Check HashSet<T> variations that appear to have 0x20, 0x30 for "count"
+        ; TODO: (from Anti) Check HashSet<T> variations that appear to have 0x20, 0x30 for "count"
         sizeObject := this.QuickClone()
         sizeObject.ValueType := "Int"
         if(this.ValueType == "Stack")
@@ -273,8 +272,8 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             sizeObject.FullOffsets.Push(0x28)
         else if(this.ValueType == "Dict")
             sizeObject.FullOffsets.Push(0x40)
-        else if(this.ValueType == "SortedDict")
-            sizeObject.FullOffsets.Push(0x20,0x30)
+        ;else if(this.ValueType == "SortedDict") ;Irisiri - SortedDict not used
+        ;    sizeObject.FullOffsets.Push(0x20,0x30)
         else if(this.ValueType == "HashSet")
             sizeObject.FullOffsets.Push(0x30)
         else
@@ -305,8 +304,8 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             versionObject.FullOffsets.Push(0x28)
         else if(this.ValueType == "Dict")
             versionObject.FullOffsets.Push(0x4C)
-        else if(this.ValueType == "SortedDict")
-            sizeObject.FullOffsets.Push(0x20,0x30) ;This was 0x20,0x3, which seems unlikely as not 4-byte aligned? We don't actually use any of these to test with
+        ;else if(this.ValueType == "SortedDict") ;Irisiri - SortedDict not used
+        ;    sizeObject.FullOffsets.Push(0x20,0x30) ;This was 0x20,0x3, which seems unlikely as not 4-byte aligned? We don't actually use any of these to test with
         else if(this.ValueType == "HashSet")
             versionObject.FullOffsets.Push(0x104)
         else ; Unsupported ValueType
@@ -367,7 +366,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         }
         else
         {
-            ; TODO: Look into feasibility of using same dictionary hash function to look up keys. (Requires DLL call?) Current method is O(n) instead of O(1)
+            ; TODO: (from Anti) Look into feasibility of using same dictionary hash function to look up keys. (Requires DLL call?) Current method is O(n) instead of O(1)
             if(this.LastDictVersionByKey[key]!="" AND this.__version.Read()==this.LastDictVersionByKey[key])                    ; Use previously created object if it is still being used.
                 return returnObj:=this.ReturnGameObject(this.DictionaryObject[key])
             keyIndex:=this.GetDictIndexOfKeyQuick(key)                                    	; Look up what index has the key entry equal to the key passed in.
@@ -509,7 +508,11 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
             offsets.Push(0x14)
             var:=_IBM_MM.instance.readstring(baseAddress, bytes:=0, valueType, offsets*) ;TODO: Why the assignment to 'bytes' here?
         }
-        else if (valueType=="List" OR valueType=="Dict" OR valueType=="SortedDict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk
+        ;else if (valueType=="List" OR valueType=="Dict" OR valueType=="SortedDict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk
+        ;{
+        ;    var:=_IBM_MM.instance.read(baseAddress, "Int", (this.GetOffsets())*)
+        ;}
+		else if (valueType=="List" OR valueType=="Dict" OR valueType=="HashSet" OR valueType=="Stack" OR valueType=="Queue") ; custom ValueTypes not in classMemory.ahk Irisiri - version of above with SortedDict removed as not used
         {
             var:=_IBM_MM.instance.read(baseAddress, "Int", (this.GetOffsets())*)
         }
@@ -587,8 +590,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
 		type2Bytes:=hasType2 ? IBM_GOS.ValueTypeToBytes[IBM_GOS.SystemTypes[this._CollectionValType]] : 0x8
 		itemSize:=(hasType1 AND hasType2 AND type1Bytes == 0x4 and type2Bytes == 0x4) ? 0x4 : 0x8
 		; ---
-		; 64-bit dictionary entries start at 0x28
-		baseOffset:=0x28
+		baseOffset:=0x28 ;64-bit dictionary entries start at 0x28
 		; Default entry sizes (e.g. int/int dict entries will be 0x10 bytes apart)
 		offsetInterval:=itemSize==0x4 ? 0x10 : 0x18
 		; Special case for Quads as values
@@ -741,7 +743,7 @@ class IBM_GOS ;Class used to describe memory locations. Updated to be 64-bit onl
         }
     }
 
-	IBM_ReBase(baseItem:="") ;Propogate a new base address through all child objects. Call without argument for base item TODO: Remove from overrides when using this class
+	IBM_ReBase(baseItem:="") ;Propogate a new base address through all child objects. Call without argument for base item
 	{
 		if (IsObject(baseItem)) ;Child object
 		{
@@ -846,8 +848,6 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.Versions.Pointer_Revision:=currentPointers["Pointer_Revision"]
 		this.Versions.Pointer_Version_Major:=currentPointers["Pointer_Version_Major"]
 		this.Versions.Pointer_Version_Minor:=currentPointers["Pointer_Version_Minor"]
-        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this. Setting won't be available here so what is this actually acheveing?
-        _IBM_MM.Refresh()
         this.GameManager:=new IC_BrivMaster_IdleGameManager_Class(currentPointers.IdleGameManager.moduleAddress, currentPointers.IdleGameManager.moduleOffset)
         this.GameSettings:=new IC_BrivMaster_GameSettings_Class(currentPointers.GameSettings.moduleAddress, currentPointers.GameSettings.staticOffset, currentPointers.GameSettings.moduleOffset)
         this.EngineSettings:=new IC_BrivMaster_EngineSettings_Class(currentPointers.EngineSettings.moduleAddress, currentPointers.EngineSettings.staticOffset, currentPointers.EngineSettings.moduleOffset)
@@ -1168,7 +1168,7 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].FormationSaveHandler.mostRecentFormation.Favorite.Read()
     }
 
-    GetFormationByFavorite(favorite:=0)  ;Returns the formation stored at the favorite value passed in.
+    GetFormationByFavorite(favorite:=0) ;Returns the formation stored at the favorite value passed in
 	{
         version:= this.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2.__version.Read()
         if(this.FavoriteFormations[favorite] != "" AND version == this.LastFormationSavesVersion[favorite])
@@ -1384,24 +1384,14 @@ class IC_BrivMaster_MemoryFunctions_Class
         return this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.Read("Int64")
     }
 
-	/*
-    IBM_ReadGoldSecond8BytesBySeat(seat) ;Reads the second 8 bytes of the gold quad. 2026-01-25 - not in use as we're only checking for gold=0 or not, for which the exponent is not necessary
-    {
-        newObject := this.GameManager.game.gameInstances[0].Screen.uiController.bottomBar.heroPanel.activeBoxes[seat-1].lastGold.QuickClone()
-        goldOffsetIndex := newObject.FullOffsets.Count()
-        newObject.FullOffsets[goldOffsetIndex] := newObject.FullOffsets[goldOffsetIndex] + 0x8
-        return newObject.Read("Int64")
-    }
-	*/
-
 	IBM_IsCurrentFormationEmpty() ;True if the current formation contains 0 champions
     {
-        size := this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
-        if(size <= 0 OR size > 14) ; sanity check, 12 is the max number of concurrent champions possible TODO: If 12 is max why is this 14? (was based on g_SF.Memory.GetCurrentFormation() )
+        size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
+        if(size<=0 OR size>12) ;Sanity check
             return true ;Assumed that an invalid read means the formation is empty
         loop, %size%
         {
-            heroID := this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
+            heroID:=this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].hero.def.ID.Read()
 			if (heroID>0)
 				return false
         }
@@ -1465,7 +1455,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	IBM_GetCurrentFormationChampions() ;Returns the champions in the formation, without positioning data, eg data[58]==true
     {
         size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
-        if(size<=0 OR size>14) ; sanity check, 12 is the max number of concurrent champions possible.
+        if(size<=0 OR size>12) ;Sanity check
             return ""
         champList:=[]
         loop, %size%

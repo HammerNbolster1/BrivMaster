@@ -73,7 +73,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		while (g_SF.Memory.ReadClickLevel() < clickTarget AND g_SF.Memory.IBM_ReadClickLevelUpAllowed() > 0 AND A_TickCount - startTime < timeout)
 		{
 			this.KEY_ClickDmg.KeyPress() ;No value in trying to build this to be able to use _Bulk() as it will mostly only be one press at a time
-			g_IBM.IBM_Sleep(1) ;TODO: Is this useful? We've demonstrated during champion levelling that a delay isn't needed. Reduced to 1ms only for now
+			DllCall("Sleep", "UInt", 0)
 		}
     }
 
@@ -196,13 +196,12 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			g_Heroes[heroID].RaisePriorityForFrontRow()
 	}
 
-
 	Reset()
 	{
 		this.ResetLevellingDone()
 		g_Heroes.ResetAll()
 		this.clickDamageTargetFinal:=g_IBM.routeMaster.targetZone ;These need a curve for post-z2000 HP. Done in Reset() as __New() is current called before the routemaster is set up
-		if (g_IBM.routeMaster.combining)
+		if (g_Heroes[139].inM)
 			this.clickDamageTargetRush:=g_IBM.routeMaster.ThelloraTarget ;Only needs to be high enough for the Thellora target as we will stop there are do the Casino
 		else
 			this.clickDamageTargetRush:=g_IBM.routeMaster.ThelloraTarget + g_IBM.routeMaster.zonesPerJumpQ*2 ;Include 2 jumps

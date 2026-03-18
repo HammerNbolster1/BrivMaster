@@ -26,6 +26,7 @@ Class IC_IriBrivMaster_Component
         {
             g_SF.Hwnd:=WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
             g_SF.Memory.OpenProcessReader()
+			g_ServerCall.Update()
             scriptLocation:=A_LineFile . "\..\IC_BrivMaster_Run.ahk"
             GuiControl, IBM_Home:Choose, ModronTabControl, Stats
             for k,v in g_IriBrivMaster_StartFunctions
@@ -81,6 +82,7 @@ Class IC_IriBrivMaster_Component
         }
         g_SF.Hwnd := WinExist("ahk_exe " . g_IBM_Settings["ExeName"])
         g_SF.Memory.OpenProcessReader()
+		g_ServerCall.Update()
         for k,v in g_IriBrivMaster_StartFunctions
         {
             v.Call()
@@ -268,8 +270,8 @@ Class IC_IriBrivMaster_Component
 
 	Start()
     {
-        g_SF.ResetServerCall()
-		fncToCallOnTimer := this.TimerFunction
+        g_ServerCall.Update()
+		fncToCallOnTimer:=this.TimerFunction
         SetTimer, %fncToCallOnTimer%, 600, 0
 		this.SharedRunData:="" ;Reset this on start
 		if (this.RefreshComObject())
@@ -530,7 +532,7 @@ Class IC_IriBrivMaster_Component
 								this.Stats.GHActive:=2
 						}
 					}
-					gemMulti:=this.Stats.GHActive>0 ? 1.5 : 1 ;Mixed is processed as active TODO: Is it worth dealing with it dropping off? Doesn't seem like something we need to track
+					gemMulti:=this.Stats.GHActive>0 ? 1.5 : 1 ;Mixed is processed as active
 					rawGPB:=gph/bph
 					gemBonus:=(rawGPB/CONSTANT_baseGPB)/gemMulti
 					GuiControl, IBM_Home:, IBM_Stats_Gem_Bonus, % ROUND((gemBonus-1)*100,1) . "% (" . ROUND(rawGPB/gemMulti,1) . " GPB)" ;Bonus best expressed as a percentage
@@ -659,7 +661,10 @@ Class IC_IriBrivMaster_Component
 		{
 			this.GetSettingsFileLocation(checkTime)
 			if (!this.GameSettingFileLocation) ;We tried and we failed
-				return ;TODO: Update the status text here?
+			{
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " unable to open game settings","TrafficLightBad","")
+				return
+			}
 		}
 		profile:=g_IBM_Settings.HUB.IBM_Game_Settings_Option_Profile
 		gameSettings:=g_SF.LoadObjectFromAHKJSON(this.GameSettingFileLocation,true)
@@ -675,7 +680,7 @@ Class IC_IriBrivMaster_Component
 		this.SettingCheck(gameSettings,"UseConsolePortraits","ConsolePortraits",true,changeCount,changeString,change)
 		this.SettingCheck(gameSettings,"ShowAllHeroBoxes","AllHero",true,changeCount,changeString,change)
 		this.SettingCheck(gameSettings,"HotKeys","Swap25100",false,changeCount,changeString,change)
-		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,changeString,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that and the appearance isn't subject, so it isn't forced
+		this.SettingCheck(gameSettings,"NarrowHeroBoxes","NarrowHero",true,changeCount,changeString,change) ;Note that all hero boxes need to be visible for the script to work properly, but at higher resolutions this isn't needed to achieve that so it isn't forced
 		this.ForcedSettingCheck(gameSettings,"LevelupAmountIndex",3,changeCount,changeString,change) ;Fixed, always 3 (x100 levelling)
 		if (changeCount)
 		{
@@ -770,10 +775,10 @@ Class IC_IriBrivMaster_Component
 
 	RefreshUserData()
     {
-        if(WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)) ; only update server when the game is open
+        if(WinExist("ahk_exe " . g_IBM_Settings.IBM_Game_Exe)) ;Only update server when the game is open
         {
             g_SF.Memory.OpenProcessReader()
-            g_SF.ResetServerCall()
+            g_ServerCall.Update()
 			this.ServerCallFailCount:=0 ;Reset
 			this.MemoryReadFailCount:=0
 			if (ComObjType(this.SharedRunData,"IID") or this.RefreshComObject())
@@ -1484,17 +1489,17 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 		if (secondsElapsed>=2)
 			return
 		serverString:="&user_id=" . g_SF.Memory.ReadUserID() . "&hash=" . g_SF.Memory.ReadUserHash() . "&instance_id=" . g_SF.Memory.ReadInstanceID() . "&language_id=1&timestamp=0&request_id=0&network_id=" . g_SF.Memory.ReadPlatform() . "&mobile_client_version=" . g_SF.Memory.ReadBaseGameVersion() . "&instance_key=1&offline_v2_build=1&localization_aware=true"
-		response := g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
+		response:=g_ServerCall.ServerCall("getdailyloginrewards",serverString) ;Check what rewards are available and their claim status
 		if (IsObject(response) && response.success)
 		{
-			dayMask := 1 << (response.daily_login_details.today_index)
+			dayMask:=1 << (response.daily_login_details.today_index)
 			if (response.daily_login_details.premium_active && response.daily_login_details.premium_expire_seconds > 0)
 				boostExpiry:=response.daily_login_details.premium_expire_seconds / 86400 ;Convert to days
 			standardClaimed:=(response.daily_login_details.rewards_claimed & dayMask) > 0
 			premimumClaimed:=(response.daily_login_details.premium_rewards_claimed & dayMask) > 0
 			if(standardClaimed AND (premimumClaimed OR !response.daily_login_details.premium_active)) ;standard claimed, and premium either claimed or not active - no need to further claim
 			{
-				nextClaim_Seconds := response.daily_login_details.next_claim_seconds
+				nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
 				this.NextDailyClaimCheck:=A_TickCount + MIN(28800000,nextClaim_Seconds * 1000) ;8 hours, or the next reset TODO: What happens when this rolls over?
 				this.AddMessage("Claim", (response.daily_login_details.premium_active ? "Standard and premium daily rewards already claimed" : "Standard daily reward already claimed. Premium not active"))
 				if (response.daily_login_details.premium_active)
@@ -1505,12 +1510,15 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 			{
 				if (response.daily_login_details.premium_active)
 				{
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed. Claiming...")
+					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward " . (standardClaimed ? "" : "un") . "claimed")
+					this.AddMessage("Claim", "Claiming...")
 					this.AddMessage("Claim", "Premium daily reward expires in " . Round(boostExpiry,1) . " days")
 				}
 				else
-					this.AddMessage("Claim", "Standard reward " . (standardClaimed ? "" : "un") . "claimed and premium reward not active. Claiming...") ;TODO: The standardClaimed check is redundant in this case, left for debugging for now
-				this.AddMessage("Claim", messageString)
+				{
+					this.AddMessage("Claim", "Standard reward unclaimed and premium reward not active")
+					this.AddMessage("Claim", "Claiming...")
+				}
 			}
 		}
 		else ;Check failed
@@ -1518,15 +1526,15 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
 			this.AddMessage("Claim", "Failed to check current daily reward status")
 			return
 		}
-		extraParams := "&is_boost=0" . serverString
-		response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
+		extraParams:="&is_boost=0" . serverString
+		response:=g_ServerCall.ServerCall("claimdailyloginreward",extraParams) ;Claim rewards
 		if (IsObject(response) AND response.success)
 		{
 			nextClaim_Seconds:=response.daily_login_details.next_claim_seconds
 			if (response.daily_login_details.premium_active) ;TODO: Use the initial check servercall to determine if this is needed? (So we can call ONLY the premium if it's the only one outstanding)
 			{
-				extraParams := "&is_boost=1" . serverString
-				response := g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
+				extraParams:="&is_boost=1" . serverString
+				response:=g_ServerCall.ServerCall("claimdailyloginreward",extraParams)
 				if (IsObject(response) AND response.success)
 				{
 					nextClaim_Seconds:=response.daily_login_details.next_claim_seconds

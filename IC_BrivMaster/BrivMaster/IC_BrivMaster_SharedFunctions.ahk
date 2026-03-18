@@ -6,12 +6,7 @@ class IC_BrivMaster_SharedFunctions_Class
 	__new()
     {
         this.Memory:=New IC_BrivMaster_MemoryFunctions_Class(A_LineFile . "\..\Offsets\IC_Offsets.json")
-		this.UserID:=""
-		this.UserHash:=""
-		this.InstanceID:=0
-		this.steelbones:="" ;steelbones and sprint are used as some sort of cache so they can be acted on once memory reads are invalid I think TODO: Review
-		this.sprint:=""
-		this.PatronID:=0
+		g_ServerCall:=New IC_BrivMaster_ServerCall_Class()
     }
 
 	LoadObjectFromAHKJSON(fileName,preserveBooleans:=false) ;If preserveBooleans is set 'true' and 'false' will be read as strings rather than being converted to -1 or 0, as AHK does not have a boolean type. Needed for game settings file
@@ -62,13 +57,6 @@ class IC_BrivMaster_SharedFunctions_Class
 		return false
 	}
 	
-	/*
-	ConvQuadToDouble(FirstEight, SecondEight) ;Takes input of first and second sets of eight byte int64s that make up a quad in memory. Obviously will not work if quad value exceeds double max TODO: Not currently used as only checking if gold=0 or not
-    {
-        return (FirstEight + (2.0**63)) * (2.0**SecondEight)
-    }
-	*/ 
-
     IsCurrentFormation(testformation:="") ;Returns true if the formation array passed is the same as the formation currently on the game field. Always false on empty formation reads. Requires full formation.
     {
         if(!IsObject(testFormation))
@@ -107,97 +95,6 @@ class IC_BrivMaster_SharedFunctions_Class
             levelTypeChampions:=!levelTypeChampions
 			ElapsedTime:=A_TickCount-StartTime
         }
-    }
-
-    SetUserCredentials() ;Removed creation of data to return for JSON export, as it never appeared to get used after output by ResetServerCall. Removed gem and chest data as those are fully handled by the hub side TODO: Is there any reason to keep this stuff in g_SF, rather than servercall? Seems like duplication
-    {
-        this.UserID:=this.Memory.ReadUserID()
-		this.UserHash:=this.Memory.ReadUserHash()
-		this.InstanceID:=this.Memory.ReadInstanceID()
-        this.sprint:=g_Heroes[58].ReadHasteStacks() ;TODO: Calling Haste 'Sprint' here is confusing; need to check throughout IC_Core if replacing it however (N.B. The reason for this naming is that the stat in the game is called 'BrivSprintStacks'). Possibly using that stat name in full would be clearer?
-        this.steelbones:=g_Heroes[58].ReadSBStacks()
-    }
-
-	;Removed saving of Servercall information to a JSON file, which never appeared to get used
-	; sets the user information used in server calls such as user_id, hash, active modron, etc.
-    ResetServerCall()
-    {
-        this.SetUserCredentials()
-        g_ServerCall:=New IC_BrivMaster_ServerCall_Class(this.UserID,this.UserHash,this.InstanceID)
-        version:=this.Memory.ReadBaseGameVersion()
-        if (version != "")
-            g_ServerCall.clientVersion := version
-        this.GetWebRoot()
-        g_ServerCall.networkID := this.Memory.ReadPlatform() ? this.Memory.ReadPlatform() : g_ServerCall.networkID
-        g_ServerCall.activeModronID := this.Memory.ReadActiveGameInstance() ? this.Memory.ReadActiveGameInstance() : 1 ; 1, 2, 3 for modron cores 1, 2, 3
-        g_ServerCall.activePatronID := this.PatronID ;this.Memory.ReadPatronID() == "" ? g_ServerCall.activePatronID : this.Memory.ReadPatronID() ; 0 = no patron
-        g_ServerCall.UpdateDummyData()
-    }
-
-	WaitForModronReset(timeout:=60000)
-    {
-        StartTime:=A_TickCount
-        ElapsedTime:=0
-        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
-        this.SetUserCredentials()
-		if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="") ;Only try and manually save if it hasn't already happened - (steelbones > 0)
-			g_serverCall.CallPreventStackFail(this.sprint,this.steelbones,"WaitForModronReset()",true)
-        while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
-        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        if (ElapsedTime>=timeout)
-			return false
-        return true
-    }
-	
-/* 
- WaitForModronReset(timeout:=60000)
-    {
-        StartTime:=A_TickCount
-        ElapsedTime:=0
-        g_SharedData.UpdateOutbound("LoopString","Modron Resetting...")
-        g_IBM.Logger.AddMessage("WaitForModronReset() Modron Resetting...")
-        this.SetUserCredentials()
-        if (this.steelbones!="" AND this.steelbones>0 AND this.sprint!="") ;Only try and manually save if it hasn't already happened - (steelbones > 0)
-            g_serverCall.CallPreventStackFail(this.sprint,this.steelbones,"WaitForModronReset()",true)
-        while (this.Memory.ReadResetting() AND ElapsedTime < timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-        g_IBM.Logger.AddMessage("WaitForModronReset() Loading z1...")
-        g_IBM.IBM_Sleep(20)
-        while(!this.Memory.ReadUserIsInited() AND this.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
-        {
-            g_IBM.IBM_Sleep(20)
-            ElapsedTime:=A_TickCount - StartTime
-        }
-        if (ElapsedTime>=timeout)
-        {
-            g_IBM.Logger.AddMessage("WaitForModronReset() Timeout Exit")
-            return false
-        }
-        g_IBM.Logger.AddMessage("WaitForModronReset() Standard Exit")
-        return true
-    }
-*/
-
-	GetWebRoot()
-    {
-        tempWebRoot := this.Memory.ReadWebRoot()
-        httpString := StrSplit(tempWebRoot,":")[1]
-        isWebRootValid := httpString == "http" or httpString == "https"
-        g_ServerCall.webroot := isWebRootValid ? tempWebRoot : g_ServerCall.webroot
     }
 }
 
@@ -397,31 +294,68 @@ class IC_BrivMaster_InputManager_Class ;A class for managing input related matte
 
 class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 {
-	userID:=0 ;TODO: Review the population and updating of all of these class variables
-    userHash:=""
-    instanceID:=0
-    networkID:=11
-    clientVersion:=999
-    activeModronID:=1
-    activePatronID:=0
-    dummyData:=""
-    webRoot:="http://ps22.idlechampions.com/~idledragons/" ;Default
-    timeoutVal:=60000
-
-	__New(userID:=0, userHash:=0, instanceID:=0)
+	__New()
     {
-        this.userID:=userID
-        this.userHash:=userHash
-        this.instanceID:=instanceID
-        this.shinies:=0
-        this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
-        return this
+        this.userID:=0
+		this.userHash:=""
+		this.instanceID:=0
+		this.networkID:=11
+		this.clientVersion:=999
+		this.activeModronID:=1
+		this.activePatronID:=0
+		this.webRoot:="http://ps22.idlechampions.com/~idledragons/" ;Default
+		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+    }
+	
+	UpdateStackData()
+    {
+		newRead:=g_SF.Memory.ReadInstanceID()
+        if(newRead)
+            this.InstanceID:=newRead
+        this.sprint:=g_Heroes[58].ReadHasteStacks() ;Note: the reason for this naming is that the stat in the game is called 'BrivSprintStacks'
+        this.steelbones:=g_Heroes[58].ReadSBStacks()
     }
 
-	CallPreventStackFail(sprint, steelbones, message,launchScript:=false) ;This function should be called after checking sprint & steelbones are valid - i.e. move 0 if no value is present. TODO: Can maybe bring this in too?
+    Update()
     {
-        stacks:=sprint + Floor(steelbones * g_IBM.RouteMaster.stackConversionRate)
-		g_IBM.Logger.AddMessage("Servercall Save via: "  . message . " Converted Haste=[" . stacks . "] from Haste=[" . sprint . "] and Steelbones=[" . steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
+        newRead:=g_SF.Memory.ReadUserID()
+        if(newRead)
+            this.UserID:=newRead
+        newRead:=g_SF.Memory.ReadUserHash()
+        if(newRead)
+            this.UserHash:=newRead
+		this.UpdateStackData()
+        newRead:=g_SF.Memory.ReadBaseGameVersion()
+        if(newRead)
+            this.clientVersion:=newRead
+		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
+		if(RegExMatch(newRead,"^https?://.+"))
+			this.webRoot:=newRead		
+        newRead:=g_SF.Memory.ReadPlatform()
+        if(newRead)
+            this.networkID:=newRead
+        newRead:=g_SF.Memory.ReadActiveGameInstance()
+        if(newRead)
+            this.activeModronID:=newRead
+        newRead:=g_SF.Memory.ReadPatronID()
+        if(newRead)
+            this.activePatronID:=newRead
+        this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
+    }
+
+	ShouldCallPreventStackFail(forceSave:=false) 
+	{
+		if (this.steelbones=="" OR this.sprint=="") ;If either value is missing, we can't put the conversion together
+			return false
+		if (!forceSave AND this.steelbones==0) ;If not forcing and we have no SB to convert, we shouldn't send a pointless save
+			return false
+		return true
+	}
+
+	CallPreventStackFail(message,launchScript:=false) ;This function should be called after UpdateStackData() is used and ShouldCallPreventStackFail() returns true
+    {
+		stacks:=this.sprint + Floor(this.steelbones * g_IBM.RouteMaster.stackConversionRate)
+		g_IBM.Logger.AddMessage("Servercall Save via: "  . message . " Converted Haste=[" . stacks . "] from Haste=[" . this.sprint . "] and Steelbones=[" . this.steelbones . "] with stackConversionRate=[" . Round(g_IBM.RouteMaster.stackConversionRate,1) . "]")
 		jsonString:="{""stats"":{""briv_steelbones_stacks"":0,""briv_sprint_stacks"":" . stacks . "}}"
 		boundaryHeader:=this.GetBoundryHeader()
 		save:=this.GetSaveFromJSON(jsonString,boundaryHeader)
@@ -444,9 +378,8 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
     ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specifically for use with saves. saveBody must be encoded before using this call.
     {
         response:=""
-        WR:=ComObjCreate( "WinHttp.WinHttpRequest.5.1" )
-        ; https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
-        WR.SetTimeouts( "0", "15000", "7500", "30000" )
+        WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")  
+        WR.SetTimeouts("0","15000","7500","30000") ;https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
         Try 
 		{
             WR.Open("POST",this.webroot . "post.php?call=saveuserdetails&", true)
@@ -500,9 +433,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
     {
 		userData:=g_zlib.Deflate(jsonString)
 		checksum:=this.MD5Save(jsonString)
-		Random, r1, 0, 65535
-		Random, r2, 0, 65535
-		boundrySuffix:=Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
         mimicSave:="--" . boundaryHeader . "`r`n"
         mimicSave.="Content-Disposition: form-data; name=""call""`r`n"
         mimicSave.="Content-Type: text/plain; charset=utf-8`r`n"
@@ -569,20 +499,14 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		return "BestHTTP_HTTPMultiPartForm_" . Format("{:04X}", r2) . Format("{:04X}", r1) ;Random is limited to signed int32, so instead of faffing about with that just glue two 16-bit values together
 	}
 
-    UpdateDummyData()
-    {
-        this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
-    }
-
     ;============================================================
     ;Various server call functions that should be pretty obvious.
     ;============================================================
     ;Except this one, it is used internally and shouldn't be called directly.
-    ServerCall(callName, parameters, timeout:="", retryNum:=0) 
+    ServerCall(callName, parameters, timeout:=60000, retryNum:=0) 
     {
         response:=""
         URLtoCall:=this.webRoot . "post.php?call=" . callName . parameters
-        timeout:=timeout ? timeout : this.timeoutVal
         WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
         WR.SetTimeouts(0,45000,30000,timeout) ;https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
         Try
@@ -600,22 +524,16 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
                     retryNum++
                     this.WebRoot:=response.switch_play_server
                     if(retryNum<=3) 
-                        return this.ServerCall(callName,parameters,timeout,retryNum)
+                    {
+						WR:=""
+						return this.ServerCall(callName,parameters,timeout,retryNum)
+					}
                 }
             }
         }
 		WR:=""
         return response
     }
-
-	/* Only used by IsOnWorldMap which we've commented out
-    CallUserDetails() ; Pulls user details from the server and returns it in a json parsed object
-    {
-        getUserParams := this.dummyData . "&include_free_play_objectives=true&instance_key=1&user_id=" . this.userID . "&hash=" . this.userHash
-        userDetails := this.ServerCall( "getuserdetails", getUserParams )
-        return userDetails
-    }
-	*/
 
     CallLoadAdventure(adventureToLoad) ;Starts a new adventure and returns the response
     {
@@ -631,94 +549,32 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         return this.ServerCall("softreset",advParams)
     }
 
-    CallBuyChests(chestID,chests,chestType:="") ;Buys <chests> number of <chestID> chests. Automatically uses Patron purchase call for patron chests. TODO: Either add Elminster patron, or strip this back to just basic chests
+    CallBuyChests(chestID,chests,chestType:="") ;Buys <chests> number of <chestID> chests. Only works with basic non-patron non-event chests
     {
-        if (chests>250)
+        if(chests>250)
             chests:=250
-        else if (chests<1)
+        else if(chests<1)
             return
-        if(chestType=="eventV2")
-        {
-            chestParams := this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests "&spend_event_v2_tokens=1"
-            return this.ServerCall("buysoftcurrencychest",chestParams)
-        }
-        else if(chestID!=152 AND chestID!=153 AND chestID!=219  AND chestID!=311)
-        {
-            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests
-            return this.ServerCall("buysoftcurrencychest",chestParams)
-        }
-        else
-        {
-            switch chestID
-            {
-                case 152:
-                    itemID := 1
-                    patronID := 1
-                case 153:
-                    itemID := 23
-                    patronID := 2
-                case 219:
-                    itemID := 45
-                    patronID := 3
-                case 311:
-                    itemID := 76
-                    patronID := 4
-                Default:
-                    return ""
-            }
-            chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&patron_id=" patronID "&shop_item_id=" itemID
-            return this.ServerCall( "purchasepatronshopitem", chestParams )
-        }
+        chestParams:=this.dummyData "&user_id=" this.userID "&hash=" this.userHash "&instance_id=" this.instanceID "&chest_type_id=" chestID "&count=" chests
+        return this.ServerCall("buysoftcurrencychest",chestParams)
     }
 
-    CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest.
+    CallOpenChests(chestID, chests) ;Open <chests> number of <chestID> chest
     {
-        if (chests>1000)
+        if(chests>1000)
             chests:=1000
-        else if (chests<1)
+        else if(chests<1)
             return
         chestParams:="&gold_per_second=0&checksum=4c5f019b6fc6eefa4d47d21cfaf1bc68&user_id=" this.userID "&hash=" this.userHash 
             . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests
         return this.ServerCall("opengenericchest",chestParams,60000)
     }
-
-	/* ;Not actually used, we just seem to assume LoadAdventure will work after sending the end adventure call
-    ;A method to check if the party is on the world map. Necessary state to use callLoadAdventure()
-    IsOnWorldMap()
+   
+    UpdatePlayServer() ;Updated to use the current play server instead of fixed ps23; this.webRoot should only ever be overwritten by valid memory reads or valid servercall returns
     {
-        currentAdventure := 0
-        userDetails := this.CallUserDetails()
-        if ( !IsObject( userDetails ) )
-            return "Failed to fetch or build user details."
-        for k, v in userDetails.details.game_instances
-        {
-            if (v.game_instance_id == this.activeInstanceID) 
-            {
-                currentAdventure := v.current_adventure_id
-            }
-        }
-        if ( currentAdventure == -1 )
-            return 1
-        else
-            return 0
-    }
-	*/
-    
-    CallGetPlayServer() ;Get the loadbalanced Play Server
-    {
-        return this.ServerCall("getPlayServerForDefinitions", this.dummyData)
-    }
-
-    UpdatePlayServer() ;TODO: Consider how this interacts with the webroot memory read
-    {
-		oldWebRoot:=this.webRoot
-		this.webRoot:="http://ps23.idlechampions.com/~idledragons/" ;Assume ps23 will always be available (avoiding using master) TODO: Why do we call ps23 and not the current server to check this?
-		response:=this.CallGetPlayServer()
+		response:=this.ServerCall("getPlayServerForDefinitions", this.dummyData)
 		if (response!="" AND response.play_server!="")
 			this.webRoot:=response.play_server
-		else
-			this.webRoot:=oldWebRoot
-		;Note: A repeat this.CallGetPlayServer() call and logic was removed, it might have been for debugging...or might have served an actual purpose
     }
 }
 

@@ -29,6 +29,7 @@ try
 #include %A_LineFile%\..\Lib\IC_BrivMaster_JSON.ahk
 #include %A_LineFile%\..\Lib\IC_BrivMaster_Zlib.ahk
 
+global g_ServerCall:={}
 global g_SF:={} ;Must be instantiated after settings are loaded
 global g_IriBrivMaster:=New IC_IriBrivMaster_Component()
 global g_IriBrivMaster_GUI:=New IC_IriBrivMaster_GUI
@@ -38,7 +39,6 @@ global g_InputManager:=New IC_BrivMaster_InputManager_Class()
 global g_IBM:={} ;Nasty hack for the input manager expecting the current HWnd to be in g_IBM.GameMaster.Hwnd, which is needed for the Elly tool TODO: Make this less horrible. Possibly by actually having g_IBM used for IBM things?!
 global g_IriBrivMaster_StartFunctions:={}
 global g_IriBrivMaster_StopFunctions:={}
-global g_ServerCall:={} ;This is instantiated by g_SF.ResetServerCall()
 
 g_IriBrivMaster.Init()
 

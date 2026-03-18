@@ -5,14 +5,14 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	static TIMEOUT_BASE:=100000  ;Allow 10s at x10 speed, 8s at x12.5
 	static ULT_DELAY:=3750 ;Half of the 7500ms duration of Elly's ult, including run out time, per the CotFeywild .IsUltimateActive read TODO: This is for 5 cards (1000 start+750 per card+750 applying debuffs+2000 end), possibly should go halfway between 4 and 5?
 	
-	__New(combining)
+	__New()
 	{
-		if(combining)
+		if(g_Heroes[139].inM)
 		{
-			this.ghostLevelling:=g_IBM_Settings["IBM_Level_Options_Ghost"] ;Ghost levelling applies only to combining, where Briv is present for all of the Casino
+			this.ghostLevelling:=g_IBM_Settings["IBM_Level_Options_Ghost"] ;Ghost levelling applies only where Thellora is in M, as we have Briv present in the full Casino in this case
 			this.levelFormation:="min"
 		}
-		else
+		else ;Without we'll be doing the Casino on z1, where Briv will be not be able to be levelled until the zone completes
 		{
 			this.ghostLevelling:=false
 			this.levelFormation:="z1"
@@ -244,9 +244,9 @@ class IC_BrivMaster_Logger_Class ;A class for recording run logs
 		this.LogEntries.Run.Cycle:=""
 	}
 
-	OutputHeader()
+	OutputHeader(strategyString)
 	{
-		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum," . g_IBM.RouteMaster.GetStrategyString() . "`n", % this.logPath
+		FileAppend, % "Reset #,Start Time,Start Tick,Total,Active,Wait,Load,Reset,Cycle,Fail,LastZone,Electrum," . strategyString . "`n", % this.logPath
 	}
 
 	ForceFail() ;The zone-based check does not capture runs that reach the target, but fail to reset, causing us to have Weird Stuff going on with no reported fails

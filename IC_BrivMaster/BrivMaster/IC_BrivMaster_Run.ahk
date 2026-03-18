@@ -86,11 +86,10 @@ class IC_BrivMaster_GemFarm_Class
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads
 		this.RouteMaster:=New IC_BrivMaster_RouteMaster_Class(g_IBM_Settings["IBM_Route_Combine"],this.Logger.logBase)
-		this.Logger.OutputHeader() ;After the RouteMaster is created so that the strategy string can be included in the header
 		if (!this.PreFlightCheck()) ; Did not pass pre flight check.
             return false
 		this.offRamp:=false ;Flag when approaching the end of a run for missed-reset detection
-		this.EllywickCasino:=New IC_BrivMaster_EllywickCasino_Class(this.RouteMaster.combining)
+		this.EllywickCasino:=New IC_BrivMaster_EllywickCasino_Class()
 		this.DialogSwatter:=New IC_BrivMaster_DialogSwatter_Class()
 		if (g_IBM_Settings["IBM_Level_Diana_Cheese"]) ;Diana Electrum Chest Cheese things
 			this.DianaCheeseHelper:=New IC_BrivMaster_DianaCheese_Class
@@ -126,7 +125,7 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				this.Logger.NewRun()
 				this.currentZone:=this.WaitForZoneLoad(this.currentZone)
-				this.routeMaster.ToggleAutoProgress(this.routeMaster.combining ? 1 : 0) ;Set initial autoprogess ASAP. routeMaster.combining can't change run-to-run as loaded at script start
+				this.routeMaster.ToggleAutoProgress(g_Heroes[139].inM ? 1 : 0) ;Set initial autoprogess ASAP
 				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
 				this.failedConversionMode:=false
                 this.levelManager.Reset()
@@ -250,7 +249,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
 			if (this.routeMaster.combining)
 			{
-				this.routeMaster.CheckThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
+				this.routeMaster.CheckCombiningThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
 				if (!melfSpawningMore)
 				{
@@ -320,60 +319,133 @@ class IC_BrivMaster_GemFarm_Class
 			}
 			else ;Non-combining
 			{
-				this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
-				;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
-				;TODO: Update to check BBEGPresent
-				if (melfSpawningMore)
-					this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
-				else if (tatyanaPresent AND g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"]) ;If Melf won't be spawning more in the waitroom level Tatyana if present
+				if(g_Heroes[139].inM) ;Thellora in M, so this will largely proceed per combining, but with Briv on z1c
 				{
-					this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-				}
-				else if (!tatyanaPresent)
-				{
-					this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",g_Heroes[125].inQ ? 100 : 0)
-				}
-				;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
-				;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
-				;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
-				frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
-				for _, v in frontColumn
-				{
-					if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise TODO: How much sense does this make for non-combine? Make sure Briv is actually being added at zone completion and I guess it can help a bit
+					this.routeMaster.CheckNonCombiningThelloraBossRecovery() ;This will set Briv's z1c in the default case
+					melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
+					if (!melfSpawningMore)
 					{
-						this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
-						this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
+						this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more
 					}
-					else
+					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
 					{
-						this.levelManager.RaisePriorityForFrontRow(v)
+						if (!melfSpawningMoreAfterRush AND tatyanaPresent) ;If Melf won't be spawning more in the waitroom level Tatyana if present
+						{
+							this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
+						}
 					}
-				}
-				this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
-				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-				if(this.EllywickCasino.Casino(frontColumn)) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
-					this.EllywickCasino.UnlockHeroes()
-				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
-				while(quest>0)
-				{
-					this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
-					this.IBM_Sleep(15)
-					quest:=g_SF.Memory.ReadQuestRemaining()
-				}
-				this.levelManager.LevelWorklist(,true) ;Force briv to z1 level (due to z1c he won't have been levelled by the earlier calls)
-				;TODO: This will stall without Thellora, or if formation is zerged. Need a cap, and need to actually compare Q/E to what we have
-				;It seems this fails due to the ranged fairies Minsc spawns attacking the formation
-				swapAttempts:=0
-				Loop
-				{
-					this.routeMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
-					swapAttempts++
-				} until (!g_Heroes[139].ReadBenched() OR (swapAttempts > 10)) ;139 is Thellora
-				this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
-				if (g_Heroes[139].inQ OR g_Heroes[139].inE)
-				{
-					g_SF.DoRushWait()
+					if (BBEGPresent)
+					{
+						if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
+							this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
+						else
+							this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
+					}
+					frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
+					for _, v in frontColumn
+					{
+						if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise
+						{
+							this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
+							this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
+						}
+						else
+						{
+							this.levelManager.RaisePriorityForFrontRow(v)
+						}
+					}
+					g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
+					this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
+					if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
+						this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
+					if (g_Heroes[139].inM)
+						g_SF.DoRushWait(true)
+					this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
+					g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
+					this.levelManager.LevelFormation("M","min") ;Level M to minimum
 					this.routeMaster.UpdateThellora()
+					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
+					unlockRequired:=this.EllywickCasino.Casino(frontColumn)
+					if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
+					{
+						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
+						this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
+						;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
+						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+							this.EllywickCasino.UnlockHeroes()
+					}
+					else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
+					{
+						brivShouldBeinEConfig:=this.routeMaster.ShouldWalk(g_SF.Memory.ReadCurrentZone())
+						swapAttempts:=0
+						Loop
+						{
+							this.routeMaster.SetFormation() ;Move to standard formation after waiting for the Casino if necessary
+							swapAttempts++
+						} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
+						this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
+						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+							this.EllywickCasino.UnlockHeroes()
+					}
+					this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
+				}
+				else ;No Thellora, so Casino in z1
+				{
+					this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
+					;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
+					;TODO: Update to check BBEGPresent
+					if (melfSpawningMore)
+						this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
+					else if (tatyanaPresent AND g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"]) ;If Melf won't be spawning more in the waitroom level Tatyana if present
+					{
+						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
+					}
+					else if (!tatyanaPresent)
+					{
+						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",g_Heroes[125].inQ ? 100 : 0)
+					}
+					;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
+					;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
+					;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
+					frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
+					for _, v in frontColumn
+					{
+						if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise TODO: How much sense does this make for non-combine? Make sure Briv is actually being added at zone completion and I guess it can help a bit
+						{
+							this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
+							this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
+						}
+						else
+						{
+							this.levelManager.RaisePriorityForFrontRow(v)
+						}
+					}
+					this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
+					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
+					if(this.EllywickCasino.Casino(frontColumn)) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
+						this.EllywickCasino.UnlockHeroes()
+					quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
+					while(quest>0)
+					{
+						this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
+						this.IBM_Sleep(15)
+						quest:=g_SF.Memory.ReadQuestRemaining()
+					}
+					this.levelManager.LevelWorklist(,true) ;Force briv to z1 level (due to z1c he won't have been levelled by the earlier calls)
+					;TODO: This will stall without Thellora, or if formation is zerged. Need a cap, and need to actually compare Q/E to what we have
+					;It seems this fails due to the ranged fairies Minsc spawns attacking the formation
+					swapAttempts:=0
+					Loop
+					{
+						this.routeMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
+						swapAttempts++
+					} until (!g_Heroes[139].ReadBenched() OR (swapAttempts > 10)) ;139 is Thellora
+					this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
+					if (g_Heroes[139].inQ OR g_Heroes[139].inE)
+					{
+						g_SF.DoRushWait()
+						this.routeMaster.UpdateThellora()
+					}
 				}
 			}
 		}
@@ -741,7 +813,7 @@ class IC_BrivMaster_GemFarm_Class
 */
 ObjRegisterActive(Object, CLSID, Flags:=0) ;TODO: This should not be floating around at the end of this file
 {
-    static cookieJar := {}
+    static cookieJar:={}
     if (!CLSID)
 	{
         if (cookie:=cookieJar.Remove(Object))!=""

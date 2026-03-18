@@ -20,7 +20,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.zonesPerJumpE:=g_IBM_Settings["IBM_Route_BrivJump_E"] + 1 ;As above
 		else
 			this.zonesPerJumpE:=1 ;Walking progresses 1 zone per 'jump'
-		this.zonesPerJumpM:=g_IBM_Settings["IBM_Route_BrivJump_M"] + 1 ;Used when combining
+		this.zonesPerJumpM:=g_IBM_Settings["IBM_Route_BrivJump_M"] + 1 ;Used when Thellora is in M, as we'll do an M-jump out of the Casino
 		this.targetZone:=g_SF.Memory.GetModronResetArea()
 		this.UpdateThellora(true) ;Must be done after the zones per jump are populated
 		this.jumpCosts:=strsplit(IC_BrivMaster_RouteMaster_Class.IRI_BRIVMASTER_JUMPCOST_METALBORN,",")
@@ -52,12 +52,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			case 2: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Attacking(this)
 			default: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker(this)
 		}
-		this.CombineModeThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to avoid combining into a boss by delaying the combine?
+		this.ThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to invert the standard combine option to avoid hitting a boss? (Note this was previously only applicable to combining)
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
 		g_SharedData.UpdateOutbound("IBM_RunControl_ForceOffline",false) ;Default to off
 		this.LastSafeStackZone:=this.GetLastSafeStackZone() ;No reason to re-calcuate this every zone
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false) ;Allows the hub to detect process changes on restarts promptly
 		this.LoadRoute()
+		this.SetStrategyStrings()
 	}
 
 	Reset()
@@ -85,7 +86,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.RelayData.Reset()
 		}
 		g_SharedData.UpdateOutbound("IBM_RunControl_CycleString","Cycle " . this.cycleCount . "/" . this.cycleMax . (this.cycleForceOffline ? " FO" : ""))
-		g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",this.GetStrategyString())
 		this.SetInitialStackString()
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",false)
 	}
@@ -110,10 +110,21 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.RelayData.PreRelease()
 	}
 
-	GetStrategyString() ;Separated to allow it to be placed into the log TODO: This could be further separated to make the log entry more suitable for CSV. Pass the targetStacks to avoid duplicate calls there?
+	SetStrategyStrings()
 	{
 		targetStacks:=this.GetTargetStacks(true)
-		return (this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " then using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ") @" . this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J to z" . this.targetZone
+		jumpString:=this.zonesPerJumpQ . (this.zonesPerJumpE>1 ? "&&" . this.zonesPerJumpE : "") . "z/J"
+		stackString:="Using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ")"
+		if(g_Heroes[139].inM)
+		{
+			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",(this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " following by Casino, jumping " . jumpString . " to reset at z" . this.targetZone . "`n" . stackString) ;Multi-line for Home display
+			g_IBM.Logger.OutputHeader((this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " following by Casino,Jumping " . jumpString . ",Reset at z" . this.targetZone . "," . stackString) ;CSV for log
+		}
+		else
+		{
+			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString","Casino at z1 followed by non-combined to z" . this.thelloraTarget . ", jumping " . jumpString . " to reset at z" . this.targetZone . "`n" . stackString)
+			g_IBM.Logger.OutputHeader("Casino at z1 followed by non-combine to z" . this.thelloraTarget . ",Jumping " . jumpString . ",Reset at z" . this.targetZone . "," . stackString)
+		}
 	}
 
 	SetInitialStackString() ;Return the pre-stacking intent, i.e. on/offline and zone
@@ -122,7 +133,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stackString:="Stacking: Expecting offline at z" . g_IBM_Settings["IBM_Offline_Stack_Zone"]
 		else
 		{
-			if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
+			if(g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
 			{
 				melfRange:=this.MelfManager.GetFirstMelfSpawnMoreRange()
 				if (melfRange)
@@ -134,7 +145,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			{
 				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Online_Melf_Min"]
 			}
-			if (this.ShouldBlankRestart())
+			if(this.ShouldBlankRestart())
 			{
 				if (this.RelayBlankOffline)
 					stackString.=" with relay blank restart"
@@ -181,9 +192,9 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return baseJump + 1
 	}
 
-	CheckThelloraBossRecovery() ;If option set, avoid Thellora combining into bosses due to a run that didn't complete by breaking the combine
+	CheckCombiningThelloraBossRecovery() ;If option set, avoid Thellora combining into bosses due to a run that didn't complete by breaking the combine
 	{
-		if(this.CombineModeThelloraBossAvoidance AND this.combining)
+		if(this.ThelloraBossAvoidance)
 		{
 			thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
 			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true)
@@ -193,6 +204,21 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				g_IBM.Logger.AddMessage("CTBR: Broke combine to avoid hitting boss")
 			}
 		}
+	}
+	
+	CheckNonCombiningThelloraBossRecovery() ;If option set, avoid Thellora running into a boss due to a run that didn't complete by attempting to combine
+	{
+		if(this.ThelloraBossAvoidance)
+		{
+			thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
+			rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
+			if (rushTargetNonCombining < this.thelloraTarget AND MOD(rushTargetNonCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,true),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
+			{
+				g_IBM.Logger.AddMessage("CTBR: Attempting to combine to avoid hitting boss")
+				return
+			}
+		}
+		g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Standard outcome: prevent Briv being levelled prior to completion of z1
 	}
 
 	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
@@ -205,13 +231,22 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if(this.combining) ;We need to do one jump to reach ThelloraTarget in this case, and will leave the Casino on an M jump, not whatever fits the zone
 		{
 			jumps:=this.zones[thelloraTarget + this.zonesPerJumpM].jumpsToFinish + 2 ;1 for the combine, 1 for the M-jump after the Casino
-			if (rushNext AND this.CombineModeThelloraBossAvoidance AND this.IsFeatSwap() AND this.zonesPerJumpM > this.zonesPerJumpE) ;If Thellora won't reach her target, we have boss recovery on, we are using feat swapping and the M jump would have been larger than an E jump, we need to generate an additional jump's worth of stacks, as replacing an M with an E would result in us needing 1 more jump Note: As this is a recovery mode trying to work out if the jump being replaced is Q or E doesn't seem worthwhile (it's made complex by her erratic behaviour if not in W)
+			if(rushNext AND this.ThelloraBossAvoidance AND this.IsFeatSwap() AND this.zonesPerJumpM > this.zonesPerJumpE) ;If Thellora won't reach her target, we have boss recovery on, we are using feat swapping and the M jump would have been larger than an E jump, we need to generate an additional jump's worth of stacks, as replacing an M with an E would result in us needing 1 more jump Note: As this is a recovery mode trying to work out if the jump being replaced is Q or E doesn't seem worthwhile (it's made complex by her erratic behaviour if not in W)
 			{
 				jumps++
-				g_IBM.Logger.AddThelloraCompensationMessage("GetTargetStacksForFullRun: Added extra jump for Thellora recovery for a total of: ",jumps)
+				g_IBM.Logger.AddThelloraCompensationMessage("GetTargetStacksForFullRun: Added extra jump for combining Thellora recovery for a total of: ",jumps)
 			}
 		}
-		else
+		else if(g_Heroes[139].inM) ;Non-combined, but with Casino after the rush and so an M-jump after
+		{
+			jumps:=this.zones[thelloraTarget + this.zonesPerJumpM].jumpsToFinish + 1 ;1 for the M-jump after the Casino, no combine here
+			if(rushNext AND this.ThelloraBossAvoidance AND this.IsFeatSwap()) ;As for combining, but will always be required as even if M=Q, we're only getting 1 standard zone completion when combining instead of 2 when separate, i.e. if M and Q are both 14J, we will replace 15 zones with 14, and potentially need an extra jump. This does highlight the limitations of this approach, as if normally landing after the reset this wouldn't be necessary - it is a recovery mode, however TODO: Could we check the previous zones's jumps to finish and make no adjustment if they are the same?
+			{
+				jumps++
+				g_IBM.Logger.AddThelloraCompensationMessage("GetTargetStacksForFullRun: Added extra jump for non-combining Thellora recovery for a total of: ",jumps)
+			}
+		}
+		else ;No M-jump
 			jumps:=this.zones[thelloraTarget].jumpsToFinish ;Simple case
 		return this.jumpCosts[jumps]
 	}
@@ -227,7 +262,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.leftoverHaste:=calcResult.haste
 			if (g_Heroes[139].inA) ;If Thellora is in use
 			{
-				targetCharges:=g_Heroes[139].rushCap + (this.combining ? 0 : 1/5) ;If not combining Thellora will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
+				targetCharges:=g_Heroes[139].rushCap + (g_Heroes[139].inM ? 0 : 0.2) ;If Thellora is not in M she will not get credit for z1. Note we can't use this.ThelloraTarget as that includes a possible combined jump and the +1. TODO: Check for her presence in W here?
 				currentCharges:=g_Heroes[139].ReadRushAreaCharges()
 				remainingCharges:=MAX(0,targetCharges-currentCharges)
 				if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run

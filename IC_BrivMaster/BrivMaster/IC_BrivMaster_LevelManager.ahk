@@ -201,7 +201,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.ResetLevellingDone()
 		g_Heroes.ResetAll()
 		this.clickDamageTargetFinal:=g_IBM.routeMaster.targetZone ;These need a curve for post-z2000 HP. Done in Reset() as __New() is current called before the routemaster is set up
-		if (g_IBM.routeMaster.combining)
+		if (g_Heroes[139].inM)
 			this.clickDamageTargetRush:=g_IBM.routeMaster.ThelloraTarget ;Only needs to be high enough for the Thellora target as we will stop there are do the Casino
 		else
 			this.clickDamageTargetRush:=g_IBM.routeMaster.ThelloraTarget + g_IBM.routeMaster.zonesPerJumpQ*2 ;Include 2 jumps

@@ -72,7 +72,7 @@ class IC_BrivMaster_SharedFunctions_Class
         return true
     }
 	
-    DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
+    DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter) Also TODO: this shouldn't be in SharedFunctions
     {
         ElapsedTime:=0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop

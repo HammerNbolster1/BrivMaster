@@ -76,7 +76,7 @@ class IC_BrivMaster_Relay_Class
 	{
 		this.LogString.=A_Tickcount . ",Starting Game(Relay)`n"
 		WinGet, savedActive,, A ;Why is this here? It's taken later - I guess it's just incase we pick up the HWnd instantly
-		this.SavedActiveWindow := savedActive
+		this.SavedActiveWindow:=savedActive
 		this.PID:=0
 		this.Hwnd:=0
 		this.Stage:=0

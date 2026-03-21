@@ -239,9 +239,7 @@ class IC_BrivMaster_GemFarm_Class
 						this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
 					}
 					else
-					{
 						this.levelManager.RaisePriorityForFrontRow(v)
-					}
 				}
 				g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
@@ -259,7 +257,6 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-					;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -302,9 +299,7 @@ class IC_BrivMaster_GemFarm_Class
 							this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
 						}
 						else
-						{
 							this.levelManager.RaisePriorityForFrontRow(v)
-						}
 					}
 					g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 					this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
@@ -322,7 +317,6 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 						this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-						;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
 					}
 					else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 					{

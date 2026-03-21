@@ -260,8 +260,6 @@ class IC_BrivMaster_GemFarm_Class
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
 					;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
-					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.EllywickCasino.UnlockHeroes()
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -273,10 +271,10 @@ class IC_BrivMaster_GemFarm_Class
 						swapAttempts++
 					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 					this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
-					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.EllywickCasino.UnlockHeroes()
 				}
-				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
+				if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+					this.EllywickCasino.UnlockHeroes()
+				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew modifier key levelling to happen
 			}
 			else ;Non-combining
 			{
@@ -325,8 +323,6 @@ class IC_BrivMaster_GemFarm_Class
 						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 						this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
 						;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
-						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-							this.EllywickCasino.UnlockHeroes()
 					}
 					else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 					{
@@ -338,9 +334,9 @@ class IC_BrivMaster_GemFarm_Class
 							swapAttempts++
 						} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 						this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
-						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-							this.EllywickCasino.UnlockHeroes()
 					}
+					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+						this.EllywickCasino.UnlockHeroes()
 					this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
 				}
 				else ;No Thellora, so Casino in z1

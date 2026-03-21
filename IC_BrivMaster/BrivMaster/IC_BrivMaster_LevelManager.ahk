@@ -131,7 +131,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 	ExtactFrontColumn() ;Returns the champions in the front row of the formation, except for Briv, used to suppress levelling so Briv takes all the hits  TODO: This needs to exclude Hew w/avoidance feat
 	{
 		frontSize:=g_SF.Memory.IBM_GetFrontColumnSize()
-		this.frontColumnChampionsMNoBriv:={}
+		this.frontColumnChampionsMNoBriv:=[]
 		loop %frontSize%
 		{
 			heroID:=this.savedFormations["M"][A_Index]
@@ -139,10 +139,26 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 				this.frontColumnChampionsMNoBriv.Push(heroID)
 		}
 	}
-
-	GetFrontColumnNoBriv() ;Returns the champions in the front row of the formation, used to suppress levelling so Briv takes all the hits. TODO: This needs to exclude Hew w/avoidance feat
+	
+	SetupFirstZoneFrontRow()
 	{
-		return this.frontColumnChampionsMNoBriv
+		if(g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row hero but Briv - in which case don't prioritise
+		{
+			for _, v in this.frontColumnChampionsMNoBriv
+			{
+				this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
+				this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
+			}
+			return this.frontColumnChampionsMNoBriv
+		}
+		else ;Raise priority to get the hero placed before the formation comes under attack
+		{
+			for _, v in this.frontColumnChampionsMNoBriv
+			{
+				this.levelManager.RaisePriorityForFrontRow(v)
+			}
+			return [] ;Empty return as we have not lowered any levels
+		}
 	}
 
 	OverrideLevelByID(heroID, mode, level) ;Updates the current data (only!)

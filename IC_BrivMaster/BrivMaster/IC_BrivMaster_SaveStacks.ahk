@@ -9,11 +9,11 @@ global g_webRoot:=A_Args[1] ? A_Args[1] : "http://ps22.idlechampions.com/~idledr
 ServerCallSave(A_Args[2],A_Args[3])
 ExitApp
 
-ServerCallSave(saveBody,boundaryHeader,retryNum:=0) ; Special server call specifically for use with saves. saveBody must be encoded before using this call.
+ServerCallSave(saveBody,boundaryHeader,retryNum:=0)
 {
 	response:=""
 	WR:=ComObjCreate("WinHttp.WinHttpRequest.5.1")
-	WR.SetTimeouts("0","15000","7500","30000") ;https://learn.microsoft.com/en-us/windows/win32/winhttp/iwinhttprequest-settimeouts defaults: 0 (DNS Resolve), 60000 (connection timeout. 60s), 30000 (send timeout), 60000 (receive timeout)
+	WR.SetTimeouts("0","15000","7500","30000")
 	Try 
 	{
 		WR.Open("POST", g_webRoot . "post.php?call=saveuserdetails&", true)

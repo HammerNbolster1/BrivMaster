@@ -1656,11 +1656,11 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
     }
 }
 
-class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outside of gem farms
+class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outside of gem farming
 {
     __New(minCards,maxCards)
 	{
-		this.CasinoTimer := ObjBindMethod(this, "Casino")
+		this.CasinoTimer:=ObjBindMethod(this, "Casino")
 		this.Redraws:=0
 		this.UsedUlt:=false ;Tracks Elly's ult being in progress, as her cards are only cleared when it ENDS, despite the visual
 		this.minCards:=minCards ;These are arrays indexed by card type, so 1 is Knight, 2 Moon, 3 Gem, 4 Fates, 5 Flames
@@ -1747,9 +1747,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
 			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
-			{
 				this.UsedUlt:=false
-			}
 			else
 			{
 				this.Redraws++

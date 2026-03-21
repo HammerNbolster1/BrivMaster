@@ -332,7 +332,7 @@ class IC_BrivMaster_DialogSwatter_Class ;A class for swatting dialogs that appea
     Swat()
     {
         if (g_SF.Memory.ReadWelcomeBackActive())
-			this.KEY_ESC.KeyPress() ;.KeyPress() applies critical itself
+			this.KEY_ESC.KeyPress()
 		else if (A_TickCount > this.StartTime + 3000) ;3s should be enough to get the swat done
 			this.Stop() ;Stop the timer since we don't have anything to swat
     }

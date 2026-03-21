@@ -856,9 +856,9 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.SlotFormations:={} ;Irisiri - used for formation caching by the looks of it
     }
 
-	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
+	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window
     {
-        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this
+        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"]
         isExeRead:=_IBM_MM.Refresh(,pid)
         if(isExeRead==-1)
             return

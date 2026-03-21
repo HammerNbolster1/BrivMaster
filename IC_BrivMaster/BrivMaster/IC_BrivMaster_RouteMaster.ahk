@@ -117,12 +117,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		stackString:="Using " . targetStacks . " stacks (stacking " . (this.stackConversionRate!=1 ? CEIL((targetStacks-48)/this.stackConversionRate) . " w/TS" : targetStacks-48) . ")"
 		if(g_Heroes[139].inM)
 		{
-			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",(this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " following by Casino, jumping " . jumpString . " to reset at z" . this.targetZone . "`n" . stackString) ;Multi-line for Home display
+			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString",(this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " following by Casino, jumping " . jumpString . " to reset at z" . this.targetZone . ". " . stackString) ;For Home display
 			g_IBM.Logger.OutputHeader((this.combining ? "Combining" : "Non-combined") . " to z" . this.thelloraTarget . " following by Casino,Jumping " . jumpString . ",Reset at z" . this.targetZone . "," . stackString) ;CSV for log
 		}
 		else
 		{
-			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString","Casino at z1 followed by non-combined to z" . this.thelloraTarget . ", jumping " . jumpString . " to reset at z" . this.targetZone . "`n" . stackString)
+			g_SharedData.UpdateOutbound("IBM_RunControl_StatusString","Casino at z1 followed by non-combined to z" . this.thelloraTarget . ", jumping " . jumpString . " to reset at z" . this.targetZone . ". " . stackString)
 			g_IBM.Logger.OutputHeader("Casino at z1 followed by non-combine to z" . this.thelloraTarget . ",Jumping " . jumpString . ",Reset at z" . this.targetZone . "," . stackString)
 		}
 	}

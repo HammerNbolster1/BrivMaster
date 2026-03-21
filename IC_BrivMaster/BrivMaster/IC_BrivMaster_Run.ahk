@@ -219,8 +219,7 @@ class IC_BrivMaster_GemFarm_Class
 			{
 				this.routeMaster.CheckCombiningThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-				if (!melfSpawningMore)
-				{
+				if (melfPresent AND !melfSpawningMore) ;Due to the ! this has to check melfPresent first
 					this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more, to avoid the multiple-credit buff ruining the combine
 				}
 				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
@@ -291,8 +290,7 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.CheckNonCombiningThelloraBossRecovery() ;This will set Briv's z1c in the default case
 					melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-					if (!melfSpawningMore)
-					{
+					if (melfPresent AND !melfSpawningMore)
 						this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more
 					}
 					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])

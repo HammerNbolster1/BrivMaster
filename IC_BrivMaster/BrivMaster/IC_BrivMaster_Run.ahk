@@ -221,14 +221,8 @@ class IC_BrivMaster_GemFarm_Class
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
 				if (melfPresent AND !melfSpawningMore) ;Due to the ! this has to check melfPresent first
 					this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more, to avoid the multiple-credit buff ruining the combine
-				}
-				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
-				{
-					if (!melfSpawningMoreAfterRush and tatyanaPresent) ;If Melf won't be spawning more in the waitroom level Tatyana if present
-					{
-						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-					}
-				}
+				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
+					this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
 				if (BBEGPresent)
 				{
 					if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
@@ -292,14 +286,8 @@ class IC_BrivMaster_GemFarm_Class
 					melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
 					if (melfPresent AND !melfSpawningMore)
 						this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more
-					}
-					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
-					{
-						if (!melfSpawningMoreAfterRush AND tatyanaPresent) ;If Melf won't be spawning more in the waitroom level Tatyana if present
-						{
-							this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-						}
-					}
+					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
+						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
 					if (BBEGPresent)
 					{
 						if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times

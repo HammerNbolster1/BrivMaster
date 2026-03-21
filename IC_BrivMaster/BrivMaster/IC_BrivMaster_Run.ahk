@@ -101,7 +101,7 @@ class IC_BrivMaster_GemFarm_Class
         {
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
-				g_IBM.GameMaster.SafetyCheck()
+				this.GameMaster.SafetyCheck()
 			if(!this.TriggerStart) ;Check for resets outside of the expected
 			{
 				if(g_SF.Memory.ReadResetsCount()>lastResetCount) ;Modron core reset
@@ -429,7 +429,7 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				this.offramp:=false ;Reset offramp
-		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
+		this.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
 		this.previousZone:=1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
@@ -459,14 +459,14 @@ class IC_BrivMaster_GemFarm_Class
 			g_serverCall.CallPreventStackFail("WaitForModronReset()",true)
         while (g_SF.Memory.ReadResetting() AND ElapsedTime < timeout)
         {
-            g_IBM.IBM_Sleep(20)
+            this.IBM_Sleep(20)
             ElapsedTime:=A_TickCount - StartTime
         }
         g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
+		this.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
         while(!g_SF.Memory.ReadUserIsInited() AND g_SF.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
         {
-            g_IBM.IBM_Sleep(20)
+            this.IBM_Sleep(20)
             ElapsedTime:=A_TickCount - StartTime
         }
         if (ElapsedTime>=timeout)

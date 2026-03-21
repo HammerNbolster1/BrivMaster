@@ -1394,7 +1394,7 @@ Class IC_IriBrivMaster_Component
 						FileDelete, %dataPath%
 						FileAppend, % offsetJSON, %dataPath%
 					}
-					prompt:="Download complete. Script Hub and the Gem Farm, if running, must be restarted independantly to use the new offsets.`nRestart Script Hub now?"
+					prompt:="Download complete. Briv Master Home and the Gem Farm, if running, must be restarted independantly to use the new offsets.`nRestart Home now?"
 					Msgbox 36, Briv Master, %prompt% ;32 for question, +4 for Yes/No
 					ifMsgBox Yes
 					{

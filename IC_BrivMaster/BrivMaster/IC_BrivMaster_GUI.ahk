@@ -619,7 +619,7 @@
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w75 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load
-		this.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		this.AddToolTip("IBM_Version_Check", "Select to automatically check for updates when Briv Master Home starts")
 
 		;++++++++++++++++++ROUTE TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Route

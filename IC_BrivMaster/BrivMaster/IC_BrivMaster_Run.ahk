@@ -255,8 +255,8 @@ class IC_BrivMaster_GemFarm_Class
 				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 					this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
 				if (g_Heroes[139].inM)
-					g_SF.DoRushWait(true)
-				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
+					this.DoRushWait(true)
+				this.routeMaster.ToggleAutoProgress(0,false,true) ;We may or may not have been stopped by DoRushWait()
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
@@ -327,7 +327,7 @@ class IC_BrivMaster_GemFarm_Class
 					if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 						this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
 					if (g_Heroes[139].inM)
-						g_SF.DoRushWait(true)
+						this.DoRushWait(true)
 					this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
 					g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 					this.levelManager.LevelFormation("M","min") ;Level M to minimum
@@ -411,7 +411,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
 					if (g_Heroes[139].inQ OR g_Heroes[139].inE)
 					{
-						g_SF.DoRushWait()
+						this.DoRushWait()
 						this.routeMaster.UpdateThellora()
 					}
 				}
@@ -420,6 +420,31 @@ class IC_BrivMaster_GemFarm_Class
 		else ;Not z1
 			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
+	
+	DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter) Also TODO: this shouldn't be in SharedFunctions
+    {
+        elapsedTime:=0
+		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
+		g_SharedData.UpdateOutbound("LoopString","Rush Wait")
+		startTime:=A_TickCount
+		while(!(g_SF.Memory.ReadCurrentZone()>1 OR g_Heroes[139].ReadRushTriggered()) AND elapsedTime < 8000)
+        {
+			if(stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
+			{
+				if(g_SF.Memory.ReadHighestZone()>1)
+				{
+					this.RouteMaster.ToggleAutoProgress(0)
+					stopProgress:=false ;No need to keep checking
+				}
+			}
+			if (levelTypeChampions)
+				this.levelManager.LevelWorklist() ;Level current worklist
+			else
+				this.levelManager.LevelClickDamage(0) ;Level click damage
+            levelTypeChampions:=!levelTypeChampions
+			elapsedTime:=A_TickCount-startTime
+        }
+    }
 
     CheckifStuck() ;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
     {

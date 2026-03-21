@@ -1084,7 +1084,7 @@ Class IC_IriBrivMaster_Component
 		this.BasicServerCaller:=""
 	}
 
-	VersionCheckBM() ;SH has the version on line 25 of the main IBM_Home.ahk file
+	VersionCheckBM()
     {
 		details:=this.GetCurrentBMDetails()
 		addonDetails:=this.BasicServerCaller.BasicServerCall(this.ExtractAddonUrl(details[2]))

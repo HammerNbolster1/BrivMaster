@@ -267,7 +267,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				remainingCharges:=MAX(0,targetCharges-currentCharges)
 				if (calcResult.partialRun) ;We can't make the end of this run and will reset early. We need to work out if we need to get extra stacks to make up for Thellora's rush shortfall in the next run
 				{
-					zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone)
+					zonesRemaining:=MAX(0,this.GetStackDepletionZone(calcResult.zone,calcResult.jumpsToDepletion)-calcResult.zone) ;TODO: Consider Thellora not being in W; possibly check if W has not already been used via comparing current changes to currentzone*5, and add a Q jump worth of zones if we still expect to stack. Hard to be precise, but it is a recovery mode
 				}
 				else
 					zonesRemaining:=MAX(0,this.targetZone-calcResult.zone)
@@ -285,7 +285,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	GetStackDepletionZone(zoneNumber,jumps)
 	{
-		while (jumps>0)
+		while(jumps>0)
 		{
 			currentZone:=this.zones[zoneNumber]
 			if (currentZone.jumpZone) ;On Q

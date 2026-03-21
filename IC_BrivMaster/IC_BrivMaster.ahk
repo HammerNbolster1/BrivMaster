@@ -45,7 +45,7 @@ g_IriBrivMaster.Init()
 GuiControl, IBM_Home:MoveDraw, ModronTabControl, % "w" . g_TabControlWidth . " h" . g_TabControlHeight
 Gui, IBM_Home:Show, % "w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
 g_IriBrivMaster_GUI.ApplyTooltips() ;Must be after controls are created by Gui, Show
-OnMessage(0x200, "CheckControlForTooltip") ;WM_MOUSEMOVE for toolTip tracking
+OnMessage(0x200, "CheckControlForTooltip") ;WM_MOUSEMOVE for tooltip tracking
 
 ClearButtonStatusMessage()
 {

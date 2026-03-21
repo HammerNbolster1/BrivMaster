@@ -107,7 +107,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
         this.savedFormations[index]:={}
 		this.savedFormationChamps[index]:={}
         size:=g_SF.Memory.GameManager.game.gameInstances[0].FormationSaveHandler.formationSavesV2[slot].Formation.size.Read()
-        if(size <= 0 OR size > 500) ; sanity check, should be less than 51 as of 2023-09-03
+        if(size <= 0 OR size > 500) ;Sanity check
             return ""
         loop, %size%
         {

@@ -192,38 +192,6 @@ class IC_BrivMaster_GemFarm_Class
 		}
     }
 
-	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
-	{
-		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		targetEndTime:=currentTime+this.CounterFrequency*sleepTime
-		while (currentTime < targetEndTime)
-		{
-			targetTick:=(targetTime - currentTime)//this.CounterFrequency
-			if (targetTick<=5) ;With <5ms to go make individual 1ms calls
-				tick:=1
-			else
-				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
-			DllCall("Sleep", "UInt", tick)
-			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		}
-	}
-
-	IBM_SleepOffset(baseTime,offsetMilliseconds) ;baseTime is in performance counter ticks, acquired from DllCall("QueryPerformanceCounter", "Int64*", var). Use to sleep until a specific time has elapsed from a previous event (rather than the call, per IBM_Sleep)
-	{
-		targetTime:=baseTime+this.CounterFrequency*offsetMilliseconds
-		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		while (currentTime < targetTime)
-		{
-			targetTick:=(targetTime - currentTime)//this.CounterFrequency
-			if (targetTick <= 5) ;With <5ms to go make individual 1ms calls
-				tick:=1
-			else
-				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
-			DllCall("Sleep", "UInt", tick)
-			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		}
-	}
-
 	WaitForZoneLoad(currentZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
 		if (currentZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
@@ -536,6 +504,38 @@ class IC_BrivMaster_GemFarm_Class
 			return false
         return true
     }
+	
+	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
+	{
+		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		targetEndTime:=currentTime+this.CounterFrequency*sleepTime
+		while (currentTime < targetEndTime)
+		{
+			targetTick:=(targetTime - currentTime)//this.CounterFrequency
+			if (targetTick<=5) ;With <5ms to go make individual 1ms calls
+				tick:=1
+			else
+				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
+			DllCall("Sleep", "UInt", tick)
+			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		}
+	}
+
+	IBM_SleepOffset(baseTime,offsetMilliseconds) ;baseTime is in performance counter ticks, acquired from DllCall("QueryPerformanceCounter", "Int64*", var). Use to sleep until a specific time has elapsed from a previous event (rather than the call, per IBM_Sleep)
+	{
+		targetTime:=baseTime+this.CounterFrequency*offsetMilliseconds
+		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		while (currentTime < targetTime)
+		{
+			targetTick:=(targetTime - currentTime)//this.CounterFrequency
+			if (targetTick <= 5) ;With <5ms to go make individual 1ms calls
+				tick:=1
+			else
+				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
+			DllCall("Sleep", "UInt", tick)
+			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		}
+	}
 
 	;START PRE-FLIGHT CHECK
     PreFlightCheck() ;TODO: Pack some of this into functions - it's getting a bit large

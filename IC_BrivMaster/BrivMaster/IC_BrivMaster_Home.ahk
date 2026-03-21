@@ -654,7 +654,7 @@ Class IC_IriBrivMaster_Component
 			this.GetSettingsFileLocation(checkTime)
 			if (!this.GameSettingFileLocation) ;We tried and we failed
 			{
-				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " unable to open game settings","TrafficLightBad","")
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " Unable to open game settings","TrafficLightBad","")
 				return
 			}
 		}

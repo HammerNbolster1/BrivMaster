@@ -37,6 +37,7 @@
 		Gui, IBM_Home:New
 		Gui, IBM_Home:+Resize -MaximizeBox
 		Gui, IBM_Home:Color, %winBGColour%
+		Gui, IBM_Home:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.Theme.UseThemeTextColour("IBM_Home")
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control
 		;Buttons for starting, saving etc
@@ -278,6 +279,7 @@
 		Gui, IBM_ChestSnatcher_Log:New , , Chest & Daily Platinum Log
 		Gui, IBM_ChestSnatcher_Log:Margin, 0,0
 		Gui, IBM_ChestSnatcher_Log:-Resize -MaximizeBox -Caption +HwndLog_Hwnd
+		Gui, IBM_ChestSnatcher_Log:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_ChestSnatcher_Log_Hwnd:=Log_Hwnd ;Save handle to the log window
 		this.Theme.UseThemeTextColour("IBM_ChestSnatcher_Log","TableText") ;No need to reset this to normal text as it only contains the LV
 		LVWidth:=groupWidth-19 ;Not sure why this isn't -20
@@ -331,6 +333,7 @@
 		Gui, IBM_Game_Settings_Options:New , , Game Settings
 		Gui, IBM_Game_Settings_Options:Color, %winBGColour%
 		Gui, IBM_Game_Settings_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
+		Gui, IBM_Game_Settings_Options:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_Game_Settings_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		this.Theme.UseThemeTextColour("IBM_Game_Settings_Options",,700)
 		Gui, IBM_Game_Settings_Options:Add, Text, xm+0 w80 h18 0x200 Center, Profile 1
@@ -460,6 +463,7 @@
 		;Theme manager window. Note this is NOT themed, to prevent situations where it is made unusable (e.g. white text in white edit boxes)
 		Gui, IBM_Theme_Manager:New,,Theme
 		Gui, IBM_Theme_Manager:-Resize -MaximizeBox +HwndOpt_Hwnd
+		Gui, IBM_Theme_Manager:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		
 		Gui, IBM_Theme_Manager:Add, Button, xm+5 ym+0 w120 gIBM_Theme_Manager_Load_Light, Load light theme

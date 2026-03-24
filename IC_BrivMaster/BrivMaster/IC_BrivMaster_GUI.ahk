@@ -95,7 +95,7 @@
 		Gui, IBM_Home:Add, Text, xp+5 yp+13 w%textWidth% 0x200 h18 Center vIBM_RunControl_Cycle, % "Cycle -/-"
 		;>RunControl status
 		Gui, IBM_Home:Add, Text, xs+10 yp+30,Strategy:
-		textWidth:=groupWidth-60
+		textWidth:=groupWidth-65
 		Gui, IBM_Home:Add, Text, x+2 r2 w%textWidth% vIBM_RunControl_Status, -
 		Gui, IBM_Home:Add, Text, xs+10 yp+28 w380 vIBM_RunControl_Stack, Stacking: -
 		Gui, IBM_Home:Add, Text, xs+10 yp+16 w380 vIBM_Stats_Loop, Stage: -

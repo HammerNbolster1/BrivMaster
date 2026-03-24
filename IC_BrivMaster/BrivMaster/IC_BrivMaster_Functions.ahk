@@ -28,7 +28,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		this.MaxRedraws:=g_IBM_Settings["IBM_Casino_Redraws_Base"] ;Maximum redraws allowed (1, or 2 with DM)
 		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"] ;Target gem cards
 		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"] ;Minimum cards before exiting, used to try and avoid saving with a partial hand when hitting a boss shortly after the Casino
-		this.lockedFrontColumnChamps:={}
+		this.lockedFrontColumnChamps:=[]
 		this.DeferredDMUlt:=0
 	}
 
@@ -332,7 +332,7 @@ class IC_BrivMaster_DialogSwatter_Class ;A class for swatting dialogs that appea
     Swat()
     {
         if (g_SF.Memory.ReadWelcomeBackActive())
-			this.KEY_ESC.KeyPress() ;.KeyPress() applies critical itself
+			this.KEY_ESC.KeyPress()
 		else if (A_TickCount > this.StartTime + 3000) ;3s should be enough to get the swat done
 			this.Stop() ;Stop the timer since we don't have anything to swat
     }

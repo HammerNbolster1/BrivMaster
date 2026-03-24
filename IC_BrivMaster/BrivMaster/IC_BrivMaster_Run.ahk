@@ -101,7 +101,7 @@ class IC_BrivMaster_GemFarm_Class
         {
 			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
 			if (this.currentZone=="")
-				g_IBM.GameMaster.SafetyCheck()
+				this.GameMaster.SafetyCheck()
 			if(!this.TriggerStart) ;Check for resets outside of the expected
 			{
 				if(g_SF.Memory.ReadResetsCount()>lastResetCount) ;Modron core reset
@@ -192,38 +192,6 @@ class IC_BrivMaster_GemFarm_Class
 		}
     }
 
-	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
-	{
-		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		targetEndTime:=currentTime+this.CounterFrequency*sleepTime
-		while (currentTime < targetEndTime)
-		{
-			targetTick:=(targetTime - currentTime)//this.CounterFrequency
-			if (targetTick<=5) ;With <5ms to go make individual 1ms calls
-				tick:=1
-			else
-				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
-			DllCall("Sleep", "UInt", tick)
-			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		}
-	}
-
-	IBM_SleepOffset(baseTime,offsetMilliseconds) ;baseTime is in performance counter ticks, acquired from DllCall("QueryPerformanceCounter", "Int64*", var). Use to sleep until a specific time has elapsed from a previous event (rather than the call, per IBM_Sleep)
-	{
-		targetTime:=baseTime+this.CounterFrequency*offsetMilliseconds
-		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		while (currentTime < targetTime)
-		{
-			targetTick:=(targetTime - currentTime)//this.CounterFrequency
-			if (targetTick <= 5) ;With <5ms to go make individual 1ms calls
-				tick:=1
-			else
-				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
-			DllCall("Sleep", "UInt", tick)
-			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
-		}
-	}
-
 	WaitForZoneLoad(currentZone) ;Waits for a valid zone. Used because force restarts seem to go into the main loop before the game has loaded z1. Note that this doesn't mean that the zone is active (per g_SF.Memory.ReadAreaActive())
 	{
 		if (currentZone!="") ;TODO: Do we need to check for this being -1 here and in the loop? The zone also becomes 0 during resets
@@ -251,17 +219,10 @@ class IC_BrivMaster_GemFarm_Class
 			{
 				this.routeMaster.CheckCombiningThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
 				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-				if (!melfSpawningMore)
-				{
+				if (melfPresent AND !melfSpawningMore) ;Due to the ! this has to check melfPresent first
 					this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more, to avoid the multiple-credit buff ruining the combine
-				}
-				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
-				{
-					if (!melfSpawningMoreAfterRush and tatyanaPresent) ;If Melf won't be spawning more in the waitroom level Tatyana if present
-					{
-						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-					}
-				}
+				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
+					this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
 				if (BBEGPresent)
 				{
 					if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
@@ -269,26 +230,14 @@ class IC_BrivMaster_GemFarm_Class
 					else
 						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
 				}
-				frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
-				for _, v in frontColumn
-				{
-					if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise
-					{
-						this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
-						this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
-					}
-					else
-					{
-						this.levelManager.RaisePriorityForFrontRow(v)
-					}
-				}
+				frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
 				g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
 				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 					this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
 				if (g_Heroes[139].inM)
-					g_SF.DoRushWait(true)
-				this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
+					this.DoRushWait(true)
+				this.routeMaster.ToggleAutoProgress(0,false,true) ;We may or may not have been stopped by DoRushWait()
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
@@ -298,9 +247,6 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-					;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
-					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.EllywickCasino.UnlockHeroes()
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
@@ -312,10 +258,10 @@ class IC_BrivMaster_GemFarm_Class
 						swapAttempts++
 					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 					this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
-					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.EllywickCasino.UnlockHeroes()
 				}
-				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
+				if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+					this.EllywickCasino.UnlockHeroes()
+				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew modifier key levelling to happen
 			}
 			else ;Non-combining
 			{
@@ -323,17 +269,10 @@ class IC_BrivMaster_GemFarm_Class
 				{
 					this.routeMaster.CheckNonCombiningThelloraBossRecovery() ;This will set Briv's z1c in the default case
 					melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-					if (!melfSpawningMore)
-					{
+					if (melfPresent AND !melfSpawningMore)
 						this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more
-					}
-					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"])
-					{
-						if (!melfSpawningMoreAfterRush AND tatyanaPresent) ;If Melf won't be spawning more in the waitroom level Tatyana if present
-						{
-							this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-						}
-					}
+					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
+						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
 					if (BBEGPresent)
 					{
 						if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
@@ -341,25 +280,13 @@ class IC_BrivMaster_GemFarm_Class
 						else
 							this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
 					}
-					frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
-					for _, v in frontColumn
-					{
-						if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise
-						{
-							this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
-							this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
-						}
-						else
-						{
-							this.levelManager.RaisePriorityForFrontRow(v)
-						}
-					}
+					frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
 					g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 					this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
 					if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
 						this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
 					if (g_Heroes[139].inM)
-						g_SF.DoRushWait(true)
+						this.DoRushWait(true)
 					this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
 					g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 					this.levelManager.LevelFormation("M","min") ;Level M to minimum
@@ -370,9 +297,6 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
 						this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-						;this.RouteMaster.WaitForTransition() ;Can't do this because we might need to level Q or E, need to build a specific function
-						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-							this.EllywickCasino.UnlockHeroes()
 					}
 					else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 					{
@@ -384,9 +308,9 @@ class IC_BrivMaster_GemFarm_Class
 							swapAttempts++
 						} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
 						this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
-						if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-							this.EllywickCasino.UnlockHeroes()
 					}
+					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
+						this.EllywickCasino.UnlockHeroes()
 					this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
 				}
 				else ;No Thellora, so Casino in z1
@@ -407,19 +331,7 @@ class IC_BrivMaster_GemFarm_Class
 					;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
 					;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
 					;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
-					frontColumn:=this.levelManager.GetFrontColumnNoBriv() ;This assumes Briv is appropriately prioritised already - which he should be
-					for _, v in frontColumn
-					{
-						if (g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row champion but Briv - in which case don't prioritise TODO: How much sense does this make for non-combine? Make sure Briv is actually being added at zone completion and I guess it can help a bit
-						{
-							this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
-							this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
-						}
-						else
-						{
-							this.levelManager.RaisePriorityForFrontRow(v)
-						}
-					}
+					frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
 					this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
 					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
 					if(this.EllywickCasino.Casino(frontColumn)) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
@@ -443,7 +355,7 @@ class IC_BrivMaster_GemFarm_Class
 					this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
 					if (g_Heroes[139].inQ OR g_Heroes[139].inE)
 					{
-						g_SF.DoRushWait()
+						this.DoRushWait()
 						this.routeMaster.UpdateThellora()
 					}
 				}
@@ -452,6 +364,31 @@ class IC_BrivMaster_GemFarm_Class
 		else ;Not z1
 			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
+	
+	DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter) Also TODO: this shouldn't be in SharedFunctions
+    {
+        elapsedTime:=0
+		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
+		g_SharedData.UpdateOutbound("LoopString","Rush Wait")
+		startTime:=A_TickCount
+		while(!(g_SF.Memory.ReadCurrentZone()>1 OR g_Heroes[139].ReadRushTriggered()) AND elapsedTime < 8000)
+        {
+			if(stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
+			{
+				if(g_SF.Memory.ReadHighestZone()>1)
+				{
+					this.RouteMaster.ToggleAutoProgress(0)
+					stopProgress:=false ;No need to keep checking
+				}
+			}
+			if (levelTypeChampions)
+				this.levelManager.LevelWorklist() ;Level current worklist
+			else
+				this.levelManager.LevelClickDamage(0) ;Level click damage
+            levelTypeChampions:=!levelTypeChampions
+			elapsedTime:=A_TickCount-startTime
+        }
+    }
 
     CheckifStuck() ;A test if stuck on current area. After 35s, toggles autoprogress every 5s. After 45s, attempts falling back up to 2 times. After 65s, restarts level.
     {
@@ -492,7 +429,7 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (this.offramp) ;Not checking the offramp zone here as simply overwriting false with false is almost certainly faster than doing so
 				this.offramp:=false ;Reset offramp
-		g_IBM.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
+		this.Logger.AddMessage("Rollback detected - expected z[" . this.currentZone . "] return z[" . returnZone . "]")
 		this.previousZone:=1 ;Otherwise the currentZone > previousZone check will be false until we pass the original zone
 		this.currentZone:=returnZone ;Must also be reset, otherwise previousZone will be updated straight to the old current zone
 		g_SharedData.UpdateOutbound_Increment("TotalRollBacks")
@@ -522,20 +459,52 @@ class IC_BrivMaster_GemFarm_Class
 			g_serverCall.CallPreventStackFail("WaitForModronReset()",true)
         while (g_SF.Memory.ReadResetting() AND ElapsedTime < timeout)
         {
-            g_IBM.IBM_Sleep(20)
+            this.IBM_Sleep(20)
             ElapsedTime:=A_TickCount - StartTime
         }
         g_SharedData.UpdateOutbound("LoopString", "Loading z1...")
-		g_IBM.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
+		this.IBM_Sleep(100) ;20ms is not sufficent for this for all users. Was 50ms in BGF, but looks like the loading part of the reset takes >1s in reality, so using 100ms is a safe play without any performance concerns
         while(!g_SF.Memory.ReadUserIsInited() AND g_SF.Memory.ReadCurrentZone()<1 AND ElapsedTime<timeout)
         {
-            g_IBM.IBM_Sleep(20)
+            this.IBM_Sleep(20)
             ElapsedTime:=A_TickCount - StartTime
         }
         if (ElapsedTime>=timeout)
 			return false
         return true
     }
+	
+	IBM_Sleep(sleepTime) ;A more accurate sleep. Relevant for any short sleep (<100ms?)
+	{
+		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		targetEndTime:=currentTime+this.CounterFrequency*sleepTime
+		while (currentTime < targetEndTime)
+		{
+			targetTick:=(targetTime - currentTime)//this.CounterFrequency
+			if (targetTick<=5) ;With <5ms to go make individual 1ms calls
+				tick:=1
+			else
+				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
+			DllCall("Sleep", "UInt", tick)
+			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		}
+	}
+
+	IBM_SleepOffset(baseTime,offsetMilliseconds) ;baseTime is in performance counter ticks, acquired from DllCall("QueryPerformanceCounter", "Int64*", var). Use to sleep until a specific time has elapsed from a previous event (rather than the call, per IBM_Sleep)
+	{
+		targetTime:=baseTime+this.CounterFrequency*offsetMilliseconds
+		DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		while (currentTime < targetTime)
+		{
+			targetTick:=(targetTime - currentTime)//this.CounterFrequency
+			if (targetTick <= 5) ;With <5ms to go make individual 1ms calls
+				tick:=1
+			else
+				tick:=Min(15,targetTick) ;Make calls of no more than 15ms to ensure timers run etc
+			DllCall("Sleep", "UInt", tick)
+			DllCall("QueryPerformanceCounter", "Int64*", currentTime)
+		}
+	}
 
 	;START PRE-FLIGHT CHECK
     PreFlightCheck() ;TODO: Pack some of this into functions - it's getting a bit large
@@ -709,9 +678,8 @@ class IC_BrivMaster_GemFarm_Class
 	{
         genericMsg:="`nOther potential solutions:`n"
         genericMsg.="1. Be sure Imports are up to date. Current imports are for: v" . g_SF.Memory.GetImportsVersion() . "`n"
-        genericMsg.="2. Check the correct memory file is being used. Current version: " . g_SF.Memory.GameManager.GetVersion() . "`n"
-        genericMsg.="3. If IC is running with admin privileges, then the script will also require admin privileges.`n"
-        genericMsg.="4. Check AHK is 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
+        genericMsg.="2. If IC is running with admin privileges, then the script will also require admin privileges.`n"
+        genericMsg.="3. AHK must be 64-bit. (Currently " . (A_PtrSize = 4 ? 32 : 64) . "-bit)"
 		return genericMsg
 	}
 
@@ -732,7 +700,7 @@ class IC_BrivMaster_GemFarm_Class
 		}
 		Gui, IBM_GemFarm:New, -Resize -MaximizeBox
 		Gui, IBM_GemFarm:Color, % Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","WindowBackground"])
-        Gui, IBM_GemFarm:Font, % "c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"]) . " w400 s8"
+        Gui, IBM_GemFarm:Font, % "c" . Format("{:#x}", g_IBM_Settings["IBM_Theme_Current","DefaultText"]) . " w400 s8", Microsoft Sans Serif
 		FormatTime, formattedDateTime,,% g_IBM_Settings["IBM_Format_Date_Display"]
 		Gui IBM_GemFarm:Add, Text, w95 xm+1, % "Gem Farm Started:"
 		Gui IBM_GemFarm:Add, Text, w105 x+3, % formattedDateTime

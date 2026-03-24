@@ -37,6 +37,7 @@
 		Gui, IBM_Home:New
 		Gui, IBM_Home:+Resize -MaximizeBox
 		Gui, IBM_Home:Color, %winBGColour%
+		Gui, IBM_Home:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.Theme.UseThemeTextColour("IBM_Home")
 		groupWidth:=g_TabControlWidth-14 ;2px spacing each side - it seems 10 pixels get lost somewhere in the Tab3 control
 		;Buttons for starting, saving etc
@@ -94,7 +95,7 @@
 		Gui, IBM_Home:Add, Text, xp+5 yp+13 w%textWidth% 0x200 h18 Center vIBM_RunControl_Cycle, % "Cycle -/-"
 		;>RunControl status
 		Gui, IBM_Home:Add, Text, xs+10 yp+30,Strategy:
-		textWidth:=groupWidth-60
+		textWidth:=groupWidth-65
 		Gui, IBM_Home:Add, Text, x+2 r2 w%textWidth% vIBM_RunControl_Status, -
 		Gui, IBM_Home:Add, Text, xs+10 yp+28 w380 vIBM_RunControl_Stack, Stacking: -
 		Gui, IBM_Home:Add, Text, xs+10 yp+16 w380 vIBM_Stats_Loop, Stage: -
@@ -285,6 +286,7 @@
 		Gui, IBM_ChestSnatcher_Log:New , , Chest & Daily Platinum Log
 		Gui, IBM_ChestSnatcher_Log:Margin, 0,0
 		Gui, IBM_ChestSnatcher_Log:-Resize -MaximizeBox -Caption +HwndLog_Hwnd
+		Gui, IBM_ChestSnatcher_Log:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_ChestSnatcher_Log_Hwnd:=Log_Hwnd ;Save handle to the log window
 		this.Theme.UseThemeTextColour("IBM_ChestSnatcher_Log","TableText") ;No need to reset this to normal text as it only contains the LV
 		LVWidth:=groupWidth-19 ;Not sure why this isn't -20
@@ -338,6 +340,7 @@
 		Gui, IBM_Game_Settings_Options:New , , Game Settings
 		Gui, IBM_Game_Settings_Options:Color, %winBGColour%
 		Gui, IBM_Game_Settings_Options:-Resize -MaximizeBox +HwndOpt_Hwnd
+		Gui, IBM_Game_Settings_Options:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_Game_Settings_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		this.Theme.UseThemeTextColour("IBM_Game_Settings_Options",,700)
 		Gui, IBM_Game_Settings_Options:Add, Text, xm+0 w80 h18 0x200 Center, Profile 1
@@ -467,6 +470,7 @@
 		;Theme manager window. Note this is NOT themed, to prevent situations where it is made unusable (e.g. white text in white edit boxes)
 		Gui, IBM_Theme_Manager:New,,Theme
 		Gui, IBM_Theme_Manager:-Resize -MaximizeBox +HwndOpt_Hwnd
+		Gui, IBM_Theme_Manager:Font,, Microsoft Sans Serif ;Required as systems may have odd default fonts, e.g. in non-Latin regions
 		this.IBM_Theme_Manager_Hwnd:=Opt_Hwnd ;Save handle to the options window
 		
 		Gui, IBM_Theme_Manager:Add, Button, xm+5 ym+0 w120 gIBM_Theme_Manager_Load_Light, Load light theme
@@ -626,7 +630,7 @@
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Button, xs+10 ys+18 w75 vIBM_Version_Check_Now gIBM_Version_Check_Now, Check now
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+4 h18 vIBM_Version_Check gIBM_Generic_Hub_Setting_Int,On load
-		this.AddToolTip("IBM_Version_Check", "Check this option to automatically check for updates to Script Hub and enabled addons when Script Hub starts")
+		this.AddToolTip("IBM_Version_Check", "Select to automatically check for updates when Briv Master Home starts")
 
 		;++++++++++++++++++ROUTE TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Route

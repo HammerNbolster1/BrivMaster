@@ -662,7 +662,7 @@ Class IC_IriBrivMaster_Component
 			this.GetSettingsFileLocation(checkTime)
 			if (!this.GameSettingFileLocation) ;We tried and we failed
 			{
-				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " unable to open game settings","TrafficLightBad","")
+				g_IriBrivMaster_GUI.GameSettings_Status(checkTime . " Unable to open game settings","TrafficLightBad","")
 				return
 			}
 		}
@@ -1092,7 +1092,7 @@ Class IC_IriBrivMaster_Component
 		this.BasicServerCaller:=""
 	}
 
-	VersionCheckBM() ;SH has the version on line 25 of the main IBM_Home.ahk file
+	VersionCheckBM()
     {
 		details:=this.GetCurrentBMDetails()
 		addonDetails:=this.BasicServerCaller.BasicServerCall(this.ExtractAddonUrl(details[2]))
@@ -1402,7 +1402,7 @@ Class IC_IriBrivMaster_Component
 						FileDelete, %dataPath%
 						FileAppend, % offsetJSON, %dataPath%
 					}
-					prompt:="Download complete. Script Hub and the Gem Farm, if running, must be restarted independantly to use the new offsets.`nRestart Script Hub now?"
+					prompt:="Download complete. Briv Master Home and the Gem Farm, if running, must be restarted independantly to use the new offsets.`nRestart Home now?"
 					Msgbox 36, Briv Master, %prompt% ;32 for question, +4 for Yes/No
 					ifMsgBox Yes
 					{
@@ -1664,11 +1664,11 @@ class IC_IriBrivMaster_ChestSnatcher_Class ;A class for managing buying and open
     }
 }
 
-class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outside of gem farms
+class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outside of gem farming
 {
     __New(minCards,maxCards)
 	{
-		this.CasinoTimer := ObjBindMethod(this, "Casino")
+		this.CasinoTimer:=ObjBindMethod(this, "Casino")
 		this.Redraws:=0
 		this.UsedUlt:=false ;Tracks Elly's ult being in progress, as her cards are only cleared when it ENDS, despite the visual
 		this.minCards:=minCards ;These are arrays indexed by card type, so 1 is Knight, 2 Moon, 3 Gem, 4 Fates, 5 Flames
@@ -1755,9 +1755,7 @@ class IC_BrivMaster_EllywickDealer_Class ;A class for re-rolling Ellywick outsid
 			this.UsedUlt:=true ;Set here to block double presses, until we can confirm it has / hasn't been used
 			retryCount:=g_Heroes[83].UseUltimate(50) ;50 'retries' is 5 actual attempts due to the way UseUltimate counts. +1 is a queue wait
 			if (retryCount=="" OR retryCount>50) ;Failed to find key, or failed to register
-			{
 				this.UsedUlt:=false
-			}
 			else
 			{
 				this.Redraws++

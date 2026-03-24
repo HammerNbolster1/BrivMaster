@@ -856,9 +856,9 @@ class IC_BrivMaster_MemoryFunctions_Class
 		this.SlotFormations:={} ;Irisiri - used for formation caching by the looks of it
     }
 
-	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window, via IBM override
+	OpenProcessReader(pid:="") ;If supplied with a PID will have the memory manager load that instead of using the window
     {
-        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"] ;TODO: There seems to be some duplication assigning this
+        _IBM_MM.exeName:=g_IBM_Settings["IBM_Game_Exe"]
         isExeRead:=_IBM_MM.Refresh(,pid)
         if(isExeRead==-1)
             return
@@ -1418,7 +1418,7 @@ class IC_BrivMaster_MemoryFunctions_Class
 	{
 		size:=this.GameManager.game.gameInstances[0].Controller.formation.slots.size.Read()
         frontCount:=0
-        loop, %size%
+        loop, %size% ;TODO: Can we break this loop once the column is >0? Not all that important as used only once per script run, though
         {
 			if (this.GameManager.game.gameInstances[0].Controller.formation.slots[A_index - 1].SlotDef.Column.Read()==0) ;TODO: Might be a problem if there is a Xaryxis-like escort at the front of a formation in the future, read slot validity first?
 				frontCount++

@@ -71,31 +71,6 @@ class IC_BrivMaster_SharedFunctions_Class
                 return false
         return true
     }
-	
-    DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
-    {
-        ElapsedTime:=0
-		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop
-		g_SharedData.UpdateOutbound("LoopString","Rush Wait")
-		StartTime:=A_TickCount
-		while(!(this.Memory.ReadCurrentZone() > 1 OR g_Heroes[139].ReadRushTriggered()) AND ElapsedTime < 8000)
-        {
-			if (stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
-			{
-				if (this.Memory.ReadHighestZone() > 1)
-				{
-					g_IBM.RouteMaster.ToggleAutoProgress(0)
-					stopProgress:=false ;No need to keep checking
-				}
-			}
-			if (levelTypeChampions)
-				g_IBM.levelManager.LevelWorklist() ;Level current worklist
-			else
-				g_IBM.levelManager.LevelClickDamage(0) ;Level click damage
-            levelTypeChampions:=!levelTypeChampions
-			ElapsedTime:=A_TickCount-StartTime
-        }
-    }
 }
 
 class IC_BrivMaster_SharedData_Class ;In the shared file as the SettingsPath static is used by the hub for the save/load location TODO: This seems like a lousy reason to load this into the hub, move settings path to SharedFunctions?

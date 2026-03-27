@@ -47,6 +47,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			g_Heroes[83].InitCotFUltActive() ;May fail if Elly is not level 200 yet, but this one will recover itself
 			gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
 			this.DMUltDelay:=(IC_BrivMaster_EllywickCasino_Class.ULT_DELAY/gameSpeed)*g_IBM.CounterFrequency
+			zoneIncomplete:=g_Heroes[139].inM ;Without Thellora in M, this check is not needed as we never do M-jumps
 			DllCall("QueryPerformanceCounter", "Int64*", startTime)
 			timeOut:=startTime+(IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/gameSpeed)*g_IBM.CounterFrequency ;Convert the timeout to counter ticks and add to the start time to determine the max allowed time. This avoids calculations each loop iteration
 			lastLoopEndTime:=startTime ;Set for the first loop
@@ -91,10 +92,22 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					g_IBM.levelManager.LevelWorklist()
 					g_IBM.levelManager.LevelClickDamage()
 				}
+				if(zoneIncomplete AND g_SF.Memory.ReadCurrentZone()>1 AND g_SF.Memory.ReadQuestRemaining()==0) ;>z1 as otherwise we can check the flag from z1 as Thellora's rush triggered updates before the animation
+					zoneIncomplete:=false
 				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Offset-based sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
+			if(zoneIncomplete) ;TODO: Include check of Q/E against the M-jump we were expecting, and only wait if we can't match via either Q or E. This will require handling in FirstZone as well - possibly need to move this over via a ByRef variable? (Or just use object property?)
+			{
+				g_IBM.Logger.AddMessage("Post-Casino wait for zone completion remaining=[" . g_SF.Memory.ReadQuestRemaining() . "]")
+				while(zoneIncomplete AND lastLoopEndTime<timeOut)
+				{
+					g_IBM.IBM_Sleep(10)
+					zoneIncomplete:=g_SF.Memory.ReadQuestRemaining()!=0
+					DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
+				}
+			}
 			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else

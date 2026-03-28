@@ -278,7 +278,9 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		this.clientVersion:=999
 		this.activeModronID:=1
 		this.activePatronID:=0
-		this.webRoot:="http://ps27.idlechampions.com/~idledragons/" ;Default
+		currentPlayServers:=[27,28,29,30]
+		Random, psIndex , 1, currentPlayServers.Count()
+		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
 		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
     }
 	

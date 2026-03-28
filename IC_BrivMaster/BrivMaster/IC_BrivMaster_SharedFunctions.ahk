@@ -279,14 +279,19 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		this.activeModronID:=1
 		this.activePatronID:=0
 		this.playServerRegex:="^https?://ps\d+\.idlechampions.com/~idledragons/"
-		this.GetPlayServer()
+		this.webRoot:=""
 		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
     }
 	
-	GetPlayServer()
+	UpdatePlayServer()
     {
-		this.webRoot:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
-		if(RegExMatch(this.webRoot,this.playServerRegex))
+		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
+		if(RegExMatch(newRead,this.playServerRegex))
+		{
+			this.webRoot:=newRead
+			return
+		}
+		else if(RegExMatch(this.webRoot,this.playServerRegex)) ;If the existing webRoot is valid, keep it
 			return
 		this.webRoot:="http://master.idlechampions.com/~idledragons/" ;Try requesting from master, this will not necessarily give our own playserver but should return a valid one, allowing redirects on future calls
 		response:=this.ServerCall("getPlayServerForDefinitions") ;No args actually required for this
@@ -321,9 +326,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         newRead:=g_SF.Memory.ReadBaseGameVersion()
         if(newRead)
             this.clientVersion:=newRead
-		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
-		if(RegExMatch(newRead,this.playServerRegex))
-			this.webRoot:=newRead		
+
         newRead:=g_SF.Memory.ReadPlatform()
         if(newRead)
             this.networkID:=newRead
@@ -333,6 +336,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         newRead:=g_SF.Memory.ReadPatronID()
         if(newRead)
             this.activePatronID:=newRead
+		this.UpdatePlayServer()
         this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
     }
 

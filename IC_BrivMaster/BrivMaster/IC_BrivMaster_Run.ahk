@@ -80,7 +80,7 @@ class IC_BrivMaster_GemFarm_Class
 		this.CounterFrequency:=PerformanceCounterFrequency/1000 ;Convert from seconds to milliseconds as that is our main interest
 		this.GameMaster:=New IC_BrivMaster_GameMaster_Class() ;This does the initial OpenProcessReader() call
 		this.RefreshImportCheck() ;Does the initial population of the import check
-        g_ServerCall.Update()
+		g_ServerCall.Update()
         g_Heroes:=New IC_BrivMaster_Heroes_Class() ;Global to allow consitency between uses in main script and hub (e.g. Ellywick for gold farming). We have to wait with initalising it until memory reads are available, however TODO: More reason for bringing some order to initial startup
 		this.Logger:=New IC_BrivMaster_Logger_Class(A_LineFile . "\..\..\Logs\")
 		this.LevelManager:=New IC_BrivMaster_LevelManager_Class() ;Must be before the PreFlightCheck() call as we use the formation data the LevelManager loads

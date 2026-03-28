@@ -278,10 +278,31 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		this.clientVersion:=999
 		this.activeModronID:=1
 		this.activePatronID:=0
-		currentPlayServers:=[27,28,29,30]
-		Random, psIndex , 1, currentPlayServers.Count()
-		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
+		this.playServerRegex:="^https?://ps\d+\.idlechampions.com/~idledragons/"
+		this.webRoot:=""
 		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
+    }
+	
+	UpdatePlayServer()
+    {
+		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
+		if(RegExMatch(newRead,this.playServerRegex))
+		{
+			this.webRoot:=newRead
+			return
+		}
+		else if(RegExMatch(this.webRoot,this.playServerRegex)) ;If the existing webRoot is valid, keep it
+			return
+		this.webRoot:="http://master.idlechampions.com/~idledragons/" ;Try requesting from master, this will not necessarily give our own playserver but should return a valid one, allowing redirects on future calls
+		response:=this.ServerCall("getPlayServerForDefinitions") ;No args actually required for this
+		if (response!="" AND RegExMatch(response.play_server,this.playServerRegex))
+		{
+			this.webRoot:=response.play_server
+			return
+		}
+		currentPlayServers:=[27,28,29,30] ;Select randomly from a hard coded server pool (current as of 2026-03-28)
+		Random, psIndex, 1, currentPlayServers.Count()
+		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
     }
 	
 	UpdateStackData()
@@ -305,9 +326,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         newRead:=g_SF.Memory.ReadBaseGameVersion()
         if(newRead)
             this.clientVersion:=newRead
-		newRead:=g_SF.Memory.ReadWebRoot() ;This is an unreliable read; we need to ensure it not only returns a value but that it is a url
-		if(RegExMatch(newRead,"^https?://.+"))
-			this.webRoot:=newRead		
+
         newRead:=g_SF.Memory.ReadPlatform()
         if(newRead)
             this.networkID:=newRead
@@ -317,6 +336,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         newRead:=g_SF.Memory.ReadPatronID()
         if(newRead)
             this.activePatronID:=newRead
+		this.UpdatePlayServer()
         this.dummyData:="&language_id=1&timestamp=0&request_id=0&network_id=" . this.networkID . "&mobile_client_version=" . this.clientVersion . "&offline_v2_build=1"
     }
 
@@ -545,13 +565,6 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
         chestParams:="&gold_per_second=0&checksum=4c5f019b6fc6eefa4d47d21cfaf1bc68&user_id=" this.userID "&hash=" this.userHash 
             . "&instance_id=" this.instanceID "&chest_type_id=" chestid "&game_instance_id=" this.activeModronID "&count=" chests
         return this.ServerCall("opengenericchest",chestParams,60000)
-    }
-   
-    UpdatePlayServer() ;Updated to use the current play server instead of fixed ps23; this.webRoot should only ever be overwritten by valid memory reads or valid servercall returns
-    {
-		response:=this.ServerCall("getPlayServerForDefinitions", this.dummyData)
-		if (response!="" AND response.play_server!="")
-			this.webRoot:=response.play_server
     }
 }
 

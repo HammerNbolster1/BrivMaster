@@ -146,8 +146,8 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		{
 			for _, v in this.frontColumnChampionsMNoBriv
 			{
-				this.levelManager.OverrideLevelByIDLowerToMax(v,"z1",0)
-				this.levelManager.OverrideLevelByIDLowerToMax(v,"min",0)
+				this.OverrideLevelByIDLowerToMax(v,"z1",0)
+				this.OverrideLevelByIDLowerToMax(v,"min",0)
 			}
 			return this.frontColumnChampionsMNoBriv
 		}
@@ -155,7 +155,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		{
 			for _, v in this.frontColumnChampionsMNoBriv
 			{
-				this.levelManager.RaisePriorityForFrontRow(v)
+				this.RaisePriorityForFrontRow(v)
 			}
 			return [] ;Empty return as we have not lowered any levels
 		}

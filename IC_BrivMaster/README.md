@@ -88,7 +88,7 @@ Gold to buy per call: Number of gold chests to buy per server call. Should gener
 	
 Gold/Silver to open per call: Number of chests to buy per call. Whilst IC allows 1000 to be opened at a time this can result in a very long servercall which has the potential to impact the game, e.g. when resetting, so using a smaller amount is advised to keep the buy time (which is displayed in the log) lower.
 
-> Author's Note: Aim for less than 4s. Gold chests are much slower to open than Silvers, e.g. I am using 150 Gold / 500 Silver
+> Author's Note: Aim for less than 4s. Gold chests are much slower to open than Silvers, e.g. I am using 500 Gold / 1000 Silver following the server upgrade in March 2026; prior to that it was 150 Gold / 500 Silver
 	
 Reserve Gems: Stay above this number of gems when purchasing chests. Use this to ensure you can always buy a needed Feat or such
 	

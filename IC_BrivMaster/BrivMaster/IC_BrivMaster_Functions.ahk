@@ -77,7 +77,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				
 				if(!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
-					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>1) ;TODO: Investigate these thresholds
+					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
 					{
 						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
 						frontColumnLevellingAllowed:=true
@@ -99,6 +99,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
+			;g_IBM.Logger.AddMessage("Dyna Level=[" . g_Heroes[145].ReadLevel() . "] Benched=[" . g_Heroes[145].ReadBenched() . "] Imoen Level=[" .  g_Heroes[117].ReadLevel() . "] Benched=[" . g_Heroes[117].ReadBenched() . "]")
 			if(zoneIncomplete) ;TODO: Include check of Q/E against the M-jump we were expecting, and only wait if we can't match via either Q or E. This will require handling in FirstZone as well - possibly need to move this over via a ByRef variable? (Or just use object property?)
 			{
 				g_IBM.Logger.AddMessage("Post-Casino wait for zone completion remaining=[" . g_SF.Memory.ReadQuestRemaining() . "]")

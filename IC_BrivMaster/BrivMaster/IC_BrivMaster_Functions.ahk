@@ -28,17 +28,21 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 		this.MaxRedraws:=g_IBM_Settings["IBM_Casino_Redraws_Base"] ;Maximum redraws allowed (1, or 2 with DM)
 		this.GemCardsNeeded:=g_IBM_Settings["IBM_Casino_Target_Base"] ;Target gem cards
 		this.MinCards:=g_IBM_Settings["IBM_Casino_MinCards_Base"] ;Minimum cards before exiting, used to try and avoid saving with a partial hand when hitting a boss shortly after the Casino
-		this.lockedFrontColumnChamps:=[]
+		this.lockedFrontColumnChamps:=[] ;lockedFrontColumnChamps are a list of champions from the front row whose levelling has been locked (set to 0)
 		this.DeferredDMUlt:=0
 	}
 
-	Casino(lockedFrontColumnChamps) ;lockedFrontColumnChamps are a list of champions from the front row whose levelling has been locked (set to 0)
+	Casino() 
 	{
-		this.lockedFrontColumnChamps:=lockedFrontColumnChamps ;Store in the object so external .UnlockHeroes() calls don't need to re-pass
-		frontColumnLevellingAllowed:=lockedFrontColumnChamps.Count()==0 ;If there are no locked champions there's no need to check for unlocking them
 		if (!g_Heroes[83].ReadBenched()) ;TODO: Could possibly check level as well?
         {
-			ghostLevellingAllowed:=!this.ghostLevelling ;TODO: Fix these variable names...
+			if(this.ghostLevelling)
+			{
+				this.ghostLevellingHeroes:=g_IBM.LevelManager.SetupFirstZoneGhost() ;This has to be done after the game has had time to load the UI so hero being seated can be checked
+				ghostFormationLevelled:=false
+			}
+			else
+				ghostFormationLevelled:=true ;If disabled sets to true meaning it does not need to be done
 			MEMORY_MELEE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached)
 			MEMORY_MELEE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.ValueType
 			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
@@ -48,6 +52,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
 			this.DMUltDelay:=(IC_BrivMaster_EllywickCasino_Class.ULT_DELAY/gameSpeed)*g_IBM.CounterFrequency
 			zoneIncomplete:=g_Heroes[139].inM ;Without Thellora in M, this check is not needed as we never do M-jumps
+			levellingDoneThisLoop:=false
 			DllCall("QueryPerformanceCounter", "Int64*", startTime)
 			timeOut:=startTime+(IC_BrivMaster_EllywickCasino_Class.TIMEOUT_BASE/gameSpeed)*g_IBM.CounterFrequency ;Convert the timeout to counter ticks and add to the start time to determine the max allowed time. This avoids calculations each loop iteration
 			lastLoopEndTime:=startTime ;Set for the first loop
@@ -75,31 +80,61 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					break
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
 				
-				if(!frontColumnLevellingAllowed) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
+				levellingDoneThisLoop:=false
+				if(this.lockedFrontColumnChamps.Count()>0) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
 				{
-					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>2) ;TODO: Investigate these thresholds
+					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"])
 					{
-						this.UnlockHeroes(lockedFrontColumnChamps,this.levelFormation)
-						frontColumnLevellingAllowed:=true
+						Hero:=this.lockedFrontColumnChamps.RemoveAt(1)
+						;OutputDebug % A_TickCount " front row levelling for heroID=[" . Hero.ID . "]"
+						if(Hero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
+						{
+							g_IBM.LevelManager.SetModifierKey(true) ;Might need to set gamefocus before this
+							loop, % Hero.Current.CasinoLevelling
+								Hero.Key.KeyPress_Bulk()
+							g_IBM.LevelManager.SetModifierKey(false)
+						}
+						else
+							Hero.Key.KeyPress_Bulk()
+						g_IBM.LevelManager.ResetLevelByID(Hero.ID)
+						levellingDoneThisLoop:=true
 					}
 				}
-				if(!ghostLevellingAllowed AND (frontColumnLevellingAllowed OR g_SF.Memory.IsCurrentFormationFull())) ;Either front row levelling is allowed (we've dealt with that champ, or don't care about the front row), or the formation is full so we can level away
+				else if(!ghostFormationLevelled AND this.ghostLevellingHeroes.Count()>0 AND !g_SF.Memory.IsCurrentFormationFull()) ;If the formation is full there's no need to wait for enemies and can proceed straight to levelling the GHOST formation
 				{
-					g_IBM.levelManager.LevelFormation("A",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
-					ghostLevellingAllowed:=true
+					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"])
+					{
+						Hero:=this.ghostLevellingHeroes.RemoveAt(1)
+						;OutputDebug % A_TickCount " ghost levelling for heroID=[" . Hero.ID . "]"
+						if(Hero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
+						{
+							g_IBM.LevelManager.SetModifierKey(true)
+							loop, % Hero.Current.CasinoLevelling
+								Hero.Key.KeyPress_Bulk()
+							g_IBM.LevelManager.SetModifierKey(false)
+						}
+						else
+							Hero.Key.KeyPress_Bulk()
+						levellingDoneThisLoop:=true
+					}
 				}
-				else
+				else if(!ghostFormationLevelled)
 				{
+					;OutputDebug % A_TickCount " GHOST formation LevelFormation() call"
+					g_IBM.levelManager.LevelFormation("GHOST",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
+					ghostFormationLevelled:=true
+					levellingDoneThisLoop:=true
+				}
+				if(!levellingDoneThisLoop) ;Only do normal levelling in this loop if we've not already done another form above
 					g_IBM.levelManager.LevelWorklist()
-					g_IBM.levelManager.LevelClickDamage()
-				}
 				if(zoneIncomplete AND g_SF.Memory.ReadCurrentZone()>1 AND g_SF.Memory.ReadQuestRemaining()==0) ;>z1 as otherwise we can check the flag from z1 as Thellora's rush triggered updates before the animation
 					zoneIncomplete:=false
 				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Offset-based sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
-			;g_IBM.Logger.AddMessage("Dyna Level=[" . g_Heroes[145].ReadLevel() . "] Benched=[" . g_Heroes[145].ReadBenched() . "] Imoen Level=[" .  g_Heroes[117].ReadLevel() . "] Benched=[" . g_Heroes[117].ReadBenched() . "]")
+			g_IBM.Logger.AddMessage("Dyna Level=[" . g_Heroes[145].ReadLevel() . "],Benched=[" . g_Heroes[145].ReadBenched() . "],Imoen Level=[" .  g_Heroes[117].ReadLevel() . "],Benched=[" . g_Heroes[117].ReadBenched() . "]")
+			;OutputDebug % A_TickCount . " Dyna Level=[" . g_Heroes[145].ReadLevel() . "],Benched=[" . g_Heroes[145].ReadBenched() . "],Imoen Level=[" .  g_Heroes[117].ReadLevel() . "],Benched=[" . g_Heroes[117].ReadBenched() . "]`n"
 			if(zoneIncomplete) ;TODO: Include check of Q/E against the M-jump we were expecting, and only wait if we can't match via either Q or E. This will require handling in FirstZone as well - possibly need to move this over via a ByRef variable? (Or just use object property?)
 			{
 				g_IBM.Logger.AddMessage("Post-Casino wait for zone completion remaining=[" . g_SF.Memory.ReadQuestRemaining() . "]")
@@ -110,26 +145,21 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
 				}
 			}
-			return !frontColumnLevellingAllowed ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
+			return this.lockedFrontColumnChamps.Count()>0 ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
 		}
 		else
 		{
 			g_IBM.Logger.AddMessage("No Elly{z" . g_SF.Memory.ReadCurrentZone() . "}")
-			return !frontColumnLevellingAllowed
+			return this.lockedFrontColumnChamps.Count()>0
 		}
 	}
 	
 	UnlockHeroes(levelFormation:="") ;Separated as this must be called either during the Casino, or if Elly is MIA
 	{
-		if (this.lockedFrontColumnChamps.Count()>0)
-		{
-			for _,v in this.lockedFrontColumnChamps
-			{
-				g_IBM.LevelManager.ResetLevelByID(v)
-			}
-			if (levelFormation)
-				g_IBM.LevelManager.LevelFormation("M",levelFormation) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
-		}
+		for Hero in this.lockedFrontColumnChamps
+			g_IBM.LevelManager.ResetLevelByID(Hero.ID)
+		if(levelFormation) ;TODO: Only do this if we actually unlocked something - put the count>0 check back in - UPDATE: Does it actually matter, since it seems we'll never call with LevelFormation set now? Maybe address that instead
+			g_IBM.LevelManager.LevelFormation("M",levelFormation) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)
 	}
 	
 	ShouldRedraw(numCards,numGemCards)

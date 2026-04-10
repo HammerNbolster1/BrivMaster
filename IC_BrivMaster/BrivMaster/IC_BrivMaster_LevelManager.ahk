@@ -15,6 +15,8 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
 		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")
 		this.ExtactFrontColumn()
+		if(g_IBM_Settings["IBM_Level_Options_Ghost"])
+			this.CreateGhostFormation()
 		this.KEY_Modifier:=g_InputManager.getKey(g_IBM_Settings["IBM_Level_Options_Mod_Key"]=="Ctrl" ? "LCtrl" : g_IBM_Settings["IBM_Level_Options_Mod_Key"]) ;Modifer to hold - the game uses LeftControl in the keybindings, as much as it doesn't seem to make a lick of difference
 		this.modifierLevelUpAmount:=g_IBM_Settings["IBM_Level_Options_Mod_Value"] ;How many levels applying the modifier key will give per keypress
 	}
@@ -127,6 +129,26 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 	{
 		return this.savedFormations[index]
 	}
+	
+	CreateGhostFormation() ;Create a formation that consists of M, and any other champions that are in seats not used by M, and so are possible candidates for ghost levelling. This can result in multiple champions in the same seat being included if different between Q/W/E. Also creates a list of ghostable heroes
+	{
+		this.savedFormationChamps["GHOST"]:={}
+		this.ghostLevellingHeroes:=[]
+		seatList:=[]
+		for heroID, _ in this.savedFormationChamps["M"] ;For each hero in the modron formation
+		{
+			this.savedFormationChamps["GHOST",heroID]:=true
+			seatList[g_Heroes[heroID].Seat]:=true
+		}
+		for heroID, _ in this.savedFormationChamps["A"] ;All heroes
+		{
+			if(!this.savedFormationChamps["GHOST",heroID] AND !seatList[g_Heroes[heroID].Seat]) ;Not in the list already, and seat not in the seat list
+			{
+				this.savedFormationChamps["GHOST",heroID]:=true
+				this.ghostLevellingHeroes.Push(g_Heroes[heroID])
+			}
+		}
+	}
 
 	ExtactFrontColumn() ;Returns the champions in the front row of the formation, except for Briv, used to suppress levelling so Briv takes all the hits  TODO: This needs to exclude Hew w/avoidance feat
 	{
@@ -144,12 +166,23 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 	{
 		if(g_IBM_Settings["IBM_Level_Options_Suppress_Front"]) ;Avoid levelling any front-row hero but Briv - in which case don't prioritise
 		{
+			frontRow:=[]
 			for _, v in this.frontColumnChampionsMNoBriv
 			{
+				levelsRequired:=g_Heroes[v].GetTargetLevel() ;TODO: Pass the appropiate z1 or min to this? Not it intentionally doesn't consider current level as that should be 0
+				if(levelsRequired<=100-this.modifierLevelUpAmount) ;Modifier key levelling, e.g. for x25 100-25=75 will trigger modifier use, 80 would not as it would end up 4x25=100 anyway
+				{
+					g_Heroes[v].Current.CasinoLevelling:=Ceil(levelsRequired / this.modifierLevelUpAmount) ;E.g. 50 at x25 will be 2
+				}
+				else
+				{
+					g_Heroes[v].Current.CasinoLevelling:=0 ;0 indicates x100 levelling
+				}
+				frontRow.Push(g_Heroes[v])
 				this.OverrideLevelByIDLowerToMax(v,"z1",0)
 				this.OverrideLevelByIDLowerToMax(v,"min",0)
 			}
-			return this.frontColumnChampionsMNoBriv
+			return frontRow
 		}
 		else ;Raise priority to get the hero placed before the formation comes under attack
 		{
@@ -159,6 +192,28 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			}
 			return [] ;Empty return as we have not lowered any levels
 		}
+	}
+	
+	SetupFirstZoneGhost() ;Checks the list of potentially ghostable heroes created at script start to confirm which are seated
+	{
+		ghostList:=[]
+		for _, Hero in this.ghostLevellingHeroes
+		{
+			if(Hero.ReadSelectedInSeat())
+			{
+				levelsRequired:=Hero.GetTargetLevel() ;TODO: Pass the appropiate z1 or min to this? Not it intentionally doesn't consider current level as that should be 0
+				if(levelsRequired<=100-this.modifierLevelUpAmount) ;Modifier key levelling, e.g. for x25 100-25=75 will trigger modifier use, 80 would not as it would end up 4x25=100 anyway
+				{
+					Hero.Current.CasinoLevelling:=Ceil(levelsRequired / this.modifierLevelUpAmount) ;E.g. 50 at x25 will be 2
+				}
+				else
+				{
+					Hero.Current.CasinoLevelling:=0 ;0 indicates x100 levelling
+				}
+				ghostList.Push(Hero)
+			}
+		}
+		return ghostList
 	}
 
 	OverrideLevelByID(heroID, mode, level) ;Updates the current data (only!)

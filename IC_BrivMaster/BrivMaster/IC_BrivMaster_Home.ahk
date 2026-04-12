@@ -54,7 +54,7 @@ Class IC_IriBrivMaster_Component
         this.LEGACY_UpdateStatus("Closing Gem Farm")
         try
         {
-            SharedRunData := ComObjActive(this.GemFarmGUID)
+            SharedRunData:=ComObjActive(this.GemFarmGUID)
             SharedRunData.Close()
         }
         catch, err
@@ -1062,7 +1062,7 @@ Class IC_IriBrivMaster_Component
     IBM_Elly_StopNonGemFarm()
     {
         this.Elly_NonGemFarm.Stop()
-        this.Elly_NonGemFarm := ""
+        this.Elly_NonGemFarm:=""
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Stopped")
     }
 

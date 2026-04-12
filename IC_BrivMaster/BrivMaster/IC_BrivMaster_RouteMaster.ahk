@@ -1109,7 +1109,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
     {
         StartTime:=A_TickCount
         ElapsedTime:=0
-        while(g_SF.Memory.ReadCurrentZone() == -1 AND ElapsedTime < maxLoopTime)
+        while(g_SF.Memory.ReadCurrentZone()==-1 AND ElapsedTime < maxLoopTime)
         {
 			g_IBM.IBM_Sleep(15)
 			ElapsedTime:=A_TickCount-StartTime

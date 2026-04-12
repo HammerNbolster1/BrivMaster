@@ -101,7 +101,9 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.levelingDone["W"]:={"min":false,"z1":false}
 		this.levelingDone["E"]:={"min":false,"z1":false}
 		this.levelingDone["M"]:={"min":false,"z1":false}
-		this.levelingDone["A"]:={"min":false,"z1":false}
+		;this.levelingDone["A"]:={"min":false,"z1":false} ;A not levelled now the specific Ghost formation exists
+		if(g_IBM_Settings["IBM_Level_Options_Ghost"])
+			this.levelingDone["GHOST"]:={"min":false,"z1":false}
 	}
 
 	ExtractFormation(slot,index) ;Extracts both the usual formation and the champ list in one go

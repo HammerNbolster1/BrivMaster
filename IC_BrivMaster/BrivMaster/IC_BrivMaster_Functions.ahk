@@ -178,12 +178,15 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
 				}
 			}
-			return this.lockedFrontColumnChamps.Count()>0 ;Returns true if we still need to unlock champions. Done like this so for featswap we can get autoprogress toggled on ASAP
+			if(nextFrontHero=="") ;Simple case, nothing to unlock
+				return false
+			this.lockedFrontColumnChamps.Push(nextFrontHero) ;Re-add to the list for unlocking TODO: This seems like more effort than just unlocking them here?
+			return true
 		}
 		else
 		{
 			g_IBM.Logger.AddMessage("No Elly{z" . g_SF.Memory.ReadCurrentZone() . "}")
-			return this.lockedFrontColumnChamps.Count()>0
+			return this.lockedFrontColumnChamps.Count()>0 ;In this case nothing has been removed from the list
 		}
 	}
 	

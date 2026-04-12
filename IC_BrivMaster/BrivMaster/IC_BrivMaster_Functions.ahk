@@ -38,11 +38,18 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
         {
 			if(this.ghostLevelling)
 			{
-				this.ghostLevellingHeroes:=g_IBM.LevelManager.SetupFirstZoneGhost() ;This has to be done after the game has had time to load the UI so hero being seated can be checked
+				ghostLevellingHeroes:=g_IBM.LevelManager.SetupFirstZoneGhost() ;This has to be done after the game has had time to load the UI so hero being seated can be checked
 				ghostFormationLevelled:=false
+				nextGhostHero:=ghostLevellingHeroes.RemoveAt(1)
 			}
 			else
+			{
 				ghostFormationLevelled:=true ;If disabled sets to true meaning it does not need to be done
+				nextGhostHero:=""
+			}
+			nextFrontHero:=this.lockedFrontColumnChamps.RemoveAt(1)
+			modifierPrePress:=false ;Tracked if we're pre-applied a modifier key for front row / ghost levelling, so we can turn it off again if needed
+			unlockThreshold:=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"] ;TODO: This setting is probably not worthwhile, and should be hard-coded to 2. 1 is too low (likely to die between check and levelling happening), 3 is too high (requires Tatyana wave or luck with Minsc, if used)
 			MEMORY_MELEE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached)
 			MEMORY_MELEE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.ValueType
 			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
@@ -81,60 +88,86 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 				;End Casino card logic TODO: We might need to check if we are within 1 card of a full hand, meeting the gem target, or re-rolling and skip the later part of the loop to ensure responsiveness		
 				
 				levellingDoneThisLoop:=false
-				if(this.lockedFrontColumnChamps.Count()>0) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
-				{
-					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"])
+				if(nextFrontHero) ;Check if we can allow this, the aim is to level whilst the formation is engauged so the champion is NOT placed, saving time without interfering with Briv
+				{				
+					if(nextFrontHero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
 					{
-						Hero:=this.lockedFrontColumnChamps.RemoveAt(1)
-						;OutputDebug % A_TickCount " front row levelling for heroID=[" . Hero.ID . "]"
-						if(Hero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
+						if(!modifierPrePress)
 						{
 							g_IBM.LevelManager.SetModifierKey(true) ;Might need to set gamefocus before this
-							loop, % Hero.Current.CasinoLevelling
-								Hero.Key.KeyPress_Bulk()
-							g_IBM.LevelManager.SetModifierKey(false)
+							modifierPrePress:=true
 						}
-						else
-							Hero.Key.KeyPress_Bulk()
-						g_IBM.LevelManager.ResetLevelByID(Hero.ID)
-						levellingDoneThisLoop:=true
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						{
+							loop, % nextFrontHero.Current.CasinoLevelling
+								nextFrontHero.Key.KeyPress_Bulk()
+							g_IBM.LevelManager.SetModifierKey(false)
+							modifierPrePress:=false
+							g_IBM.LevelManager.ResetLevelByID(nextFrontHero.ID)
+							nextFrontHero:=this.lockedFrontColumnChamps.RemoveAt(1)
+							levellingDoneThisLoop:=true
+						}
+					}
+					else ;We don't need to check modifierPrePress here as it cannot have been left on as if the previous hero required modifier levelling, it must have happened to move on to the next
+					{
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						{
+							nextFrontHero.Key.KeyPress_Bulk()
+							g_IBM.LevelManager.ResetLevelByID(nextFrontHero.ID)
+							nextFrontHero:=this.lockedFrontColumnChamps.RemoveAt(1)
+							levellingDoneThisLoop:=true
+						}
 					}
 				}
-				else if(!ghostFormationLevelled AND this.ghostLevellingHeroes.Count()>0 AND !g_SF.Memory.IsCurrentFormationFull()) ;If the formation is full there's no need to wait for enemies and can proceed straight to levelling the GHOST formation
+				else if(!ghostFormationLevelled AND nextGhostHero AND !g_SF.Memory.IsCurrentFormationFull()) ;If the formation is full there's no need to wait for enemies and can proceed straight to levelling the GHOST formation
 				{
-					if (_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"])
+					if(nextGhostHero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
 					{
-						Hero:=this.ghostLevellingHeroes.RemoveAt(1)
-						;OutputDebug % A_TickCount " ghost levelling for heroID=[" . Hero.ID . "]"
-						if(Hero.Current.CasinoLevelling) ;>0 for modifier key levelling being required
+						if(!modifierPrePress)
 						{
-							g_IBM.LevelManager.SetModifierKey(true)
-							loop, % Hero.Current.CasinoLevelling
-								Hero.Key.KeyPress_Bulk()
-							g_IBM.LevelManager.SetModifierKey(false)
+							g_IBM.LevelManager.SetModifierKey(true) ;Might need to set gamefocus before this
+							modifierPrePress:=true
 						}
-						else
-							Hero.Key.KeyPress_Bulk()
-						levellingDoneThisLoop:=true
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						{
+							loop, % nextGhostHero.Current.CasinoLevelling
+								nextGhostHero.Key.KeyPress_Bulk()
+							g_IBM.LevelManager.SetModifierKey(false)
+							modifierPrePress:=false
+							nextGhostHero:=ghostLevellingHeroes.RemoveAt(1)
+							levellingDoneThisLoop:=true
+						}
+					}
+					else
+					{
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						{
+							nextGhostHero.Key.KeyPress_Bulk()
+							nextGhostHero:=ghostLevellingHeroes.RemoveAt(1)
+							levellingDoneThisLoop:=true
+						}
 					}
 				}
 				else if(!ghostFormationLevelled)
 				{
-					;OutputDebug % A_TickCount " GHOST formation LevelFormation() call"
-					g_IBM.levelManager.LevelFormation("GHOST",this.levelFormation,,,[33]) ;Suppress Farideh, so that her levelling can be blocked during online stacking during recovery
+					g_IBM.LevelManager.LevelFormation("GHOST",this.levelFormation,,,[33]) ;Suppress Farideh (ID 33), so that her levelling can be blocked during online stacking during recovery
 					ghostFormationLevelled:=true
 					levellingDoneThisLoop:=true
 				}
-				if(!levellingDoneThisLoop) ;Only do normal levelling in this loop if we've not already done another form above
+				if(!levellingDoneThisLoop) ;Only do normal LevelManager levelling in this loop if we've not already done another form above
 					g_IBM.levelManager.LevelWorklist()
 				if(zoneIncomplete AND g_SF.Memory.ReadCurrentZone()>1 AND g_SF.Memory.ReadQuestRemaining()==0) ;>z1 as otherwise we can check the flag from z1 as Thellora's rush triggered updates before the animation
 					zoneIncomplete:=false
 				g_IBM.IBM_SleepOffset(lastLoopEndTime,10) ;Offset-based sleep as loop is hugely variable (e.g. ult + levelling vs nothing)
 				DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
             }
+			if(modifierPrePress) ;May have been set but no opportunity to actually level found
+			{
+				g_IBM.LevelManager.SetModifierKey(false) ;Might need to set gamefocus before this
+				modifierPrePress:=false
+			}
 			g_IBM.Logger.AddMessage("Casino{z" . g_SF.Memory.ReadCurrentZone() . " T=" . Round((lastLoopEndTime-startTime)/g_IBM.CounterFrequency,0) . " R=" . this.Redraws . " M=" . g_IBM.RouteMaster.MelfManager.GetCurrentMelfEffect() .  " SB=" . g_Heroes[58].ReadSBStacks() . "}")
-			g_IBM.Logger.AddMessage("Dyna Level=[" . g_Heroes[145].ReadLevel() . "],Benched=[" . g_Heroes[145].ReadBenched() . "],Imoen Level=[" .  g_Heroes[117].ReadLevel() . "],Benched=[" . g_Heroes[117].ReadBenched() . "]")
-			;OutputDebug % A_TickCount . " Dyna Level=[" . g_Heroes[145].ReadLevel() . "],Benched=[" . g_Heroes[145].ReadBenched() . "],Imoen Level=[" .  g_Heroes[117].ReadLevel() . "],Benched=[" . g_Heroes[117].ReadBenched() . "]`n"
+			;g_IBM.Logger.AddMessage("Dyna Level=[" . g_Heroes[145].ReadLevel() . "],Benched=[" . g_Heroes[145].ReadBenched() . "],Imoen Level=[" .  g_Heroes[117].ReadLevel() . "],Benched=[" . g_Heroes[117].ReadBenched() . "]")		
 			if(zoneIncomplete) ;TODO: Include check of Q/E against the M-jump we were expecting, and only wait if we can't match via either Q or E. This will require handling in FirstZone as well - possibly need to move this over via a ByRef variable? (Or just use object property?)
 			{
 				g_IBM.Logger.AddMessage("Post-Casino wait for zone completion remaining=[" . g_SF.Memory.ReadQuestRemaining() . "]")

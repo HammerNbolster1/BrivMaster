@@ -229,7 +229,7 @@ class IC_BrivMaster_GemFarm_Class
 					else
 						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
 				}
-				frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
+				this.EllywickCasino.lockedFrontColumnChamps:=this.LevelManager.SetupFirstZoneFrontRow()
 				g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
 				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
@@ -240,8 +240,9 @@ class IC_BrivMaster_GemFarm_Class
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
 				this.routeMaster.UpdateThellora()
+				this.levelManager.LevelClickDamage() ;Probably done whilst waiting for Thellora, but not guaranteed
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-				unlockRequired:=this.EllywickCasino.Casino(frontColumn)
+				unlockRequired:=this.EllywickCasino.Casino()
 				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 				{
 					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
@@ -279,7 +280,7 @@ class IC_BrivMaster_GemFarm_Class
 						else
 							this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
 					}
-					frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
+					this.EllywickCasino.lockedFrontColumnChamps:=this.levelManager.SetupFirstZoneFrontRow()
 					g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
 					this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
 					if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
@@ -290,8 +291,9 @@ class IC_BrivMaster_GemFarm_Class
 					g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 					this.levelManager.LevelFormation("M","min") ;Level M to minimum
 					this.routeMaster.UpdateThellora()
+					this.levelManager.LevelClickDamage() ;Probably done whilst waiting for Thellora, but not guaranteed
 					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-					unlockRequired:=this.EllywickCasino.Casino(frontColumn)
+					unlockRequired:=this.EllywickCasino.Casino()
 					if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 					{
 						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
@@ -330,10 +332,11 @@ class IC_BrivMaster_GemFarm_Class
 					;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
 					;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
 					;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
-					frontColumn:=this.levelManager.SetupFirstZoneFrontRow()
+					this.EllywickCasino.lockedFrontColumnChamps:=this.levelManager.SetupFirstZoneFrontRow()
 					this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
 					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-					if(this.EllywickCasino.Casino(frontColumn)) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
+					this.levelManager.LevelClickDamage()
+					if(this.EllywickCasino.Casino()) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
 						this.EllywickCasino.UnlockHeroes()
 					quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
 					while(quest>0)

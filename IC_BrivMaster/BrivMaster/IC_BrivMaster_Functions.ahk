@@ -52,8 +52,6 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 			unlockThreshold:=g_IBM_Settings["IBM_Casino_Front_Row_Threshold"] ;TODO: This setting is probably not worthwhile, and should be hard-coded to 2. 1 is too low (likely to die between check and levelling happening), 3 is too high (requires Tatyana wave or luck with Minsc, if used)
 			MEMORY_MELEE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached)
 			MEMORY_MELEE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numAttackingMonstersReached.ValueType
-			MEMORY_RANGE_ADDRESS:=g_SF.Memory.ResolvePointers(g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters)
-			MEMORY_RANGE_TYPE:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.formation.numRangedAttackingMonsters.ValueType
 			g_Heroes[83].InitDoMTHandler() ;TODO: We should perhaps check if this actually worked?
 			g_Heroes[83].InitCotFUltActive() ;May fail if Elly is not level 200 yet, but this one will recover itself
 			gameSpeed:=g_SF.Memory.IBM_ReadBaseGameSpeed()
@@ -97,7 +95,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 							g_IBM.LevelManager.SetModifierKey(true) ;Might need to set gamefocus before this
 							modifierPrePress:=true
 						}
-						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>=unlockThreshold)
 						{
 							loop, % nextFrontHero.Current.CasinoLevelling
 								nextFrontHero.Key.KeyPress_Bulk()
@@ -110,7 +108,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					}
 					else ;We don't need to check modifierPrePress here as it cannot have been left on as if the previous hero required modifier levelling, it must have happened to move on to the next
 					{
-						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>=unlockThreshold)
 						{
 							nextFrontHero.Key.KeyPress_Bulk()
 							g_IBM.LevelManager.ResetLevelByID(nextFrontHero.ID)
@@ -128,7 +126,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 							g_IBM.LevelManager.SetModifierKey(true) ;Might need to set gamefocus before this
 							modifierPrePress:=true
 						}
-						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>=unlockThreshold)
 						{
 							loop, % nextGhostHero.Current.CasinoLevelling
 								nextGhostHero.Key.KeyPress_Bulk()
@@ -140,7 +138,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					}
 					else
 					{
-						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE) + _IBM_MM.instance.Read(MEMORY_RANGE_ADDRESS,MEMORY_RANGE_TYPE)>=unlockThreshold)
+						if(_IBM_MM.instance.Read(MEMORY_MELEE_ADDRESS,MEMORY_MELEE_TYPE)>=unlockThreshold)
 						{
 							nextGhostHero.Key.KeyPress_Bulk()
 							nextGhostHero:=ghostLevellingHeroes.RemoveAt(1)

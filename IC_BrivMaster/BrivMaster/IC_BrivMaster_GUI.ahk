@@ -766,9 +766,9 @@
 		Gui, IBM_Home:Add, DropDownList, x+1 w35 vIBM_Level_Options_Mod_Value gIBM_Generic_Setting_Int, 10|25
 		this.AddToolTip("IBM_Level_Options_Mod_Value", "The levelling amount associated with the key selected. This must match the in-game keybind")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_Suppress_Front gIBM_Generic_Setting_Int, Suppress Front Row
-		this.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front row. Used to maximise Briv's stack gain in the Casino")
+		this.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front row. Used to maximise Briv's stack gain in the Casino. The champion will be levelled opportunistically when the formation is under attack, but note that this is unlikely to happen on ranged Casino zones")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Ghost gIBM_Generic_Setting_Int, Ghost Level
-		this.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining")
+		this.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or the formation being under attack by melee monsters. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when Thellora is in the M formation")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Limit_Tatyana gIBM_Generic_Setting_Int, Smart Tatyana in Casino
 		this.AddToolTip("IBM_Level_Options_Limit_Tatyana", "Only level Tatyana at the start of a run if Melf's Spawn More effect is not active in the Casino zone. To use this option her Start level should be set to 0")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_BrivBoost_Use gIBM_Level_Options_BrivBoost_Use, Briv Level Boost

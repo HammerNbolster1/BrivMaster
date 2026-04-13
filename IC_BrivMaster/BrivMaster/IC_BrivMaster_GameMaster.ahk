@@ -472,7 +472,7 @@ class IC_BrivMaster_GameMaster_Class ;A class for managing the game process
 			ElapsedTime := A_TickCount - StartTime
         }
 		timeout*=2 ;Double the timeout
-        while(!isCurrentFormation AND (g_SF.Memory.ReadNumAttackingMonstersReached() OR g_SF.Memory.ReadNumRangedAttackingMonsters()) AND (ElapsedTime < timeout))
+        while(!isCurrentFormation AND (g_SF.Memory.ReadNumAttackingMonstersReached()) AND (ElapsedTime < timeout))
         {
             ElapsedTime := A_TickCount - StartTime
             g_IBM.RouteMaster.FallBackFromZone()

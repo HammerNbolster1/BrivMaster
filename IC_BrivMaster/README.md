@@ -386,9 +386,11 @@ Recovery Levelling: With this option selected, if Briv does not have enough stac
 
 Smart Tatyana in Casino: When using a setup that has Melf in the M formation, this option will only level Tatyana (if also present) at the start of the run if Melf's spawn-more buff is not active. This may be beneficial because a decent level Melf (~30 spawn) is able to allow Ellywick to draw rapidly alone, and the extra champion plus load from having a full Tatyana wave active at once might not be worth it. If using this option, Tatyana's 'Start' level should be 0.
 	
-Supress Front Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason.
+Suppress Front Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason. The champion will be levelled opportunistically when the formation is under attack so that they are not placed.
+
+> Author's Note: The opportunistic levelling is unlikely to happen on ranged Casino zones.
 	
-Ghost Level: During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or only slots at the front being available and the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when combining, and should normally be enabled.
+Ghost Level: During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or the formation being under attack by melee monsters. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when Thellora in is in the M formation, and should normally be enabled.
 	
 ### Level Manager  
 This section allows the levelling of champions to be configured. The formations should already be set up in game before reviewing it.

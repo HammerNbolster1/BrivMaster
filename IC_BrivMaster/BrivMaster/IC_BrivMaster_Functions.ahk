@@ -178,10 +178,12 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 					DllCall("QueryPerformanceCounter", "Int64*", lastLoopEndTime)
 				}
 			}
-			if(nextFrontHero=="") ;Simple case, nothing to unlock
-				return false
-			this.lockedFrontColumnChamps.Push(nextFrontHero) ;Re-add to the list for unlocking TODO: This seems like more effort than just unlocking them here?
-			return true
+			if(nextFrontHero) ;Re-add to the list for unlocking TODO: This seems like more effort than just unlocking them here?
+			{
+				this.lockedFrontColumnChamps.Push(nextFrontHero) 
+				return true
+			}
+			return false ;Simple case, nothing to unlock
 		}
 		else
 		{
@@ -192,7 +194,7 @@ class IC_BrivMaster_EllywickCasino_Class ;A class to manage the whole casino, wi
 	
 	UnlockHeroes(levelFormation:="") ;Separated as this must be called either during the Casino, or if Elly is MIA
 	{
-		for Hero in this.lockedFrontColumnChamps
+		for _, Hero in this.lockedFrontColumnChamps
 			g_IBM.LevelManager.ResetLevelByID(Hero.ID)
 		if(levelFormation) ;TODO: Only do this if we actually unlocked something - put the count>0 check back in - UPDATE: Does it actually matter, since it seems we'll never call with LevelFormation set now? Maybe address that instead
 			g_IBM.LevelManager.LevelFormation("M",levelFormation) ;Re-create job. This could do without being a duplicate of the call in FirstZone (things will go weird when we change one and forget to change the other)

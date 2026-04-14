@@ -2019,7 +2019,7 @@ class IBM_Theme
 		this.ThemeList:=["DefaultText","WarningText","SpecialText1","SpecialText2","EditText","TrafficLightBad","TrafficLightNeutral","TrafficLightGood","TableText","TableBackground","WindowBackground"]
 		this.Stock:={}
 		this.Stock["Light"]:={"DefaultText":"000000","WarningText":"F18500","SpecialText1":"0000FF","SpecialText2":"008000","TableText":"000000","EditText":"000000","TableBackground":"FFFFFF","WindowBackground":"F0F0F0","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":false}
-		this.Stock["Dark"]:={"DefaultText":"C0C0C0","WarningText":"F18500","SpecialText1":"8888FF","SpecialText2":"88FF88","TableText":"E0E0E0","EditText":"333333","TableBackground":"555555","WindowBackground":"333333","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":true}
+		this.Stock["Dark"]:={"DefaultText":"C49F78","WarningText":"F18500","SpecialText1":"8888FF","SpecialText2":"88FF88","TableText":"C49F78","EditText":"333333","TableBackground":"383B3B","WindowBackground":"383B3B","TrafficLightBad":"F00000","TrafficLightGood":"00F000","TrafficLightNeutral":"FFC000","DarkMode":true}
 	}
 	
     UseThemeTextColour(guiName, textType:="DefaultText", weight:=400) ;Sets the colour/weight for subsequent text based on the theme

@@ -258,10 +258,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 			{
 				this.Master.z1:=0
 			}
-			if champData.hasKey("z1c")
-				this.Master.z1c:=champData["z1c"]
-			else
-				this.Master.z1c:=false
+			this.Master.z1c:=false ;z1c is not part of the settings loaded
 			if champData.hasKey("prio")
 				this.Master.priority:=champData["prio"]
 			else

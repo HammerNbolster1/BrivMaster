@@ -151,9 +151,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_LevelManager_Levels["_DEFAULT",165]:={"min": 200,"prio": 2,"priolimit": "","z1": 200}
 		settings.IBM_Route_Zones_Jump["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 		settings.IBM_Route_Zones_Stack["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-		settings.IBM_Online_Use_Melf["_DEFAULT"]:=false
 		settings.IBM_Online_Melf_Min["_DEFAULT"]:=349
-		settings.IBM_Online_Melf_Max["_DEFAULT"]:=800
 		settings.IBM_LevelManager_Input_Max["_DEFAULT"]:=5
 		settings.IBM_LevelManager_Boost_Use["_DEFAULT"]:=false
 		settings.IBM_LevelManager_Boost_Multi["_DEFAULT"]:=8
@@ -173,7 +171,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_OffLine_Blank["_DEFAULT"]:=0
 		settings.IBM_OffLine_Blank_Relay["_DEFAULT"]:=0
 		settings.IBM_OffLine_Blank_Relay_Zones["_DEFAULT"]:=400
-		settings.IBM_Level_Options_Limit_Tatyana["_DEFAULT"]:=false
 		settings.IBM_Level_Options_Suppress_Front["_DEFAULT"]:=true
 		settings.IBM_Level_Options_Ghost["_DEFAULT"]:=true
 		settings.IBM_Level_Recovery_Softcap["_DEFAULT"]:=0

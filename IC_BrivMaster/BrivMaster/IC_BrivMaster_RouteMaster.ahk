@@ -24,11 +24,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.targetZone:=g_SF.Memory.GetModronResetArea()
 		this.UpdateThellora(true) ;Must be done after the zones per jump are populated
 		this.jumpCosts:=strsplit(IC_BrivMaster_RouteMaster_Class.IRI_BRIVMASTER_JUMPCOST_METALBORN,",")
-		if (g_IBM_Settings[ "IBM_Online_Use_Melf"])
-		{
-			this.MelfManager:=new IC_BrivMaster_MelfMaster_Class(this.targetZone)
-			this.UpdateMelfPatterns(true) ;We may not be on z1 when we start the script, so won't call Reset() initially
-		}
 		if (this.BrivHasThunderStep()) ;Multiplier for Briv stacks on conversion, to accomodate Thunder Step feat (2131)
 			this.stackConversionRate:=1.2
 		else
@@ -68,12 +63,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		this.cycleCount++
 		g_IBM.Logger.SetRunCycle(this.cycleCount)
 		this.cycleMax:=g_IBM_Settings["IBM_OffLine_Freq"]
-		;Melf
-		if(g_IBM_Settings["IBM_Online_Use_Melf"])
-		{
-			this.UpdateMelfPatterns(true) ;Calling with (true) cleans up old data from this call; no need to do that regularly
-			this.MelfManager.Reset(g_IBM_Settings["IBM_Online_Melf_Min"],g_IBM_Settings["IBM_Online_Melf_Max"],5)
-		}
 		;Only process Run Control input from the hub at the start of a run, as changing mid-run could make a mess
 		this.cycleDisableOffline:=g_SharedData.IBM_RunControl_DisableOffline
 		if (g_SharedData.IBM_RunControl_ForceOffline)
@@ -133,18 +122,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			stackString:="Stacking: Expecting offline at z" . g_IBM_Settings["IBM_Offline_Stack_Zone"]
 		else
 		{
-			if(g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf
-			{
-				melfRange:=this.MelfManager.GetFirstMelfSpawnMoreRange()
-				if (melfRange)
-					stackString:="Stacking: Expecting online with Melf in range z" . melfRange[1] . " to z" . melfRange[2]
-				else
-					stackString:="Stacking: Expecting online with Melf at z" . g_IBM_Settings[ "IBM_Online_Melf_Min" ] . " (no spawn more available)"
-			}
-			else
-			{
-				stackString:="Stacking: Expecting online at z" . g_IBM_Settings["IBM_Online_Melf_Min"]
-			}
+			stackString:="Stacking: Expecting online at or after z" . g_IBM_Settings["IBM_Online_Melf_Min"]
 			if(this.ShouldBlankRestart())
 			{
 				if (this.RelayBlankOffline)
@@ -192,33 +170,35 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			return baseJump + 1
 	}
 
-	CheckCombiningThelloraBossRecovery() ;If option set, avoid Thellora combining into bosses due to a run that didn't complete by breaking the combine
+	CheckThelloraBossRecovery() ;If option set, avoid rushing into bosses after a failed run by breaking / making the combine. This will set Briv's z1c in the default case for non-combining
 	{
-		if(this.ThelloraBossAvoidance)
+		if(this.combining)
 		{
-			thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
-			rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true)
-			if (rushTargetCombining < this.thelloraTarget AND MOD(rushTargetCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,false),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
+			if(this.ThelloraBossAvoidance)
 			{
-				g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent Briv being levelled prior to completion of z1, breaking the combine
-				g_IBM.Logger.AddMessage("CTBR: Broke combine to avoid hitting boss")
+				thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
+				rushTargetCombining:=this.GetThelloraTarget(thelloraCharges,true)
+				if (rushTargetCombining < this.thelloraTarget AND MOD(rushTargetCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,false),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
+				{
+					g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent Briv being levelled prior to completion of z1, breaking the combine
+					g_IBM.Logger.AddMessage("Thellora: Broke combine to avoid hitting boss")
+				}
 			}
 		}
-	}
-	
-	CheckNonCombiningThelloraBossRecovery() ;If option set, avoid Thellora running into a boss due to a run that didn't complete by attempting to combine
-	{
-		if(this.ThelloraBossAvoidance)
+		else
 		{
-			thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
-			rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
-			if (rushTargetNonCombining < this.thelloraTarget AND MOD(rushTargetNonCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,true),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
+			if(this.ThelloraBossAvoidance)
 			{
-				g_IBM.Logger.AddMessage("CTBR: Attempting to combine to avoid hitting boss")
-				return
+				thelloraCharges:=Floor(g_Heroes[139].GetCappedRushCharges()) ;Floor as the part-charges are presented as decimals, eg 307.2 = 307 zones plus 20% of the way to another
+				rushTargetNonCombining:=this.GetThelloraTarget(thelloraCharges,false)
+				if (rushTargetNonCombining < this.thelloraTarget AND MOD(rushTargetNonCombining,5)==0 AND MOD(this.GetThelloraTarget(thelloraCharges,true),5)!=0) ;If we are short on stacks and going to hit a boss, and not combining will land us on anything but a boss
+				{
+					g_IBM.Logger.AddMessage("Thellora: Attempting to combine to avoid hitting boss")
+					return
+				}
 			}
+			g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Standard outcome: prevent Briv being levelled prior to completion of z1
 		}
-		g_IBM.levelManager.OverrideLevelByID(58,"z1c", true) ;Standard outcome: prevent Briv being levelled prior to completion of z1
 	}
 
 	GetTargetStacksForFullRun(assumeStandardRush:=false) ;Returns the expected total stacks for a full run
@@ -375,17 +355,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayData.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
 		{
 			restartZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
-			if (currentZone > restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
-			{
+			if (currentZone>restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
 				this.BlankRestart()
-			}
 			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
-				relayZone:=this.RelayData.GetRelayZone(restartZone,this)
-				if (currentZone>relayZone) ;If beyond the relay threshold TODO: If we need to stack this has to wait. Maybe it could be set to go 500 zones before the expected stack zone if that many are available?
-				{
+				if (currentZone>=this.RelayData.relayZone) ;If at or beyond the relay threshold
 					this.RelayData.Start()
-				}
 			}
 		}
 	}
@@ -570,7 +545,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 	
-	class IBM_Online_Stacker ;Base version - active enemies
+	class IBM_Online_Stacker ;Base version - active enemies TODO: Make this a non-functional base that requires extending for all 3 cases
 	{
 		__New(RouteMaster)
 		{
@@ -769,7 +744,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			Critical Off
 			generatedStacks:=stacks-startStacks
 			g_SharedData.UpdateOutbound("IBM_RunControl_StackString","Stacking: Completed online at z" . currentZone . " generating " . generatedStacks . " stacks in " . Round(ElapsedTime/g_IBM.CounterFrequency,0) . "ms")
-			g_IBM.Logger.AddMessage("Online{M=" . this.RM.MelfManager.GetCurrentMelfEffect() . " z" . currentZone . " Tar=" . targetStacks . " Gen=" . generatedStacks . "}," . g_Heroes[58].FastReadSBStacks() . "," . ROUND(ElapsedTime/g_IBM.CounterFrequency,0)) ;TODO: The melf effect call is after we resume progress, should we pass it the stack zone? Also TODO: Handle no Melf in a neater way? Probably pending the hero collection inX() wrapper to avoid creating him an object that isn't needed
+			g_IBM.Logger.AddMessage("Online{z" . currentZone . " Tar=" . targetStacks . " Gen=" . generatedStacks . "}," . g_Heroes[58].FastReadSBStacks() . "," . ROUND(ElapsedTime/g_IBM.CounterFrequency,0))
 			if (!runComplete)
 			{
 				this.RM.SetFormation(,true) ;Use the high zone, as the current zone is complete
@@ -811,7 +786,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				{
 					g_IBM.LevelManager.SetModifierKey(true)
 					Hero.Key.KeyPress_Bulk()
-					g_IBM.LevelManager.SetModifierKey(false) ;TODO - if the next hero needs modifier as well this is a waste. Currently implementation assumes Fari (no) and Melf (yes) so that wouldn't happen, but things can change...
+					g_IBM.LevelManager.SetModifierKey(false) ;TODO: if the next hero needs modifier as well this is a waste
 				}
 				else
 					Hero.Key.KeyPress_Bulk()
@@ -838,7 +813,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			if(elapsedTime>=timeOut)
 			{
 				g_IBM.Logger.AddMessage("FAIL: Online Stack Setup() did not set W formation within " . timeOut . "ms")
-				g_IBM.Logger.AddMessage("DEBUG: Melf Level=[" . g_Heroes[59].ReadLevel() . "] Fari Level=[" . g_Heroes[33].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
+				g_IBM.Logger.AddMessage("DEBUG: Fari Level=[" . g_Heroes[33].ReadLevel() . "] Formation=" . this.DEBUG_FORMATION_STRING())
 			}
 			if (this.useBrivBoost) ;Should this be moved before StackFarmSetup()? Or possibly into StartFarmSetup(this.useBrivboost) (as online only) - we want the first W press to occur before we start doing Other Stuff so the formation switch happens ASAP
 				this.BrivBoost.Apply()
@@ -905,7 +880,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for Melf's spawn-more buff, or for a preferred stacking zone for non-Melf online
+	PostponeStacking(currentZone) ;Used to delay stacking whilst waiting for the target stack zone and preferred stacking zone
     {
         if(currentZone<g_IBM_Settings["IBM_Offline_Stack_Min"]) ;Never attempt to stack below minimum recovery stack zone
 			return true
@@ -913,31 +888,10 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
             return false
 		if (currentZone>this.LastSafeStackZone) ;Stack immediately to avoid resetting before stacking
 			return false
-		if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Below target minimum online zone (for Melf or otherwise, bad name). Here as this will be called once we pass the recovery minimum
+		if(currentZone<g_IBM_Settings["IBM_Online_Melf_Min"]) ;Below target minimum online zone (legacy setting - bad name). Here as this will be called once we pass the recovery minimum
 			return true
-		if(g_IBM_Settings["IBM_Online_Use_Melf"]) ;Melf mode
-		{
-			nextSpawnMoreRange:=this.MelfManager.GetFirstMelfSpawnMoreRange(currentZone)
-			if(nextSpawnMoreRange)
-			{
-				if (currentZone<nextSpawnMoreRange[1]) ;We're below the desired stack range, and (per the above check) one exists
-					return true
-				else if (!this.zones[currentZone].stackZone) ;Not on a stack zone
-					return true
-				else if (!this.MelfManager.IsMelfEffectSpawnMore(currentZone)) ;Not spawning more
-					return true
-			}
-			else ;No Spawn More available
-			{
-				if (this.zones[currentZone].stackZone==false) ;Even without spawn more, try to use a desired stackzone
-					return true
-			}
-		}
-		else ;Non-Melf, this just needs to consider preferred zones
-		{
-			if (this.zones[currentZone].stackZone==false)
-					return true
-		}
+		if (this.zones[currentZone].stackZone==false)
+			return true
 		return false
     }
 
@@ -1029,8 +983,8 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
         this.ToggleAutoProgress(0,false,true)
 		g_IBM.levelManager.LevelFormation("W", "min")
 		this.WaitForTransition(this.KEY_W)
-		StartTime := A_TickCount
-        ElapsedTime := 0
+		StartTime:=A_TickCount
+        ElapsedTime:=0
 		TimeOut:=5000
         g_SharedData.UpdateOutbound("LoopString","Setting stack farm formation")
         while (!this.FormationCheckWithFari() AND ElapsedTime < TimeOut)
@@ -1038,14 +992,12 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			this.KEY_W.KeyPress() ;Not using _Bulk here as the swap here is a failure mode
             g_IBM.levelManager.LevelFormation("W", "min") ;Should this be here?
 			g_IBM.IBM_Sleep(15)
-            ElapsedTime := A_TickCount - StartTime
+            ElapsedTime:=A_TickCount - StartTime
         }
 		if (elapsedTime >= TimeOut)
 			g_IBM.Logger.AddMessage("FAIL: StackFarmSetup() did not set W formation within " . TimeOut . "ms")
     }
 
-	;Override to remove swap to E when feat swapping. TODO: Why did this swap to E anyway? Just using a normal SetFormation
-	;This is called when trying to stack, if for some reason we're trying to stack on a boss zone A) things have gone weird (fallback maybe?) and B) We should complete on the expected formation to stay on-route. If that jumps us into the Modron reset that's a route setup issue (although perhaps we should check for it)
 	KillCurrentBoss(maxLoopTime:=25000)
     {
         currentZone := g_SF.Memory.ReadCurrentZone()
@@ -1324,7 +1276,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			feats:=g_SF.Memory.GetHeroFeats(58)
 			for k, v in feats
-				if (v == 2131)
+				if (v==2131)
 					return true
 		}
 		return false
@@ -1390,18 +1342,19 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 
 	__New()
 	{
-		this.RelayZones:=g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
 		this.MEMORY_baseAddress:=g_SF.Memory.GameManager.game.gameUser.Loaded.basePtr.ModuleOffset + 0 ;Memory structure data for the reads we need TODO: This has been changed from the whole address to the module offset, since if the module moves in a new process the base address for the old one is worthless... Maybe rename throughout
 		this.MEMORY_LOADED_Type:=g_SF.Memory.GameManager.game.gameUser.Loaded.valueType
 		offSets:=g_SF.Memory.GameManager.game.gameUser.Loaded.GetOffsets() ;We need to turn this into a SafeArray for access via COM
 		offsetSize:=offSets.Count()
-		ArrayObj := ComObjArray(12, offsetSize)
+		ArrayObj:=ComObjArray(12, offsetSize)
 		loop %offsetSize%
 			ArrayObj[A_Index-1]:=offSets[A_Index] ;Com Array is 0-indexed, vs AHK 1-indexed
 		this.MEMORY_LOADED_Offsets:=ArrayObj
 		this.LaunchCommand:=g_IBM_Settings["IBM_Game_Launch"]
 		this.HideLauncher:=g_IBM_Settings["IBM_Game_Hide_Launcher"]
 		this.ExeName:=g_IBM_Settings["IBM_Game_Exe"]
+		relayBase:=restartZone - g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
+		this.relayZone:=MAX(relayBase,g_Heroes.InA(139) ? g_Heroes[139].rushCap : 2) ;Do not try and relay restart until after Thellora's jump
 		this.Reset()
 	}
 
@@ -1411,7 +1364,6 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		this.RelayHwnd:=0
 		this.HelperPID:=0
 		this.State:=0
-		this.RelayZone:=""
 		this.RequestRelease:=false
 	}
 
@@ -1422,7 +1374,6 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			this.RelayPID:=0 ;Make sure things are reset
 			this.RelayHwnd:=0
 			this.HelperPID:=0
-			this.RelayZone:=""
 			this.RequestRelease:=false
 			this.MainPID:=g_IBM.GameMaster.PID
 			this.MainHwnd:=g_IBM.GameMaster.Hwnd
@@ -1580,21 +1531,6 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		g_IBM.GameMaster.CloseIC("Relay failed to halt at platform login",true) ;Close via PID
 		this.Release()
 	}
-
-	GetRelayZone(restartZone,routeMaster)
-	{
-		if (this.RelayZone) ;Use cache
-			return this.RelayZone
-		relayZone:=restartZone - this.RelayZones
-		if (g_IBM_Settings["IBM_Online_Use_Melf"]) ;Online with melf - try to avoid starting the game as we're online stacking
-		{
-			melfRange:=routeMaster.MelfManager.GetFirstMelfSpawnMoreRange()
-			if (melfRange AND melfRange[1] > relayZone AND melfRange[1] < relayZone + this.RelayZones) ;If the target online stack zone is at the start of the blank range
-				relayZone:=melfRange[1] - this.RelayZones ;Move the relay zone ahead
-		}
-		this.RelayZone:=MAX(relayZone,routeMaster.thelloraTarget) ;Do not try and relay restart until after Thellora's jump (which will generally have the casino)
-		return this.RelayZone
-	}
 }
 
 class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv needs to be to survive on a given zone
@@ -1730,277 +1666,4 @@ class IC_BrivMaster_BrivBoost_Class ;A class used to work out what level Briv ne
 	}
 	*/
 
-}
-
-class IC_BrivMaster_MelfMaster_Class ;A class for tracking Melf's buffs
-{
-	Patterns:={} ;Stores a breakdown of Melf's buff types by reset #, array of buff number for each block of 50 (aka Segment)
-	NextSpawnMore:={} ;Stores for each segment the next segment with the spawn-more buff
-	NextSpawnFaster:={} ;As above, but for the spawn-faster buff for fallback
-	lookahead:=5 ;Number of Melf runs to calculate ahead of the current run
-	minZone:=1 ;Min online stack zone
-	maxZone:=2500 ;Max online stack zone
-	zoneCap:=2500 ;This is the reset zone
-
-	__New(zoneCap) ;Called with the zone cap to avoid duplicating it everywhere
-	{
-		this.zoneCap:=zoneCap
-	}
-
-	Reset(minZone,maxZone,lookahead) ;To be called once per run at the start, this deletes old patterns and handles possible changes of settings TODO: We currently support changing the min/max stack zone at runtime, which seems unnecessary? Likewise the lookhead is hard-coded
-	{
-		curReset:=g_SF.Memory.ReadResetsTotal()
-		removeAll:=(minZone!=this.minZone OR maxZone!=this.maxZone) ;if either change the NextSpawnMore segment field needs to be recalculated. We only need to do that part so removing everything is overkill, but we shouldn't be changing these mid-run with any frequency
-		this.minZone:=minZone
-		this.maxZone:=maxZone
-		this.lookhead:=lookahead
-		for reset, _ in this.melfPatterns
-		{
-			if (removeAll OR reset < curReset)
-				this.Patterns.Delete(reset)
-				this.NextSpawnMore.Delete(reset)
-				this.NextSpawnFaster.Delete(reset)
-		}
-		this.Update(curReset)
-	}
-
-	Update(curReset:="") ;Generates patterns
-	{
-		if (curReset=="")
-			curReset:=g_SF.Memory.ReadResetsTotal()
-		;Calculate this and any needed future value
-		loop, % this.lookahead + 1
-		{
-			reset:=curReset + A_INDEX - 1
-			minSegment:=this.ZoneToSegment(this.minZone)
-			maxSegment:=this.ZoneToSegment(this.maxZone)
-			if (!this.Patterns.HasKey(reset))
-			{
-				this.Patterns[reset] := []
-				this.NextSpawnMore[reset] := []
-				this.NextSpawnFaster[reset] := []
-				rng:=new IC_BrivMaster_MelfMaster_Class.CSharpRNG(reset * 10)
-				segments:=Ceil(this.zoneCap / 50)
-				Loop, % segments
-					this.Patterns[reset,A_Index] := rng.NextRange(0, 3)
-				index:=segments ;Now we iterate backwards to fill NextSpawnMore / Next Spawn Faster
-				lastSpawnMore:=0 ;For false / none
-				lastSpawnFaster:=0
-				Loop
-				{
-					If (index <= maxSegment AND index>=minSegment) ;If this is in range
-					{
-						If (this.Patterns[reset,index] == 0) ;...and spawning more
-						{
-							this.NextSpawnMore[reset,index]:=index
-							lastSpawnMore:=index
-						}
-						Else
-						{
-							this.NextSpawnMore[reset,index]:=lastSpawnMore
-						}
-						If (this.Patterns[reset,index] == 1) ;...and spawning faster
-						{
-							this.NextSpawnFaster[reset,index]:=index
-							lastSpawnFaster:=index
-						}
-						Else
-						{
-							this.NextSpawnFaster[reset,index]:=lastSpawnFaster
-						}
-					}
-					index--
-				} Until (index < 1)
-			}
-		}
-	}
-
-	CheckReset(reset) ;Calculates data for the current reset if needed, e.g. because of background party updates and a small lookahead
-	{
-		if (!this.Patterns.HasKey(reset)) ;If the reset is not in the data we need to calculate it
-			this.Update(reset)
-	}
-
-	GetCurrentMelfEffect(zone:="") ;0 is spawn amount, 1 is spawn speed, 2 is quest drops
-	{
-		if (zone=="")
-			zone:=g_SF.Memory.ReadCurrentZone()
-		reset:=g_SF.Memory.ReadResetsTotal()
-		this.CheckReset(reset) ;Ensure we have data for the current reset
-		return this.Patterns[reset,this.ZoneToSegment(zone)]
-	}
-
-	IsMelfEffectSpawnMore(zone:="")
-	{
-		return this.GetCurrentMelfEffect(zone)==0
-	}
-
-	IsMelfEffectSpawnFaster(zone:="")
-	{
-		return this.GetCurrentMelfEffect(zone)==1
-	}
-
-	SegmentToZonePair(segment)
-	{
-		if (segment==0) ;Segment 0 means no range found
-			return False
-		lastZone:=segment*50
-		return [lastZone-49,lastZone]
-	}
-
-	ZoneToSegment(zone)
-	{
-		return ceil(zone/50)
-	}
-
-	GetFirstMelfSpawnMoreSegment(curZone:="") ;If a zone is supplied, the segment at or after that will be returned instead of the minimum
-	{
-		reset:=g_SF.Memory.ReadResetsTotal()
-		this.CheckReset(reset) ;Ensure we have data for the current reset
-		if (curZone=="")
-			startZone:=this.minZone
-		else
-			startZone:=max(curZone,this.minZone) ;Use the highest of the two
-		segment:=this.ZoneToSegment(startZone)
-		return this.NextSpawnMore[reset,segment]
-	}
-
-	GetFirstMelfSpawnFasterSegment(curZone:="") ;If a zone is supplied, the segment at or after that will be returned instead of the minimum
-	{
-		reset:=g_SF.Memory.ReadResetsTotal()
-		this.CheckReset(reset) ;Ensure we have data for the current reset
-		if (curZone=="")
-			startZone:=this.minZone
-		else
-			startZone:=max(curZone,this.minZone) ;Use the highest of the two
-		segment:=this.ZoneToSegment(startZone)
-		return this.NextSpawnFaster[reset,segment]
-	}
-
-	GetFirstMelfSpawnMoreRange(curZone:="") ;Returns a range as a simple array eg [401,450], or false/0 if no range exists
-	{
-		return this.SegmentToZonePair(this.GetFirstMelfSpawnMoreSegment(curZone))
-	}
-
-	GetFirstMelfSpawnFasterRange(curZone:="") ;Returns a range as a simple array eg [401,450], or false/0 if no range exists
-	{
-		return this.SegmentToZonePair(this.GetFirstMelfSpawnFasterSegment(curZone))
-	}
-
-	GetFirstMelfSpawnMoreRangeString(curZone:="") ;Returns a range as a string, eg 401-450, or None if no range exists
-	{
-		segment:=this.GetFirstMelfSpawnMoreSegment(curZone)
-		if (segment)
-			return segment[1] . "-" . segment[2]
-		return "None"
-	}
-
-	GetFirstMelfSpawnFasterRangeString(curZone:="") ;Returns a range as a string, eg 401-450, or None if no range exists
-	{
-		segment:=this.GetFirstMelfSpawnFasterSegment(curZone)
-		if (segment)
-			return segment[1] . "-" . segment[2]
-		return "None"
-	}
-	
-	Class CSharpRNG
-	{
-		static MBIG := 2147483647
-		static MSEED := 161803398
-		static MZ := 0
-
-		inext := 0
-		inextp := 0
-		SeedArray := []
-
-		__New(Seed)
-		{
-			seedArray := this.SeedArray
-			subtraction := (Seed == -2147483648) ? 2147483647 : Abs(Seed)
-			mj := this.MSEED - subtraction
-			seedArray[55] := mj
-			mk := 1
-			Loop, 54
-			{
-				ii := Mod((21 * A_Index), 55)
-				seedArray[ii] := mk
-				mk := mj - mk
-				if (mk < 0)
-					mk += this.MBIG
-				mj := seedArray[ii]
-			}
-			Loop, 4
-			{
-				Loop, 55
-				{
-					seedArray[A_Index] -= seedArray[1 + Mod(A_Index + 30, 55)]
-					if (seedArray[A_Index] < 0)
-						seedArray[A_Index] += this.MBIG
-				}
-			}
-			this.inext := 0
-			this.inextp := 21
-		}
-
-		Sample()
-		{
-			return this.InternalSample() / this.MBIG
-		}
-
-		InternalSample()
-		{
-			seedArray := this.SeedArray
-			locINext := this.inext
-			locINextp := this.inextp
-			if (++locINext >= 56)
-				locINext := 1
-			if (++locINextp >= 56)
-				locINextp := 1
-			retVal := seedArray[locINext] - seedArray[locINextp]
-			if (retVal == this.MBIG)
-				retVal--
-			if (retVal < 0)
-				retVal += this.MBIG
-			seedArray[locINext] := retVal
-			this.inext := locINext
-			this.inextp := locINextp
-			return retVal
-		}
-
-		Next()
-		{
-			return this.InternalSample()
-		}
-
-		GetSampleForLargeRange()
-		{
-			result := this.InternalSample()
-			if (Mod(this.InternalSample(), 2) == 0)
-				result := -result
-			return (result + 2147483646) / 4294967293
-		}
-
-		NextRange(minValue, maxValue)
-		{
-			if (minValue > maxValue)
-				throw "'" . minValue . "' cannot be greater than " . maxValue . "."
-			range := maxValue - minValue
-			if (range <= 2147483647)
-				return Floor(this.Sample() * range) + minValue
-			else
-				return Floor(this.GetSampleForLargeRange() * range + minValue)
-		}
-
-		NextPositive(maxValue)
-		{
-			if (maxValue < 0)
-				throw "'" . maxValue . "' must be greater than zero."
-			return Floor(this.Sample() * maxValue)
-		}
-
-		NextDouble()
-		{
-			return this.Sample()
-		}
-	}
 }

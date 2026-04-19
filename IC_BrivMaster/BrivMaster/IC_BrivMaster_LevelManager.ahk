@@ -11,6 +11,7 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 		this.ExtractFormation(g_SF.Memory.GetActiveModronFormationSaveSlot(),"M")
 		this.ExtractFormation(g_SF.Memory.GetSavedFormationSlotByFavorite(2),"W") ;Must be last to allow W-only champions to be identified easily
 		this.ProcessFormation(g_IBM_Settings.IBM_LevelManager_Levels)
+		this.SetZ1C()
 		this.ResetLevellingDone()
 		this.maxKeyPresses:=g_IBM_Settings["IBM_LevelManager_Input_Max"]
 		this.KEY_ClickDmg:=g_InputManager.getKey("ClickDmg")
@@ -19,6 +20,23 @@ class IC_BrivMaster_LevelManager_Class ;A class for managing champion levelling
 			this.CreateGhostFormation()
 		this.KEY_Modifier:=g_InputManager.getKey(g_IBM_Settings["IBM_Level_Options_Mod_Key"]=="Ctrl" ? "LCtrl" : g_IBM_Settings["IBM_Level_Options_Mod_Key"]) ;Modifer to hold - the game uses LeftControl in the keybindings, as much as it doesn't seem to make a lick of difference
 		this.modifierLevelUpAmount:=g_IBM_Settings["IBM_Level_Options_Mod_Value"] ;How many levels applying the modifier key will give per keypress
+	}
+	
+	SetZ1C() ;Applies Z1C levelling to appropriate heroes (z1c = z1 complete), as these do not change at run time TODO: This needs a review based on the levels of Melf's abilities
+	{
+		if(g_Heroes.InM(139)) ;Thellora in M, avoid Melf completing z1 too fast if present
+		{
+			if(g_Heroes.InM(59))
+			{
+				g_Heroes[59].Master.z1c:=true
+				g_Heroes[59].Reset()
+			}
+		}
+		else ;Casino on z1, stop Briv being levelled
+		{
+			g_Heroes[58].Master.z1c:=true
+			g_Heroes[58].Reset()
+		}
 	}
 
 	LevelFormation(formationIndex, mode:="min", allowedTime:=10000, forcePriority:=false, surpressByID:="", waitForGold:=false)

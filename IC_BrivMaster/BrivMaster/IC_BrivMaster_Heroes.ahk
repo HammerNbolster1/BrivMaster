@@ -6,7 +6,7 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 		this.Init()
 	}
 
-	__Get(heroID) ;TODO: Add a wrapper for the .InM etc functions that can check if the hero actually exists at all first, to avoid creating hero objects needlessly, i.e. you'd call g_Heroes.InM(59) which would return this[59].InM if this.HasKey(59), else false
+	__Get(heroID)
 	{
 		if(!this.Init())
 			return
@@ -21,6 +21,16 @@ class IC_BrivMaster_Heroes_Class ;A class for managing heroes. Or Champions, but
 				default: this[heroID]:=new IC_BrivMaster_Hero_Class(heroID,this.IDToIndexMap[heroID])
 			}
 		}
+	}
+	
+	InM(heroID) ;Wrapper to avoid creating objects via __Get() when we only want to check for a hero's presence in a formation
+	{
+		return this.HasKey(heroID) ? this[heroID].InM : false
+	}
+	
+	InA(heroID) ;Wrapper to avoid creating objects via __Get() when we only want to check for a hero's presence in a formation
+	{
+		return this.HasKey(heroID) ? this[heroID].InA : false
 	}
 
 	Init() ;Initialises the heroIndexMap if needed, returns true on success or if already done. This is for use with the hub side where we don't abort if the __new function cannot do this, so hub functions need to check
@@ -258,10 +268,7 @@ class IC_BrivMaster_Hero_Class ;Represents a single hero. Can be extended for he
 			{
 				this.Master.z1:=0
 			}
-			if champData.hasKey("z1c")
-				this.Master.z1c:=champData["z1c"]
-			else
-				this.Master.z1c:=false
+			this.Master.z1c:=false ;z1c is not part of the settings loaded
 			if champData.hasKey("prio")
 				this.Master.priority:=champData["prio"]
 			else

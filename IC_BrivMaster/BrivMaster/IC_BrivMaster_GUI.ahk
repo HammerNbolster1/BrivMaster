@@ -693,27 +693,22 @@
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Stacking zones
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h102 vIBM_Group_Stacking, Stacking Zones
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 y%nextGroupStart% w%groupWidth% h75 vIBM_Group_Stacking, Stacking Zones
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+20 h18 0x200, Offline:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 yp+0 Number Limit4 vIBM_Offline_Stack_Zone gIBM_Generic_Setting_Int
 		this.AddToolTip("IBM_Offline_Stack_Zone","Offline stacking or blank restarts will be performed on or after this zone during normal operation")
-		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min recovery stack zone:
+		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min recovery:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 yp+0 Number Limit4 vIBM_OffLine_Stack_Min gIBM_Generic_Setting_Int
 		this.AddToolTip("IBM_OffLine_Stack_Min","The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation, excluding Farideh if used, does not kill enemies. Used for recovery")
-		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Min online stack zone:
+		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Target online:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w31 x+3 Number Limit4 vIBM_Online_Melf_Min gIBM_Generic_Setting_Int
-		this.AddToolTip("IBM_Online_Melf_Min","If Online Stack with Melf is disabled, the farm will stack at the first stack zone greater than or equal to this.`nIf Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. The full W formation must not be able to kill enemies in this zone")
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_Online_Melf_Use gIBM_Online_Melf_Use, Online Stack with Melf
-		this.AddToolTip("IBM_Online_Melf_Use","When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified")
-		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Max
-		Gui, IBM_Home:Add, Edit, +%editTextColour% w35 x+3 Number Limit4 vIBM_Online_Melf_Max gIBM_Generic_Setting_Int
-		this.AddToolTip("IBM_Online_Melf_Max","This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity")
+		this.AddToolTip("IBM_Online_Melf_Min","The farm will stack at the first stack zone greater than or equal to this")
 		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, % "Farideh's ultimate trigger:"
 		Gui, IBM_Home:Add, DropDownList, cRed w110 x+3 AltSubmit vIBM_Online_Farideh_Condition gIBM_Generic_Setting_Int, Active enemies|Attacking enemies|Tatyana return
 		Gui, IBM_Home:Add, Text, x+3 h18 0x200, with threshold:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% x+3 w32 Number Limit4 vIBM_Online_Farideh_Threshold gIBM_Generic_Setting_Int
-		this.AddToolTip("IBM_Online_Farideh_Threshold","For Active enemies and Attacking enemies, this is the number of active enemies at which Farideh's ultimate will be used when stacking.`nFor Tatyana return the number of game milliseconds remaining on her return timer after which the ultimate should be used, e.g. 1250ms at x12.5 will result in the ultimate being used 100ms real time before she returns.`nUse these options to tune Farideh's ultimate usage")
+		this.AddToolTip("IBM_Online_Farideh_Threshold","Use these options to tune Farideh's ultimate usage.`nFor Active enemies and Attacking enemies, this is the number of enemies at which Farideh's ultimate will be used when stacking.`nFor Tatyana return the number of game milliseconds remaining on her return timer after which the ultimate should be used, e.g. 1250ms at x12.5 will result in the ultimate being used 100ms real time before she returns")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Stacking ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Offline Settings
@@ -743,7 +738,7 @@
 		this.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
 		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start offset:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
-		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone")
+		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. The relay will not start prior to Thellora's landing zone")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Offline ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Ellywick Casino
@@ -761,7 +756,7 @@
 		Gui, IBM_Home:Tab, Levels
 		;Levelling Options
 		Gui, IBM_Home:Font, w700
-		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h119 vIBM_Group_Level_Options, Levelling Options
+		Gui, IBM_Home:Add, Groupbox, Section xm+2 ym+48 w%groupWidth% h97 vIBM_Group_Level_Options, Levelling Options
 		Gui, IBM_Home:Font, w400
 		Gui, IBM_Home:Add, Text, xs+10 ys+15 h18 0x200, Max sequential keys
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 Number w20 Limit2 vIBM_LevelManager_Input_Max gIBM_LevelManager_Input_Max
@@ -772,12 +767,12 @@
 		Gui, IBM_Home:Add, Text, x+5 h18 0x200, for x
 		Gui, IBM_Home:Add, DropDownList, x+1 w35 vIBM_Level_Options_Mod_Value gIBM_Generic_Setting_Int, 10|25
 		this.AddToolTip("IBM_Level_Options_Mod_Value", "The levelling amount associated with the key selected. This must match the in-game keybind")
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_Suppress_Front gIBM_Generic_Setting_Int, Suppress Front Row
-		this.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front row. Used to maximise Briv's stack gain in the Casino. The champion will be levelled opportunistically when the formation is under attack, but note that this is unlikely to happen on ranged Casino zones")
+		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_Suppress_Front gIBM_Generic_Setting_Int, Suppress Front Column
+		this.AddToolTip("IBM_Level_Options_Suppress_Front", "Do not level champions other than Briv in the front column. Used to maximise Briv's stack gain in the Casino. The champion will be levelled opportunistically when the formation is under attack")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Ghost gIBM_Generic_Setting_Int, Ghost Level
-		this.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or the formation being under attack by melee monsters. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when Thellora is in the M formation")
-		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Options_Limit_Tatyana gIBM_Generic_Setting_Int, Smart Tatyana in Casino
-		this.AddToolTip("IBM_Level_Options_Limit_Tatyana", "Only level Tatyana at the start of a run if Melf's Spawn More effect is not active in the Casino zone. To use this option her Start level should be set to 0")
+		this.AddToolTip("IBM_Level_Options_Ghost", "During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or the formation being under attack. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when Thellora is in the M formation")
+		Gui, IBM_Home:Add, CheckBox, x+5 h18 0x200 vIBM_Level_Diana_Cheese gIBM_Generic_Setting_Int, Dynamic Diana
+		this.AddToolTip("IBM_Level_Diana_Cheese", "Diana can give excess chests after the daily reset. This option will raise her level to 200 for Electrum Chest Scavenger from 3 minutes before the daily reset to 30 minutes after. Her level in the main options should be left at 100")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Options_BrivBoost_Use gIBM_Level_Options_BrivBoost_Use, Briv Level Boost
 		this.AddToolTip("IBM_Level_Options_BrivBoost_Use", "When enabled will increase Briv's level during online stacking. Use when Briv's normal level is insufficent for later stack zones")
 		Gui, IBM_Home:Add, Text, x+15 h18 0x200, Safety Factor
@@ -785,8 +780,6 @@
 		this.AddToolTip("IBM_LevelManager_Boost_Multi", "This is how many times greater Briv's HP should be than the incoming damage of 100 enemies. Useful range 8 (fast stacking) to 12 (slower stacking)")
 		Gui, IBM_Home:Add, CheckBox, x+15 h18 0x200 vIBM_Level_Recovery_Softcap gIBM_Generic_Setting_Int, Recovery Levelling
 		this.AddToolTip("IBM_Level_Recovery_Softcap", "With this option selected, champions will be levelled to their last update when reaching a boss zone in stack conversion recovery, that is when Briv has no stacks and the minimum stack zone has yet to be reached. This can aid killing armoured bosses, but will raise the minimum zone required to gain online stacks")
-		Gui, IBM_Home:Add, CheckBox, xs+10 y+8 h18 0x200 vIBM_Level_Diana_Cheese gIBM_Generic_Setting_Int, Dynamic Diana
-		this.AddToolTip("IBM_Level_Diana_Cheese", "Diana can give excess chests after the daily reset. This option will raise her level to 200 for Electrum Chest Scavenger from 3 minutes before the daily reset to 30 minutes after. Her level in the main options should be left at 100")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Level_Options ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Level manager - headings
@@ -924,10 +917,7 @@
 		;Stacking Zone
 		GuiControl, IBM_Home:, IBM_Offline_Stack_Zone, % g_IBM_Settings.IBM_Offline_Stack_Zone
 		GuiControl, IBM_Home:, IBM_OffLine_Stack_Min, % g_IBM_Settings.IBM_Offline_Stack_Min
-		GuiControl, IBM_Home:, IBM_Online_Melf_Use, % g_IBM_Settings.IBM_Online_Use_Melf
 		GuiControl, IBM_Home:, IBM_Online_Melf_Min, % g_IBM_Settings.IBM_Online_Melf_Min
-		GuiControl, IBM_Home:, IBM_Online_Melf_Max, % g_IBM_Settings.IBM_Online_Melf_Max
-		IBM_Online_Melf_Enable(g_IBM_Settings.IBM_Online_Use_Melf)
 		GuiControl, IBM_Home:, IBM_Online_Farideh_Threshold, % g_IBM_Settings.IBM_Online_Farideh_Threshold
 		GuiControl, IBM_Home:Choose,IBM_Online_Farideh_Condition, % g_IBM_Settings.IBM_Online_Farideh_Condition
 		;Offline settings
@@ -952,7 +942,6 @@
 		GuiControl, IBM_Home:, IBM_Level_Options_BrivBoost_Use, % g_IBM_Settings.IBM_LevelManager_Boost_Use
 		GuiControl, IBM_Home:, IBM_LevelManager_Boost_Multi, % g_IBM_Settings.IBM_LevelManager_Boost_Multi
 		IBM_Level_Options_BrivBoost_Enable(g_IBM_Settings.IBM_LevelManager_Boost_Use)
-		GuiControl, IBM_Home:, IBM_Level_Options_Limit_Tatyana, % g_IBM_Settings.IBM_Level_Options_Limit_Tatyana
 		GuiControl, IBM_Home:, IBM_Level_Options_Suppress_Front, % g_IBM_Settings.IBM_Level_Options_Suppress_Front
 		GuiControl, IBM_Home:, IBM_Level_Options_Ghost, % g_IBM_Settings.IBM_Level_Options_Ghost
 		GuiControl, IBM_Home:ChooseString, IBM_Level_Options_Mod_Key, % g_IBM_Settings.IBM_Level_Options_Mod_Key
@@ -1948,21 +1937,6 @@ IBM_Level_Options_BrivBoost_Enable(enableControl)
 	{
 		GuiControl, IBM_Home:Disable, IBM_LevelManager_Boost_Multi
 	}
-}
-
-IBM_Online_Melf_Use()
-{
-	GuiControlGet, value,, IBM_Online_Melf_Use
-	IBM_Online_Melf_Enable(value)
-	g_IriBrivMaster.UpdateSetting("IBM_Online_Use_Melf",value)
-}
-
-IBM_Online_Melf_Enable(enableControl)
-{
-	if (enableControl)
-		GuiControl, IBM_Home:Enable, IBM_Online_Melf_Max
-	else
-		GuiControl, IBM_Home:Disable, IBM_Online_Melf_Max
 }
 
 IBM_Route_Import_Button() ;TODO: Provide some instructions...

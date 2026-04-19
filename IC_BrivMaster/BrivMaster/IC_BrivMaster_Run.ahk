@@ -98,7 +98,7 @@ class IC_BrivMaster_GemFarm_Class
         this.CheckifStuck_fallBackTries:=0
 		Loop
         {
-			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to routeMaster
+			this.currentZone:=g_SF.Memory.ReadCurrentZone() ;Class level variable so it can be reset during rollbacks TODO: Move to RouteMaster
 			if (this.currentZone=="")
 				this.GameMaster.SafetyCheck()
 			if(!this.TriggerStart) ;Check for resets outside of the expected
@@ -108,10 +108,10 @@ class IC_BrivMaster_GemFarm_Class
 					this.TriggerStart:=true
 					this.Logger.AddMessage("Missed Reset: Core reset count=[" . g_SF.Memory.ReadResetsCount() . "] lastResetCount=[" . lastResetCount . "]")
 				}
-				else if(lastResetCount==0 AND this.offRamp AND this.currentZone<=this.routeMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one
+				else if(lastResetCount==0 AND this.offRamp AND this.currentZone<=this.RouteMaster.thelloraTarget) ;Additional reset detection for the first run after a manual (forced) restart, as we can't tell run 0 from run 0 if another forced restart happens in that one
 				{
 					this.TriggerStart:=true
-					this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.routeMaster.thelloraTarget . "]")
+					this.Logger.AddMessage("Missed Reset: Core reset count=0 offramp=true and z[" . this.currentZone . "] is at or before Thellora target z[" . this.RouteMaster.thelloraTarget . "]")
 				}
 			}
 			if (this.TriggerStart) ;First loop
@@ -124,15 +124,15 @@ class IC_BrivMaster_GemFarm_Class
 				}
 				this.Logger.NewRun()
 				this.currentZone:=this.WaitForZoneLoad(this.currentZone)
-				this.routeMaster.ToggleAutoProgress(g_Heroes[139].inM ? 1 : 0) ;Set initial autoprogess ASAP
+				this.RouteMaster.ToggleAutoProgress(g_Heroes[139].inM ? 1 : 0) ;Set initial autoprogess ASAP
 				this.offRamp:=false ;TODO: There's a lot of resetting that could probably be wrapped together. Or possibly this whole block carved out
 				this.failedConversionMode:=false
                 this.levelManager.Reset()
-                this.routeMaster.Reset()
+                this.RouteMaster.Reset()
 				this.EllywickCasino.Reset()
 				this.IBM_FirstZone(this.currentZone)
                 lastResetCount:=g_SF.Memory.ReadResetsCount()
-				if (!this.routeMaster.ExpectingGameRestart() OR this.routeMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
+				if (!this.RouteMaster.ExpectingGameRestart() OR this.RouteMaster.cycleMax==1) ;When running hybrid don't do standard online chests during offline runs as there will be an early save when closing the game. Without hybrid we don't have a choice
 					g_SharedData.UpdateOutbound("IBM_BuyChests",true)
                 this.PreviousZoneStartTime:=A_TickCount
 				this.TriggerStart:=false
@@ -148,13 +148,13 @@ class IC_BrivMaster_GemFarm_Class
 				this.ModronResetCheck()
 				Continue ;ModronResetCheck() updates PreviousZoneStartTime in all cases, so the CheckifStuck() call we'd proceed to will never do anything, and the delay is unwanted in this case - we've been waiting on the reset
 			}
-			else if (this.currentZone <= this.routeMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
+			else if (this.currentZone <= this.RouteMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
 			{
 				if (!Mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND Mod( g_SF.Memory.ReadHighestZone(), 5 ) AND !g_SF.Memory.ReadTransitioning())
-					this.routeMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
-				if (this.routeMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
+					this.RouteMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag
+				if (this.RouteMaster.TestForSteelBonesStackFarming()) ;Returns true on failure case (out of stacks and restarted due to having enough for another run)
 					Continue ;Go straight back to the start of the loop
-				this.routeMaster.SetFormation(true) ;This is the only call that uses fastCheck, as it should be whilst just cruising along
+				this.RouteMaster.SetFormation(true) ;This is the only call that uses fastCheck, as it should be whilst just cruising along
 				this.RouteMaster.TestForBlankOffline(this.currentZone)
 				if (this.currentZone>1)
 					this.levelManager.LevelFormation("Q", "min", 0) ;TODO: Should this call on Q? We might be on E and it's technically possible E has champs Q doesn't (although that would be odd). Probably need a union of Q and E
@@ -167,7 +167,7 @@ class IC_BrivMaster_GemFarm_Class
 					{
 						g_SharedData.UpdateOutbound_Increment("TotalBossesHit")
 						g_SharedData.UpdateOutbound_Increment("BossesHitThisRun")
-						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.failedConversionMode AND this.routeMaster.NeedToStack() AND g_Heroes[58].ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss
+						if (g_IBM_Settings["IBM_Level_Recovery_Softcap"] AND !this.failedConversionMode AND this.RouteMaster.NeedToStack() AND g_Heroes[58].ReadHasteStacks() < 50) ;Only check for recovery levelling when we hit a boss
 						{
 							this.failedConversionMode:=true
 							this.levelManager.SetupFailedConversion()
@@ -177,7 +177,7 @@ class IC_BrivMaster_GemFarm_Class
 						this.offRamp:=true
 				}
 				else
-					this.routeMaster.StartAutoProgressSoft() ;InitZone() will handle this for new zones (which makes it odd it is separate...) TODO: Checking this every single tick seems excessive?
+					this.RouteMaster.StartAutoProgressSoft() ;InitZone() will handle this for new zones (which makes it odd it is separate...) TODO: Checking this every single tick seems excessive?
 			}
 			else
 			{
@@ -208,163 +208,76 @@ class IC_BrivMaster_GemFarm_Class
 	{
 		if (currentZone==1)
 		{
-			melfPresent:=g_Heroes[59].inM ;TODO: Copying these flags doesn't seem monsterously useful? It makes things a tiny bit easier to read I suppose...
-			tatyanaPresent:=g_Heroes[97].inM
-			BBEGPresent:=g_Heroes[125].inM
-			melfSpawningMore:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore()
 			if (g_IBM_Settings["IBM_Level_Diana_Cheese"] AND this.DianaCheeseHelper.InWindow()) ;Diana can give excess chests after the daily reset, as it seems things don't get synced up until a restart. Level her to 200 only in that window
 				this.levelManager.OverrideLevelByIDRaiseToMin(148,"min",200)
-			if (this.routeMaster.combining)
+			if (g_Heroes[139].inM) ;Thellora in M, either combining or non-combining followed by Casino, which proceed in the same way but with Briv's z1c set when not combining
 			{
-				this.routeMaster.CheckCombiningThelloraBossRecovery() ;Try to avoid Combining into bosses after a failed run by breaking the combine
-				melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-				if (melfPresent AND !melfSpawningMore) ;Due to the ! this has to check melfPresent first
-					this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more, to avoid the multiple-credit buff ruining the combine
-				if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
-					this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-				if (BBEGPresent)
-				{
-					if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
-						this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
-					else
-						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
-				}
+				this.RouteMaster.CheckThelloraBossRecovery() ;Try to avoid rushing into bosses after a failed run by breaking / making the combine. This will set Briv's z1c in the default case for non-combining
 				this.EllywickCasino.lockedFrontColumnChamps:=this.LevelManager.SetupFirstZoneFrontRow()
 				g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
-				this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
-				if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
-					this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
-				if (g_Heroes[139].inM)
-					this.DoRushWait(true)
-				this.routeMaster.ToggleAutoProgress(0,false,true) ;We may or may not have been stopped by DoRushWait()
+				this.levelManager.LevelFormation("M","z1",,true,,true) ;Level until priority champions hit target only
+				this.DoRushWait(true)
+				this.RouteMaster.ToggleAutoProgress(0,false,true) ;We may or may not have been stopped by DoRushWait()
 				g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
 				this.levelManager.LevelFormation("M","min") ;Level M to minimum
-				this.routeMaster.UpdateThellora()
+				this.RouteMaster.UpdateThellora()
 				this.levelManager.LevelClickDamage() ;Probably done whilst waiting for Thellora, but not guaranteed
 				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
 				unlockRequired:=this.EllywickCasino.Casino()
-				if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
+				if (this.RouteMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
 				{
-					this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
-					this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
+					this.RouteMaster.StartAutoProgressSoft() ;Start moving ASAP
+					this.RouteMaster.SetFormation(,true) ;Use the highzone on the immediate exit
 				}
 				else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
 				{
-					brivShouldBeinEConfig:=this.routeMaster.ShouldWalk(g_SF.Memory.ReadCurrentZone())
+					brivShouldBeInEConfig:=this.RouteMaster.ShouldWalk(g_SF.Memory.ReadCurrentZone())
 					swapAttempts:=0
 					Loop
 					{
-						this.routeMaster.SetFormation() ;Move to standard formation after waiting for the Casino if necessary
+						this.RouteMaster.SetFormation() ;Move to standard formation after waiting for the Casino if necessary
 						swapAttempts++
-					} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
-					this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
+					} until (brivShouldBeInEConfig==g_Heroes[58].ReadBenched() OR swapAttempts>10)
+					this.RouteMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
 				}
 				if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
 					this.EllywickCasino.UnlockHeroes()
 				this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew modifier key levelling to happen
 			}
-			else ;Non-combining
+			else ;No Thellora, so Casino in z1
 			{
-				if(g_Heroes[139].inM) ;Thellora in M, so this will largely proceed per combining, but with Briv on z1c
+				this.EllywickCasino.lockedFrontColumnChamps:=this.levelManager.SetupFirstZoneFrontRow()
+				this.levelManager.LevelFormation("M","z1",,true,,true)
+				g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
+				this.levelManager.LevelClickDamage()
+				if(this.EllywickCasino.Casino()) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
+					this.EllywickCasino.UnlockHeroes()
+				quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
+				while(quest>0)
 				{
-					this.routeMaster.CheckNonCombiningThelloraBossRecovery() ;This will set Briv's z1c in the default case
-					melfSpawningMoreAfterRush:=melfPresent AND this.routeMaster.MelfManager.IsMelfEffectSpawnMore(this.routeMaster.thelloraTarget) ;TODO: This will not give the right zone if Thellora cant reach her max target, might need to consider current?
-					if (melfPresent AND !melfSpawningMore)
-						this.levelManager.OverrideLevelByID(59,"z1c", true) ;Do not level melf until after zone completion if not spawning more
-					if (g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"] AND !melfSpawningMoreAfterRush AND tatyanaPresent)
-						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-					if (BBEGPresent)
-					{
-						if (melfSpawningMore) ;It doesn't matter if BBEG is spawning zombies post-rush as there is no need to preserve targets for Thellora, so we don't have to consider that here. Without we don't want waves being insta-killed at bad times
-							this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
-						else
-							this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",100)
-					}
-					this.EllywickCasino.lockedFrontColumnChamps:=this.levelManager.SetupFirstZoneFrontRow()
-					g_SharedData.UpdateOutbound("LoopString","Start Zone Levelling")
-					this.levelManager.LevelFormation("M", "z1",,true,[28],true) ;Level until priority champions hit target only
-					if (BBEGPresent AND (melfSpawningMoreAfterRush OR tatyanaPresent))
-						this.levelManager.OverrideLevelByIDRaiseToMin(125,"min",200) ;No 'else' as already set on z1 TODO: No it hasn't for the "min" setting. Update: But he will still be levelled to some degree
-					if (g_Heroes[139].inM)
-						this.DoRushWait(true)
-					this.routeMaster.ToggleAutoProgress(0, false, true) ;We may or may not have been stopped by DoRushWait()
-					g_SharedData.UpdateOutbound("LoopString","Standard Levelling: M")
-					this.levelManager.LevelFormation("M","min") ;Level M to minimum
-					this.routeMaster.UpdateThellora()
-					this.levelManager.LevelClickDamage() ;Probably done whilst waiting for Thellora, but not guaranteed
-					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-					unlockRequired:=this.EllywickCasino.Casino()
-					if (this.routeMaster.IsFeatSwap()) ;Swap formation here as we can't be blocked in the transition
-					{
-						this.routeMaster.StartAutoProgressSoft() ;Start moving ASAP
-						this.routeMaster.SetFormation(,true) ;Use the highzone on the immediate exit
-					}
-					else ;For non-feat swap, check if Briv is correctly placed so we do/don't jump out of the waitroom
-					{
-						brivShouldBeinEConfig:=this.routeMaster.ShouldWalk(g_SF.Memory.ReadCurrentZone())
-						swapAttempts:=0
-						Loop
-						{
-							this.routeMaster.SetFormation() ;Move to standard formation after waiting for the Casino if necessary
-							swapAttempts++
-						} until (brivShouldBeinEConfig==g_Heroes[58].ReadBenched() OR swapAttempts > 10)
-						this.routeMaster.StartAutoProgressSoft() ;Start moving only once Briv is correctly placed or removed
-					}
-					if(unlockRequired) ;Moved this out of the IBM_EllywickCasino end logic so it can be done after sending the key presses needed to get moving - there is nothing gained doing it before the next levelling call
-						this.EllywickCasino.UnlockHeroes()
-					this.levelManager.LevelFormation("Q","min",500) ;Apply min so BBEG->Dyna swap, Tatyana->Hew swap etc happens. Trying 500ms to allow for Hew x10 levelling to happen
+					this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
+					this.IBM_Sleep(15)
+					quest:=g_SF.Memory.ReadQuestRemaining()
 				}
-				else ;No Thellora, so Casino in z1
+				this.levelManager.LevelWorklist(,true) ;Force briv to z1 level (due to z1c he won't have been levelled by the earlier calls)
+				;TODO: This will stall without Thellora, or if formation is zerged. Need a cap, and need to actually compare Q/E to what we have
+				;It seems this fails due to the ranged fairies Minsc spawns attacking the formation
+				swapAttempts:=0
+				Loop
 				{
-					this.levelManager.OverrideLevelByID(58,"z1c", true) ;Prevent z1 Briv levelling until zone complete to force separate jumps, and avoid wierd jumping-with-metalborn-but-using-4%-of-stacks issues
-					;Melf-dependant BBEG levelling, so we can kill the hordes with spawn more, without stealing all the kills from Thellora for the other buffs
-					;TODO: Update to check BBEGPresent
-					if (melfSpawningMore)
-						this.levelManager.OverrideLevelByIDRaiseToMin(125,"z1",200)
-					else if (tatyanaPresent AND g_IBM_Settings["IBM_Level_Options_Limit_Tatyana"]) ;If Melf won't be spawning more in the waitroom level Tatyana if present
-					{
-						this.levelManager.OverrideLevelByIDRaiseToMin(97,"z1",100)
-					}
-					else if (!tatyanaPresent)
-					{
-						this.levelManager.OverrideLevelByIDLowerToMax(125,"z1",g_Heroes[125].inQ ? 100 : 0)
-					}
-					;83 is Elly, 58 is Briv, 59 is Melf only levels the prio champs to max so that the waitroom can move on
-					;Only put Melf in early with his spawn more effect because of the spawn speed bug with teleporting enemies, and keep  Widdle (91) or Deekin(28) out at this stage due to their spawn speed effects as well - they'll be levelled by the first tick in the waitroom
-					;Update: Removed Widdle for now as her spawn-faster is at level 260, and so shouldn't block other champs being placed as long as she isn't set as a priority
-					this.EllywickCasino.lockedFrontColumnChamps:=this.levelManager.SetupFirstZoneFrontRow()
-					this.levelManager.LevelFormation("M", "z1",, true, melfSpawningMore ? [28]:[28, 59], true)
-					g_SharedData.UpdateOutbound("LoopString","Ellywick's Casino")
-					this.levelManager.LevelClickDamage()
-					if(this.EllywickCasino.Casino()) ;Moved this out of the IBM_EllywickCasino end logic, for non-combine unlock right away as if the zone is somehow not complete Briv won't be present to get 'free' stacks anyway | TODO: Think about ghost levelling in this case
-						this.EllywickCasino.UnlockHeroes()
-					quest:=g_SF.Memory.ReadQuestRemaining() ;Wait for zone completion so we can level Briv - TODO: this should perhaps have a timeout in case things get weird (no familiars in modron formation? Which would mean no gold anyway)
-					while(quest>0)
-					{
-						this.levelManager.LevelWorklist() ;Level existing M worklist whilst waiting
-						this.IBM_Sleep(15)
-						quest:=g_SF.Memory.ReadQuestRemaining()
-					}
-					this.levelManager.LevelWorklist(,true) ;Force briv to z1 level (due to z1c he won't have been levelled by the earlier calls)
-					;TODO: This will stall without Thellora, or if formation is zerged. Need a cap, and need to actually compare Q/E to what we have
-					;It seems this fails due to the ranged fairies Minsc spawns attacking the formation
-					swapAttempts:=0
-					Loop
-					{
-						this.routeMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
-						swapAttempts++
-					} until (!g_Heroes[139].ReadBenched() OR (swapAttempts > 10)) ;139 is Thellora
-					this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
-					if (g_Heroes[139].inQ OR g_Heroes[139].inE)
-					{
-						this.DoRushWait()
-						this.routeMaster.UpdateThellora()
-					}
+					this.RouteMaster.SetFormation() ;Move to z1 formation after waiting for the Casino if necessary
+					swapAttempts++
+				} until (!g_Heroes[139].ReadBenched() OR (swapAttempts>10)) ;139 is Thellora
+				this.levelManager.LevelFormation("Q","min",0) ;One tap of levelling after the change so that BBEG->Dyna swap or such happens
+				if (g_Heroes[139].inQ OR g_Heroes[139].inE)
+				{
+					this.DoRushWait()
+					this.RouteMaster.UpdateThellora()
 				}
 			}
 		}
 		else ;Not z1
-			this.routeMaster.InitZone() ;Includes levelling click damage to make sure we can move
+			this.RouteMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
 	
 	DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter) Also TODO: this shouldn't be in SharedFunctions
@@ -375,7 +288,7 @@ class IC_BrivMaster_GemFarm_Class
 		startTime:=A_TickCount
 		while(!(g_SF.Memory.ReadCurrentZone()>1 OR g_Heroes[139].ReadRushTriggered()) AND elapsedTime < 8000)
         {
-			if(stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill (probably via Melf) doesn't jump us an extra time, possibly on the wrong formation
+			if(stopProgress) ;If we are doing Elly's casino after the rush we need to stop ASAP so that 1 kill doesn't jump us an extra time, possibly on the wrong formation
 			{
 				if(g_SF.Memory.ReadHighestZone()>1)
 				{

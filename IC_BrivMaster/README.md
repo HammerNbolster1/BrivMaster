@@ -286,7 +286,7 @@ Import/Export: As these settings are time consuming to enter (90 selections!) th
 | 5/4J Ranged stacking | {K8pylryjg,AAAIYIAAA} |
 | 6/4J Offline | {2xZxxK3rQ,________w} |
 | 9J Melee stacking | {3zXoa17wA,x4DjGAbxA} |
-| 11 | {-p-hvk_gw,MB0MY8gGg} |
+| 11J | {-p-hvk_gw,MB0MY8gGg} |
 | 12/11J | {BeR7QfAfg,MB0MY8gGg} |
 | 14J | {hSFIV5CEA,AAAMY9gGg} |
 | 14/9J | {t_Hvn___w,AAAIYxgGg} |
@@ -301,22 +301,12 @@ The Briv jump value for each formation. The formations are described in more det
 ### Stacking Zones  
 Offline: Offline stacking or blank restarts will be performed on or after this zone during normal operation. When flames-based stacking is enabled this will be used for 0 flames cards. If offline stacking, set this based on the stacks needed.
 	
-Min recovery stack zone: The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. If Farideh is present in W she will not be levelled and so should not be included when testing for this minimum. Used for recovery.
+Min recovery: The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. If Farideh is present in W she will not be levelled and so should not be included when testing for this minimum. Used for recovery.
 
 > Author's Note: Naturally if Farideh is included in another formation and being levelled elsewhere she will be present in W in all cases and so must be included when determining this recovery minimum. Currently there is no reason for her to be outside of W, however.
 
-Min online stack zone: The full W formation must not be able to kill enemies in this zone.
-- If Online Stack with Melf (see below) is disabled, the farm will stack at the first stack zone greater than or equal to this.
-- If Online Stack with Melf is enabled this is the start of the range in which the script will look for Melf's spawn more buff. It will also be the zone used if a spawn more buff is not available.
+Target online:  The farm will stack at the first stack zone greater than or equal to this. The full W formation must not be able to kill enemies in this zone.
 	
-Online Stack with Melf: When enabled online stacking will be performed when Melf's increased spawn count effect is active, within the range specified. Melf has 3 different buffs that are 'randomly' active, but being a computer program it is only psuedo-random and is possible to predict.
-	
-> Author's Note: For the curious the Melf effective active in each block of 50 zones are based on the number of resets your account has performed in total.  
-
-Max: This, rounded up to the next 50, is the highest zone that Briv Master will look for Melf's spawn-more buff in. If it cannot find a segment with that buff it will stack at the earliest opportunity, which will be the first stack zone after the Min online stack zone above.
-
-> Author's Note: This means that if you have a reset of say z1200, setting z1020 here will allow stacking up to and including z1049. Disabling the later zones in the route grid would allow you to prevent stacking from z1021 to z1049, but will have consequences for the start of the run.
-
 Farideh's ultiamte trigger and threshold: The condition used to determine when Farideh's ultimate should be used during online stacking. Three options are provided:
 - Number of active enemies (i.e. enemies on-screen).
 - Number of attacking enemies (the primary difference from the above being that melee enemies have reached the formation).
@@ -349,7 +339,7 @@ Blank restarts: The purpose of restarting during hybrid stacking is to clear mem
 	
 Relay restarts: Instead of closing the game and immediately restarting it during a blank restart, this option starts a new instance of the game before the old one is closed, and holds it at platform login ready to go. This can significantly reduce the time required to preform a blank restart. This is not compatible with the EGS launcher which will not allow a second copy of the game to be started.
 	
-Relay start offset: The number of zones prior to the Offline zone that the relay will start. If stacking with Melf and the online stacking zone is within the Relay window, this will be be offset from that stacking zone instead. In any case the relay will not start until after Thellora's landing zone.
+Relay start offset: The number of zones prior to the Offline zone that the relay will start. This will be capped so that the relay will not start until after Thellora's landing zone.
 	
 ### Ellywick's Casino  
 Ellywick's Gem cards provide an immense boost to our gem income. Briv Master allows for re-rolling using her ultimate, including a second use via Dungeon Master(DM)'s ultimate to increase the average number of gem cards. Options in this section control this.
@@ -384,12 +374,8 @@ Recovery Levelling: With this option selected, if Briv does not have enough stac
 
 > Author's Note: This was a feature carried over from BrivGemFarmLevelUp, and previously always on, but since it's often undesiable it has been made an option. It will be considered for future removal. Generally if you can clear the armoured bosses prior to the minimum stack zone with standard levels this only hurts you.
 
-Smart Tatyana in Casino: When using a setup that has Melf in the M formation, this option will only level Tatyana (if also present) at the start of the run if Melf's spawn-more buff is not active. This may be beneficial because a decent level Melf (~30 spawn) is able to allow Ellywick to draw rapidly alone, and the extra champion plus load from having a full Tatyana wave active at once might not be worth it. If using this option, Tatyana's 'Start' level should be 0.
-	
 Suppress Front Row: If selected champions other than Briv will not be levelled if in the front row of the M formation at the start of the run. This is useful to ensure any attacks made against the formation whilst the Casino runs are directed at Briv, and thus grant Steelbones stacks. Do not use if the other champion in the front row is needed for some reason. The champion will be levelled opportunistically when the formation is under attack so that they are not placed.
 
-> Author's Note: The opportunistic levelling is unlikely to happen on ranged Casino zones.
-	
 Ghost Level: During the Casino, level champions that are not part of the formation so long as they will not be placed, either due to all slots being full or the formation being under attack by melee monsters. This option makes it more likely all speed effects will be ready for the first normal zone. Only applied when Thellora in is in the M formation, and should normally be enabled.
 	
 ### Level Manager  
@@ -434,7 +420,6 @@ The following provide the Author's current setup, which is an end-game farm usin
 | Diana | 100 | 2 | 100
 | Ellywick | 200 | 4↓100 | 200 | See priority description above for the reason this is beneficial, and also the comment on Briv.
 | Imoen | 50 | 0 | 50 | Imoen gains the ability we need at level 40, and an ability of non-trivial complexity at level 60 (Perseverance, counting Favoured Foe kills). As Imoen is not important at the start of the run, she can use modifier levelling without much impact to avoid that ability.
-| Melf | 70 | 2 | 70 | This example has Baldric in M, so Melf cannot have a spec saved. This avoids his spec pop-up which would appear if 100 was used.
 | Baldric | 200 | 2 | 200
 		
 > Author's Note: When saving Briv Master's settings, level settings will be ignored if no champions are displayed at all. Take care if tweaking options whilst doing something else in-game, as it is a little bit too easy to overwrite your settings. Once you have things configured to your satisfaction making a backup of IC_BrivMaster_Settings.json might be sensible.

@@ -433,7 +433,7 @@ class IC_BrivMaster_Thellora_Class extends IC_BrivMaster_Hero_Class
 
 	ReadRushAreaCharges() ;How many zones does Thellora have stored? The stat dictionary has ~570 items as of 08Dec25, so searching through it means calls can take >60ms on a fast PC. Cache the index instead, using a hard coded last-known value as the start point
 	{
-		static cachedIndex:=420 ;Default index taken from v673.1 08Dec25, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this (and closer to this than 0, more to the point)
+		static cachedIndex:=421 ;Default index taken from v645 20Apr26, although this will be game data not client build dependant. This is obviously subject to change, but the actual location is likely to be close to this (and closer to this than 0, more to the point)
 		MEMORY_SERVERSTATS:=g_SF.Memory.GameManager.game.gameInstances[0].Controller.userData.StatHandler.ServerStats
 		if(MEMORY_SERVERSTATS["key",cachedIndex].Read()==this.STAT_AREA_CHARGES) ;Valid cache
 		{

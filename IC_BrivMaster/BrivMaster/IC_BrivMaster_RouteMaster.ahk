@@ -81,7 +81,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	RelaySetup(logBase) ;One-time relay setup
 	{
-		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(this.targetZone)
+		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(g_Heroes.InA(139) ? this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining) : 1) ;Pass Thellora's target, or 1 otherwise
 		GuidCreate := ComObjCreate("Scriptlet.TypeLib")
 		this.RelayData.GUID := GuidCreate.Guid
 		this.RelayData.LogFile:=logBase . "_Relay.csv"
@@ -354,12 +354,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 	{
 		if ((this.ShouldBlankRestart() AND this.EnoughHasteForCurrentRun()) OR (this.RelayBlankOffline AND this.RelayData.IsActive())) ;Do not attempt relay if we don't have enough haste to complete the run, as that will require a forced restart. Once we start the relay manager, we are committed
 		{
-			restartZone:=g_IBM_Settings["IBM_Offline_Stack_Zone"] ;Default
-			if (currentZone>restartZone) ;CycleCount will be reset on return from offline, so this will only trigger once
+			if (currentZone>g_IBM_Settings["IBM_Offline_Stack_Zone"]) ;CycleCount will be reset on return from offline, so this will only trigger once
 				this.BlankRestart()
 			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
-				if (currentZone>=this.RelayData.relayZone) ;If at or beyond the relay threshold
+				if (currentZone>this.RelayData.relayZone) ;If beyond the relay threshold
 					this.RelayData.Start()
 			}
 		}
@@ -1340,7 +1339,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		-2: Failed to suspend (game will have started, current instance will be invalid)
 	*/
 
-	__New(targetZone)
+	__New(relayClamp)
 	{
 		this.MEMORY_baseAddress:=g_SF.Memory.GameManager.game.gameUser.Loaded.basePtr.ModuleOffset + 0 ;Memory structure data for the reads we need TODO: This has been changed from the whole address to the module offset, since if the module moves in a new process the base address for the old one is worthless... Maybe rename throughout
 		this.MEMORY_LOADED_Type:=g_SF.Memory.GameManager.game.gameUser.Loaded.valueType
@@ -1353,8 +1352,8 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		this.LaunchCommand:=g_IBM_Settings["IBM_Game_Launch"]
 		this.HideLauncher:=g_IBM_Settings["IBM_Game_Hide_Launcher"]
 		this.ExeName:=g_IBM_Settings["IBM_Game_Exe"]
-		relayBase:=targetZone - g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
-		this.relayZone:=MAX(relayBase,g_Heroes.InA(139) ? g_Heroes[139].rushCap : 2) ;Do not try and relay restart until after Thellora's jump
+		relayBase:=g_IBM_Settings["IBM_Offline_Stack_Zone"] - g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
+		this.relayZone:=MAX(relayBase,relayClamp) ;Do not try and relay restart until after Thellora's jump
 		this.Reset()
 	}
 

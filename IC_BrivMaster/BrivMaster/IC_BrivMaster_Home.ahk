@@ -1051,6 +1051,8 @@ Class IC_IriBrivMaster_Component
 			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Unable to read hero details")
 			return
 		}
+		if(IsObject(this.Elly_NonGemFarm)) ;Stop any existing timer
+			this.Elly_NonGemFarm.Stop()
 		this.Elly_NonGemFarm:=New IC_BrivMaster_EllywickDealer_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
         this.Elly_NonGemFarm.Start()
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Started")

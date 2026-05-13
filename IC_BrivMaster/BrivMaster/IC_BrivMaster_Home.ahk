@@ -151,9 +151,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_LevelManager_Levels["_DEFAULT",165]:={"min": 200,"prio": 2,"priolimit": "","z1": 200}
 		settings.IBM_Route_Zones_Jump["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 		settings.IBM_Route_Zones_Stack["_DEFAULT"]:=[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
-		settings.IBM_Online_Use_Melf["_DEFAULT"]:=false
 		settings.IBM_Online_Melf_Min["_DEFAULT"]:=349
-		settings.IBM_Online_Melf_Max["_DEFAULT"]:=800
 		settings.IBM_LevelManager_Input_Max["_DEFAULT"]:=5
 		settings.IBM_LevelManager_Boost_Use["_DEFAULT"]:=false
 		settings.IBM_LevelManager_Boost_Multi["_DEFAULT"]:=8
@@ -173,7 +171,6 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_OffLine_Blank["_DEFAULT"]:=0
 		settings.IBM_OffLine_Blank_Relay["_DEFAULT"]:=0
 		settings.IBM_OffLine_Blank_Relay_Zones["_DEFAULT"]:=400
-		settings.IBM_Level_Options_Limit_Tatyana["_DEFAULT"]:=false
 		settings.IBM_Level_Options_Suppress_Front["_DEFAULT"]:=true
 		settings.IBM_Level_Options_Ghost["_DEFAULT"]:=true
 		settings.IBM_Level_Recovery_Softcap["_DEFAULT"]:=0
@@ -1054,6 +1051,8 @@ Class IC_IriBrivMaster_Component
 			g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Unable to read hero details")
 			return
 		}
+		if(IsObject(this.Elly_NonGemFarm)) ;Stop any existing timer
+			this.Elly_NonGemFarm.Stop()
 		this.Elly_NonGemFarm:=New IC_BrivMaster_EllywickDealer_Class(this.IBM_Elly_GetNonGemFarmCards("Min"),this.IBM_Elly_GetNonGemFarmCards("Max"))
         this.Elly_NonGemFarm.Start()
 		g_IriBrivMaster_GUI.SetEllyNonGemFarmStatus("Started")

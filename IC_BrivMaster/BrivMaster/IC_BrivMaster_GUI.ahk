@@ -301,20 +301,20 @@
 		Gui, IBM_ChestSnatcher_Options:Color, %winBGColour%
 		this.Theme.UseThemeTextColour("IBM_ChestSnatcher_Options")
 		this.IBM_ChestSnatcher_Opt_Hwnd:=Opt_Hwnd ;Save handle to the options window
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w40 +%editTextColour% Number Limit3 vIBM_ChestSnatcher_Options_Min_Buy
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to buy per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w40 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Gold
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Gold to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w40 +%editTextColour% Number Limit4 vIBM_ChestSnatcher_Options_Open_Silver
 		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Silver to open per call (0 to disable)
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Gem
-		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gems
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
-		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Gold
-		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w50 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
-		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w170 h18 0x200, Reserve Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w65 +%editTextColour% Number Limit10 vIBM_ChestSnatcher_Options_Min_Gem
+		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w100 h18 0x200, Reserve Gems
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w40 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w100 h18 0x200, Reserve Gold
+		Gui, IBM_ChestSnatcher_Options:Add, Edit, xm+10 w40 +%editTextColour% Number Limit8 vIBM_ChestSnatcher_Options_Min_Silver
+		Gui, IBM_ChestSnatcher_Options:Add, Text, x+10 w100 h18 0x200, Reserve Silver
 		Gui, IBM_ChestSnatcher_Options:Add, CheckBox, xm+10 h18 0x200 vIBM_ChestSnatcher_Options_Claim, Claim Daily Rewards
-		gui, IBM_ChestSnatcher_Options:Add, Button, xm+100 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
+		gui, IBM_ChestSnatcher_Options:Add, Button, xm+90 w50 gIBM_ChestSnatcher_Options_OK_Button, Accept
 		this.Theme.UseThemeTitleBar("IBM_ChestSnatcher_Options",false)
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Chests ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1

@@ -364,7 +364,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 
-	BlankRestart() ;Restart without stacking
+	BlankRestart() ;Restart without stacking TODO: Can we check for offline progress to detect resets here, in case of unwanted autoprogress?
     {
 		if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
 			this.ToggleAutoProgress(0,false,true)
@@ -432,7 +432,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				return 0
 			}
 		}
-        ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early. Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
+        ;Briv ran out of jumps but has enough stacks for a new adventure => restart adventure. With protections from repeating too early. Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
         if (g_Heroes[58].ReadHasteStacks()<50 AND stacks>=targetStacks AND g_SF.Memory.ReadHighestZone()>this.thelloraTarget AND (g_SF.Memory.ReadHighestZone()<=this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...) Even more TODO: Should we check ReadAreaActive() here as well?
         {

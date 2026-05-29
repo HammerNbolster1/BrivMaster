@@ -561,7 +561,7 @@
 		}
 		gameVersion:=gameMajor ? gameMajor . gameMinor : "<Not found>"
 		Gui, IBM_Home:Add, Text, w200 xs+10 ys+15 h18 0x200 %colour% vIBM_Offsets_Text_Game, % "Game Version: " . gameVersion
-		Gui, IBM_Home:Add, Text, w200 xs+10 y+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
+		Gui, IBM_Home:Add, Text, w230 xs+10 y+0 h18 0x200 vIBM_Offsets_Text_Platform, % "Platform: " . g_IriBrivMaster.GetPlatformString()
 
 		Gui, IBM_Home:Font, w700
 		Gui, IBM_Home:Add, Text, w45 xs+10 y+2 h18 0x200, % "Pointers"

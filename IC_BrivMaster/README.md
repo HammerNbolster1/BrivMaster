@@ -278,19 +278,7 @@ This grid serves two purposes,
 > Author's Note 1: Do not just select zones on-route, as you might go off route recovering from problems; include all the zones of the type you are interested in. Also consider enabling every zone after the last one of interest to act as a fall-back.
 > Author's Note 2: The UI allows boss zones to be selected for stacking, but these will be ignored.
 	
-Import/Export: As these settings are time consuming to enter (90 selections!) they can be exported to a short string to share, or imported from a string. The strings contain two parts ordered as above; leaving one part blank will result in only the other being changed, e.g. {3zXoa17wA,} will set a 9J route for Tall Tales without changing the stacking settings. Some samples are provided below for Tall Tales; please review these, particularly the stacking selections, if you wish to use them.  
-
-| Set Up | Import Code |
-| ----------- | ----------- |
-| 4J Offline | {973oe9D3g,________w} |
-| 5/4J Ranged stacking | {K8pylryjg,AAAIYIAAA} |
-| 6/4J Offline | {2xZxxK3rQ,________w} |
-| 9J Melee stacking | {3zXoa17wA,x4DjGAbxA} |
-| 11J | {-p-hvk_gw,MB0MY8gGg} |
-| 12/11J | {BeR7QfAfg,MB0MY8gGg} |
-| 14J | {hSFIV5CEA,AAAMY9gGg} |
-| 14/9J | {t_Hvn___w,AAAIYxgGg} |
-| 14/9J No Melf Safe | {t_Hvn___w,973vex73g} |
+Import/Export: As these settings are time consuming to enter (90 selections!) they can be exported to a short string to share, or imported from a string. The strings contain two parts ordered as above; leaving one part blank will result in only the other being changed, e.g. {3zXoa17wA,} will set a 9J route for Tall Tales without changing the stacking settings. Emmote's routes site provides these strings for standard routes.
 
 ### Briv Jumps
 The Briv jump value for each formation. The formations are described in more detail earlier in this document.

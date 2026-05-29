@@ -327,7 +327,7 @@ Blank restarts: The purpose of restarting during hybrid stacking is to clear mem
 	
 Relay restarts: Instead of closing the game and immediately restarting it during a blank restart, this option starts a new instance of the game before the old one is closed, and holds it at platform login ready to go. This can significantly reduce the time required to preform a blank restart. This is not compatible with the EGS launcher which will not allow a second copy of the game to be started.
 	
-Relay start offset: The number of zones prior to the Offline zone that the relay will start. This will be capped so that the relay will not start until after Thellora's landing zone.
+Relay start zone: The zone to launch the relay on or after. Regardless of this setting the relay will not start until after Thellora's landing zone.
 	
 ### Ellywick's Casino  
 Ellywick's Gem cards provide an immense boost to our gem income. Briv Master allows for re-rolling using her ultimate, including a second use via Dungeon Master(DM)'s ultimate to increase the average number of gem cards. Options in this section control this.

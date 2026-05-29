@@ -729,9 +729,9 @@
 		this.AddToolTip("IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
 		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
 		this.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
-		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start offset:
+		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start zone:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
-		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The number of zones prior to the Offline zone that the relay will start. The relay will not start prior to Thellora's landing zone")
+		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The zone to launch the relay on or after. Regardless of this setting the relay will not start until after Thellora's landing zone")
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Offline ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Ellywick Casino

@@ -1352,8 +1352,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		this.LaunchCommand:=g_IBM_Settings["IBM_Game_Launch"]
 		this.HideLauncher:=g_IBM_Settings["IBM_Game_Hide_Launcher"]
 		this.ExeName:=g_IBM_Settings["IBM_Game_Exe"]
-		relayBase:=g_IBM_Settings["IBM_Offline_Stack_Zone"] - g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
-		this.relayZone:=MAX(relayBase,relayClamp) ;Do not try and relay restart until after Thellora's jump
+		this.relayZone:=MAX(g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"],relayClamp) ;Do not try and relay restart until after Thellora's jump
 		this.Reset()
 	}
 

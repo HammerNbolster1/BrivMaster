@@ -45,7 +45,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			case 3: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Tatyana_Return(this)
 			case 2: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Attacking(this)
-			default: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker(this)
+			default: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Active_Enemies(this)
 		}
 		this.ThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to invert the standard combine option to avoid hitting a boss? (Note this was previously only applicable to combining)
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
@@ -543,20 +543,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 	
-	class IBM_Online_Stacker ;Base version - active enemies TODO: Make this a non-functional base that requires extending for all 3 cases
+	class IBM_Online_Stacker_Active_Enemies extends IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker
 	{
 		__New(RouteMaster)
 		{
-			this.RM:=RouteMaster
-			this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
-			if(this.useFaridehUlt)
-			{
-				g_Heroes[33] ;Ensure the object is created at start-up
-				this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
-			}
-			this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
-			if (this.useBrivBoost)
-				this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
+			Base.__New(RouteMaster)
 		}
 			
 		InitMemoryReads()
@@ -577,6 +568,33 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				;END FARI DEBUG BLOCK
 				;++++++++++++++++++++
 			}
+		}
+	}
+	
+	class IBM_Online_Stacker ;Prototype to be extended for each Farideh ultimate activation method
+	{
+		__New(RouteMaster)
+		{
+			this.RM:=RouteMaster
+			this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
+			if(this.useFaridehUlt)
+			{
+				g_Heroes[33] ;Ensure the object is created at start-up
+				this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
+			}
+			this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
+			if (this.useBrivBoost)
+				this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
+		}
+			
+		InitMemoryReads() ;To be extended for each activation method
+		{
+			
+		}
+		
+		FaridehUltCheck(ByRef activateFariUlt) ;To be extended for each activation method
+		{
+
 		}
 		
 		Stack()

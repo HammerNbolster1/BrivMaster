@@ -81,7 +81,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	RelaySetup(logBase) ;One-time relay setup
 	{
-		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(g_Heroes.InA(139) ? this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining) : 1) ;Pass Thellora's target, or 1 otherwise
+		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(g_Heroes.InA(139) ? this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining) + 1 : 2) ;Zone after Thellora's target, or 2 otherwise, to avoid the Casino / initial levelling respectively
 		GuidCreate := ComObjCreate("Scriptlet.TypeLib")
 		this.RelayData.GUID := GuidCreate.Guid
 		this.RelayData.LogFile:=logBase . "_Relay.csv"
@@ -358,7 +358,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				this.BlankRestart()
 			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
-				if (currentZone>this.RelayData.relayZone) ;If beyond the relay threshold
+				if (currentZone>=this.RelayData.relayZone) ;At or beyond relay start zone
 					this.RelayData.Start()
 			}
 		}

@@ -280,7 +280,7 @@ class IC_BrivMaster_GemFarm_Class
 			this.RouteMaster.InitZone() ;Includes levelling click damage to make sure we can move
 	}
 	
-	DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter) Also TODO: this shouldn't be in SharedFunctions
+	DoRushWait(stopProgress:=false) ;Wait for Thellora (ID=139) to activate her Rush ability. TODO: unknown what ReadRushTriggered() returns if she starts with 0 stacks or we have 0 favour (with the former being the case that might matter)
     {
         elapsedTime:=0
 		levelTypeChampions:=true ;Alternate levelling types to cover both without taking too long in each loop

@@ -170,7 +170,7 @@ Class IC_IriBrivMaster_Component
 		settings.IBM_OffLine_Freq["_DEFAULT"]:=1
 		settings.IBM_OffLine_Blank["_DEFAULT"]:=0
 		settings.IBM_OffLine_Blank_Relay["_DEFAULT"]:=0
-		settings.IBM_OffLine_Blank_Relay_Zones["_DEFAULT"]:=400
+		settings.IBM_OffLine_Blank_Relay_Zones["_DEFAULT"]:=300
 		settings.IBM_Level_Options_Suppress_Front["_DEFAULT"]:=true
 		settings.IBM_Level_Options_Ghost["_DEFAULT"]:=true
 		settings.IBM_Level_Recovery_Softcap["_DEFAULT"]:=0

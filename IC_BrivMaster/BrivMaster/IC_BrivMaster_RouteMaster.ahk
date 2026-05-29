@@ -45,7 +45,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		{
 			case 3: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Tatyana_Return(this)
 			case 2: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Attacking(this)
-			default: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker(this)
+			default: this.OnlineStacker:=New IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker_Active_Enemies(this)
 		}
 		this.ThelloraBossAvoidance:=g_IBM_Settings["IBM_Route_Combine_Boss_Avoidance"] ;Should we try to invert the standard combine option to avoid hitting a boss? (Note this was previously only applicable to combining)
 		g_SharedData.UpdateOutbound("IBM_RunControl_DisableOffline",false) ;Default to off
@@ -81,7 +81,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 
 	RelaySetup(logBase) ;One-time relay setup
 	{
-		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(g_Heroes.InA(139) ? this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining) : 1) ;Pass Thellora's target, or 1 otherwise
+		this.RelayData:=new IC_BrivMaster_Relay_SharedData_Class(g_Heroes.InA(139) ? this.GetThelloraTarget(g_Heroes[139].rushCap,this.combining) + 1 : 2) ;Zone after Thellora's target, or 2 otherwise, to avoid the Casino / initial levelling respectively
 		GuidCreate := ComObjCreate("Scriptlet.TypeLib")
 		this.RelayData.GUID := GuidCreate.Guid
 		this.RelayData.LogFile:=logBase . "_Relay.csv"
@@ -358,13 +358,13 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				this.BlankRestart()
 			else if (this.RelayBlankOffline AND !this.RelayData.HasTriggered()) ;Check for relay only if it isn't already active
 			{
-				if (currentZone>this.RelayData.relayZone) ;If beyond the relay threshold
+				if (currentZone>=this.RelayData.relayZone) ;At or beyond relay start zone
 					this.RelayData.Start()
 			}
 		}
 	}
 
-	BlankRestart() ;Restart without stacking
+	BlankRestart() ;Restart without stacking TODO: Can we check for offline progress to detect resets here, in case of unwanted autoprogress?
     {
 		if(g_IBM_Settings["IBM_OffLine_Blank_Stop"])
 			this.ToggleAutoProgress(0,false,true)
@@ -378,7 +378,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.Logger.AddMessage("BlankRestart() returning game in Relay mode")
 			this.RelayData.Release()
 			g_IBM.routeMaster.ResetCycleCount() ;TODO: Do these make sense here? Might need to be after picked up
-			g_IBM.DialogSwatter.Start() ;This seems a bit low-priority to happen this early, can we make it check later?
 		}
 		else ;The sleep is to allow launcher like EGS to detect the game has closed, but that is not applicable to relay (which can't use the EGS launcher)
 		{
@@ -433,7 +432,7 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				return 0
 			}
 		}
-        ; Briv ran out of jumps but has enough stacks for a new adventure, restart adventure. With protections from repeating too early. Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
+        ;Briv ran out of jumps but has enough stacks for a new adventure => restart adventure. With protections from repeating too early. Irisiri - changed >z10 to >Thell target, but this will fail if Thell isn't present
 		;04Jul25: Added check for transitioning, so we actually spend the last jump before resetting, otherwise we'll go as soon as the stacks are spent which is before we benefit from them
         if (g_Heroes[58].ReadHasteStacks()<50 AND stacks>=targetStacks AND g_SF.Memory.ReadHighestZone()>this.thelloraTarget AND (g_SF.Memory.ReadHighestZone()<=this.targetZone) AND !g_SF.Memory.ReadTransitioning()) ;Removed the 5-zones-from-end check; if there's an armoured boss we'll not be able to be progress. TODO: With adventure-aware routing we could determine the last safe zone to walk from. Updated to not try and reset during relay restart (which shouldn't really happen since we don't blank if we don't have enough stacks...) Even more TODO: Should we check ReadAreaActive() here as well?
         {
@@ -544,20 +543,11 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 		}
 	}
 	
-	class IBM_Online_Stacker ;Base version - active enemies TODO: Make this a non-functional base that requires extending for all 3 cases
+	class IBM_Online_Stacker_Active_Enemies extends IC_BrivMaster_RouteMaster_Class.IBM_Online_Stacker
 	{
 		__New(RouteMaster)
 		{
-			this.RM:=RouteMaster
-			this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
-			if(this.useFaridehUlt)
-			{
-				g_Heroes[33] ;Ensure the object is created at start-up
-				this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
-			}
-			this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
-			if (this.useBrivBoost)
-				this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
+			Base.__New(RouteMaster)
 		}
 			
 		InitMemoryReads()
@@ -578,6 +568,33 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 				;END FARI DEBUG BLOCK
 				;++++++++++++++++++++
 			}
+		}
+	}
+	
+	class IBM_Online_Stacker ;Prototype to be extended for each Farideh ultimate activation method
+	{
+		__New(RouteMaster)
+		{
+			this.RM:=RouteMaster
+			this.useFaridehUlt:=g_IBM.LevelManager.savedFormationChamps["W"].HasKey(33)
+			if(this.useFaridehUlt)
+			{
+				g_Heroes[33] ;Ensure the object is created at start-up
+				this.FaridehUltThreshold:=g_IBM_Settings["IBM_Online_Farideh_Threshold"]
+			}
+			this.useBrivBoost:=g_IBM_Settings["IBM_LevelManager_Boost_Use"]
+			if (this.useBrivBoost)
+				this.BrivBoost:=new IC_BrivMaster_BrivBoost_Class(g_IBM_Settings["IBM_LevelManager_Boost_Multi"])
+		}
+			
+		InitMemoryReads() ;To be extended for each activation method
+		{
+			
+		}
+		
+		FaridehUltCheck(ByRef activateFariUlt) ;To be extended for each activation method
+		{
+
 		}
 		
 		Stack()
@@ -1352,8 +1369,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 		this.LaunchCommand:=g_IBM_Settings["IBM_Game_Launch"]
 		this.HideLauncher:=g_IBM_Settings["IBM_Game_Hide_Launcher"]
 		this.ExeName:=g_IBM_Settings["IBM_Game_Exe"]
-		relayBase:=g_IBM_Settings["IBM_Offline_Stack_Zone"] - g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"] ;Number of zones prior to the restart the relay should start
-		this.relayZone:=MAX(relayBase,relayClamp) ;Do not try and relay restart until after Thellora's jump
+		this.relayZone:=MAX(g_IBM_Settings["IBM_OffLine_Blank_Relay_Zones"],relayClamp) ;Do not try and relay restart until after Thellora's jump
 		this.Reset()
 	}
 
@@ -1521,6 +1537,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")
+		g_IBM.DialogSwatter.Start()
 		g_ServerCall.Update()
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",true) ;Allows the hub to react
 	}

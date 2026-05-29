@@ -378,7 +378,6 @@ class IC_BrivMaster_RouteMaster_Class ;A class for managing routes
 			g_IBM.Logger.AddMessage("BlankRestart() returning game in Relay mode")
 			this.RelayData.Release()
 			g_IBM.routeMaster.ResetCycleCount() ;TODO: Do these make sense here? Might need to be after picked up
-			g_IBM.DialogSwatter.Start() ;This seems a bit low-priority to happen this early, can we make it check later?
 		}
 		else ;The sleep is to allow launcher like EGS to detect the game has closed, but that is not applicable to relay (which can't use the EGS launcher)
 		{
@@ -1520,6 +1519,7 @@ class IC_BrivMaster_Relay_SharedData_Class ;Allows for communication between thi
 			g_IBM.Logger.AddMessage("ProcessSwap() completed switching process")
 		else
 			g_IBM.Logger.AddMessage("ProcessSwap() WaitForGameReady() call failed whilst switching process")
+		g_IBM.DialogSwatter.Start()
 		g_ServerCall.Update()
 		g_SharedData.UpdateOutbound("IBM_ProcessSwap",true) ;Allows the hub to react
 	}

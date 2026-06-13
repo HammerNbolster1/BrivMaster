@@ -729,16 +729,30 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, Offline every:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit3 vIBM_OffLine_Freq_Edit gIBM_OffLine_Freq_Edit
 		Gui, IBM_Home:Add, Text, x+5 h18 0x200, runs
-		this.AddToolTip("IBM_OffLine_Freq_Edit", "Often referred to as FORT (Force Offline Run Threshold)")
+		this.AddToolTip("IBM_OffLine_Freq_Edit", "The frequency of offline runs. A value of 1 disables hybrid stacking and will restart every run if stacks are required")
 		Gui, IBM_Home:Add, CheckBox, x+15 h20 0x200 vIBM_Route_Offline_Restore_Window gIBM_Generic_Setting_Int, Restore window
 		this.AddToolTip("IBM_Route_Offline_Restore_Window", "Sets the default Restore Window option to be used when the script starts")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Blank gIBM_OffLine_Blank, Blank restarts
 		this.AddToolTip("IBM_OffLine_Blank", "Blank offline runs do not attempt to stack, and will online stack if needed along with a restart of the game. Use this to clear memory bloat in the game when offline stacking is slower overall than online")
-		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
+		Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Stop gIBM_Generic_Setting_Int, Stop progress
+		this.AddToolTip("IBM_OffLine_Blank_Stop", "Stop auto progression during blank restarts. Select if restarting the game takes long enough to trigger offline progress")
+		if(this.Wide)
+		{
+			Gui, IBM_Home:Add, CheckBox, x+10 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
+			Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start zone:
+			Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
+		}
+		else
+		{
+			Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Blank_Relay gIBM_OffLine_Blank, Relay restarts
+			Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start zone:
+			Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
+		}
 		this.AddToolTip("IBM_OffLine_Blank_Relay", "Relay blank restarts launch a new instance of the game prior to closing the current one. Not compatible with the Epic Games Launcher")
-		Gui, IBM_Home:Add, Text, x+10 h18 0x200, Relay start zone:
-		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit4 vIBM_OffLine_Blank_Relay_Zones gIBM_OffLine_Blank
 		this.AddToolTip("IBM_OffLine_Blank_Relay_Zones", "The zone to launch the relay on or after. Regardless of this setting the relay will not start until after Thellora's landing zone")
+		GuiControlGet, lastItemPos, IBM_Home:Pos,IBM_OffLine_Blank_Relay ;Used for setting the next box
+		groupEnd:=lastItemPosY+lastItemPosH-nextGroupStart+10
+		GuiControl, IBM_Home:Move, IBM_Group_Offline, h%groupEnd%
 		GuiControlGet, groupPos, IBM_Home:Pos,IBM_Group_Offline ;Used for setting the next box
 		nextGroupStart:=groupPosY+groupPosH+1
 		;Ellywick Casino
@@ -926,6 +940,7 @@
 		GuiControl, IBM_Home:, IBM_OffLine_Freq_Edit, % g_IBM_Settings.IBM_OffLine_Freq
 		GuiControl, IBM_Home:, IBM_OffLine_Blank, % g_IBM_Settings.IBM_OffLine_Blank
 		GuiControl, IBM_Home:, IBM_OffLine_Blank_Relay, % g_IBM_Settings.IBM_OffLine_Blank_Relay
+		GuiControl, IBM_Home:, IBM_OffLine_Blank_Stop, % g_IBM_Settings.IBM_OffLine_Blank_Stop
 		GuiControl, IBM_Home:, IBM_OffLine_Blank_Relay_Zones, % g_IBM_Settings.IBM_OffLine_Blank_Relay_Zones
 		IBM_Offline_Blank_EnableControls(g_IBM_Settings.IBM_OffLine_Blank,g_IBM_Settings.IBM_OffLine_Blank_Relay)
 		GuiControl, IBM_Home:, IBM_OffLine_Timeout, % g_IBM_Settings.IBM_OffLine_Timeout
@@ -1885,9 +1900,15 @@ IBM_OffLine_Blank() ;Handle the cascade of enabled/disabled options for Blank->R
 IBM_Offline_Blank_EnableControls(relay, relayZones)
 {
 	if (relay)
+	{
 		GuiControl, IBM_Home:Enable, IBM_OffLine_Blank_Relay
+		GuiControl, IBM_Home:Enable, IBM_OffLine_Blank_Stop
+	}
 	else
+	{
 		GuiControl, IBM_Home:Disable, IBM_OffLine_Blank_Relay
+		GuiControl, IBM_Home:Disable, IBM_OffLine_Blank_Stop
+	}
 	if (relay AND relayZones)
 		GuiControl, IBM_Home:Enable, IBM_OffLine_Blank_Relay_Zones
 	else

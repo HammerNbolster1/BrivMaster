@@ -319,12 +319,16 @@ Offline every x runs: Often referred to as FORT (Force Offline Run Threshold), t
 	
 > Author's Note: The optimal value will depend upon the user's system and platform, as memory bloat can be impacted by things like platform and drivers, and also by the type of offline being done, as it is based on the opportunity cost of doing an offline stack; therefore a relay blank restart has less impact than offline stacking for doubles, which in term has less imapct than offline stacking for singles. The ideal value is likely between 40 and 80.
 	
-Restore window: Whether focus is returned to the IC window when the game is restarted or not. Can be toggled at run time on the Briv Master tab.
+Restore window: Whether focus is returned to the IC window when the game is restarted or not.
 	
 Blank restarts: The purpose of restarting during hybrid stacking is to clear memory bloat that slows the game. Blank restarts provide an alternative: always online stack, and simple close and immediately re-open the game to clear that bloat out.
 	
-> Author's Note: Whether this is beneficial or not will depend on how long online stacking takes verses offline stacking, which therefore also depends on the number of stacks required for each run, and therefore is very user-dependent. With an end-game farm on a decent PC Blank restarts should be superior.
-	
+> Author's Note: Whether this is beneficial or not will depend on how long online stacking takes verses offline stacking, which also depends on the number of stacks required for each run, and therefore is very user-dependent. With an end-game farm on a decent PC Blank restarts should be superior.
+
+Stop progress: Stop auto progression during blank restarts. Select if restarting the game takes long enough to trigger offline progress.
+
+> Author's Note: Ideally this setting is off, as enabling it adds two additional steps to each restart, but if offline progress triggers with autoprogress enabled it can cause the game to return off-route, or after having performed a modron reset which will cause issues. EGS clients seem to need this more than Steam ones.
+
 Relay restarts: Instead of closing the game and immediately restarting it during a blank restart, this option starts a new instance of the game before the old one is closed, and holds it at platform login ready to go. This can significantly reduce the time required to preform a blank restart. This is not compatible with the EGS launcher which will not allow a second copy of the game to be started.
 	
 Relay start zone: The zone to launch the relay on or after. Regardless of this setting the relay will not start until after Thellora's landing zone.
@@ -419,7 +423,6 @@ Occasionally a setting may be added to Briv Master but not exposed via the GUI, 
 - IBM_Format_Date_File: As above, but must only use characters valid in file names. This notably means the colon is not permitted.
 - IBM_Offsets_URL: The GitHub URL to check for Offsets. Change this if you do not wish to use my repository.
 - IBM_Scan_Codes: This is a mapping of keys to the scan codes that a keyboard sends when you press them. The defaults will be appropriate for QWERTY keyboards, but other layouts might require changes. Click damage, which is ` on QWERTY keyboards, is most likely to need changes.
-- IBM_OffLine_Blank_Stop: Stops progress for blank restarts. This might be necessary for slow systems that cannot reliably avoid offline progress triggering
 - IBM_Casino_Front_Row_Threshold: Front row and ghost levelling in the Casino are allowed when the number of attacking monsters is greater than or equal to this value. Increasing it means that those will not trigger until something spawns multiple enemies at once, either Tatyana or Melf with his spawn-more effect active. This will mean that in faster (no re-roll) Casinos the front row or ghost levelling will not trigger, and the levelling will have to be done afterwards which may slow down the run. This was added for testing and is likely to be removed.
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).

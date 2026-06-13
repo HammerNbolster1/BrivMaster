@@ -722,7 +722,7 @@
 		Gui, IBM_Home:Add, Text, xs+10 y+5 h18 0x200, Offline every:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w25 x+3 Number Limit3 vIBM_OffLine_Freq_Edit gIBM_OffLine_Freq_Edit
 		Gui, IBM_Home:Add, Text, x+5 h18 0x200, runs
-		this.AddToolTip("IBM_OffLine_Freq_Edit", "Often referred to as FORT (Force Offline Run Threshold)")
+		this.AddToolTip("IBM_OffLine_Freq_Edit", "The frequency of offline runs. A value of 1 disables hybrid stacking and will restart every run if stacks are required")
 		Gui, IBM_Home:Add, CheckBox, x+15 h20 0x200 vIBM_Route_Offline_Restore_Window gIBM_Generic_Setting_Int, Restore window
 		this.AddToolTip("IBM_Route_Offline_Restore_Window", "Sets the default Restore Window option to be used when the script starts")
 		Gui, IBM_Home:Add, CheckBox, xs+10 y+5 h18 0x200 vIBM_OffLine_Blank gIBM_OffLine_Blank, Blank restarts

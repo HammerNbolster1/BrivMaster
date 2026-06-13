@@ -315,9 +315,9 @@ Timeout factor: Controls the time allowed for the game to start and close. The s
 	
 > Author's Note: A fast PC should use the default of 5. A very slow mobile device might benefit from values at high as 10.
 	
-Offline every x runs: Often referred to as FORT (Force Offline Run Threshold), taken from the BrivGemFarm setting name. This is the frequency off offline runs. A value of 1 disables hybrid stacking and will restart every run if stacks are required, a higher value means to restart every x runs.
+Offline every x runs: This is the frequency of offline runs. A value of 1 disables hybrid stacking and will restart every run if stacks are required, a higher value means to restart every x runs.
 	
-> Author's Note: The optimal value will depend upon the user's system and platform, as memory bloat can be impacted by things like platform and drivers, and also by the type of offline being done, as it is based on the opportunity cost of doing an offline stack; therefore a relay blank restart has less impact than offline stacking for doubles, which in term has less imapct than offline stacking for singles. The ideal value is likely between 40 and 80.
+> Author's Note: The optimal value will depend upon the user's system and platform, as memory bloat can be impacted by things like platform and drivers, and also by the type of offline being done, as it is based on the opportunity cost of doing an offline stack; therefore a relay blank restart has less impact than offline stacking for doubles, which in term has less imapct than offline stacking for singles. The ideal value is likely between 40 and 80. This setting is often referred to as FORT (Force Offline Run Threshold), taken from the BrivGemFarm setting with the same purpose.
 	
 Restore window: Whether focus is returned to the IC window when the game is restarted or not.
 	

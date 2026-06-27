@@ -1222,7 +1222,7 @@ Class IC_IriBrivMaster_Component
 	
 	ExtractPlayServerFromURL(webRoot, failReturn:="")
 	{
-		if(RegExMatch(webRoot,"ps\d+[^/]+",match))
+		if(RegExMatch(webRoot,"ps(lt)?\d+[^/]+",match))
 			return match
 		else
 			return failReturn

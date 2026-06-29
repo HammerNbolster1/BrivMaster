@@ -70,7 +70,7 @@ Launch_Clicked()
     }
     catch
     {
-        MsgBox, 48, % "Unable to launch game, `nVerify the game location is set properly in the Briv Master settings"
+        MsgBox, 48,Briv Master, Unable to launch game`nVerify the game location is set properly in the Briv Master settings
     }
 	if (g_SF.GetProcessName(openPID)==g_IBM_Settings.IBM_Game_Exe) ;If we launch the game .exe directly (e.g. Steam) the Run PID will be the game, but for things like EGS it will not so we need to find it
 		g_SF.PID:=openPID

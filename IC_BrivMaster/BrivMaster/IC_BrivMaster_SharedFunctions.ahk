@@ -278,7 +278,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 		this.clientVersion:=999
 		this.activeModronID:=1
 		this.activePatronID:=0
-		this.playServerRegex:="^https?://ps\d+\.idlechampions.com/~idledragons/"
+		this.playServerRegex:="^https?://ps(?:lt)?\d+\.idlechampions.com/~idledragons/"
 		this.webRoot:=""
 		this.md5Module:=DllCall("LoadLibrary", "Str", "advapi32.dll", "Ptr")
     }
@@ -300,7 +300,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 			this.webRoot:=response.play_server
 			return
 		}
-		currentPlayServers:=[27,28,29,30] ;Select randomly from a hard coded server pool (current as of 2026-03-28)
+		currentPlayServers:=["27","28","29","30","lt1","lt2","lt3"] ;Select randomly from a hard coded server pool (current as of 2026-06-27)
 		Random, psIndex, 1, currentPlayServers.Count()
 		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
     }

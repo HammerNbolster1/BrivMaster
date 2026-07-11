@@ -500,7 +500,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
     ;Various server call functions that should be pretty obvious.
     ;============================================================
     ;Except this one, it is used internally and shouldn't be called directly.
-    ServerCall(callName, parameters, timeout:=60000, retryNum:=0) 
+    ServerCall(callName, parameters:="", timeout:=60000, retryNum:=0) 
     {
         response:=""
         URLtoCall:=this.webRoot . "post.php?call=" . callName . parameters

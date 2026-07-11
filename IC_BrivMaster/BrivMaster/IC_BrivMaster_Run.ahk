@@ -148,7 +148,7 @@ class IC_BrivMaster_GemFarm_Class
 				this.ModronResetCheck()
 				Continue ;ModronResetCheck() updates PreviousZoneStartTime in all cases, so the CheckifStuck() call we'd proceed to will never do anything, and the delay is unwanted in this case - we've been waiting on the reset
 			}
-			else if (this.currentZone <= this.RouteMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
+			else if (this.currentZone<=this.RouteMaster.targetZone) ;If we've passed the reset but the modron has yet to trigger we don't want to spam the game with inputs
 			{
 				if (!Mod( g_SF.Memory.ReadCurrentZone(), 5 ) AND Mod( g_SF.Memory.ReadHighestZone(), 5 ) AND !g_SF.Memory.ReadTransitioning())
 					this.RouteMaster.ToggleAutoProgress( 1, true ) ; Toggle autoprogress to skip boss bag

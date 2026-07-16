@@ -300,7 +300,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 			this.webRoot:=response.play_server
 			return
 		}
-		currentPlayServers:=["27","28","29","30"] ;Select randomly from a hard coded server pool (current as of 2026-07-11): "lt1","lt2","lt3" removed as taken down TODO: We need to somehow manage servers being added and removed. Some kind of blacklist, and if that fills up go back to master?
+		currentPlayServers:=["lt1","lt2","lt3","lt4"] ;Select randomly from a hard coded server pool (current as of 2026-07-16)
 		Random, psIndex, 1, currentPlayServers.Count()
 		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
     }

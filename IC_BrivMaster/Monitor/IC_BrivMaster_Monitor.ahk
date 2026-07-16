@@ -59,7 +59,7 @@ else
     Gui, Font, s9
 }
 Gui, IBM_Monitor:Add, Text, xm+0 h20 0x200, Time since last update (s):
-Gui, IBM_Monitor:Add, Text, x+5 w30 h20 0x200 vIBM_Monitor_Last_Update,-
+Gui, IBM_Monitor:Add, Text, x+5 w40 h20 0x200 vIBM_Monitor_Last_Update,-
 Gui, IBM_Monitor:Add, Button, xm+259 yp+0 vIBM_Monitor_Settings gIBM_Monitor_Settings, ⚙ ;Symbol requires this file to saved as UTF-8 with BOM
 rowCount:=g_Settings.Rows
 Gui, IBM_Monitor:Add, ListView,xm+0 y+3 w282 0x2000 LV0x10000 vIBM_Monitor_LV Count%rowCount% R%rowCount% LV0x10 NoSort NoSortHdr, BPH|Total|Active|Wait|Cycle|Fail ;0x2000 is remove H scroll bar, LV0x10000 is double-buffering to stop flickering, LV0x10 prevents re-ordering of columns

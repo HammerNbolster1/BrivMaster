@@ -300,7 +300,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
 			this.webRoot:=response.play_server
 			return
 		}
-		currentPlayServers:=["27","28","29","30","lt1","lt2","lt3"] ;Select randomly from a hard coded server pool (current as of 2026-06-27)
+		currentPlayServers:=["lt1","lt2","lt3","lt4"] ;Select randomly from a hard coded server pool (current as of 2026-07-16)
 		Random, psIndex, 1, currentPlayServers.Count()
 		this.webRoot:="http://ps" . currentPlayServers[psIndex] . ".idlechampions.com/~idledragons/"
     }
@@ -500,7 +500,7 @@ class IC_BrivMaster_ServerCall_Class extends IBM_ServerCall_Class
     ;Various server call functions that should be pretty obvious.
     ;============================================================
     ;Except this one, it is used internally and shouldn't be called directly.
-    ServerCall(callName, parameters, timeout:=60000, retryNum:=0) 
+    ServerCall(callName, parameters:="", timeout:=60000, retryNum:=0) 
     {
         response:=""
         URLtoCall:=this.webRoot . "post.php?call=" . callName . parameters

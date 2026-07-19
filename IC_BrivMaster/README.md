@@ -287,7 +287,7 @@ The Briv jump value for each formation. The formations are described in more det
 3. M will reflect the jump Briv will have in the Modron formation
 	
 ### Stacking Zones  
-Offline: Offline stacking or blank restarts will be performed on or after this zone during normal operation. When flames-based stacking is enabled this will be used for 0 flames cards. If offline stacking, set this based on the stacks needed.
+Offline: Offline stacking or blank restarts will be performed on or after this zone during normal operation. If offline stacking, set this based on the stacks needed.
 	
 Min recovery: The minimum zone Briv can farm stacks on; that is the lowest zone that the W formation does not kill enemies. If Farideh is present in W she will not be levelled and so should not be included when testing for this minimum. Used for recovery.
 

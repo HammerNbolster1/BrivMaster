@@ -442,7 +442,7 @@
 		editWidth:=groupWidth-74
 		Gui, IBM_Home:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Path gIBM_Game_Location_Settings
-		this.AddToolTip("IBM_Game_Path", "The game install location")
+		this.AddToolTip("IBM_Game_Path", "The game install location. Must include the trailing \")
 		Gui, IBM_Home:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		this.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")

@@ -162,7 +162,7 @@
 			Gui, IBM_Home:Add, Text, xs+5 ys+20 w100 w%highLightWidth% Center vIBM_Stats_GPH, GPH
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
-			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
+			Gui, IBM_Home:Add, Text, xs+10 y+10, Gems gained:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_TotalGems,
 			Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_Gem_Hunter,-
@@ -204,7 +204,7 @@
 			Gui, IBM_Home:Add, Text, x+1 w100 w%highlightWidth% Center vIBM_Stats_GPH, GPH
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
-			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
+			Gui, IBM_Home:Add, Text, xs+10 y+10, Gems gained:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_TotalGems,
 			Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_Gem_Hunter,-

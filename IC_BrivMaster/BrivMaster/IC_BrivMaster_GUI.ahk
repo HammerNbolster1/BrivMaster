@@ -1116,14 +1116,14 @@
 				for champID, champData in seatMembers
 				{
 					GuiControlGet, value,, IBM_LevelRow_%index%_z1
-					if (value)
+					if value is integer
 						currentLevels[champID,"z1"]:=value
 					GuiControlGet, value,, IBM_LevelRow_%index%_Priority
-					if (value)
+					if value is integer
 						currentLevels[champID,"prio"]:=this.LevelRow_Priority_Value[value]
 						currentLevels[champID,"priolimit"]:=this.LevelRow_Priority_Limit[value]
 					GuiControlGet, value,, IBM_LevelRow_%index%_min
-					if (value)
+					if value is integer
 						currentLevels[champID,"min"]:=value
 					currentLevels[champID,"Feat_List"]:=champData["Feat_List"]
 					currentLevels[champID,"Feat_Exclusive"]:=champData["Feat_Exclusive"]

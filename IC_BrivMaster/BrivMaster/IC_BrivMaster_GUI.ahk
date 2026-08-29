@@ -166,7 +166,7 @@
 			Gui, IBM_Home:Font
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
-			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
+			Gui, IBM_Home:Add, Text, xs+10 y+10, Gems gained:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_TotalGems,
 			Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_Gem_Hunter,-
@@ -211,7 +211,7 @@
 			Gui, IBM_Home:Font
 			this.Theme.UseThemeTextColour("IBM_Home")
 			;>Gems
-			Gui, IBM_Home:Add, Text, xs+10 y+10, Total gems:
+			Gui, IBM_Home:Add, Text, xs+10 y+10, Gems gained:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_TotalGems,
 			Gui, IBM_Home:Add, Text, xs+10 y+3, Gem hunter:
 			Gui, IBM_Home:Add, Text, x+3 w140 vIBM_Stats_Gem_Hunter,-
@@ -449,7 +449,7 @@
 		editWidth:=groupWidth-74
 		Gui, IBM_Home:Add, Text, w55 xs+5 y+5 h18 0x200, Location:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Path gIBM_Game_Location_Settings
-		this.AddToolTip("IBM_Game_Path", "The game install location")
+		this.AddToolTip("IBM_Game_Path", "The game install location. Must include the trailing \")
 		Gui, IBM_Home:Add, Text, w55 r2 xs+5 y+5 h18, Launch Command:
 		Gui, IBM_Home:Add, Edit, +%editTextColour% w40 x+5 w%editWidth% r2 vIBM_Game_Launch gIBM_Game_Location_Settings
 		this.AddToolTip("IBM_Game_Launch", "The launch command for the game. This is seperated to allow the use of different launchers")
@@ -1123,14 +1123,14 @@
 				for champID, champData in seatMembers
 				{
 					GuiControlGet, value,, IBM_LevelRow_%index%_z1
-					if (value)
+					if value is integer
 						currentLevels[champID,"z1"]:=value
 					GuiControlGet, value,, IBM_LevelRow_%index%_Priority
-					if (value)
+					if value is integer
 						currentLevels[champID,"prio"]:=this.LevelRow_Priority_Value[value]
 						currentLevels[champID,"priolimit"]:=this.LevelRow_Priority_Limit[value]
 					GuiControlGet, value,, IBM_LevelRow_%index%_min
-					if (value)
+					if value is integer
 						currentLevels[champID,"min"]:=value
 					currentLevels[champID,"Feat_List"]:=champData["Feat_List"]
 					currentLevels[champID,"Feat_Exclusive"]:=champData["Feat_Exclusive"]

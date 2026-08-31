@@ -504,13 +504,13 @@ Class IC_IriBrivMaster_Component
 										
 					this.Stats.BossKills+=FLOOR(LogData.LastZone / 5)
 					bph:=(this.Stats.BossKills / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . ROUND(bph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_BPH, % "BPH: " . RegExReplace(ROUND(bph,2), "\G\d+?(?=(\d{3})+(?:\D|$))", "$0" ",") ;Includes the prefix so it can be properly centered
 					gems:=g_SF.Memory.ReadGems()
 					if(gems!="")
 						this.CurrentGems:=gems
 					gemsTotal:=this.CurrentGems - this.Stats.StartGems + this.Chests.PurchasedGold*this.CONSTANT_goldCost + this.Chests.PurchasedSilver*this.CONSTANT_silverCost
 					gph:=(gemsTotal / totalTime) * 3600000
-					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . ROUND(gph,2) ;Includes the prefix so it can be properly centered
+					GuiControl, IBM_Home:, IBM_Stats_GPH, % "GPH: " . RegExReplace(ROUND(gph,2), "\G\d+?(?=(\d{3})+(?:\D|$))", "$0" ",") ;Includes the prefix so it can be properly centered				
 					GuiControl, IBM_Home:, IBM_Stats_TotalGems, % gemsTotal
 					;Track GH status
 					if (this.Stats.GHActive!=2) ;If already set to 2 the current value no longer matters; we've seen both states

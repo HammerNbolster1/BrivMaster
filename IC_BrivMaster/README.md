@@ -161,7 +161,7 @@ Executable: The name of the game executable, normally IdleDragons.exe. This shou
 	
 > Author's Note: Some methods of running two farms on the same PC require one of the executables to be renamed, which is why this is editable at all.
 	
-Location: The game install location.
+Location: The game install location. This must include the trailing \, e.g. C:\Idle Champions\ not C:\Idle Champions
 	
 Launch Command: The command used to launch the game. For non-EGS setups this will just be the Executable and Location fields combined, however for EGS it will either be the EGS URI for the game, or if using an alternative to the EGS Launcher the appropriate command will need to be added here.
 
@@ -424,10 +424,6 @@ Occasionally a setting may be added to Briv Master but not exposed via the GUI, 
 - IBM_Offsets_URL: The GitHub URL to check for Offsets. Change this if you do not wish to use my repository.
 - IBM_Scan_Codes: This is a mapping of keys to the scan codes that a keyboard sends when you press them. The defaults will be appropriate for QWERTY keyboards, but other layouts might require changes. Click damage, which is ` on QWERTY keyboards, is most likely to need changes.
 - IBM_Casino_Front_Row_Threshold: Front row and ghost levelling in the Casino are allowed when the number of attacking monsters is greater than or equal to this value. Increasing it means that those will not trigger until something spawns multiple enemies at once, either Tatyana or Melf with his spawn-more effect active. This will mean that in faster (no re-roll) Casinos the front row or ghost levelling will not trigger, and the levelling will have to be done afterwards which may slow down the run. This was added for testing and is likely to be removed.
-<<<<<<< Updated upstream
-=======
-- IBM_BM_X / IBM_BM_Y: The X and Y window coordinates respectively that the main Briv Master Home window will start at on load. 0 is left / top.
->>>>>>> Stashed changes
 
 I hope that this project is useful to you, either directly or through ideas that have shared with BrivGemFarm and its addons (largely by Emmote).
 

@@ -16,8 +16,6 @@ g_MouseTooltips.ByHandle:={}
 global g_TabControlHeight
 global g_TabControlStartHeight
 global g_TabControlWidth
-global g_TabControlX
-global g_TabControlY
 
 try
 {

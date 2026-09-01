@@ -65,7 +65,7 @@
 		Gui, IBM_Home:Add, Tab3, x5 y%g_TabControlStartHeight% w%g_TabControlWidth% h%g_TabControlHeight% vModronTabControl, %g_TabList%
 		this.AddTab("Home|Game|Route|Levels")
 		this.Theme.UseThemeTitleBar("IBM_Home")
-		Gui, IBM_Home:Show, %  "x0 y0" . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
+		Gui, IBM_Home:Show, %  "x" . g_IBM_Settings.HUB.IBM_HOME_X . " y" . g_IBM_Settings.HUB.IBM_HOME_Y . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6  . " NA", % "Briv Master Home (Loading...)"
 
 		;++++++++++++++++++HOME TAB++++++++++++++++++
 		Gui, IBM_Home:Tab, Home

@@ -43,7 +43,11 @@ global g_IriBrivMaster_StopFunctions:={}
 g_IriBrivMaster.Init()
 
 GuiControl, IBM_Home:MoveDraw, ModronTabControl, % "w" . g_TabControlWidth . " h" . g_TabControlHeight
+<<<<<<< Updated upstream
 Gui, IBM_Home:Show, % "w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
+=======
+Gui, IBM_Home:Show, % "x" . g_IBM_Settings.HUB.IBM_HOME_X . " y" . g_IBM_Settings.HUB.IBM_HOME_Y . " w" . g_TabControlWidth+10 . " h" . g_TabControlHeight+g_TabControlStartHeight+6 . " NA", % "Briv Master Home"
+>>>>>>> Stashed changes
 g_IriBrivMaster_GUI.ApplyTooltips() ;Must be after controls are created by Gui, Show
 OnMessage(0x200, "CheckControlForTooltip") ;WM_MOUSEMOVE for tooltip tracking
 
